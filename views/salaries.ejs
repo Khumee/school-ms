@@ -78,6 +78,7 @@
                         <th style="text-align: right;">Bonus (PKR)</th>
                         <th>Bonus Details</th>
                         <th style="text-align: right; background-color: #f1f5f9;">Total Paid</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -94,11 +95,12 @@
                                 <td style="text-align: right; font-weight: 700; background-color: #f8fafc;">
                                     <%= (parseFloat(s.basic_salary) + parseFloat(s.bonus)).toLocaleString() %>
                                 </td>
+                                <td><a href="/salaries/slip/<%= s.id %>" class="btn-secondary nav-btn" target="_blank"><i class="bi bi-file-earmark-pdf-fill"></i> Slip</a></td>
                             </tr>
                         <% }) %>
                     <% } else { %>
                         <tr>
-                            <td colspan="6" style="text-align: center; color: #64748b;">No payroll payments logged.</td>
+                            <td colspan="7" style="text-align: center; color: #64748b;">No payroll payments logged.</td>
                         </tr>
                     <% } %>
                 </tbody>

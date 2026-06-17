@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { isAuthenticated } = require('../middleware/auth');
+const { renderPdf, resolvePublicAsset } = require('../utils/pdfGenerator');
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 // GET /expenses - list and form
 router.get('/expenses', isAuthenticated, async (req, res) => {
@@ -109,6 +112,42 @@ router.post('/salaries/pay', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send('Error recording salary payment.');
+    }
+});
+
+// GET /salaries/slip/:id - generate PDF salary slip
+router.get('/salaries/slip/:id', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const [rows] = await db.execute(
+            `SELECT s.*, e.name as employee_name, e.designation
+             FROM salaries s
+             JOIN employees e ON s.employee_id = e.id
+             WHERE s.id = ? AND s.tenant_id = ?`,
+            [req.params.id, tenantId]
+        );
+        if (rows.length === 0) return res.status(404).send('Salary record not found.');
+        const salary = rows[0];
+
+        const tenantForPdf = { ...req.tenant, logo_url: resolvePublicAsset(req.tenant.logo_url) };
+        const totalPaid = parseFloat(salary.basic_salary) + parseFloat(salary.bonus);
+
+        renderPdf(res, {
+            templateName: 'salary_slip',
+            data: {
+                tenant: tenantForPdf,
+                employee: { name: salary.employee_name, designation: salary.designation },
+                salary,
+                monthName: MONTH_NAMES[salary.month - 1],
+                paidDateFormatted: new Date(salary.paid_date).toLocaleDateString('en-GB'),
+                totalPaid
+            },
+            fileBaseName: `salary_slip_${salary.id}`,
+            downloadName: `salary-slip-${salary.employee_name}-${MONTH_NAMES[salary.month - 1]}-${salary.year}.pdf`
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error generating salary slip.');
     }
 });
 

@@ -440,42 +440,73 @@ for idx, row in df_eid.iterrows():
 print("Salaries and bonuses imported. Importing monthly overhead expenses...")
 
 # 6. Import General Expenses from monthly tabs
+# NOTE: column positions for the 3 side-by-side sections (Main/Office/Utility)
+# are NOT consistent across month sheets (e.g. 'Jan' is shifted one column to
+# the right compared to 'Feb'..'Jun'), so we detect the header row and each
+# section's "Date" column dynamically per sheet instead of hardcoding indices.
+sheet_name_overrides = {'Jul': 'July'}
+
+def find_expense_sections(df_m):
+    """Scans the first few rows for the header row containing 'Date' labels
+    and returns (data_start_row, [(date_col, item_col, amt_col, category), ...])."""
+    header_row = None
+    for r in range(0, min(8, len(df_m))):
+        row_vals = [str(v).strip() if pd.notna(v) else "" for v in df_m.iloc[r]]
+        if row_vals.count('Date') >= 1:
+            header_row = r
+            break
+    if header_row is None:
+        return None, []
+
+    row_vals = [str(v).strip() if pd.notna(v) else "" for v in df_m.iloc[header_row]]
+    date_cols = [i for i, v in enumerate(row_vals) if v == 'Date']
+    section_categories = ['other', 'office', 'utility']  # Main, Office, Utility in left-to-right order
+    sections = []
+    for idx, date_col in enumerate(date_cols):
+        cat = section_categories[idx] if idx < len(section_categories) else 'other'
+        sections.append((date_col, date_col + 1, date_col + 2, cat))
+    return header_row + 1, sections
+
 for month_name, m_num in month_mapping.items():
-    if month_name not in xl.sheet_names:
+    actual_sheet_name = sheet_name_overrides.get(month_name, month_name)
+    if actual_sheet_name not in xl.sheet_names:
         continue
-        
-    df_m = pd.read_excel(xl, month_name, header=None)
-    
-    # We parse three sections side by side:
-    # 1. Main Expenses: Columns C, D, E (Date, Item, Amount)
-    # 2. Office Expenses: Columns G, H, I (Date, Description, Amount)
-    # 3. Utility Bills: Columns K, L, M (Date, Description, Amount)
-    
+
+    df_m = pd.read_excel(xl, actual_sheet_name, header=None)
+    data_start, sections = find_expense_sections(df_m)
+    if data_start is None:
+        continue
+
     def extract_expense_ledger(date_col, item_col, amt_col, exp_category):
-        for idx in range(4, len(df_m)):
+        for idx in range(data_start, len(df_m)):
             r_date = df_m.iloc[idx, date_col]
             r_item = df_m.iloc[idx, item_col]
             r_amt = df_m.iloc[idx, amt_col]
-            
+
             if pd.isna(r_item) or pd.isna(r_amt):
                 continue
-                
+
             item_str = str(r_item).strip()
             # Clean totals or balances
             if "total" in item_str.lower() or "balance" in item_str.lower() or "carry" in item_str.lower():
                 continue
-                
+
             # Skip salaries in monthly expenses as we track them via payroll salaries table
             if "salary" in item_str.lower() or "salaries" in item_str.lower():
                 continue
-                
+
+            # Skip section subtotal labels that appear inline among the real line items
+            # (e.g. "Office Expense" / "Utility Bills" / "Expense" recap figures, not real transactions)
+            if item_str.lower() in ('expense', 'office expense', 'utility bills', 'utility bill'):
+                continue
+
             try:
                 amt = float(r_amt)
             except (ValueError, TypeError):
                 continue
             if amt <= 0:
                 continue
-                
+
             # Parse date
             exp_date = None
             if pd.notna(r_date):
@@ -490,27 +521,22 @@ for month_name, m_num in month_mapping.items():
                         pass
             if not exp_date:
                 exp_date = datetime.date(2026, m_num, 1)
-                
+
             # Map category
             cat = exp_category
             if "rent" in item_str.lower():
                 cat = "rent"
             elif "bill" in item_str.lower() or "electricity" in item_str.lower() or "water" in item_str.lower() or "gas" in item_str.lower():
                 cat = "utility"
-                
+
             cursor.execute(
                 """INSERT INTO expenses (tenant_id, date, item, amount, category, description)
                    VALUES (%s, %s, %s, %s, %s, %s)""",
                 (tenant_id, exp_date, item_str, amt, cat, item_str)
             )
-            
-    # Extract
-    if len(df_m.columns) >= 5:
-        extract_expense_ledger(2, 3, 4, 'other') # Main
-    if len(df_m.columns) >= 9:
-        extract_expense_ledger(6, 7, 8, 'office') # Office
-    if len(df_m.columns) >= 13:
-        extract_expense_ledger(10, 11, 12, 'utility') # Utilities
+
+    for date_col, item_col, amt_col, cat in sections:
+        extract_expense_ledger(date_col, item_col, amt_col, cat)
 
 conn.commit()
 conn.close()

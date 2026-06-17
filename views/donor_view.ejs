@@ -1,0 +1,68 @@
+<%- include('partials/header') %>
+
+<div class="section-header">
+    <h1 class="section-title"><i class="bi bi-person-heart"></i> <%= donor.name %></h1>
+    <a href="/donations" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Donations</a>
+</div>
+
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.5rem;">
+    <div class="card kpi-card">
+        <span class="kpi-icon pink"><i class="bi bi-telephone-fill"></i></span>
+        <span class="kpi-label">Contact No.</span>
+        <span class="kpi-value" style="font-size: 1.4rem;"><%= donor.contact_no || '-' %></span>
+    </div>
+    <div class="card kpi-card">
+        <span class="kpi-icon purple"><i class="bi bi-person-plus-fill"></i></span>
+        <span class="kpi-label">Referred By</span>
+        <span class="kpi-value" style="font-size: 1.4rem;"><%= donor.referred_by || 'Direct' %></span>
+    </div>
+    <div class="card kpi-card">
+        <span class="kpi-icon green"><i class="bi bi-heart-fill"></i></span>
+        <span class="kpi-label">Total Donated (All Time)</span>
+        <span class="kpi-value" style="font-size: 1.4rem;">PKR <%= totalDonated.toLocaleString() %></span>
+    </div>
+    <div class="card kpi-card">
+        <span class="kpi-icon blue"><i class="bi bi-receipt"></i></span>
+        <span class="kpi-label">Total Donations Logged</span>
+        <span class="kpi-value" style="font-size: 1.4rem;"><%= donations.length %></span>
+    </div>
+</div>
+
+<div class="section-header">
+    <h2 class="section-title"><i class="bi bi-clock-history"></i> Donation History</h2>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th style="text-align: right;">Amount (PKR)</th>
+                <th>Fund Category</th>
+                <th>Payment Method</th>
+                <th>Notes</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (donations.length > 0) { %>
+                <% donations.forEach(d => { %>
+                    <tr>
+                        <td><%= new Date(d.date).toLocaleDateString() %></td>
+                        <td style="text-align: right; font-weight: 600; color: #15803d;"><%= parseFloat(d.amount).toLocaleString() %></td>
+                        <td><%= fundLabels[d.fund_category] || d.fund_category %></td>
+                        <td><%= d.payment_method || '-' %></td>
+                        <td><%= d.notes || '-' %></td>
+                        <td><a href="/donations/receipt/<%= d.id %>" class="btn-secondary nav-btn" target="_blank"><i class="bi bi-file-earmark-pdf-fill"></i> Receipt</a></td>
+                    </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #64748b;">No donations recorded yet.</td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('partials/footer') %>

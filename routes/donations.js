@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { isAuthenticated } = require('../middleware/auth');
+const { renderPdf, resolvePublicAsset } = require('../utils/pdfGenerator');
+
+const FUND_LABELS = { general: 'General / Direct', trust: 'Trust Account', student_support: 'Student Sponsorship' };
 
 // GET /donations - donor grid & records
 router.get('/donations', isAuthenticated, async (req, res) => {
@@ -77,6 +80,64 @@ router.post('/donations/add', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send('Error adding donation.');
+    }
+});
+
+// GET /donations/donor/:id - donor profile + full donation history
+router.get('/donations/donor/:id', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const [donorRows] = await db.execute(
+            'SELECT * FROM donors WHERE id = ? AND tenant_id = ?',
+            [req.params.id, tenantId]
+        );
+        if (donorRows.length === 0) return res.status(404).send('Donor not found.');
+
+        const [donations] = await db.execute(
+            'SELECT * FROM donations WHERE donor_id = ? AND tenant_id = ? ORDER BY date DESC, id DESC',
+            [req.params.id, tenantId]
+        );
+
+        const totalDonated = donations.reduce((sum, d) => sum + parseFloat(d.amount), 0);
+
+        res.render('donor_view', { donor: donorRows[0], donations, totalDonated, fundLabels: FUND_LABELS });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading donor profile.');
+    }
+});
+
+// GET /donations/receipt/:id - generate PDF receipt for a donation
+router.get('/donations/receipt/:id', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const [rows] = await db.execute(
+            `SELECT d.*, dn.name as donor_name, dn.contact_no, dn.referred_by
+             FROM donations d
+             JOIN donors dn ON d.donor_id = dn.id
+             WHERE d.id = ? AND d.tenant_id = ?`,
+            [req.params.id, tenantId]
+        );
+        if (rows.length === 0) return res.status(404).send('Donation not found.');
+        const donation = rows[0];
+
+        const tenantForPdf = { ...req.tenant, logo_url: resolvePublicAsset(req.tenant.logo_url) };
+
+        renderPdf(res, {
+            templateName: 'donation_receipt',
+            data: {
+                tenant: tenantForPdf,
+                donor: { name: donation.donor_name, contact_no: donation.contact_no, referred_by: donation.referred_by },
+                donation,
+                fundCategoryLabel: FUND_LABELS[donation.fund_category] || donation.fund_category,
+                dateFormatted: new Date(donation.date).toLocaleDateString('en-GB')
+            },
+            fileBaseName: `donation_receipt_${donation.id}`,
+            downloadName: `donation-receipt-${donation.donor_name}-${donation.id}.pdf`
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error generating donation receipt.');
     }
 });
 

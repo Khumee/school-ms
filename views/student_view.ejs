@@ -1,0 +1,103 @@
+<%- include('partials/header') %>
+
+<% const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December']; %>
+
+<div class="section-header">
+    <h1 class="section-title"><i class="bi bi-person-vcard-fill"></i> <%= student.name %></h1>
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="/students/edit/<%= student.id %>" class="btn-secondary"><i class="bi bi-pencil-square"></i> Edit</a>
+        <a href="/students" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Directory</a>
+    </div>
+</div>
+
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.5rem;">
+    <div class="card kpi-card">
+        <span class="kpi-icon blue"><i class="bi bi-credit-card-2-front-fill"></i></span>
+        <span class="kpi-label">Registration No.</span>
+        <span class="kpi-value" style="font-size: 1.4rem;"><%= student.reg_no %></span>
+    </div>
+    <div class="card kpi-card">
+        <span class="kpi-icon purple"><i class="bi bi-mortarboard-fill"></i></span>
+        <span class="kpi-label">Class</span>
+        <span class="kpi-value" style="font-size: 1.4rem;"><%= student.class_name || 'Unassigned' %></span>
+    </div>
+    <div class="card kpi-card">
+        <span class="kpi-icon amber"><i class="bi bi-tags-fill"></i></span>
+        <span class="kpi-label">Monthly Fee</span>
+        <span class="kpi-value" style="font-size: 1.4rem;">
+            PKR <%= (student.custom_monthly_fee !== null ? student.custom_monthly_fee : (student.default_monthly_fee || 0)).toLocaleString() %>
+        </span>
+        <span class="kpi-subtitle"><%= student.has_concession ? 'Concessional Rate' : 'Standard Rate' %></span>
+    </div>
+    <div class="card kpi-card">
+        <span class="kpi-icon green"><i class="bi bi-cash-stack"></i></span>
+        <span class="kpi-label">Total Fees Paid (2026)</span>
+        <span class="kpi-value" style="font-size: 1.4rem;">PKR <%= totalPaid.toLocaleString() %></span>
+    </div>
+</div>
+
+<div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 2rem;">
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-person-lines-fill"></i> Admission & Demographic Details</h3>
+        <table class="details-table" style="width: 100%; font-size: 0.875rem;">
+            <tr><td style="font-weight: 600; padding: 6px 0; width: 45%;">Date of Admission</td><td style="padding: 6px 0;"><%= student.date_of_admission ? new Date(student.date_of_admission).toLocaleDateString() : '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Date of Birth</td><td style="padding: 6px 0;"><%= student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString() : '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Gender</td><td style="padding: 6px 0; text-transform: capitalize;"><%= student.gender || '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Status</td><td style="padding: 6px 0; text-transform: capitalize;"><%= student.status %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Father's Name</td><td style="padding: 6px 0;"><%= student.father_name || '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Father's Phone</td><td style="padding: 6px 0;"><%= student.father_phone || '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Emergency Contact</td><td style="padding: 6px 0;"><%= student.emergency_contact || '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Address</td><td style="padding: 6px 0;"><%= student.address || '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Blood Group</td><td style="padding: 6px 0;"><%= student.blood_group || '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Previous School</td><td style="padding: 6px 0;"><%= student.previous_school_info || '-' %></td></tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-tags-fill"></i> Fee Concession Details</h3>
+        <table class="details-table" style="width: 100%; font-size: 0.875rem;">
+            <tr><td style="font-weight: 600; padding: 6px 0; width: 45%;">Class Default Fee</td><td style="padding: 6px 0;">PKR <%= (student.default_monthly_fee || 0).toLocaleString() %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Custom Monthly Fee</td><td style="padding: 6px 0;"><%= student.custom_monthly_fee !== null ? 'PKR ' + student.custom_monthly_fee.toLocaleString() : 'Not Set (Uses Class Default)' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Has Concession</td><td style="padding: 6px 0;"><%= student.has_concession ? 'Yes' : 'No' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Notes</td><td style="padding: 6px 0;"><%= student.concession_notes || '-' %></td></tr>
+        </table>
+        <a href="/fees/concessions" class="btn-secondary" style="margin-top: 1rem;"><i class="bi bi-pencil-square"></i> Edit Concession</a>
+    </div>
+</div>
+
+<div class="section-header">
+    <h2 class="section-title"><i class="bi bi-clock-history"></i> Fee Payment History</h2>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Year</th>
+                <th style="text-align: right;">Amount Paid (PKR)</th>
+                <th>Payment Date</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (payments.length > 0) { %>
+                <% payments.forEach(p => { %>
+                    <tr>
+                        <td style="font-weight: 600;"><%= monthNames[p.month - 1] %></td>
+                        <td><%= p.year %></td>
+                        <td style="text-align: right; font-weight: 600; color: #15803d;"><%= parseFloat(p.amount_paid).toLocaleString() %></td>
+                        <td><%= new Date(p.payment_date).toLocaleDateString() %></td>
+                        <td><a href="/fees/receipt/<%= p.id %>" class="btn-secondary nav-btn" target="_blank"><i class="bi bi-file-earmark-pdf-fill"></i> Receipt</a></td>
+                    </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #64748b;">No fee payments recorded yet.</td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('partials/footer') %>

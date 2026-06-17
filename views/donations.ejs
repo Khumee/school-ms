@@ -109,7 +109,7 @@
                         let donorTotal = 0;
                     %>
                     <tr>
-                        <td style="font-weight: 600; text-align: left;"><%= d.name %></td>
+                        <td style="font-weight: 600; text-align: left;"><a href="/donations/donor/<%= d.id %>" style="color: var(--primary-color); text-decoration: none;"><i class="bi bi-person-vcard-fill"></i> <%= d.name %></a></td>
                         <td style="text-align: left;"><%= d.referred_by || '-' %></td>
                         
                         <% for (let m = 1; m <= 12; m++) { %>

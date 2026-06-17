@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { isAuthenticated } = require('../middleware/auth');
+const { renderPdf, resolvePublicAsset } = require('../utils/pdfGenerator');
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 // GET /fees/concessions - list students & custom fees
 router.get('/fees/concessions', isAuthenticated, async (req, res) => {
@@ -135,6 +138,45 @@ router.post('/fees/pay', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send('Error recording fee payment.');
+    }
+});
+
+// GET /fees/receipt/:id - generate PDF receipt for a fee payment
+router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const [rows] = await db.execute(
+            `SELECT fp.*, s.name as student_name, s.reg_no, s.has_concession, c.name as class_name
+             FROM fee_payments fp
+             JOIN students s ON fp.student_id = s.id
+             LEFT JOIN classes c ON s.class_id = c.id
+             WHERE fp.id = ? AND fp.tenant_id = ?`,
+            [req.params.id, tenantId]
+        );
+        if (rows.length === 0) return res.status(404).send('Fee payment not found.');
+        const payment = rows[0];
+
+        const tenantForPdf = { ...req.tenant, logo_url: resolvePublicAsset(req.tenant.logo_url) };
+
+        renderPdf(res, {
+            templateName: 'fee_receipt',
+            data: {
+                tenant: tenantForPdf,
+                student: { name: payment.student_name, reg_no: payment.reg_no, has_concession: payment.has_concession },
+                className: payment.class_name,
+                month: payment.month,
+                monthName: MONTH_NAMES[payment.month - 1],
+                year: payment.year,
+                amount: payment.amount_paid,
+                receiptId: payment.id,
+                paymentDate: new Date(payment.payment_date).toLocaleDateString('en-GB')
+            },
+            fileBaseName: `fee_receipt_${payment.id}`,
+            downloadName: `fee-receipt-${payment.reg_no}-${MONTH_NAMES[payment.month - 1]}-${payment.year}.pdf`
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error generating fee receipt.');
     }
 });
 

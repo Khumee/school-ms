@@ -164,6 +164,33 @@ router.post('/students/edit/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+// GET /students/view/:id - profile + fee payment history
+router.get('/students/view/:id', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const [students] = await db.execute(
+            `SELECT s.*, c.name as class_name, c.default_monthly_fee
+             FROM students s
+             LEFT JOIN classes c ON s.class_id = c.id
+             WHERE s.id = ? AND s.tenant_id = ?`,
+            [req.params.id, tenantId]
+        );
+        if (students.length === 0) return res.status(404).send('Student not found.');
+
+        const [payments] = await db.execute(
+            'SELECT * FROM fee_payments WHERE student_id = ? AND tenant_id = ? ORDER BY year DESC, month DESC',
+            [req.params.id, tenantId]
+        );
+
+        const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.amount_paid), 0);
+
+        res.render('student_view', { student: students[0], payments, totalPaid });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading student profile.');
+    }
+});
+
 // POST /students/delete/:id - delete
 router.post('/students/delete/:id', isAuthenticated, async (req, res) => {
     try {

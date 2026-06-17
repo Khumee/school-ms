@@ -5,3 +5,4 @@ node_modules/
 .claude/
 npm-debug.log*
 public/images/logos/
+scratch/

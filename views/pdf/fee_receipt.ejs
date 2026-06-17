@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fee Receipt</title>
+<style>
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        color: #0f172a;
+        margin: 0;
+        padding: 40px 50px;
+    }
+    .receipt-box {
+        border: 2px solid <%= tenant.primary_color || '#4f46e5' %>;
+        border-radius: 14px;
+        padding: 32px;
+    }
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 3px solid <%= tenant.primary_color || '#4f46e5' %>;
+        padding-bottom: 16px;
+        margin-bottom: 20px;
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .header-left img { height: 56px; max-width: 140px; object-fit: contain; }
+    .school-name { font-size: 20px; font-weight: 800; color: #0f172a; margin: 0; }
+    .school-sub { font-size: 11px; color: #64748b; margin: 2px 0 0; }
+    .doc-title {
+        text-align: right;
+    }
+    .doc-title h2 {
+        margin: 0;
+        font-size: 18px;
+        color: <%= tenant.primary_color || '#4f46e5' %>;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .doc-title p { margin: 2px 0 0; font-size: 12px; color: #64748b; }
+    .meta-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        margin-bottom: 22px;
+        color: #334155;
+    }
+    table.details {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 24px;
+    }
+    table.details td {
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
+        font-size: 13px;
+    }
+    table.details td.label {
+        background-color: #f8fafc;
+        font-weight: 600;
+        width: 35%;
+        color: #475569;
+    }
+    .amount-box {
+        background: linear-gradient(135deg, <%= tenant.primary_color || '#4f46e5' %>, <%= tenant.secondary_color || '#4338ca' %>);
+        color: #fff;
+        border-radius: 10px;
+        padding: 18px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    .amount-box .label { font-size: 13px; opacity: 0.9; }
+    .amount-box .value { font-size: 26px; font-weight: 800; }
+    .signatures {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 50px;
+    }
+    .sign-block { text-align: center; width: 200px; }
+    .sign-line { border-top: 1px solid #94a3b8; margin-bottom: 6px; }
+    .sign-label { font-size: 11px; color: #64748b; }
+    .footer-note { text-align: center; font-size: 10px; color: #94a3b8; margin-top: 30px; }
+</style>
+</head>
+<body>
+    <div class="receipt-box">
+        <div class="header">
+            <div class="header-left">
+                <% if (tenant.logo_url) { %><img src="<%= tenant.logo_url %>" alt="logo"><% } %>
+                <div>
+                    <p class="school-name"><%= tenant.school_name %></p>
+                    <p class="school-sub">Fee Payment Receipt</p>
+                </div>
+            </div>
+            <div class="doc-title">
+                <h2>Receipt</h2>
+                <p>No. FR-<%= String(receiptId).padStart(5, '0') %></p>
+            </div>
+        </div>
+
+        <div class="meta-row">
+            <span>Date: <strong><%= paymentDate %></strong></span>
+            <span>Month: <strong><%= monthName %> <%= year %></strong></span>
+        </div>
+
+        <table class="details">
+            <tr>
+                <td class="label">Student Name</td>
+                <td><%= student.name %></td>
+            </tr>
+            <tr>
+                <td class="label">Registration No.</td>
+                <td><%= student.reg_no %></td>
+            </tr>
+            <tr>
+                <td class="label">Class</td>
+                <td><%= className || '-' %></td>
+            </tr>
+            <% if (student.has_concession) { %>
+            <tr>
+                <td class="label">Fee Type</td>
+                <td>Concessional Fee</td>
+            </tr>
+            <% } %>
+        </table>
+
+        <div class="amount-box">
+            <span class="label">Amount Received</span>
+            <span class="value">PKR <%= Number(amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+        </div>
+
+        <div class="signatures">
+            <div class="sign-block">
+                <div class="sign-line"></div>
+                <div class="sign-label">Received By</div>
+            </div>
+            <div class="sign-block">
+                <div class="sign-line"></div>
+                <div class="sign-label">Authorized Signature</div>
+            </div>
+        </div>
+
+        <p class="footer-note">This is a computer-generated receipt from <%= tenant.school_name %>.</p>
+    </div>
+</body>
+</html>
