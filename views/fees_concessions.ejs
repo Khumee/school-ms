@@ -1,0 +1,84 @@
+<%- include('partials/header') %>
+
+<div class="section-header">
+    <h1 class="section-title">Student Fee Concessions</h1>
+</div>
+
+<!-- Filters -->
+<form action="/fees/concessions" method="GET" class="filter-bar">
+    <div class="form-group">
+        <label for="classId">Class</label>
+        <select name="classId" id="classId" class="form-control" onchange="this.form.submit()">
+            <option value="">-- All Classes --</option>
+            <% classes.forEach(c => { %>
+                <option value="<%= c.id %>" <%= classId == c.id ? 'selected' : '' %>><%= c.name %></option>
+            <% }) %>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label for="search">Search</label>
+        <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or Reg No...">
+    </div>
+    
+    <button type="submit" class="btn-secondary">Search</button>
+    <a href="/fees/concessions" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
+</form>
+
+<!-- Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Reg No</th>
+                <th>Name</th>
+                <th>Class</th>
+                <th style="text-align: right;">Class default Fee (PKR)</th>
+                <th style="text-align: right;">Active Monthly Fee (PKR)</th>
+                <th>Concession Status</th>
+                <th>Concession Notes</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (students.length > 0) { %>
+                <% students.forEach(s => { %>
+                    <tr>
+                        <td style="font-weight: 600;"><%= s.reg_no %></td>
+                        <td><%= s.name %></td>
+                        <td><%= s.class_name || 'Unassigned' %></td>
+                        <td style="text-align: right;"><%= s.default_monthly_fee ? s.default_monthly_fee.toLocaleString() : '0.00' %></td>
+                        <td style="text-align: right; font-weight: 700; color: <%= s.has_concession ? '#b91c1c' : '#1e293b' %>">
+                            <%= s.custom_monthly_fee !== null ? s.custom_monthly_fee.toLocaleString() : (s.default_monthly_fee || '0.00').toLocaleString() %>
+                        </td>
+                        <td>
+                            <span class="status-cell <%= s.has_concession ? 'status-unpaid' : 'status-paid' %>">
+                                <%= s.has_concession ? 'CONCESSION' : 'STANDARD' %>
+                            </span>
+                        </td>
+                        <td><%= s.concession_notes || '-' %></td>
+                        <td>
+                            <!-- Simple Inline Action Form -->
+                            <form action="/fees/concessions/update" method="POST" style="display: flex; gap: 0.5rem; align-items: center;">
+                                <input type="hidden" name="student_id" value="<%= s.id %>">
+                                <input type="number" step="0.01" name="custom_monthly_fee" class="form-control" style="width: 100px; padding: 0.25rem;" value="<%= s.custom_monthly_fee !== null ? s.custom_monthly_fee : '' %>" placeholder="Amt">
+                                <select name="has_concession" class="form-control" style="width: 110px; padding: 0.25rem;">
+                                    <option value="0" <%= !s.has_concession ? 'selected' : '' %>>Standard</option>
+                                    <option value="1" <%= s.has_concession ? 'selected' : '' %>>Concession</option>
+                                </select>
+                                <input type="text" name="concession_notes" class="form-control" style="width: 120px; padding: 0.25rem;" value="<%= s.concession_notes || '' %>" placeholder="Notes">
+                                <button type="submit" class="btn-primary nav-btn" style="padding: 0.25rem 0.5rem;">Save</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="8" style="text-align: center; color: #64748b;">No students found.</td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('partials/footer') %>

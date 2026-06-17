@@ -1,0 +1,86 @@
+<%- include('partials/header') %>
+
+<div class="section-header">
+    <h1 class="section-title">Employee Registry</h1>
+    <a href="/employees/add" class="btn-primary">+ Add New Employee</a>
+</div>
+
+<!-- Filters -->
+<form action="/employees" method="GET" class="filter-bar">
+    <div class="form-group">
+        <label for="role">Role Type</label>
+        <select name="role" id="role" class="form-control" onchange="this.form.submit()">
+            <option value="">-- All Roles --</option>
+            <option value="teacher" <%= role === 'teacher' ? 'selected' : '' %>>Teacher</option>
+            <option value="admin" <%= role === 'admin' ? 'selected' : '' %>>Administrator</option>
+            <option value="support" <%= role === 'support' ? 'selected' : '' %>>Support Staff</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label for="status">Payroll Status</label>
+        <select name="status" id="status" class="form-control" onchange="this.form.submit()">
+            <option value="">-- All Statuses --</option>
+            <option value="on_payroll" <%= status === 'on_payroll' ? 'selected' : '' %>>On Payroll</option>
+            <option value="volunteer" <%= status === 'volunteer' ? 'selected' : '' %>>Volunteer</option>
+            <option value="inactive" <%= status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label for="search">Search</label>
+        <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or designation...">
+    </div>
+    
+    <button type="submit" class="btn-secondary">Search</button>
+    <a href="/employees" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
+</form>
+
+<!-- Table -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Designation</th>
+                <th>Role</th>
+                <th>Payroll Status</th>
+                <th style="text-align: right;">Default Salary (PKR)</th>
+                <th>Joining Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (employees.length > 0) { %>
+                <% employees.forEach(e => { %>
+                    <tr>
+                        <td style="font-weight: 600;"><%= e.name %></td>
+                        <td><%= e.designation %></td>
+                        <td><%= e.role.toUpperCase() %></td>
+                        <td>
+                            <span class="status-cell <%= e.status === 'on_payroll' ? 'status-paid' : 'status-unpaid' %>">
+                                <%= e.status.replace('_', ' ').toUpperCase() %>
+                            </span>
+                        </td>
+                        <td style="text-align: right; font-weight: 600;"><%= e.default_salary > 0 ? e.default_salary.toLocaleString() : '-' %></td>
+                        <td><%= e.date_of_joining ? new Date(e.date_of_joining).toLocaleDateString() : '-' %></td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <a href="/employees/edit/<%= e.id %>" class="btn-secondary nav-btn">Edit</a>
+                                <form action="/employees/delete/<%= e.id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this employee?')">
+                                    <button type="submit" class="btn-danger nav-btn">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #64748b;">No employees found.</td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('partials/footer') %>

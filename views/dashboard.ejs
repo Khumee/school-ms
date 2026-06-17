@@ -1,0 +1,123 @@
+<%- include('partials/header') %>
+
+<div class="section-header">
+    <h1 class="section-title">Dashboard & KPI Report</h1>
+    <span class="user-greeting">Academic Year: 2026</span>
+</div>
+
+<!-- KPI Cards Grid -->
+<div class="kpi-grid">
+    <div class="card kpi-card" style="border-left: 4px solid #3b82f6;">
+        <span class="kpi-label">Total Students</span>
+        <span class="kpi-value"><%= total_students %></span>
+        <span class="kpi-subtitle"><%= paying_students %> Paying / <%= support_students %> Supported</span>
+    </div>
+    
+    <div class="card kpi-card" style="border-left: 4px solid #10b981;">
+        <span class="kpi-label">Teachers</span>
+        <span class="kpi-value"><%= parseInt(payroll_teachers) + parseInt(volunteer_teachers) %></span>
+        <span class="kpi-subtitle"><%= payroll_teachers %> On Payroll / <%= volunteer_teachers %> Volunteer</span>
+    </div>
+    
+    <div class="card kpi-card" style="border-left: 4px solid #f59e0b;">
+        <span class="kpi-label">Admin Staff</span>
+        <span class="kpi-value"><%= parseInt(payroll_admins) + parseInt(volunteer_admins) %></span>
+        <span class="kpi-subtitle"><%= payroll_admins %> On Payroll / <%= volunteer_admins %> Volunteer</span>
+    </div>
+    
+    <div class="card kpi-card" style="border-left: 4px solid #8b5cf6;">
+        <span class="kpi-label">Closing Cash Balance</span>
+        <span class="kpi-value">PKR <%= currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+        <span class="kpi-subtitle">Carry Forward: PKR <%= carryForward.toLocaleString() %></span>
+    </div>
+</div>
+
+<!-- Financial Summary Section -->
+<div class="section-header" style="margin-top: 3rem;">
+    <h2 class="section-title">2026 Monthly Income & Expense Ledger</h2>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th style="text-align: right;">Fees (PKR)</th>
+                <th style="text-align: right;">Donations (PKR)</th>
+                <th style="text-align: right; background-color: #f1f5f9; font-weight: 700;">Total Income</th>
+                <th style="text-align: right;">Rent</th>
+                <th style="text-align: right;">Salaries</th>
+                <th style="text-align: right;">Utilities</th>
+                <th style="text-align: right;">Office Exp</th>
+                <th style="text-align: right;">Other Exp</th>
+                <th style="text-align: right; background-color: #fef2f2; font-weight: 700;">Total Expense</th>
+                <th style="text-align: right; font-weight: 700;">Net Monthly</th>
+                <th style="text-align: right; background-color: #ecfdf5; font-weight: 700;">Closing Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% 
+                let cumulativeBalance = carryForward;
+                let sumFees = 0;
+                let sumDonations = 0;
+                let sumIncome = 0;
+                let sumRent = 0;
+                let sumSalaries = 0;
+                let sumUtilities = 0;
+                let sumOffice = 0;
+                let sumOther = 0;
+                let sumExpense = 0;
+            %>
+            <% monthsData.forEach(month => { %>
+                <% 
+                    cumulativeBalance += month.balance;
+                    sumFees += month.fees;
+                    sumDonations += month.donations;
+                    sumIncome += month.income;
+                    sumRent += month.rent;
+                    sumSalaries += month.salaries;
+                    sumUtilities += month.utilities;
+                    sumOffice += month.office;
+                    sumOther += month.other;
+                    sumExpense += month.expense;
+                %>
+                <tr>
+                    <td style="font-weight: 600;"><%= month.name %></td>
+                    <td style="text-align: right;"><%= month.fees > 0 ? month.fees.toLocaleString() : '-' %></td>
+                    <td style="text-align: right;"><%= month.donations > 0 ? month.donations.toLocaleString() : '-' %></td>
+                    <td style="text-align: right; background-color: #f8fafc; font-weight: 700;"><%= month.income > 0 ? month.income.toLocaleString() : '-' %></td>
+                    <td style="text-align: right;"><%= month.rent > 0 ? month.rent.toLocaleString() : '-' %></td>
+                    <td style="text-align: right;"><%= month.salaries > 0 ? month.salaries.toLocaleString() : '-' %></td>
+                    <td style="text-align: right;"><%= month.utilities > 0 ? month.utilities.toLocaleString() : '-' %></td>
+                    <td style="text-align: right;"><%= month.office > 0 ? month.office.toLocaleString() : '-' %></td>
+                    <td style="text-align: right;"><%= month.other > 0 ? month.other.toLocaleString() : '-' %></td>
+                    <td style="text-align: right; background-color: #fdf2f2; font-weight: 700;"><%= month.expense > 0 ? month.expense.toLocaleString() : '-' %></td>
+                    <td style="text-align: right; font-weight: 700; color: <%= month.balance >= 0 ? '#16a34a' : '#dc2626' %>">
+                        <%= month.balance !== 0 ? (month.balance > 0 ? '+' : '') + month.balance.toLocaleString() : '-' %>
+                    </td>
+                    <td style="text-align: right; background-color: #f0fdf4; font-weight: 700;"><%= cumulativeBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
+                </tr>
+            <% }) %>
+            
+            <!-- Aggregated Totals Row -->
+            <tr style="background-color: #f1f5f9; font-weight: 700; border-top: 2px solid #cbd5e1;">
+                <td>Total</td>
+                <td style="text-align: right;"><%= sumFees.toLocaleString() %></td>
+                <td style="text-align: right;"><%= sumDonations.toLocaleString() %></td>
+                <td style="text-align: right;"><%= sumIncome.toLocaleString() %></td>
+                <td style="text-align: right;"><%= sumRent.toLocaleString() %></td>
+                <td style="text-align: right;"><%= sumSalaries.toLocaleString() %></td>
+                <td style="text-align: right;"><%= sumUtilities.toLocaleString() %></td>
+                <td style="text-align: right;"><%= sumOffice.toLocaleString() %></td>
+                <td style="text-align: right;"><%= sumOther.toLocaleString() %></td>
+                <td style="text-align: right;"><%= sumExpense.toLocaleString() %></td>
+                <td style="text-align: right; color: <%= (sumIncome - sumExpense) >= 0 ? '#16a34a' : '#dc2626' %>">
+                    <%= (sumIncome - sumExpense).toLocaleString() %>
+                </td>
+                <td style="text-align: right; background-color: #dcfce7;"><%= currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<%- include('partials/footer') %>

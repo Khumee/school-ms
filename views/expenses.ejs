@@ -1,0 +1,105 @@
+<%- include('partials/header') %>
+
+<div class="section-header">
+    <h1 class="section-title">Overhead Expenses Ledger</h1>
+</div>
+
+<div class="form-grid" style="grid-template-columns: 1fr 2fr; gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Form to Add Expense -->
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Record Overhead Expense</h3>
+        <form action="/expenses/add" method="POST">
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="item">Expense Item / Vendor Name *</label>
+                <input type="text" id="item" name="item" class="form-control" required placeholder="e.g. Electric bill, Office stationery">
+            </div>
+            
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label for="amount">Amount (PKR) *</label>
+                    <input type="number" step="0.01" id="amount" name="amount" class="form-control" required placeholder="0.00">
+                </div>
+                
+                <div class="form-group">
+                    <label for="date">Date Paid</label>
+                    <input type="date" id="date" name="date" class="form-control">
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="category">Category</label>
+                <select name="category" id="category" class="form-control">
+                    <option value="other">Other Expenses</option>
+                    <option value="rent">Rent</option>
+                    <option value="utility">Utility Bills</option>
+                    <option value="office">Office Expenses</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="description">Remarks / Description</label>
+                <input type="text" id="description" name="description" class="form-control" placeholder="Add optional details">
+            </div>
+            
+            <button type="submit" class="btn-primary" style="width: 100%;">Log Expense</button>
+        </form>
+    </div>
+    
+    <!-- Table list -->
+    <div class="card">
+        <h3 style="margin-bottom: 1rem;">Logged Expenses List (2026)</h3>
+        
+        <!-- Filters -->
+        <form action="/expenses" method="GET" style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
+            <select name="category" class="form-control" style="width: 140px;">
+                <option value="">-- All Categories --</option>
+                <option value="rent" <%= category === 'rent' ? 'selected' : '' %>>Rent</option>
+                <option value="utility" <%= category === 'utility' ? 'selected' : '' %>>Utilities</option>
+                <option value="office" <%= category === 'office' ? 'selected' : '' %>>Office</option>
+                <option value="other" <%= category === 'other' ? 'selected' : '' %>>Other</option>
+            </select>
+            
+            <select name="month" class="form-control" style="width: 140px;">
+                <option value="">-- All Months --</option>
+                <% const mNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']; %>
+                <% mNames.forEach((n, idx) => { %>
+                    <option value="<%= idx + 1 %>" <%= month == (idx + 1) ? 'selected' : '' %>><%= n %></option>
+                <% }) %>
+            </select>
+            
+            <button type="submit" class="btn-secondary nav-btn" style="height: 38px;">Filter</button>
+            <a href="/expenses" class="btn-secondary nav-btn" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
+        </form>
+        
+        <div class="table-container" style="border: none; max-height: 400px; overflow-y: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Item</th>
+                        <th>Category</th>
+                        <th style="text-align: right;">Amount (PKR)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (expenses.length > 0) { %>
+                        <% expenses.forEach(e => { %>
+                            <tr>
+                                <td><%= new Date(e.date).toLocaleDateString() %></td>
+                                <td style="font-weight: 500;"><%= e.item %></td>
+                                <td><span class="status-cell status-paid"><%= e.category.toUpperCase() %></span></td>
+                                <td style="text-align: right; font-weight: 600;"><%= e.amount.toLocaleString() %></td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #64748b;">No expenses recorded.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

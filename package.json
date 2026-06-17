@@ -1,0 +1,32 @@
+{
+  "name": "school-ms",
+  "version": "1.0.0",
+  "description": "Multi-tenant SaaS School Management System with Donations and Concessions",
+  "main": "server.js",
+  "scripts": {
+    "start": "npm run migrate && node server.js",
+    "migrate": "node migrate.js",
+    "ingest": "node scripts/ingest_excel.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "school",
+    "management",
+    "multitenant",
+    "saas",
+    "donations",
+    "concessions"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "ejs": "^5.0.2",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "luxon": "^3.7.2",
+    "mysql2": "^3.22.3"
+  }
+}

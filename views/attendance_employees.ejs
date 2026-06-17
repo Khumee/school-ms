@@ -1,0 +1,65 @@
+<%- include('partials/header') %>
+
+<div class="section-header">
+    <h1 class="section-title">Employee Attendance Dashboard</h1>
+</div>
+
+<!-- Date Selector -->
+<form action="/attendance/employees" method="GET" class="filter-bar" style="align-items: center;">
+    <div class="form-group" style="flex: 0 0 250px;">
+        <label for="date">Select Date</label>
+        <input type="date" name="date" id="date" class="form-control" value="<%= dateStr %>" onchange="this.form.submit()">
+    </div>
+    <span style="font-weight: 500; color: #64748b; margin-top: 1rem;">Marking attendance for: <%= new Date(dateStr).toLocaleDateString(undefined, {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'}) %></span>
+</form>
+
+<!-- Table Form -->
+<div class="card">
+    <form action="/attendance/employees" method="POST">
+        <input type="hidden" name="date" value="<%= dateStr %>">
+        
+        <div class="table-container" style="border: none; margin-bottom: 1.5rem;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employee Name</th>
+                        <th>Designation</th>
+                        <th>Role</th>
+                        <th style="text-align: center;">Present</th>
+                        <th style="text-align: center;">Absent</th>
+                        <th style="text-align: center;">Leave</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (employees.length > 0) { %>
+                        <% employees.forEach(e => { %>
+                            <% const currentStatus = attendanceMap[e.id] || 'present'; %>
+                            <tr>
+                                <td style="font-weight: 600;"><%= e.name %></td>
+                                <td><%= e.designation %></td>
+                                <td><%= e.role.toUpperCase() %></td>
+                                <td style="text-align: center;">
+                                    <input type="radio" name="attendance[<%= e.id %>]" value="present" <%= currentStatus === 'present' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #10b981;">
+                                </td>
+                                <td style="text-align: center;">
+                                    <input type="radio" name="attendance[<%= e.id %>]" value="absent" <%= currentStatus === 'absent' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #ef4444;">
+                                </td>
+                                <td style="text-align: center;">
+                                    <input type="radio" name="attendance[<%= e.id %>]" value="leave" <%= currentStatus === 'leave' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #f59e0b;">
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: #64748b;">No active employees found to mark attendance.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+        
+        <button type="submit" class="btn-primary">Save Today's Attendance</button>
+    </form>
+</div>
+
+<%- include('partials/footer') %>

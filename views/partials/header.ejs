@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= tenant ? tenant.school_name : 'School Management System' %></title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        :root {
+            --primary-color: <%= tenant ? tenant.primary_color : '#3b82f6' %>;
+            --secondary-color: <%= tenant ? tenant.secondary_color : '#1d4ed8' %>;
+        }
+    </style>
+</head>
+<body>
+    <% if (session && session.userId) { %>
+        <nav class="main-nav">
+            <div class="nav-container">
+                <a href="/" class="brand-link">
+                    <% if (tenant && tenant.logo_url) { %>
+                        <img src="<%= tenant.logo_url %>" alt="Logo" class="nav-logo">
+                    <% } %>
+                    <span class="brand-name"><%= tenant ? tenant.school_name : 'School Portal' %></span>
+                </a>
+                <ul class="nav-links">
+                    <li><a href="/">Dashboard</a></li>
+                    <li><a href="/students">Students</a></li>
+                    <li><a href="/employees">Employees</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropbtn">Fees</a>
+                        <div class="dropdown-content">
+                            <a href="/fees/ledger">Monthly Ledger</a>
+                            <a href="/fees/concessions">Concessions</a>
+                        </div>
+                    </li>
+                    <li><a href="/donations">Donations</a></li>
+                    <li><a href="/attendance/employees">Attendance</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropbtn">Ledgers</a>
+                        <div class="dropdown-content">
+                            <a href="/expenses">Overhead Expenses</a>
+                            <a href="/salaries">Salaries/Payroll</a>
+                        </div>
+                    </li>
+                    <li class="user-menu">
+                        <span class="user-greeting">Hi, <%= session.username %></span>
+                        <a href="/change-password" class="btn-secondary nav-btn">Password</a>
+                        <a href="/logout" class="btn-danger nav-btn">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    <% } %>
+    <main class="main-content">
