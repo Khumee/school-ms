@@ -10,5 +10,11 @@ module.exports = {
             return next();
         }
         res.status(403).send('Unauthorized. Admin access required.');
+    },
+    isSuperAdmin: (req, res, next) => {
+        if (req.session && req.session.masterAdminId) {
+            return next();
+        }
+        res.redirect('/admin/login');
     }
 };

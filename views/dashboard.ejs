@@ -1,31 +1,35 @@
 <%- include('partials/header') %>
 
 <div class="section-header">
-    <h1 class="section-title">Dashboard & KPI Report</h1>
-    <span class="user-greeting">Academic Year: 2026</span>
+    <h1 class="section-title"><i class="bi bi-speedometer2"></i> Dashboard & KPI Report</h1>
+    <span class="user-greeting"><i class="bi bi-calendar3"></i> Academic Year: 2026</span>
 </div>
 
 <!-- KPI Cards Grid -->
 <div class="kpi-grid">
-    <div class="card kpi-card" style="border-left: 4px solid #3b82f6;">
+    <div class="card kpi-card">
+        <span class="kpi-icon blue"><i class="bi bi-mortarboard-fill"></i></span>
         <span class="kpi-label">Total Students</span>
         <span class="kpi-value"><%= total_students %></span>
         <span class="kpi-subtitle"><%= paying_students %> Paying / <%= support_students %> Supported</span>
     </div>
-    
-    <div class="card kpi-card" style="border-left: 4px solid #10b981;">
+
+    <div class="card kpi-card">
+        <span class="kpi-icon green"><i class="bi bi-person-workspace"></i></span>
         <span class="kpi-label">Teachers</span>
         <span class="kpi-value"><%= parseInt(payroll_teachers) + parseInt(volunteer_teachers) %></span>
         <span class="kpi-subtitle"><%= payroll_teachers %> On Payroll / <%= volunteer_teachers %> Volunteer</span>
     </div>
-    
-    <div class="card kpi-card" style="border-left: 4px solid #f59e0b;">
+
+    <div class="card kpi-card">
+        <span class="kpi-icon amber"><i class="bi bi-briefcase-fill"></i></span>
         <span class="kpi-label">Admin Staff</span>
         <span class="kpi-value"><%= parseInt(payroll_admins) + parseInt(volunteer_admins) %></span>
         <span class="kpi-subtitle"><%= payroll_admins %> On Payroll / <%= volunteer_admins %> Volunteer</span>
     </div>
-    
-    <div class="card kpi-card" style="border-left: 4px solid #8b5cf6;">
+
+    <div class="card kpi-card">
+        <span class="kpi-icon purple"><i class="bi bi-wallet2"></i></span>
         <span class="kpi-label">Closing Cash Balance</span>
         <span class="kpi-value">PKR <%= currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
         <span class="kpi-subtitle">Carry Forward: PKR <%= carryForward.toLocaleString() %></span>
@@ -34,7 +38,7 @@
 
 <!-- Financial Summary Section -->
 <div class="section-header" style="margin-top: 3rem;">
-    <h2 class="section-title">2026 Monthly Income & Expense Ledger</h2>
+    <h2 class="section-title"><i class="bi bi-bar-chart-line-fill"></i> 2026 Monthly Income & Expense Ledger</h2>
 </div>
 
 <div class="table-container">

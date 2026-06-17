@@ -44,8 +44,10 @@ const feeRoutes = require('./routes/fees');
 const donationRoutes = require('./routes/donations');
 const attendanceRoutes = require('./routes/attendance');
 const expenseRoutes = require('./routes/expenses');
+const superAdminRoutes = require('./routes/superAdmin');
 
 // Register Routers
+app.use(superAdminRoutes);
 app.use(authRoutes);
 app.use(dashboardRoutes);
 app.use(studentRoutes);

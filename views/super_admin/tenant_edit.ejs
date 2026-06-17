@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Tenant - <%= tenant.school_name %></title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #4338ca;
+        }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-container">
+            <a href="/admin" class="brand-link">
+                <span class="login-icon" style="width: 36px; height: 36px; font-size: 1.1rem; margin: 0; border-radius: 9px; background: rgb(255 255 255 / 0.18); box-shadow: none;"><i class="bi bi-buildings-fill"></i></span>
+                <span class="brand-name">Super Admin Console</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="/admin"><i class="bi bi-arrow-left"></i> Back to Tenants</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="section-header">
+            <h1 class="section-title"><i class="bi bi-gear-fill"></i> Edit Tenant: <%= tenant.school_name %></h1>
+        </div>
+
+        <% if (error) { %>
+            <div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> <%= error %></div>
+        <% } %>
+
+        <div class="card" style="padding: 1.5rem; max-width: 640px;">
+            <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+                <img src="<%= tenant.logo_url %>" alt="Current logo" style="height: 64px; max-width: 160px; object-fit: contain; border: 1px solid #e6e9f0; border-radius: 9px; padding: 4px;">
+                <span style="color: #64748b; font-size: 0.875rem;"><i class="bi bi-image"></i> Current logo</span>
+            </div>
+
+            <form action="/admin/tenants/<%= tenant.id %>" method="POST" enctype="multipart/form-data">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="school_name"><i class="bi bi-building"></i> School Name</label>
+                        <input type="text" id="school_name" name="school_name" class="form-control" value="<%= tenant.school_name %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="subdomain"><i class="bi bi-globe2"></i> Subdomain</label>
+                        <input type="text" id="subdomain" name="subdomain" class="form-control" value="<%= tenant.subdomain %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="custom_domain"><i class="bi bi-link-45deg"></i> Custom Domain</label>
+                        <input type="text" id="custom_domain" name="custom_domain" class="form-control" value="<%= tenant.custom_domain || '' %>" placeholder="optional">
+                    </div>
+                    <div class="form-group">
+                        <label for="status"><i class="bi bi-toggle2-on"></i> Status</label>
+                        <select id="status" name="status" class="form-control">
+                            <option value="active" <%= tenant.status === 'active' ? 'selected' : '' %>>Active</option>
+                            <option value="suspended" <%= tenant.status === 'suspended' ? 'selected' : '' %>>Suspended</option>
+                            <option value="maintenance" <%= tenant.status === 'maintenance' ? 'selected' : '' %>>Maintenance</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="primary_color"><i class="bi bi-palette-fill"></i> Primary Color</label>
+                        <input type="color" id="primary_color" name="primary_color" class="form-control" value="<%= tenant.primary_color %>" style="height: 42px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="secondary_color"><i class="bi bi-palette2"></i> Secondary Color</label>
+                        <input type="color" id="secondary_color" name="secondary_color" class="form-control" value="<%= tenant.secondary_color %>" style="height: 42px;">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="logo"><i class="bi bi-upload"></i> Replace Logo (PNG/JPG/SVG/WEBP, max 2MB)</label>
+                        <input type="file" id="logo" name="logo" class="form-control" accept=".png,.jpg,.jpeg,.svg,.webp">
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top: 1rem;"><i class="bi bi-check-circle-fill"></i> Save Changes</button>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

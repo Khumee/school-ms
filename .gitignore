@@ -4,3 +4,4 @@ node_modules/
 *.xlsx
 .claude/
 npm-debug.log*
+public/images/logos/
