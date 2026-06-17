@@ -53,7 +53,16 @@
                         <td><%= fundLabels[d.fund_category] || d.fund_category %></td>
                         <td><%= d.payment_method || '-' %></td>
                         <td><%= d.notes || '-' %></td>
-                        <td><a href="/donations/receipt/<%= d.id %>" class="btn-secondary nav-btn" target="_blank"><i class="bi bi-file-earmark-pdf-fill"></i> Receipt</a></td>
+                        <td>
+                            <div style="display: flex; gap: 0.4rem;">
+                                <a href="/donations/receipt/<%= d.id %>" class="btn-secondary nav-btn" target="_blank"><i class="bi bi-file-earmark-pdf-fill"></i></a>
+                                <button type="button" class="btn-secondary nav-btn" onclick='openEditModal(<%- JSON.stringify({ id: d.id, amount: d.amount, date: new Date(d.date).toISOString().slice(0,10), fund_category: d.fund_category, payment_method: d.payment_method, notes: d.notes || "", donor_name: donor.name }) %>)'><i class="bi bi-pencil-square"></i></button>
+                                <form action="/donations/delete/<%= d.id %>" method="POST" onsubmit="return confirm('Delete this donation record?')">
+                                    <input type="hidden" name="redirect_to" value="/donations/donor/<%= donor.id %>">
+                                    <button type="submit" class="btn-danger nav-btn"><i class="bi bi-trash3-fill"></i></button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
                 <% }) %>
             <% } else { %>
@@ -64,5 +73,60 @@
         </tbody>
     </table>
 </div>
+
+<!-- Edit Donation Modal -->
+<div id="editModal" class="card" style="display: none; max-width: 420px; margin: 1rem auto; position: fixed; top: 15%; left: 50%; transform: translate(-50%, 0); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+    <h3 style="margin-bottom: 1rem;" id="editModalTitle">Edit Donation</h3>
+    <form id="editForm" method="POST">
+        <input type="hidden" name="redirect_to" value="/donations/donor/<%= donor.id %>">
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label>Amount (PKR)</label>
+            <input type="number" step="0.01" id="editAmount" name="amount" class="form-control" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label>Date</label>
+            <input type="date" id="editDate" name="date" class="form-control" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label>Fund Category</label>
+            <select id="editFundCategory" name="fund_category" class="form-control">
+                <option value="general">General / Direct</option>
+                <option value="trust">Trust Account</option>
+                <option value="student_support">Student Sponsorship</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label>Payment Method</label>
+            <input type="text" id="editPaymentMethod" name="payment_method" class="form-control">
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label>Notes</label>
+            <input type="text" id="editNotes" name="notes" class="form-control">
+        </div>
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+    </form>
+</div>
+<div id="editModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeEditModal()"></div>
+
+<script>
+    function openEditModal(d) {
+        document.getElementById('editForm').action = '/donations/edit/' + d.id;
+        document.getElementById('editModalTitle').innerText = 'Edit Donation: ' + d.donor_name;
+        document.getElementById('editAmount').value = d.amount;
+        document.getElementById('editDate').value = d.date;
+        document.getElementById('editFundCategory').value = d.fund_category;
+        document.getElementById('editPaymentMethod').value = d.payment_method || '';
+        document.getElementById('editNotes').value = d.notes || '';
+        document.getElementById('editModal').style.display = 'block';
+        document.getElementById('editModalOverlay').style.display = 'block';
+    }
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+        document.getElementById('editModalOverlay').style.display = 'none';
+    }
+</script>
 
 <%- include('partials/footer') %>

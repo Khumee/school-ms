@@ -2,6 +2,8 @@ node_modules/
 .env
 .env.local
 *.xlsx
+*.sql.dump
+school_db_dump.sql
 .claude/
 npm-debug.log*
 public/images/logos/

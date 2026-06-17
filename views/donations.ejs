@@ -1,36 +1,63 @@
 <%- include('partials/header') %>
 
 <div class="section-header">
-    <h1 class="section-title"><i class="bi bi-heart-fill"></i> Donation Records & Donor Registry</h1>
+    <h1 class="section-title"><i class="bi bi-heart-fill"></i> Donations Overview</h1>
 </div>
 
+<div class="filter-bar" style="margin-bottom: 1.5rem;">
+    <a href="/donations" class="nav-tab active">Overview</a>
+    <a href="/donations/matrix" class="nav-tab">Matrix View</a>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+    <div class="card kpi-card">
+        <span class="kpi-icon green"><i class="bi bi-cash-coin"></i></span>
+        <span class="kpi-label">This Month's Donations</span>
+        <span class="kpi-value">PKR <%= thisMonthTotal.toLocaleString() %></span>
+        <span class="kpi-subtitle"><%= thisMonthDonorCount %> donor(s) contributed</span>
+    </div>
+    <div class="card kpi-card">
+        <span class="kpi-icon amber"><i class="bi bi-person-exclamation"></i></span>
+        <span class="kpi-label">Donors to Reconnect With</span>
+        <span class="kpi-value"><%= lapsedDonors.length %></span>
+        <span class="kpi-subtitle">Gave 6 months straight, missed this month</span>
+    </div>
+    <div class="card kpi-card">
+        <span class="kpi-icon purple"><i class="bi bi-piggy-bank-fill"></i></span>
+        <span class="kpi-label">All-Time Total</span>
+        <span class="kpi-value">PKR <%= totalAllTime.toLocaleString() %></span>
+    </div>
+    <div class="card kpi-card">
+        <span class="kpi-icon blue"><i class="bi bi-people-fill"></i></span>
+        <span class="kpi-label">Total Donors Registered</span>
+        <span class="kpi-value"><%= totalDonorCount %></span>
+    </div>
+</div>
+
+<!-- Quick Add Forms -->
 <div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 2rem;">
-    <!-- Form 1: Add Donor -->
     <div class="card">
-        <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Register New Donor</h3>
+        <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-person-plus-fill"></i> Register New Donor</h3>
         <form action="/donations/donor/add" method="POST">
             <div class="form-group" style="margin-bottom: 1rem;">
                 <label for="donorName">Donor Name *</label>
                 <input type="text" id="donorName" name="name" class="form-control" required placeholder="e.g. Ali Irfan">
             </div>
-            
             <div class="form-group" style="margin-bottom: 1rem;">
                 <label for="contactNo">Contact Number</label>
                 <input type="text" id="contactNo" name="contact_no" class="form-control" placeholder="e.g. 0300-XXXXXXX">
             </div>
-            
             <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label for="referredBy">Referred By</label>
                 <input type="text" id="referredBy" name="referred_by" class="form-control" placeholder="e.g. Faheem Zafar">
             </div>
-            
-            <button type="submit" class="btn-primary">Register Donor</button>
+            <button type="submit" class="btn-primary"><i class="bi bi-check-circle-fill"></i> Register Donor</button>
         </form>
     </div>
-    
-    <!-- Form 2: Log Donation -->
+
     <div class="card">
-        <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Record Donation Received</h3>
+        <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-cash-coin"></i> Record Donation Received</h3>
         <form action="/donations/add" method="POST">
             <div class="form-group" style="margin-bottom: 1rem;">
                 <label for="donor_id">Select Donor *</label>
@@ -41,19 +68,16 @@
                     <% }) %>
                 </select>
             </div>
-            
             <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div class="form-group">
                     <label for="amount">Amount (PKR) *</label>
                     <input type="number" step="0.01" id="amount" name="amount" class="form-control" required placeholder="0.00">
                 </div>
-                
                 <div class="form-group">
                     <label for="date">Date Received</label>
                     <input type="date" id="date" name="date" class="form-control">
                 </div>
             </div>
-            
             <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                 <div class="form-group">
                     <label for="fund_category">Fund Category</label>
@@ -63,76 +87,154 @@
                         <option value="student_support">Student Sponsorship</option>
                     </select>
                 </div>
-                
                 <div class="form-group">
                     <label for="payment_method">Payment Method</label>
                     <input type="text" id="payment_method" name="payment_method" class="form-control" value="Cash">
                 </div>
             </div>
-            
-            <button type="submit" class="btn-primary">Log Donation</button>
+            <button type="submit" class="btn-primary"><i class="bi bi-check-circle-fill"></i> Log Donation</button>
         </form>
     </div>
 </div>
 
+<!-- Donors to Reconnect With -->
+<% if (lapsedDonors.length > 0) { %>
 <div class="section-header">
-    <h2 class="section-title">2026 Donors & Monthly Donations Matrix</h2>
+    <h2 class="section-title"><i class="bi bi-person-exclamation"></i> Donors to Reconnect With</h2>
+</div>
+<div class="card" style="border-left: 4px solid #d97706; margin-bottom: 2rem;">
+    <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">
+        These donors gave consistently for the last 6 months but haven't donated this month yet &mdash; a good list to call or message.
+    </p>
+    <div class="table-container" style="border: none; box-shadow: none; margin-bottom: 0;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Donor Name</th>
+                    <th>Contact No.</th>
+                    <th>Referred By</th>
+                    <th>Last Donation</th>
+                    <th style="text-align: right;">Last Amount (PKR)</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <% lapsedDonors.forEach(ld => { %>
+                    <tr>
+                        <td style="font-weight: 600;"><%= ld.donor.name %></td>
+                        <td><%= ld.donor.contact_no || '-' %></td>
+                        <td><%= ld.donor.referred_by || '-' %></td>
+                        <td><%= ld.lastDonationDate ? new Date(ld.lastDonationDate).toLocaleDateString() : '-' %></td>
+                        <td style="text-align: right;"><%= ld.lastDonationAmount ? parseFloat(ld.lastDonationAmount).toLocaleString() : '-' %></td>
+                        <td><a href="/donations/donor/<%= ld.donor.id %>" class="btn-secondary nav-btn"><i class="bi bi-person-vcard-fill"></i> View</a></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+<% } %>
+
+<!-- Recent Donations This Month -->
+<div class="section-header">
+    <h2 class="section-title"><i class="bi bi-clock-history"></i> Recent Donations This Month</h2>
 </div>
 
-<!-- Table -->
 <div class="table-container">
-    <table class="matrix-table">
+    <table>
         <thead>
             <tr>
-                <th style="text-align: left;">Donor Name</th>
-                <th style="text-align: left;">Referred By</th>
-                <th>Jan</th>
-                <th>Feb</th>
-                <th>Mar</th>
-                <th>Apr</th>
-                <th>May</th>
-                <th>Jun</th>
-                <th>Jul</th>
-                <th>Aug</th>
-                <th>Sep</th>
-                <th>Oct</th>
-                <th>Nov</th>
-                <th>Dec</th>
-                <th style="text-align: right; background-color: #f1f5f9;">Total</th>
+                <th>Donor</th>
+                <th>Date</th>
+                <th style="text-align: right;">Amount (PKR)</th>
+                <th>Fund</th>
+                <th>Method</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
-            <% if (donors.length > 0) { %>
-                <% donors.forEach(d => { %>
-                    <% 
-                        const donorPayments = donationMap[d.id] || {};
-                        let donorTotal = 0;
-                    %>
+            <% if (recentThisMonth.length > 0) { %>
+                <% recentThisMonth.forEach(d => { %>
                     <tr>
-                        <td style="font-weight: 600; text-align: left;"><a href="/donations/donor/<%= d.id %>" style="color: var(--primary-color); text-decoration: none;"><i class="bi bi-person-vcard-fill"></i> <%= d.name %></a></td>
-                        <td style="text-align: left;"><%= d.referred_by || '-' %></td>
-                        
-                        <% for (let m = 1; m <= 12; m++) { %>
-                            <% const amt = donorPayments[m]; %>
-                            <% if (amt !== undefined && amt > 0) { %>
-                                <% donorTotal += amt; %>
-                                <td class="cell-amount" style="color: #15803d; font-weight: 600;">
-                                    <%= amt.toLocaleString() %>
-                                </td>
-                            <% } else { %>
-                                <td style="color: #cbd5e1;">-</td>
-                            <% } %>
-                        <% } %>
-                        <td style="text-align: right; font-weight: 700; background-color: #f8fafc;"><%= donorTotal > 0 ? donorTotal.toLocaleString() : '-' %></td>
+                        <td style="font-weight: 600;"><a href="/donations/donor/<%= d.donor_id %>" style="color: var(--primary-color); text-decoration: none;"><%= d.donor_name %></a></td>
+                        <td><%= new Date(d.date).toLocaleDateString() %></td>
+                        <td style="text-align: right; font-weight: 600; color: #15803d;"><%= parseFloat(d.amount).toLocaleString() %></td>
+                        <td><%= fundLabels[d.fund_category] || d.fund_category %></td>
+                        <td><%= d.payment_method || '-' %></td>
+                        <td>
+                            <div style="display: flex; gap: 0.4rem;">
+                                <a href="/donations/receipt/<%= d.id %>" class="btn-secondary nav-btn" target="_blank"><i class="bi bi-file-earmark-pdf-fill"></i></a>
+                                <button type="button" class="btn-secondary nav-btn" onclick='openEditModal(<%- JSON.stringify({ id: d.id, amount: d.amount, date: new Date(d.date).toISOString().slice(0,10), fund_category: d.fund_category, payment_method: d.payment_method, notes: d.notes || "", donor_name: d.donor_name }) %>)'><i class="bi bi-pencil-square"></i></button>
+                                <form action="/donations/delete/<%= d.id %>" method="POST" onsubmit="return confirm('Delete this donation record?')">
+                                    <input type="hidden" name="redirect_to" value="/donations">
+                                    <button type="submit" class="btn-danger nav-btn"><i class="bi bi-trash3-fill"></i></button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
                 <% }) %>
             <% } else { %>
                 <tr>
-                    <td colspan="15" style="text-align: center; color: #64748b;">No donors registered.</td>
+                    <td colspan="6" style="text-align: center; color: #64748b;">No donations logged this month yet.</td>
                 </tr>
             <% } %>
         </tbody>
     </table>
 </div>
+
+<!-- Edit Donation Modal -->
+<div id="editModal" class="card" style="display: none; max-width: 420px; margin: 1rem auto; position: fixed; top: 15%; left: 50%; transform: translate(-50%, 0); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+    <h3 style="margin-bottom: 1rem;" id="editModalTitle">Edit Donation</h3>
+    <form id="editForm" method="POST">
+        <input type="hidden" name="redirect_to" value="/donations">
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label>Amount (PKR)</label>
+            <input type="number" step="0.01" id="editAmount" name="amount" class="form-control" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label>Date</label>
+            <input type="date" id="editDate" name="date" class="form-control" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label>Fund Category</label>
+            <select id="editFundCategory" name="fund_category" class="form-control">
+                <option value="general">General / Direct</option>
+                <option value="trust">Trust Account</option>
+                <option value="student_support">Student Sponsorship</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label>Payment Method</label>
+            <input type="text" id="editPaymentMethod" name="payment_method" class="form-control">
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label>Notes</label>
+            <input type="text" id="editNotes" name="notes" class="form-control">
+        </div>
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+    </form>
+</div>
+<div id="editModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeEditModal()"></div>
+
+<script>
+    function openEditModal(d) {
+        document.getElementById('editForm').action = '/donations/edit/' + d.id;
+        document.getElementById('editModalTitle').innerText = 'Edit Donation: ' + d.donor_name;
+        document.getElementById('editAmount').value = d.amount;
+        document.getElementById('editDate').value = d.date;
+        document.getElementById('editFundCategory').value = d.fund_category;
+        document.getElementById('editPaymentMethod').value = d.payment_method || '';
+        document.getElementById('editNotes').value = d.notes || '';
+        document.getElementById('editModal').style.display = 'block';
+        document.getElementById('editModalOverlay').style.display = 'block';
+    }
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+        document.getElementById('editModalOverlay').style.display = 'none';
+    }
+</script>
 
 <%- include('partials/footer') %>

@@ -315,6 +315,30 @@ body {
     font-size: 1.3rem;
 }
 
+/* Sub-nav tabs */
+.nav-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    background-color: #eef1f8;
+    transition: all 0.2s;
+}
+
+.nav-tab:hover {
+    background-color: #e2e6f0;
+}
+
+.nav-tab.active {
+    background: linear-gradient(135deg, var(--primary-color, #4f46e5), var(--secondary-color, #4338ca));
+    color: #ffffff;
+}
+
 /* Tables */
 .table-container {
     overflow-x: auto;

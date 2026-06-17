@@ -1,0 +1,79 @@
+<%- include('partials/header') %>
+
+<div class="section-header">
+    <h1 class="section-title"><i class="bi bi-grid-3x3-gap-fill"></i> Donor x Month Matrix</h1>
+    <a href="/donations" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Overview</a>
+</div>
+
+<div class="filter-bar" style="margin-bottom: 1rem;">
+    <a href="/donations" class="nav-tab">Overview</a>
+    <a href="/donations/matrix" class="nav-tab active">Matrix View</a>
+</div>
+
+<!-- Filters -->
+<form action="/donations/matrix" method="GET" class="filter-bar">
+    <div class="form-group">
+        <label for="search">Search Donor</label>
+        <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or referrer...">
+    </div>
+    <button type="submit" class="btn-secondary">Search</button>
+    <a href="/donations/matrix" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
+</form>
+
+<!-- Table -->
+<div class="table-container">
+    <table class="matrix-table">
+        <thead>
+            <tr>
+                <th style="text-align: left;">Donor Name</th>
+                <th style="text-align: left;">Referred By</th>
+                <th>Jan</th>
+                <th>Feb</th>
+                <th>Mar</th>
+                <th>Apr</th>
+                <th>May</th>
+                <th>Jun</th>
+                <th>Jul</th>
+                <th>Aug</th>
+                <th>Sep</th>
+                <th>Oct</th>
+                <th>Nov</th>
+                <th>Dec</th>
+                <th style="text-align: right; background-color: #f1f5f9;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (donors.length > 0) { %>
+                <% donors.forEach(d => { %>
+                    <%
+                        const donorPayments = donationMap[d.id] || {};
+                        let donorTotal = 0;
+                    %>
+                    <tr>
+                        <td style="font-weight: 600; text-align: left;"><a href="/donations/donor/<%= d.id %>" style="color: var(--primary-color); text-decoration: none;"><i class="bi bi-person-vcard-fill"></i> <%= d.name %></a></td>
+                        <td style="text-align: left;"><%= d.referred_by || '-' %></td>
+
+                        <% for (let m = 1; m <= 12; m++) { %>
+                            <% const amt = donorPayments[m]; %>
+                            <% if (amt !== undefined && amt > 0) { %>
+                                <% donorTotal += amt; %>
+                                <td class="cell-amount" style="color: #15803d; font-weight: 600;">
+                                    <%= amt.toLocaleString() %>
+                                </td>
+                            <% } else { %>
+                                <td style="color: #cbd5e1;">-</td>
+                            <% } %>
+                        <% } %>
+                        <td style="text-align: right; font-weight: 700; background-color: #f8fafc;"><%= donorTotal > 0 ? donorTotal.toLocaleString() : '-' %></td>
+                    </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="15" style="text-align: center; color: #64748b;">No donors registered.</td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('partials/footer') %>
