@@ -42,7 +42,7 @@ jobs:
 
           # Force create .env file
           cat <<EOF > .env
-          PORT=3000
+          PORT=${{ secrets.SERVER_PORT }}
           DB_HOST=localhost
           DB_PORT=3306
           DB_USER=${{ secrets.DB_USER }}
