@@ -28,6 +28,7 @@ app.use(session({
 // Set layout locals
 app.use((req, res, next) => {
     res.locals.session = req.session;
+    res.locals.req = req;
     next();
 });
 
