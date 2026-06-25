@@ -120,29 +120,60 @@
                 <td class="label">Class</td>
                 <td><%= className || '-' %></td>
             </tr>
-            <% if (student.has_concession) { %>
             <tr>
-                <td class="label">Fee Type</td>
-                <td>Concessional Fee</td>
+                <td class="label">Full Fee (Standard)</td>
+                <td>PKR <%= Number(standardFee).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
             </tr>
-            <% } %>
+            <tr>
+                <td class="label">Concession (Discount)</td>
+                <td>PKR <%= Number(concession).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
+            </tr>
+            <tr>
+                <td class="label">Late Fee Fine</td>
+                <td>
+                    <% if (fineAmount > 0) { %>
+                        PKR <%= Number(fineAmount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %> <%= fineWaived ? '(Waived)' : '' %>
+                    <% } else { %>
+                        PKR 0.00
+                    <% } %>
+                </td>
+            </tr>
         </table>
 
         <div class="amount-box">
-            <span class="label">Amount Received</span>
+            <span class="label">Fee Paid (Amount Received)</span>
             <span class="value">PKR <%= Number(amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
         </div>
 
-        <div class="signatures">
-            <div class="sign-block">
-                <div class="sign-line"></div>
-                <div class="sign-label">Received By</div>
-            </div>
-            <div class="sign-block">
-                <div class="sign-line"></div>
-                <div class="sign-label">Authorized Signature</div>
-            </div>
-        </div>
+        <% if (lastFivePayments && lastFivePayments.length > 0) { %>
+        <h4 style="margin-top: 30px; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; color: <%= tenant.primary_color || '#4f46e5' %>; letter-spacing: 0.02em;">Recent Fee Payments History</h4>
+        <table class="details" style="margin-bottom: 20px;">
+            <thead>
+                <tr style="background-color: #f8fafc; font-weight: bold;">
+                    <td style="font-weight: 600;">Month / Year</td>
+                    <td style="font-weight: 600;">Date Paid</td>
+                    <td style="font-weight: 600; text-align: right;">Fine</td>
+                    <td style="font-weight: 600; text-align: right;">Amount Paid</td>
+                </tr>
+            </thead>
+            <tbody>
+                <% lastFivePayments.forEach(p => { %>
+                    <tr>
+                        <td><%= MONTH_NAMES[p.month - 1] %> <%= p.year %></td>
+                        <td><%= new Date(p.payment_date).toLocaleDateString('en-GB') %></td>
+                        <td style="text-align: right;">
+                            <% if (p.fine_amount > 0) { %>
+                                PKR <%= parseFloat(p.fine_amount).toLocaleString() %> <%= p.fine_waived ? '(Waived)' : '' %>
+                            <% } else { %>
+                                -
+                            <% } %>
+                        </td>
+                        <td style="text-align: right; font-weight: 600;">PKR <%= parseFloat(p.amount_paid).toLocaleString() %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+        <% } %>
 
         <p class="footer-note">This is a computer-generated receipt from <%= tenant.school_name %>.</p>
     </div>
