@@ -141,7 +141,7 @@
                         %>
                         <tr class="student-row <%= isPaid ? 'status-row-paid' : 'status-row-unpaid' %>">
                             <td style="font-weight: 600; text-align: left;"><%= s.reg_no %></td>
-                            <td style="text-align: left; font-weight: 500;"><a href="#" onclick="showStudentHistory('<%= s.id %>', '<%= s.name %>'); return false;" style="color: var(--primary-color, #4f46e5); text-decoration: underline; cursor: pointer;"><%= s.name %></a></td>
+                            <td style="text-align: left; font-weight: 500;"><a href="/students/view/<%= s.id %>" style="color: var(--primary-color, #4f46e5); text-decoration: underline; cursor: pointer;"><%= s.name %></a></td>
                             <td style="text-align: left;"><%= s.class_name || 'Unassigned' %></td>
                             <td style="text-align: right; font-weight: 600;">PKR <%= expectedFee.toLocaleString() %></td>
                             <td style="text-align: right; font-weight: 600; color: #16a34a;">
@@ -208,7 +208,7 @@
                         %>
                         <tr>
                             <td style="font-weight: 600; text-align: left;"><%= s.reg_no %></td>
-                            <td style="text-align: left;"><a href="#" onclick="showStudentHistory('<%= s.id %>', '<%= s.name %>'); return false;" style="color: var(--primary-color, #4f46e5); text-decoration: underline; cursor: pointer;"><%= s.name %></a></td>
+                            <td style="text-align: left;"><a href="/students/view/<%= s.id %>" style="color: var(--primary-color, #4f46e5); text-decoration: underline; cursor: pointer;"><%= s.name %></a></td>
                             <td style="text-align: left; font-weight: 600; color: <%= s.has_concession ? '#b91c1c' : '#1e293b' %>">
                                 <%= expectedFee.toLocaleString() %>
                             </td>
@@ -272,30 +272,6 @@
 </div>
 <div id="modalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeModal()"></div>
 
-<!-- Student History Modal -->
-<div id="historyModal" class="card" style="display: none; max-width: 500px; margin: 1rem auto; position: fixed; top: 15%; left: 50%; transform: translate(-50%, 0); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); box-sizing: border-box; width: 90%;">
-    <h3 style="margin-bottom: 1rem;" id="historyModalTitle">Student Fee History</h3>
-    <div class="table-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 1rem;">
-        <table style="font-size: 0.85rem;">
-            <thead>
-                <tr>
-                    <th>Month/Year</th>
-                    <th>Date Paid</th>
-                    <th style="text-align: right;">Fine</th>
-                    <th style="text-align: right;">Amount Paid</th>
-                </tr>
-            </thead>
-            <tbody id="historyModalBody">
-                <!-- Rows will be dynamically loaded -->
-            </tbody>
-        </table>
-    </div>
-    <div style="display: flex; justify-content: flex-end;">
-        <button type="button" class="btn-secondary" onclick="closeHistoryModal()">Close</button>
-    </div>
-</div>
-<div id="historyModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeHistoryModal()"></div>
-
 <script>
     function openPaymentModal(studentId, studentName, month, currentAmount, expectedFee) {
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -358,61 +334,6 @@
             fineInput.value = calculatedFine;
         }
     }
-    
-    function showStudentHistory(studentId, studentName) {
-        document.getElementById('historyModalTitle').innerText = 'Fee History: ' + studentName;
-        const tbody = document.getElementById('historyModalBody');
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Loading history...</td></tr>';
-        
-        document.getElementById('historyModal').style.display = 'block';
-        document.getElementById('historyModalOverlay').style.display = 'block';
-        
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        
-        fetch('/fees/student-history/' + studentId)
-            .then(res => res.json())
-            .then(data => {
-                if (data.success && data.payments.length > 0) {
-                    tbody.innerHTML = '';
-                    data.payments.forEach(p => {
-                        const tr = document.createElement('tr');
-                        
-                        const monthCell = document.createElement('td');
-                        monthCell.textContent = months[p.month - 1] + ' ' + p.year;
-                        tr.appendChild(monthCell);
-                        
-                        const dateCell = document.createElement('td');
-                        dateCell.textContent = new Date(p.payment_date).toLocaleDateString('en-GB');
-                        tr.appendChild(dateCell);
-                        
-                        const fineCell = document.createElement('td');
-                        fineCell.style.textAlign = 'right';
-                        fineCell.textContent = p.fine_amount > 0 ? 'PKR ' + parseFloat(p.fine_amount).toLocaleString() + (p.fine_waived ? ' (Waived)' : '') : '-';
-                        tr.appendChild(fineCell);
-                        
-                        const amountCell = document.createElement('td');
-                        amountCell.style.textAlign = 'right';
-                        amountCell.style.fontWeight = 'bold';
-                        amountCell.textContent = 'PKR ' + parseFloat(p.amount_paid).toLocaleString();
-                        tr.appendChild(amountCell);
-                        
-                        tbody.appendChild(tr);
-                    });
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b;">No payment history found.</td></tr>';
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #ef4444;">Error loading history.</td></tr>';
-            });
-    }
-    
-    function closeHistoryModal() {
-        document.getElementById('historyModal').style.display = 'none';
-        document.getElementById('historyModalOverlay').style.display = 'none';
-    }
-    
     function closeModal() {
         document.getElementById('paymentModal').style.display = 'none';
         document.getElementById('modalOverlay').style.display = 'none';
