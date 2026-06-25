@@ -165,6 +165,22 @@ router.post('/donations/donor/add', isAuthenticated, async (req, res) => {
     }
 });
 
+// POST /donations/donor/edit/:id - edit donor details
+router.post('/donations/donor/edit/:id', isAuthenticated, async (req, res) => {
+    const { name, contact_no, referred_by } = req.body;
+    try {
+        const tenantId = req.tenant.id;
+        await db.execute(
+            'UPDATE donors SET name = ?, contact_no = ?, referred_by = ? WHERE id = ? AND tenant_id = ?',
+            [name, contact_no || null, referred_by || null, req.params.id, tenantId]
+        );
+        res.redirect('/donations');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error updating donor.');
+    }
+});
+
 // POST /donations/add - record donation payment
 router.post('/donations/add', isAuthenticated, async (req, res) => {
     const { donor_id, amount, date, fund_category, payment_method, notes } = req.body;
