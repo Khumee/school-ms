@@ -140,7 +140,7 @@ router.post('/hifz/student/:studentId/diary', isAuthenticated, async (req, res) 
         const {
             entry_date, is_absent,
             sabaq_status, sabaq_from_para, sabaq_to_para, sabaq_from_page, sabaq_to_page, sabaq_from_line, sabaq_to_line, sabaq_quality, sabaq_tajweed,
-            sabqi_status, sabqi_para, sabqi_quality,
+            sabqi_status, sabqi_para, sabqi_para_2, sabqi_quality,
             manzil_status, manzil_para_1, manzil_para_2, manzil_para_3, manzil_quality,
             teacher_remarks
         } = req.body;
@@ -151,17 +151,17 @@ router.post('/hifz/student/:studentId/diary', isAuthenticated, async (req, res) 
             `INSERT INTO hifz_diary_entries
              (tenant_id, student_id, entry_date, is_absent,
               sabaq_status, sabaq_from_para, sabaq_to_para, sabaq_from_page, sabaq_to_page, sabaq_from_line, sabaq_to_line, sabaq_quality, sabaq_tajweed,
-              sabqi_status, sabqi_para, sabqi_quality,
+              sabqi_status, sabqi_para, sabqi_para_2, sabqi_quality,
               manzil_status, manzil_para_1, manzil_para_2, manzil_para_3, manzil_quality,
               teacher_remarks, marked_by)
-             VALUES (?,?,?,?, ?,?,?,?,?,?,?,?,?, ?,?,?, ?,?,?,?,?, ?,?)
+             VALUES (?,?,?,?, ?,?,?,?,?,?,?,?,?, ?,?,?,?, ?,?,?,?,?, ?,?)
              ON DUPLICATE KEY UPDATE
               is_absent=VALUES(is_absent),
               sabaq_status=VALUES(sabaq_status), sabaq_from_para=VALUES(sabaq_from_para), sabaq_to_para=VALUES(sabaq_to_para),
               sabaq_from_page=VALUES(sabaq_from_page), sabaq_to_page=VALUES(sabaq_to_page),
               sabaq_from_line=VALUES(sabaq_from_line), sabaq_to_line=VALUES(sabaq_to_line),
               sabaq_quality=VALUES(sabaq_quality), sabaq_tajweed=VALUES(sabaq_tajweed),
-              sabqi_status=VALUES(sabqi_status), sabqi_para=VALUES(sabqi_para), sabqi_quality=VALUES(sabqi_quality),
+              sabqi_status=VALUES(sabqi_status), sabqi_para=VALUES(sabqi_para), sabqi_para_2=VALUES(sabqi_para_2), sabqi_quality=VALUES(sabqi_quality),
               manzil_status=VALUES(manzil_status), manzil_para_1=VALUES(manzil_para_1), manzil_para_2=VALUES(manzil_para_2), manzil_para_3=VALUES(manzil_para_3),
               manzil_quality=VALUES(manzil_quality), teacher_remarks=VALUES(teacher_remarks), marked_by=VALUES(marked_by)`,
             [
@@ -177,6 +177,7 @@ router.post('/hifz/student/:studentId/diary', isAuthenticated, async (req, res) 
                 absentVal ? null : (sabaq_tajweed || null),
                 absentVal ? 'recited' : (sabqi_status || 'not_recited'),
                 absentVal ? null : (sabqi_para || null),
+                absentVal ? null : (sabqi_para_2 || null),
                 absentVal ? null : (sabqi_quality || null),
                 absentVal ? 'recited' : (manzil_status || 'not_recited'),
                 absentVal ? null : (manzil_para_1 || null),
@@ -216,7 +217,7 @@ router.get('/hifz/mark-all', isAuthenticated, async (req, res) => {
                     c.name as class_name,
                     d.id as entry_id, d.is_absent,
                     d.sabaq_status, d.sabaq_from_para, d.sabaq_to_para, d.sabaq_from_page, d.sabaq_to_page, d.sabaq_from_line, d.sabaq_to_line, d.sabaq_quality, d.sabaq_tajweed,
-                    d.sabqi_status, d.sabqi_para, d.sabqi_quality,
+                    d.sabqi_status, d.sabqi_para, d.sabqi_para_2, d.sabqi_quality,
                     d.manzil_status, d.manzil_para_1, d.manzil_para_2, d.manzil_para_3, d.manzil_quality,
                     d.teacher_remarks
              FROM hifz_enrollment e
@@ -246,8 +247,9 @@ router.get('/hifz/mark-all', isAuthenticated, async (req, res) => {
                     sabaq_from_page: last.sabaq_from_page || 1,
                     sabaq_to_page: last.sabaq_to_page || 1,
                     sabaq_from_line: last.sabaq_from_line || 1,
-                    sabaq_to_line: last.sabaq_to_line || 15,
+                    sabaq_to_line: last.sabaq_to_line || 16,
                     sabqi_para: last.sabqi_para || Math.max(1, s.current_para - 1),
+                    sabqi_para_2: last.sabqi_para_2 || '',
                     manzil_para_1: last.manzil_para_1 || 1,
                     manzil_para_2: last.manzil_para_2 || Math.max(1, s.current_para - 2),
                     manzil_para_3: last.manzil_para_3 || Math.max(1, s.current_para - 1),
@@ -257,8 +259,9 @@ router.get('/hifz/mark-all', isAuthenticated, async (req, res) => {
                     sabaq_from_page: 1,
                     sabaq_to_page: 1,
                     sabaq_from_line: 1,
-                    sabaq_to_line: 15,
+                    sabaq_to_line: 16,
                     sabqi_para: Math.max(1, s.current_para - 1),
+                    sabqi_para_2: '',
                     manzil_para_1: 1,
                     manzil_para_2: Math.max(1, s.current_para - 2),
                     manzil_para_3: Math.max(1, s.current_para - 1),
@@ -293,10 +296,10 @@ router.post('/hifz/mark-all', isAuthenticated, async (req, res) => {
                 `INSERT INTO hifz_diary_entries
                  (tenant_id, student_id, entry_date, is_absent,
                   sabaq_status, sabaq_from_para, sabaq_to_para, sabaq_from_page, sabaq_to_page, sabaq_from_line, sabaq_to_line, sabaq_quality, sabaq_tajweed,
-                  sabqi_status, sabqi_para, sabqi_quality,
+                  sabqi_status, sabqi_para, sabqi_para_2, sabqi_quality,
                   manzil_status, manzil_para_1, manzil_para_2, manzil_para_3, manzil_quality,
                   teacher_remarks, marked_by)
-                 VALUES (?,?,?,?, ?,?,?,?,?,?,?,?,?, ?,?,?, ?,?,?,?,?, ?,?)
+                 VALUES (?,?,?,?, ?,?,?,?,?,?,?,?,?, ?,?,?,?, ?,?,?,?,?, ?,?)
                  ON DUPLICATE KEY UPDATE
                   is_absent=VALUES(is_absent),
                   sabaq_status=VALUES(sabaq_status), 
@@ -304,7 +307,7 @@ router.post('/hifz/mark-all', isAuthenticated, async (req, res) => {
                   sabaq_from_page=VALUES(sabaq_from_page), sabaq_to_page=VALUES(sabaq_to_page),
                   sabaq_from_line=VALUES(sabaq_from_line), sabaq_to_line=VALUES(sabaq_to_line),
                   sabaq_quality=VALUES(sabaq_quality), sabaq_tajweed=VALUES(sabaq_tajweed),
-                  sabqi_status=VALUES(sabqi_status), sabqi_para=VALUES(sabqi_para), sabqi_quality=VALUES(sabqi_quality),
+                  sabqi_status=VALUES(sabqi_status), sabqi_para=VALUES(sabqi_para), sabqi_para_2=VALUES(sabqi_para_2), sabqi_quality=VALUES(sabqi_quality),
                   manzil_status=VALUES(manzil_status), manzil_para_1=VALUES(manzil_para_1), manzil_para_2=VALUES(manzil_para_2), manzil_para_3=VALUES(manzil_para_3),
                   manzil_quality=VALUES(manzil_quality), teacher_remarks=VALUES(teacher_remarks), marked_by=VALUES(marked_by)`,
                 [
@@ -320,6 +323,7 @@ router.post('/hifz/mark-all', isAuthenticated, async (req, res) => {
                     isAbsent ? null : (e.sabaq_tajweed || null),
                     isAbsent ? 'recited' : (e.sabqi_status || 'not_recited'),
                     isAbsent ? null : (e.sabqi_para || null),
+                    isAbsent ? null : (e.sabqi_para_2 || null),
                     isAbsent ? null : (e.sabqi_quality || null),
                     isAbsent ? 'recited' : (e.manzil_status || 'not_recited'),
                     isAbsent ? null : (e.manzil_para_1 || null),

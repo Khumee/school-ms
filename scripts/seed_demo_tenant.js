@@ -169,9 +169,9 @@ const SESSION_YEAR = '2026';
                         `INSERT INTO hifz_diary_entries 
                          (tenant_id, student_id, entry_date, is_absent, 
                           sabaq_status, sabaq_from_para, sabaq_to_para, sabaq_from_page, sabaq_to_page, sabaq_from_line, sabaq_to_line,
-                          sabqi_status, sabqi_para, 
+                          sabqi_status, sabqi_para, sabqi_para_2, 
                           manzil_status, manzil_para_1, manzil_para_2, manzil_para_3)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
                             tenantId, res.insertId, dateString, is_absent, 
                             sabaq_status,
@@ -180,9 +180,10 @@ const SESSION_YEAR = '2026';
                             is_absent ? null : 1,
                             is_absent ? null : 2,
                             is_absent ? null : 1,
-                            is_absent ? null : 15,
+                            is_absent ? null : 16,
                             sabaq_status,
                             is_absent ? null : Math.max(1, s.current_para - 1),
+                            is_absent ? null : (s.current_para > 2 ? Math.max(1, s.current_para - 2) : null),
                             sabaq_status,
                             is_absent ? null : 1,
                             is_absent ? null : Math.max(1, s.current_para - 2),
