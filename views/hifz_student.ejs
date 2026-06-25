@@ -154,6 +154,50 @@
                 </tr>
             </table>
         </div>
+
+        <!-- Weekly Progress Card -->
+        <div class="card" style="padding: 1.25rem; border-top: 4px solid var(--primary-color);">
+            <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+                <i class="bi bi-calendar-check"></i> Weekly Progress Report
+            </h3>
+            <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem;">
+                Week Starting: <%= new Date(weeklyStats.startDate).toLocaleDateString() %>
+            </div>
+            <table style="width: 100%; font-size: 0.9rem;">
+                <tr style="height: 2.2rem;">
+                    <td style="color: #64748b;">Pace (Avg Lines/Day)</td>
+                    <td style="text-align: right; font-weight: 600; color: #0f766e;">
+                        <%= weeklyStats.avgLines > 0 ? `${weeklyStats.avgLines.toFixed(1)} lines/day` : 'No lessons recited' %>
+                    </td>
+                </tr>
+                <tr style="height: 2.2rem;">
+                    <td style="color: #64748b;">Days Active</td>
+                    <td style="text-align: right; font-weight: 600;"><%= weeklyStats.daysLogged %> days</td>
+                </tr>
+                <tr style="height: 2.2rem;">
+                    <td style="color: #64748b;">Days Absent</td>
+                    <td style="text-align: right; font-weight: 600; color: <%= weeklyStats.daysAbsent > 0 ? '#dc2626' : '#16a34a' %>;">
+                        <%= weeklyStats.daysAbsent %> days
+                    </td>
+                </tr>
+                <tr style="height: 2.2rem;">
+                    <td style="color: #64748b;">Weekly Alarm Status</td>
+                    <td style="text-align: right; font-weight: 600;">
+                        <% 
+                            const isCritical = alarms.some(a => a.severity === 'critical');
+                            const isWarning = alarms.some(a => a.severity === 'warning' || a.severity === 'alert');
+                        %>
+                        <% if (isCritical) { %>
+                            <span class="status-cell status-unpaid" style="font-size: 0.75rem;"><i class="bi bi-exclamation-octagon-fill"></i> CRITICAL</span>
+                        <% } else if (isWarning) { %>
+                            <span class="status-cell" style="background-color: #fffbeb; color: #b45309; font-size: 0.75rem; border: 1px solid #fde68a;"><i class="bi bi-exclamation-triangle-fill"></i> WARNING</span>
+                        <% } else { %>
+                            <span class="status-cell status-paid" style="font-size: 0.75rem;"><i class="bi bi-check-circle"></i> CLEAR</span>
+                        <% } %>
+                    </td>
+                </tr>
+            </table>
+        </div>
     </div>
 
     <!-- Right Column: Para Heatmap -->

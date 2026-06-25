@@ -32,7 +32,7 @@
 
     <% if (req.tenant && req.tenant.enable_hifz_module) { %>
     <!-- Hifz Students -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Hifz Students', '<h3>Hifz Memorization Program</h3><p>Total students enrolled in Hifz class: <strong><%= hifz_students %></strong></p><p>These students focus on Quran memorization and Islamic study tracks.</p><a href=\'/students\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>View Students List</a>')">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Hifz Students', '<h3>Hifz Memorization Program</h3><p>Total students enrolled in Hifz class: <strong><%= hifz_students %></strong></p><p>These students focus on Quran memorization and Islamic study tracks.</p><a href=\'/hifz\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>Go to Hifz Roster</a>')">
         <span class="kpi-icon pink"><i class="bi bi-book-fill"></i></span>
         <span class="kpi-label">Hifz Students</span>
         <span class="kpi-value"><%= hifz_students %></span>

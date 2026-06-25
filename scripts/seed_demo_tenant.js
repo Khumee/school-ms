@@ -130,13 +130,13 @@ const SESSION_YEAR = '2026';
                 [s.reg, s.name, classId, s.fee, s.concession, s.notes, tenantId]
             );
             studentMap[s.name] = res.insertId;
-
             // Enroll Hifz students
             if (s.hifz) {
+                const avgLines = s.pace === 'fast' ? 12.5 : s.pace === 'average' ? 6.5 : 4.0;
                 await conn.execute(
-                    `INSERT INTO hifz_enrollment (tenant_id, student_id, class_id, current_phase, current_para, total_lines_memorized, current_streak_days, status, enrolled_date)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, 'active', '2025-01-15')`,
-                    [tenantId, res.insertId, classId, s.phase, s.current_para, s.lines, s.streak]
+                    `INSERT INTO hifz_enrollment (tenant_id, student_id, class_id, current_phase, current_para, total_lines_memorized, avg_lines_30d, current_streak_days, status, enrolled_date)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', '2025-01-15')`,
+                    [tenantId, res.insertId, classId, s.phase, s.current_para, s.lines, avgLines, s.streak]
                 );
 
                 // Seed historical diary logs to back up the pace & streak metrics (last 7 days of entries)

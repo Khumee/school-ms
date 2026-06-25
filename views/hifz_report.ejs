@@ -35,13 +35,16 @@
                         %>
                         <tr>
                             <td>
-                                <strong style="color: #0f172a; display: block;"><%= s.student_name %></strong>
-                                <small style="color: #64748b;"><%= s.reg_no %></small>
+                                <a href="/hifz/student/<%= s.student_id %>" style="text-decoration: none; color: inherit; display: block;">
+                                    <strong style="color: var(--primary-color); display: block;"><%= s.student_name %></strong>
+                                    <small style="color: #64748b;"><%= s.reg_no %></small>
+                                </a>
                             </td>
                             <td><%= s.class_name %></td>
                             <td style="font-weight: bold; color: #1e3a8a; text-align: center;"><%= s.current_para || '-' %></td>
                             <td>
-                                <%= s.avg_lines ? `${parseFloat(s.avg_lines).toFixed(1)} lines/day` : 'No lessons recited' %>
+                                <% const displayPace = s.avg_lines || s.avg_lines_30d; %>
+                                <%= displayPace ? `${parseFloat(displayPace).toFixed(1)} lines/day` : 'No lessons recited' %>
                             </td>
                             <td>
                                 <%= s.days_logged %> days active

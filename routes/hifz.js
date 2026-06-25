@@ -480,7 +480,40 @@ router.get('/hifz/student/:studentId', isAuthenticated, async (req, res) => {
             });
         }
 
-        res.render('hifz_student', { ...data, studentId });
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        const weekAgoStr = weekAgo.toISOString().split('T')[0];
+
+        const weeklyEntries = data.entries.filter(e => {
+            const entryDateStr = new Date(e.entry_date).toISOString().split('T')[0];
+            return entryDateStr >= weekAgoStr;
+        });
+
+        const weeklyDaysLogged = weeklyEntries.length;
+        const weeklyDaysAbsent = weeklyEntries.filter(e => e.is_absent === 1).length;
+
+        let totalWeeklyLines = 0;
+        let weeklyRecitedCount = 0;
+        weeklyEntries.forEach(e => {
+            if (!e.is_absent && e.sabaq_status === 'recited' && e.sabaq_to_line !== null && e.sabaq_from_line !== null) {
+                const fromL = parseInt(e.sabaq_from_line) || 1;
+                const toL = parseInt(e.sabaq_to_line) || 16;
+                totalWeeklyLines += Math.max(0, toL - fromL + 1);
+                weeklyRecitedCount++;
+            }
+        });
+        const weeklyAvgLines = weeklyRecitedCount > 0 ? (totalWeeklyLines / weeklyRecitedCount) : 0;
+
+        res.render('hifz_student', { 
+            ...data, 
+            studentId,
+            weeklyStats: {
+                daysLogged: weeklyDaysLogged,
+                daysAbsent: weeklyDaysAbsent,
+                avgLines: weeklyAvgLines,
+                startDate: weekAgoStr
+            }
+        });
     } catch (err) {
         console.error('Hifz Student Error:', err);
         res.status(500).send('Error loading student Hifz profile.');
