@@ -64,7 +64,15 @@
             </div>
             <div class="form-group" style="margin-bottom: 1rem;">
                 <label for="referredBy">Referred By</label>
-                <input type="text" id="referredBy" name="referred_by" class="form-control" placeholder="e.g. Faheem Zafar">
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <select id="referredBy" name="referred_by" class="form-control">
+                        <option value="">-- None (Direct) --</option>
+                        <option value="Faheem Zafar">Faheem Zafar</option>
+                        <option value="Kamal Muhammad">Kamal Muhammad</option>
+                        <option value="Khurram Shahzad">Khurram Shahzad</option>
+                    </select>
+                    <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewReferredOption('referredBy')"><i class="bi bi-plus-lg"></i></button>
+                </div>
             </div>
             <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div class="form-group">
@@ -391,7 +399,15 @@
         </div>
         <div class="form-group" style="margin-bottom: 1rem;">
             <label for="editDonorReferred">Referred By</label>
-            <input type="text" id="editDonorReferred" name="referred_by" class="form-control">
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <select id="editDonorReferred" name="referred_by" class="form-control">
+                    <option value="">-- None (Direct) --</option>
+                    <option value="Faheem Zafar">Faheem Zafar</option>
+                    <option value="Kamal Muhammad">Kamal Muhammad</option>
+                    <option value="Khurram Shahzad">Khurram Shahzad</option>
+                </select>
+                <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewReferredOption('editDonorReferred')"><i class="bi bi-plus-lg"></i></button>
+            </div>
         </div>
         <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
             <div class="form-group">
@@ -476,7 +492,27 @@
         document.getElementById('editDonorForm').action = '/donations/donor/edit/' + d.id;
         document.getElementById('editDonorName').value = d.name;
         document.getElementById('editDonorContact').value = d.contact_no || '';
-        document.getElementById('editDonorReferred').value = d.referred_by || '';
+        
+        const refSelect = document.getElementById('editDonorReferred');
+        const refVal = d.referred_by || '';
+        if (refVal) {
+            let exists = false;
+            for (let i = 0; i < refSelect.options.length; i++) {
+                if (refSelect.options[i].value === refVal) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                const opt = document.createElement('option');
+                opt.value = refVal;
+                opt.textContent = refVal;
+                refSelect.appendChild(opt);
+            }
+            refSelect.value = refVal;
+        } else {
+            refSelect.value = '';
+        }
         
         document.getElementById('editDonorPreferredFund').value = d.preferred_fund_category || 'general';
         document.getElementById('editDonorPreferredMethod').value = d.preferred_payment_method || 'Online';
@@ -519,6 +555,19 @@
     // Add new option to the direct select box dynamically
     function addNewDirectOption(selectId) {
         const name = prompt("Enter name of new direct option:");
+        if (name && name.trim() !== "") {
+            const selectEl = document.getElementById(selectId);
+            const opt = document.createElement("option");
+            opt.value = name.trim();
+            opt.textContent = name.trim();
+            selectEl.appendChild(opt);
+            selectEl.value = name.trim();
+        }
+    }
+
+    // Add new option to the referred select box dynamically
+    function addNewReferredOption(selectId) {
+        const name = prompt("Enter name of new referrer:");
         if (name && name.trim() !== "") {
             const selectEl = document.getElementById(selectId);
             const opt = document.createElement("option");
