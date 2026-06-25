@@ -2,7 +2,7 @@ require('dotenv').config();
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 
-const TENANT_SUBDOMAIN = 'smsdemo';
+const TENANT_SUBDOMAIN = 'school-ms';
 const SESSION_YEAR = '2026';
 
 (async () => {
