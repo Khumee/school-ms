@@ -13,9 +13,9 @@
 </div>
 
 <!-- KPI Cards Grid -->
-<div class="kpi-grid">
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
     <!-- Total Students -->
-    <div class="card kpi-card">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Total Students', '<h3>Student Enrollment Breakdown</h3><table style=\'width:100%; border-collapse:collapse; margin-top:0.5rem;\'><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Paying Students</td><td style=\'text-align:right; font-weight:bold;\'><%= paying_students %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Supported (Concession)</td><td style=\'text-align:right; font-weight:bold;\'><%= support_students %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Hifz Enrolled</td><td style=\'text-align:right; font-weight:bold;\'><%= hifz_students %></td></tr><tr style=\'font-weight:bold;\'><td style=\'padding:0.5rem 0;\'>Total Enrollment</td><td style=\'text-align:right;\'><%= total_students %></td></tr></table><a href=\'/students\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>View Students List</a>')">
         <span class="kpi-icon blue"><i class="bi bi-mortarboard-fill"></i></span>
         <span class="kpi-label">Total Students</span>
         <span class="kpi-value"><%= total_students %></span>
@@ -23,7 +23,7 @@
     </div>
 
     <!-- New Admissions this Year -->
-    <div class="card kpi-card">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('New Admissions (2026)', '<h3>Academic Year 2026 Admissions</h3><p>New student registrations recorded during the 2026 academic year: <strong><%= new_admissions %></strong></p><a href=\'/students\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>View Students List</a>')">
         <span class="kpi-icon teal"><i class="bi bi-person-plus-fill"></i></span>
         <span class="kpi-label">New Admissions (2026)</span>
         <span class="kpi-value"><%= new_admissions %></span>
@@ -31,23 +31,39 @@
     </div>
 
     <!-- Hifz Students -->
-    <div class="card kpi-card">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Hifz Students', '<h3>Hifz Memorization Program</h3><p>Total students enrolled in Hifz class: <strong><%= hifz_students %></strong></p><p>These students focus on Quran memorization and Islamic study tracks.</p><a href=\'/students\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>View Students List</a>')">
         <span class="kpi-icon pink"><i class="bi bi-book-fill"></i></span>
         <span class="kpi-label">Hifz Students</span>
         <span class="kpi-value"><%= hifz_students %></span>
         <span class="kpi-subtitle">Enrolled in Hifz class</span>
     </div>
 
+    <!-- Total Employees -->
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Total Employees', '<h3>Active Employees</h3><p>Total active employees currently registered on the system: <strong><%= total_employees %></strong></p><p>Includes teaching and non-teaching staff members currently active.</p><a href=\'/employees\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>Go to Employees Directory</a>')">
+        <span class="kpi-icon orange" style="background-color: #ffedd5; color: #ea580c;"><i class="bi bi-person-badge-fill"></i></span>
+        <span class="kpi-label">Total Employees</span>
+        <span class="kpi-value"><%= total_employees %></span>
+        <span class="kpi-subtitle">Active staff on payroll</span>
+    </div>
+
+    <!-- Registered Donors -->
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Registered Donors', '<h3>Donors Directory</h3><p>Total donors registered in the database: <strong><%= total_donors %></strong></p><p>These donors support student sponsorships, general funds, and trust accounts.</p><a href=\'/donations\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>Go to Donations Dashboard</a>')">
+        <span class="kpi-icon indigo" style="background-color: #e0e7ff; color: #4f46e5;"><i class="bi bi-people-fill"></i></span>
+        <span class="kpi-label">Registered Donors</span>
+        <span class="kpi-value"><%= total_donors %></span>
+        <span class="kpi-subtitle">Supporting donors registered</span>
+    </div>
+
     <!-- Closing Balance -->
-    <div class="card kpi-card">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Closing Cash Balance', '<h3>Balance Summary</h3><table style=\'width:100%; border-collapse:collapse; margin-top:0.5rem;\'><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Carry Forward (Excel)</td><td style=\'text-align:right; font-weight:bold;\'>PKR <%= carryForward.toLocaleString() %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>YTD Income</td><td style=\'text-align:right; font-weight:bold; color:#16a34a;\'>+ PKR <%= totalIncomeAllTime.toLocaleString() %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>YTD Expense</td><td style=\'text-align:right; font-weight:bold; color:#dc2626;\'>- PKR <%= totalExpenseAllTime.toLocaleString() %></td></tr><tr style=\'font-weight:bold;\'><td style=\'padding:0.5rem 0;\'>Closing Cash Balance</td><td style=\'text-align:right;\'>PKR <%= currentBalance.toLocaleString() %></td></tr></table>')">
         <span class="kpi-icon purple"><i class="bi bi-wallet2"></i></span>
         <span class="kpi-label">Closing Cash Balance</span>
-        <span class="kpi-value" style="font-size: 1.5rem; white-space: nowrap;">PKR <%= currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+        <span class="kpi-value" style="font-size: 1.4rem; white-space: nowrap;">PKR <%= currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
         <span class="kpi-subtitle">Carry Forward: PKR <%= carryForward.toLocaleString() %></span>
     </div>
 
     <!-- Monthly Income -->
-    <div class="card kpi-card">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Income (<%= currentMonthName %>)', '<h3><%= currentMonthName %> Revenue Breakdown</h3><table style=\'width:100%; border-collapse:collapse; margin-top:0.5rem;\'><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Fees Collected</td><td style=\'text-align:right; font-weight:bold; color:#16a34a;\'>PKR <%= currentMonthData.fees.toLocaleString() %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Donations Collected</td><td style=\'text-align:right; font-weight:bold; color:#16a34a;\'>PKR <%= currentMonthData.donations.toLocaleString() %></td></tr><tr style=\'font-weight:bold;\'><td style=\'padding:0.5rem 0;\'>Total Monthly Income</td><td style=\'text-align:right;\'>PKR <%= currentMonthData.income.toLocaleString() %></td></tr></table>')">
         <span class="kpi-icon green"><i class="bi bi-graph-up-arrow"></i></span>
         <span class="kpi-label">Income (<%= currentMonthName %>)</span>
         <span class="kpi-value">PKR <%= currentMonthData.income.toLocaleString() %></span>
@@ -55,7 +71,7 @@
     </div>
 
     <!-- Monthly Expense -->
-    <div class="card kpi-card">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Expense (<%= currentMonthName %>)', '<h3><%= currentMonthName %> Outflow Breakdown</h3><table style=\'width:100%; border-collapse:collapse; margin-top:0.5rem;\'><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Salaries Paid</td><td style=\'text-align:right; font-weight:bold;\'>PKR <%= currentMonthData.salaries.toLocaleString() %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Rent paid</td><td style=\'text-align:right; font-weight:bold;\'>PKR <%= currentMonthData.rent.toLocaleString() %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Utilities</td><td style=\'text-align:right; font-weight:bold;\'>PKR <%= currentMonthData.utilities.toLocaleString() %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Office Expenses</td><td style=\'text-align:right; font-weight:bold;\'>PKR <%= currentMonthData.office.toLocaleString() %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Other Expenses</td><td style=\'text-align:right; font-weight:bold;\'>PKR <%= currentMonthData.other.toLocaleString() %></td></tr><tr style=\'font-weight:bold;\'><td style=\'padding:0.5rem 0;\'>Total Monthly Expense</td><td style=\'text-align:right; color:#dc2626;\'>PKR <%= currentMonthData.expense.toLocaleString() %></td></tr></table>')">
         <span class="kpi-icon red"><i class="bi bi-graph-down-arrow"></i></span>
         <span class="kpi-label">Expense (<%= currentMonthName %>)</span>
         <span class="kpi-value">PKR <%= currentMonthData.expense.toLocaleString() %></span>
@@ -63,7 +79,7 @@
     </div>
 
     <!-- Monthly Donations -->
-    <div class="card kpi-card">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Donations (<%= currentMonthName %>)', '<h3><%= currentMonthName %> Donations Details</h3><p>Total donations received this month: <strong>PKR <%= currentMonthData.donations.toLocaleString() %></strong></p><p>These funds support student sponsorships and trust accounts.</p><a href=\'/donations\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>Go to Donations Dashboard</a>')">
         <span class="kpi-icon indigo"><i class="bi bi-heart-fill"></i></span>
         <span class="kpi-label">Donations (<%= currentMonthName %>)</span>
         <span class="kpi-value">PKR <%= currentMonthData.donations.toLocaleString() %></span>
@@ -71,7 +87,7 @@
     </div>
 
     <!-- Monthly Fees -->
-    <div class="card kpi-card">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Fees Collected (<%= currentMonthName %>)', '<h3><%= currentMonthName %> Fee Collections</h3><p>Total tuition fee collections recorded this month: <strong>PKR <%= currentMonthData.fees.toLocaleString() %></strong></p><p>Check details inside the Fees Ledger.</p><a href=\'/fees\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>View Fees Ledger</a>')">
         <span class="kpi-icon amber"><i class="bi bi-cash-coin"></i></span>
         <span class="kpi-label">Fees Collected (<%= currentMonthName %>)</span>
         <span class="kpi-value">PKR <%= currentMonthData.fees.toLocaleString() %></span>
@@ -79,15 +95,60 @@
     </div>
 </div>
 
-<!-- Financial Graph Card -->
-<div class="card chart-card" style="margin-top: 2rem; margin-bottom: 2rem;">
-    <h3 class="chart-title">
-        <i class="bi bi-bar-chart-line-fill"></i> Financial Performance Trend (2026)
-    </h3>
-    <div class="chart-container">
-        <canvas id="financialChart"></canvas>
+<!-- Financial Graphs Grids -->
+<div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2rem; margin-bottom: 1.5rem;">
+    <!-- Chart 1: Financial Performance Trend -->
+    <div class="card chart-card" style="margin-bottom: 0;">
+        <h3 class="chart-title"><i class="bi bi-bar-chart-line-fill"></i> Financial Performance Trend (2026)</h3>
+        <div class="chart-container" style="height: 300px; position: relative;">
+            <canvas id="financialChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Chart 2: Fee vs Donation Revenue Mix -->
+    <div class="card chart-card" style="margin-bottom: 0;">
+        <h3 class="chart-title"><i class="bi bi-graph-up"></i> Fees vs Donations Trend (2026)</h3>
+        <div class="chart-container" style="height: 300px; position: relative;">
+            <canvas id="feesDonationsChart"></canvas>
+        </div>
     </div>
 </div>
+
+<div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Chart 3: YTD Expense Distribution -->
+    <div class="card chart-card" style="margin-bottom: 0;">
+        <h3 class="chart-title"><i class="bi bi-pie-chart-fill"></i> YTD Expense Breakdown</h3>
+        <div class="chart-container" style="height: 300px; position: relative;">
+            <canvas id="expenseBreakdownChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Chart 4: Student Concession Mix -->
+    <div class="card chart-card" style="margin-bottom: 0;">
+        <h3 class="chart-title"><i class="bi bi-pie-chart"></i> Student Sponsorship Distribution</h3>
+        <div class="chart-container" style="height: 300px; position: relative;">
+            <canvas id="studentSponsorshipChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Details Modal -->
+<div id="kpiDetailModal" class="modal" style="display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+    <div class="modal-content" style="background-color: #ffffff; margin: 12% auto; padding: 2rem; border-radius: 12px; width: 90%; max-width: 450px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); border: 1px solid #e2e8f0; position: relative; animation: slideIn 0.25s ease-out; box-sizing: border-box;">
+        <span class="close-kpi-btn" onclick="closeKpiModal()" style="position: absolute; right: 1.5rem; top: 1.5rem; font-size: 1.5rem; font-weight: bold; color: #94a3b8; cursor: pointer; transition: color 0.2s;">&times;</span>
+        <h2 id="kpiModalTitle" style="margin-top: 0; font-size: 1.3rem; color: #0f172a; margin-bottom: 1rem; font-weight: 700;">KPI Detail</h2>
+        <div id="kpiModalBody" style="color: #334155; line-height: 1.5; font-size: 0.95rem;">
+            <!-- Content will be injected here -->
+        </div>
+        <button onclick="closeKpiModal()" class="btn-primary" style="margin-top: 1.5rem; width: 100%;">Close Details</button>
+    </div>
+</div>
+
+<style>
+.close-kpi-btn:hover {
+    color: #0f172a !important;
+}
+</style>
 
 <!-- Collapsible Ledger Section -->
 <details class="ledger-details">
@@ -182,19 +243,54 @@
 <!-- Include Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    function openKpiModal(title, content) {
+        document.getElementById('kpiModalTitle').innerText = title;
+        document.getElementById('kpiModalBody').innerHTML = content;
+        document.getElementById('kpiDetailModal').style.display = 'block';
+    }
+
+    function closeKpiModal() {
+        document.getElementById('kpiDetailModal').style.display = 'none';
+    }
+
+    // Close modal if clicked outside
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('kpiDetailModal');
+        if (event.target == modal) {
+            closeKpiModal();
+        }
+    });
+
     document.addEventListener("DOMContentLoaded", function() {
         const monthsData = <%- JSON.stringify(monthsData) %>;
         
         const labels = monthsData.map(m => m.name);
         const incomeData = monthsData.map(m => m.income);
         const expenseData = monthsData.map(m => m.expense);
+        const feesData = monthsData.map(m => m.fees);
+        const donationsData = monthsData.map(m => m.donations);
         
-        const ctx = document.getElementById('financialChart').getContext('2d');
+        // Calculate YTD expenses breakdown
+        let totalRent = 0;
+        let totalSalaries = 0;
+        let totalUtilities = 0;
+        let totalOffice = 0;
+        let totalOther = 0;
         
+        monthsData.forEach(m => {
+            totalRent += m.rent;
+            totalSalaries += m.salaries;
+            totalUtilities += m.utilities;
+            totalOffice += m.office;
+            totalOther += m.other;
+        });
+
         // CSS variable primary color lookup or fallback
         const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim() || '#3b82f6';
         
-        new Chart(ctx, {
+        // Chart 1: Financial Performance Trend
+        const ctx1 = document.getElementById('financialChart').getContext('2d');
+        new Chart(ctx1, {
             type: 'bar',
             data: {
                 labels: labels,
@@ -202,16 +298,16 @@
                     {
                         label: 'Total Income (PKR)',
                         data: incomeData,
-                        backgroundColor: 'rgba(52, 211, 153, 0.85)', // beautiful green
-                        borderColor: '#059669',
+                        backgroundColor: 'rgba(16, 185, 129, 0.85)',
+                        borderColor: '#10b981',
                         borderWidth: 1.5,
                         borderRadius: 6,
                     },
                     {
                         label: 'Total Expense (PKR)',
                         data: expenseData,
-                        backgroundColor: 'rgba(244, 114, 182, 0.85)', // beautiful pink/red
-                        borderColor: '#db2777',
+                        backgroundColor: 'rgba(239, 68, 68, 0.85)',
+                        borderColor: '#ef4444',
                         borderWidth: 1.5,
                         borderRadius: 6,
                     }
@@ -221,68 +317,142 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            font: {
-                                family: "'Inter', sans-serif",
-                                size: 12,
-                                weight: '600'
-                            },
-                            color: '#475569'
-                        }
-                    },
+                    legend: { position: 'top', labels: { font: { family: "'Inter', sans-serif", weight: '600' }, color: '#475569' } },
                     tooltip: {
                         padding: 12,
                         backgroundColor: '#0f172a',
-                        titleFont: {
-                            family: "'Inter', sans-serif",
-                            weight: '700'
-                        },
-                        bodyFont: {
-                            family: "'Inter', sans-serif"
-                        },
                         callbacks: {
                             label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== null) {
-                                    label += 'PKR ' + context.parsed.y.toLocaleString();
-                                }
-                                return label;
+                                return context.dataset.label + ': PKR ' + context.parsed.y.toLocaleString();
                             }
                         }
                     }
                 },
                 scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: {
-                                family: "'Inter', sans-serif",
-                                weight: '500'
-                            },
-                            color: '#64748b'
-                        }
+                    x: { grid: { display: false }, ticks: { font: { family: "'Inter', sans-serif" }, color: '#64748b' } },
+                    y: { border: { dash: [4, 4] }, grid: { color: '#e2e8f0' }, ticks: { font: { family: "'Inter', sans-serif" }, color: '#64748b', callback: v => v >= 1000 ? (v / 1000) + 'k' : v } }
+                }
+            }
+        });
+
+        // Chart 2: Fees vs Donations Trend
+        const ctx2 = document.getElementById('feesDonationsChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Fees Collected (PKR)',
+                        data: feesData,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 3,
+                        pointRadius: 4
                     },
-                    y: {
-                        border: {
-                            dash: [4, 4]
-                        },
-                        grid: {
-                            color: '#e2e8f0'
-                        },
-                        ticks: {
-                            font: {
-                                family: "'Inter', sans-serif"
-                            },
-                            color: '#64748b',
-                            callback: function(value) {
-                                return value >= 1000 ? (value / 1000) + 'k' : value;
+                    {
+                        label: 'Donations Received (PKR)',
+                        data: donationsData,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 3,
+                        pointRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { font: { family: "'Inter', sans-serif", weight: '600' }, color: '#475569' } },
+                    tooltip: {
+                        padding: 12,
+                        backgroundColor: '#0f172a',
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': PKR ' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { family: "'Inter', sans-serif" }, color: '#64748b' } },
+                    y: { border: { dash: [4, 4] }, grid: { color: '#e2e8f0' }, ticks: { font: { family: "'Inter', sans-serif" }, color: '#64748b', callback: v => v >= 1000 ? (v / 1000) + 'k' : v } }
+                }
+            }
+        });
+
+        // Chart 3: YTD Expense Breakdown
+        const ctx3 = document.getElementById('expenseBreakdownChart').getContext('2d');
+        new Chart(ctx3, {
+            type: 'doughnut',
+            data: {
+                labels: ['Salaries', 'Rent', 'Utilities', 'Office', 'Other'],
+                datasets: [{
+                    data: [totalSalaries, totalRent, totalUtilities, totalOffice, totalOther],
+                    backgroundColor: [
+                        '#3b82f6', // blue
+                        '#ef4444', // red
+                        '#f59e0b', // amber
+                        '#10b981', // green
+                        '#6366f1'  // indigo
+                    ],
+                    borderWidth: 2,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { font: { family: "'Inter', sans-serif", weight: '600' }, color: '#475569' } },
+                    tooltip: {
+                        padding: 12,
+                        backgroundColor: '#0f172a',
+                        callbacks: {
+                            label: function(context) {
+                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let value = context.parsed;
+                                let percentage = ((value / total) * 100).toFixed(1);
+                                return context.label + ': PKR ' + value.toLocaleString() + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Chart 4: Student Concession Distribution
+        const ctx4 = document.getElementById('studentSponsorshipChart').getContext('2d');
+        new Chart(ctx4, {
+            type: 'pie',
+            data: {
+                labels: ['Paying Students', 'Supported (Concession)'],
+                datasets: [{
+                    data: [<%= paying_students %>, <%= support_students %>],
+                    backgroundColor: ['#3b82f6', '#ec4899'],
+                    borderWidth: 2,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { font: { family: "'Inter', sans-serif", weight: '600' }, color: '#475569' } },
+                    tooltip: {
+                        padding: 12,
+                        backgroundColor: '#0f172a',
+                        callbacks: {
+                            label: function(context) {
+                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                let value = context.parsed;
+                                let percentage = ((value / total) * 100).toFixed(1);
+                                return context.label + ': ' + value + ' students (' + percentage + '%)';
                             }
                         }
                     }
