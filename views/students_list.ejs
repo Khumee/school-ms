@@ -1,8 +1,36 @@
 <%- include('partials/header') %>
 
+<%
+    let totalCount = students.length;
+    let concessionCount = students.filter(s => s.has_concession).length;
+    let standardCount = totalCount - concessionCount;
+%>
+
 <div class="section-header">
     <h1 class="section-title"><i class="bi bi-mortarboard-fill"></i> Student Directory</h1>
     <a href="/students/add" class="btn-primary"><i class="bi bi-person-plus-fill"></i> Add New Student</a>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.5rem;">
+    <div class="card kpi-card" style="cursor: pointer;" onclick="filterStudents('all')" id="kpi-all">
+        <span class="kpi-icon blue"><i class="bi bi-people-fill"></i></span>
+        <span class="kpi-label">Total Students</span>
+        <span class="kpi-value" style="font-size: 1.4rem;"><%= totalCount %></span>
+        <span class="kpi-subtitle">Click to view all</span>
+    </div>
+    <div class="card kpi-card" style="cursor: pointer;" onclick="filterStudents('standard')" id="kpi-standard">
+        <span class="kpi-icon green"><i class="bi bi-dash-circle"></i></span>
+        <span class="kpi-label">Standard Rate</span>
+        <span class="kpi-value" style="font-size: 1.4rem;"><%= standardCount %></span>
+        <span class="kpi-subtitle">Click to view standard only</span>
+    </div>
+    <div class="card kpi-card" style="cursor: pointer;" onclick="filterStudents('concession')" id="kpi-concession">
+        <span class="kpi-icon red"><i class="bi bi-tags-fill"></i></span>
+        <span class="kpi-label">Concessions</span>
+        <span class="kpi-value" style="font-size: 1.4rem;"><%= concessionCount %></span>
+        <span class="kpi-subtitle">Click to view concessions only</span>
+    </div>
 </div>
 
 <!-- Filters Collapsible Panel -->
@@ -51,7 +79,7 @@
         <tbody>
             <% if (students.length > 0) { %>
                 <% students.forEach(s => { %>
-                    <tr>
+                    <tr class="student-row" data-has-concession="<%= s.has_concession ? 'true' : 'false' %>">
                         <td style="font-weight: 600;"><%= s.reg_no %></td>
                         <td><%= s.name %></td>
                         <td><%= s.class_name || 'Unassigned' %></td>
@@ -89,5 +117,26 @@
         </tbody>
     </table>
 </div>
+
+<script>
+    function filterStudents(type) {
+        const rows = document.querySelectorAll('.student-row');
+        rows.forEach(row => {
+            const hasConcession = row.getAttribute('data-has-concession') === 'true';
+            if (type === 'all') {
+                row.style.display = '';
+            } else if (type === 'standard') {
+                row.style.display = hasConcession ? 'none' : '';
+            } else if (type === 'concession') {
+                row.style.display = hasConcession ? '' : 'none';
+            }
+        });
+        
+        // Add visual active state to cards
+        document.getElementById('kpi-all').style.border = type === 'all' ? '2px solid var(--primary-color)' : '';
+        document.getElementById('kpi-standard').style.border = type === 'standard' ? '2px solid var(--primary-color)' : '';
+        document.getElementById('kpi-concession').style.border = type === 'concession' ? '2px solid var(--primary-color)' : '';
+    }
+</script>
 
 <%- include('partials/footer') %>

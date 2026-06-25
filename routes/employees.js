@@ -76,7 +76,7 @@ router.post('/employees/add', isAuthenticated, async (req, res) => {
     const {
         name, designation, role, status, date_of_joining, default_salary,
         email, phone, cnic_number, address, gender, qualification,
-        experience_years, bank_account_info
+        previous_experience_years, bank_account_info
     } = req.body;
     
     try {
@@ -86,14 +86,14 @@ router.post('/employees/add', isAuthenticated, async (req, res) => {
             `INSERT INTO employees (
                 name, designation, role, status, date_of_joining, default_salary,
                 email, phone, cnic_number, address, gender, qualification,
-                experience_years, bank_account_info, tenant_id
+                previous_experience_years, bank_account_info, tenant_id
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 name, designation, role || 'teacher', status || 'on_payroll',
                 date_of_joining || null, default_salary ? parseFloat(default_salary) : 0.00,
                 email || null, phone || null, cnic_number || null, address || null,
                 gender || 'male', qualification || null,
-                experience_years ? parseInt(experience_years) : 0,
+                previous_experience_years ? parseInt(previous_experience_years) : 0,
                 bank_account_info || null, tenantId
             ]
         );
@@ -127,7 +127,7 @@ router.post('/employees/edit/:id', isAuthenticated, async (req, res) => {
     const {
         name, designation, role, status, date_of_joining, default_salary,
         email, phone, cnic_number, address, gender, qualification,
-        experience_years, bank_account_info
+        previous_experience_years, bank_account_info
     } = req.body;
     
     try {
@@ -137,7 +137,7 @@ router.post('/employees/edit/:id', isAuthenticated, async (req, res) => {
             `UPDATE employees SET 
                 name = ?, designation = ?, role = ?, status = ?, date_of_joining = ?, 
                 default_salary = ?, email = ?, phone = ?, cnic_number = ?, 
-                address = ?, gender = ?, qualification = ?, experience_years = ?, 
+                address = ?, gender = ?, qualification = ?, previous_experience_years = ?, 
                 bank_account_info = ?
              WHERE id = ? AND tenant_id = ?`,
             [
@@ -145,7 +145,7 @@ router.post('/employees/edit/:id', isAuthenticated, async (req, res) => {
                 default_salary ? parseFloat(default_salary) : 0.00,
                 email || null, phone || null, cnic_number || null, address || null,
                 gender || 'male', qualification || null,
-                experience_years ? parseInt(experience_years) : 0,
+                previous_experience_years ? parseInt(previous_experience_years) : 0,
                 bank_account_info || null, req.params.id, tenantId
             ]
         );

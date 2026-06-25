@@ -1,8 +1,43 @@
 <%- include('partials/header') %>
 
+<%
+    let totalCount = employees.length;
+    let teachersCount = employees.filter(e => e.role === 'teacher').length;
+    let adminsCount = employees.filter(e => e.role === 'admin').length;
+    let supportCount = employees.filter(e => e.role === 'support').length;
+%>
+
 <div class="section-header">
     <h1 class="section-title"><i class="bi bi-person-badge-fill"></i> Employee Registry</h1>
     <a href="/employees/add" class="btn-primary"><i class="bi bi-person-plus-fill"></i> Add New Employee</a>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.5rem;">
+    <div class="card kpi-card" style="cursor: pointer;" onclick="filterEmployees('all')" id="kpi-all">
+        <span class="kpi-icon blue"><i class="bi bi-people-fill"></i></span>
+        <span class="kpi-label">Total Employees</span>
+        <span class="kpi-value" style="font-size: 1.4rem;"><%= totalCount %></span>
+        <span class="kpi-subtitle">Click to view all</span>
+    </div>
+    <div class="card kpi-card" style="cursor: pointer;" onclick="filterEmployees('teacher')" id="kpi-teacher">
+        <span class="kpi-icon green"><i class="bi bi-person-workspace"></i></span>
+        <span class="kpi-label">Teachers</span>
+        <span class="kpi-value" style="font-size: 1.4rem;"><%= teachersCount %></span>
+        <span class="kpi-subtitle">Click to view teachers</span>
+    </div>
+    <div class="card kpi-card" style="cursor: pointer;" onclick="filterEmployees('admin')" id="kpi-admin">
+        <span class="kpi-icon purple"><i class="bi bi-briefcase-fill"></i></span>
+        <span class="kpi-label">Administrators</span>
+        <span class="kpi-value" style="font-size: 1.4rem;"><%= adminsCount %></span>
+        <span class="kpi-subtitle">Click to view admins</span>
+    </div>
+    <div class="card kpi-card" style="cursor: pointer;" onclick="filterEmployees('support')" id="kpi-support">
+        <span class="kpi-icon amber"><i class="bi bi-tools"></i></span>
+        <span class="kpi-label">Support Staff</span>
+        <span class="kpi-value" style="font-size: 1.4rem;"><%= supportCount %></span>
+        <span class="kpi-subtitle">Click to view support</span>
+    </div>
 </div>
 
 <!-- Filters Collapsible Panel -->
@@ -61,7 +96,7 @@
         <tbody>
             <% if (employees.length > 0) { %>
                 <% employees.forEach(e => { %>
-                    <tr>
+                    <tr class="employee-row" data-role="<%= e.role %>">
                         <td style="font-weight: 600;"><a href="/employees/view/<%= e.id %>" style="color: var(--primary-color, #3b82f6); text-decoration: none; hover: underline;"><%= e.name %></a></td>
                         <td><%= e.designation %></td>
                         <td><%= e.role.toUpperCase() %></td>
@@ -91,5 +126,25 @@
         </tbody>
     </table>
 </div>
+
+<script>
+    function filterEmployees(role) {
+        const rows = document.querySelectorAll('.employee-row');
+        rows.forEach(row => {
+            const empRole = row.getAttribute('data-role');
+            if (role === 'all') {
+                row.style.display = '';
+            } else {
+                row.style.display = empRole === role ? '' : 'none';
+            }
+        });
+        
+        // Add visual active state to cards
+        document.getElementById('kpi-all').style.border = role === 'all' ? '2px solid var(--primary-color)' : '';
+        document.getElementById('kpi-teacher').style.border = role === 'teacher' ? '2px solid var(--primary-color)' : '';
+        document.getElementById('kpi-admin').style.border = role === 'admin' ? '2px solid var(--primary-color)' : '';
+        document.getElementById('kpi-support').style.border = role === 'support' ? '2px solid var(--primary-color)' : '';
+    }
+</script>
 
 <%- include('partials/footer') %>

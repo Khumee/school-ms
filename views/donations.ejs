@@ -38,9 +38,11 @@
         <span class="kpi-label">Top 5 Donors (All-Time)</span>
         <ul style="list-style: none; font-size: 0.82rem; padding: 0; margin-top: 0.5rem; margin-bottom: 0;">
             <% topDonors.forEach((td, i) => { %>
-                <li style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
-                    <span><%= i+1 %>. <a href="/donations/donor/<%= td.id %>" style="color: var(--primary-color, #4f46e5); text-decoration: none; font-weight: 600;"><%= td.name %></a></span>
-                    <span style="font-weight: 700; color: #15803d;">PKR <%= parseFloat(td.total_amount).toLocaleString() %></span>
+                <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; gap: 0.5rem;">
+                    <span style="display: inline-flex; min-width: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        <%= i+1 %>. <a href="/donations/donor/<%= td.id %>" style="color: var(--primary-color, #4f46e5); text-decoration: none; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline;"><%= td.name %></a>
+                    </span>
+                    <span style="font-weight: 700; color: #15803d; flex-shrink: 0;">PKR <%= parseFloat(td.total_amount).toLocaleString() %></span>
                 </li>
             <% }) %>
         </ul>

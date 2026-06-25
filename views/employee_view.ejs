@@ -63,12 +63,29 @@
     </div>
 
     <!-- Professional & Bank Details -->
+    <%
+        let currentExperience = 0;
+        if (employee.date_of_joining) {
+            const joinDate = new Date(employee.date_of_joining);
+            const today = new Date();
+            let diffYears = today.getFullYear() - joinDate.getFullYear();
+            const m = today.getMonth() - joinDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < joinDate.getDate())) {
+                diffYears--;
+            }
+            currentExperience = Math.max(0, diffYears);
+        }
+        const previousExperience = parseInt(employee.previous_experience_years || 0);
+        const totalExperience = previousExperience + currentExperience;
+    %>
     <div class="card">
         <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-mortarboard-fill"></i> Professional & Bank Details</h3>
         <table class="details-table" style="width: 100%; font-size: 0.875rem;">
             <tr><td style="font-weight: 600; padding: 6px 0; width: 45%;">Joining Date</td><td style="padding: 6px 0;"><%= employee.date_of_joining ? new Date(employee.date_of_joining).toLocaleDateString() : '-' %></td></tr>
             <tr><td style="font-weight: 600; padding: 6px 0;">Highest Qualification</td><td style="padding: 6px 0;"><%= employee.qualification || '-' %></td></tr>
-            <tr><td style="font-weight: 600; padding: 6px 0;">Experience (Years)</td><td style="padding: 6px 0;"><%= employee.experience_years %> Year(s)</td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Previous Experience</td><td style="padding: 6px 0;"><%= previousExperience %> Year(s)</td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Experience at School</td><td style="padding: 6px 0;"><%= currentExperience %> Year(s)</td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0; color: var(--primary-color);">Total Experience</td><td style="padding: 6px 0; font-weight: 700; color: var(--primary-color);"><%= totalExperience %> Year(s)</td></tr>
             <tr><td style="font-weight: 600; padding: 6px 0;">Bank Account Details</td><td style="padding: 6px 0;"><%= employee.bank_account_info || '-' %></td></tr>
         </table>
     </div>
