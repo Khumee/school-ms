@@ -62,9 +62,29 @@
                 <label for="contactNo">Contact Number</label>
                 <input type="text" id="contactNo" name="contact_no" class="form-control" placeholder="e.g. 0300-XXXXXXX">
             </div>
-            <div class="form-group" style="margin-bottom: 1.5rem;">
+            <div class="form-group" style="margin-bottom: 1rem;">
                 <label for="referredBy">Referred By</label>
                 <input type="text" id="referredBy" name="referred_by" class="form-control" placeholder="e.g. Faheem Zafar">
+            </div>
+            <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label for="preferred_fund_category">Preferred Fund</label>
+                    <select name="preferred_fund_category" id="preferred_fund_category" class="form-control">
+                        <option value="general">General / Direct</option>
+                        <option value="trust">Trust Account</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="preferred_payment_method">Preferred Method</label>
+                    <select name="preferred_payment_method" id="preferred_payment_method" class="form-control">
+                        <option value="Online">Online</option>
+                        <option value="Cash">Cash</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" id="monthlyCommitment" name="monthly_commitment" value="1" style="width: 18px; height: 18px; cursor: pointer;">
+                <label for="monthlyCommitment" style="margin-bottom: 0; cursor: pointer; font-weight: 500;">Monthly Commitment Donor</label>
             </div>
             <button type="submit" class="btn-primary"><i class="bi bi-check-circle-fill"></i> Register Donor</button>
         </form>
@@ -86,8 +106,13 @@
                 
                 <div id="donor_dropdown_list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); margin-top: 4px;">
                     <% donors.forEach(d => { %>
-                        <div class="dropdown-donor-item" data-value="<%= d.id %>" data-name="<%= d.name %>" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
-                            <div style="font-weight: 600; color: #1e293b;"><%= d.name %></div>
+                        <div class="dropdown-donor-item" data-value="<%= d.id %>" data-name="<%= d.name %>" data-last-amount="<%= d.last_donation_amount || '' %>" data-preferred-fund="<%= d.preferred_fund_category || 'general' %>" data-preferred-payment="<%= d.preferred_payment_method || 'Online' %>" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
+                            <div style="font-weight: 600; color: #1e293b; display: flex; justify-content: space-between; align-items: center;">
+                                <span><%= d.name %></span>
+                                <% if (d.monthly_commitment) { %>
+                                    <span style="font-size: 0.7rem; background-color: #e0f2fe; color: #0369a1; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 700;">Monthly</span>
+                                <% } %>
+                            </div>
                             <div style="font-size: 0.75rem; color: #64748b;">Referred by: <%= d.referred_by || 'Direct' %></div>
                         </div>
                     <% }) %>
@@ -103,16 +128,15 @@
                 </div>
                 <div class="form-group">
                     <label for="date">Date Received</label>
-                    <input type="date" id="date" name="date" class="form-control">
+                    <input type="date" id="date" name="date" class="form-control" value="<%= new Date().toISOString().slice(0, 10) %>">
                 </div>
             </div>
-            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div class="form-group">
                     <label for="fund_category">Fund Category</label>
-                    <select name="fund_category" id="fund_category" class="form-control">
+                    <select name="fund_category" id="fund_category" class="form-control" onchange="toggleDirectOption(this.value, 'direct_option_group')">
                         <option value="general">General / Direct</option>
                         <option value="trust">Trust Account</option>
-                        <option value="student_support">Student Sponsorship</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -123,7 +147,19 @@
                     </select>
                 </div>
             </div>
-            <button type="submit" class="btn-primary"><i class="bi bi-check-circle-fill"></i> Log Donation</button>
+            
+            <div id="direct_option_group" class="form-group" style="display: block; margin-bottom: 1.5rem;">
+                <label for="direct_ref">Direct Received By / Option *</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <select id="direct_ref" name="direct_ref" class="form-control">
+                        <option value="Faheem Zafar">Faheem Zafar</option>
+                        <option value="Kamal Muhammad">Kamal Muhammad</option>
+                        <option value="Khurram Shahzad">Khurram Shahzad</option>
+                    </select>
+                    <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewDirectOption('direct_ref')"><i class="bi bi-plus-lg"></i></button>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 0.5rem;"><i class="bi bi-check-circle-fill"></i> Log Donation</button>
         </form>
     </div>
 </div>
@@ -250,6 +286,7 @@
                         <th>Donor Name</th>
                         <th>Contact No.</th>
                         <th>Referred By</th>
+                        <th>Monthly Commitment</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -260,17 +297,20 @@
                                 <td style="font-weight: 600;"><a href="/donations/donor/<%= d.id %>" style="color: var(--primary-color, #4f46e5); text-decoration: none;"><%= d.name %></a></td>
                                 <td><%= d.contact_no || '-' %></td>
                                 <td><%= d.referred_by || '-' %></td>
+                                <td style="font-weight: 500; color: <%= d.monthly_commitment ? '#0369a1' : '#64748b' %>;">
+                                    <%= d.monthly_commitment ? 'Yes' : 'No' %>
+                                </td>
                                 <td>
                                     <div style="display: flex; gap: 0.5rem;">
                                         <a href="/donations/donor/<%= d.id %>" class="btn-secondary nav-btn"><i class="bi bi-person-vcard-fill"></i> View Profile</a>
-                                        <button type="button" class="btn-secondary nav-btn" onclick='openEditDonorModal(<%- JSON.stringify({ id: d.id, name: d.name, contact_no: d.contact_no || "", referred_by: d.referred_by || "" }) %>)'><i class="bi bi-pencil-square"></i> Edit</button>
+                                        <button type="button" class="btn-secondary nav-btn" onclick='openEditDonorModal(<%- JSON.stringify({ id: d.id, name: d.name, contact_no: d.contact_no || "", referred_by: d.referred_by || "", monthly_commitment: d.monthly_commitment || 0 }) %>)'><i class="bi bi-pencil-square"></i> Edit</button>
                                     </div>
                                 </td>
                             </tr>
                         <% }) %>
                     <% } else { %>
                         <tr>
-                            <td colspan="4" style="text-align: center; color: #64748b; padding: 1.5rem;">No donors found.</td>
+                            <td colspan="5" style="text-align: center; color: #64748b; padding: 1.5rem;">No donors found.</td>
                         </tr>
                     <% } %>
                 </tbody>
@@ -302,11 +342,21 @@
         </div>
         <div class="form-group" style="margin-bottom: 1rem;">
             <label>Fund Category</label>
-            <select id="editFundCategory" name="fund_category" class="form-control">
+            <select id="editFundCategory" name="fund_category" class="form-control" onchange="toggleDirectOption(this.value, 'edit_direct_option_group')">
                 <option value="general">General / Direct</option>
                 <option value="trust">Trust Account</option>
-                <option value="student_support">Student Sponsorship</option>
             </select>
+        </div>
+        <div id="edit_direct_option_group" class="form-group" style="display: none; margin-bottom: 1rem;">
+            <label>Direct Received By / Option *</label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <select id="edit_direct_ref" name="direct_ref" class="form-control">
+                    <option value="Faheem Zafar">Faheem Zafar</option>
+                    <option value="Kamal Muhammad">Kamal Muhammad</option>
+                    <option value="Khurram Shahzad">Khurram Shahzad</option>
+                </select>
+                <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewDirectOption('edit_direct_ref')"><i class="bi bi-plus-lg"></i></button>
+            </div>
         </div>
         <div class="form-group" style="margin-bottom: 1rem;">
             <label>Payment Method</label>
@@ -339,9 +389,29 @@
             <label for="editDonorContact">Contact Number</label>
             <input type="text" id="editDonorContact" name="contact_no" class="form-control">
         </div>
-        <div class="form-group" style="margin-bottom: 1.5rem;">
+        <div class="form-group" style="margin-bottom: 1rem;">
             <label for="editDonorReferred">Referred By</label>
             <input type="text" id="editDonorReferred" name="referred_by" class="form-control">
+        </div>
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="editDonorPreferredFund">Preferred Fund</label>
+                <select name="preferred_fund_category" id="editDonorPreferredFund" class="form-control">
+                    <option value="general">General / Direct</option>
+                    <option value="trust">Trust Account</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="editDonorPreferredMethod">Preferred Method</label>
+                <select name="preferred_payment_method" id="editDonorPreferredMethod" class="form-control">
+                    <option value="Online">Online</option>
+                    <option value="Cash">Cash</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="editDonorMonthlyCommitment" name="monthly_commitment" value="1" style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="editDonorMonthlyCommitment" style="margin-bottom: 0; cursor: pointer; font-weight: 500;">Monthly Commitment Donor</label>
         </div>
         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
             <button type="button" class="btn-secondary" onclick="closeEditDonorModal()">Cancel</button>
@@ -359,7 +429,41 @@
         document.getElementById('editDate').value = d.date;
         document.getElementById('editFundCategory').value = d.fund_category;
         document.getElementById('editPaymentMethod').value = d.payment_method || '';
-        document.getElementById('editNotes').value = d.notes || '';
+        
+        let directVal = '';
+        let cleanNotes = d.notes || '';
+        if (cleanNotes.startsWith('[Direct: ')) {
+            const endIndex = cleanNotes.indexOf(']');
+            if (endIndex > -1) {
+                directVal = cleanNotes.slice(9, endIndex);
+                cleanNotes = cleanNotes.slice(endIndex + 1).trim();
+            }
+        }
+        
+        const editSelect = document.getElementById('edit_direct_ref');
+        if (d.fund_category === 'general') {
+            document.getElementById('edit_direct_option_group').style.display = 'block';
+            if (directVal) {
+                let exists = false;
+                for (let i = 0; i < editSelect.options.length; i++) {
+                    if (editSelect.options[i].value === directVal) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    const opt = document.createElement('option');
+                    opt.value = directVal;
+                    opt.textContent = directVal;
+                    editSelect.appendChild(opt);
+                }
+                editSelect.value = directVal;
+            }
+        } else {
+            document.getElementById('edit_direct_option_group').style.display = 'none';
+        }
+        
+        document.getElementById('editNotes').value = cleanNotes;
         document.getElementById('editModal').style.display = 'block';
         document.getElementById('editModalOverlay').style.display = 'block';
     }
@@ -373,6 +477,11 @@
         document.getElementById('editDonorName').value = d.name;
         document.getElementById('editDonorContact').value = d.contact_no || '';
         document.getElementById('editDonorReferred').value = d.referred_by || '';
+        
+        document.getElementById('editDonorPreferredFund').value = d.preferred_fund_category || 'general';
+        document.getElementById('editDonorPreferredMethod').value = d.preferred_payment_method || 'Online';
+        document.getElementById('editDonorMonthlyCommitment').checked = d.monthly_commitment === 1;
+        
         document.getElementById('editDonorModal').style.display = 'block';
         document.getElementById('editDonorModalOverlay').style.display = 'block';
     }
@@ -397,6 +506,27 @@
         });
         const btn = document.getElementById('btn-show-more-donors');
         if (btn) btn.style.display = 'none';
+    }
+
+    // Toggle Direct Option Group visibility
+    function toggleDirectOption(value, elementId) {
+        const el = document.getElementById(elementId);
+        if (el) {
+            el.style.display = (value === 'general') ? 'block' : 'none';
+        }
+    }
+
+    // Add new option to the direct select box dynamically
+    function addNewDirectOption(selectId) {
+        const name = prompt("Enter name of new direct option:");
+        if (name && name.trim() !== "") {
+            const selectEl = document.getElementById(selectId);
+            const opt = document.createElement("option");
+            opt.value = name.trim();
+            opt.textContent = name.trim();
+            selectEl.appendChild(opt);
+            selectEl.value = name.trim();
+        }
     }
 
     // Custom Searchable Dropdown
@@ -468,10 +598,26 @@
             item.addEventListener('click', () => {
                 const val = item.getAttribute('data-value');
                 const name = item.getAttribute('data-name');
+                const lastAmount = item.getAttribute('data-last-amount');
+                const prefFund = item.getAttribute('data-preferred-fund') || 'general';
+                const prefPayment = item.getAttribute('data-preferred-payment') || 'Online';
                 
                 donorSelect.value = val;
                 donorSearch.value = name;
                 donorDropdown.style.display = 'none';
+                
+                // Pre-populate fields automatically
+                if (lastAmount) {
+                    document.getElementById('amount').value = lastAmount;
+                } else {
+                    document.getElementById('amount').value = '';
+                }
+                
+                document.getElementById('fund_category').value = prefFund;
+                document.getElementById('payment_method').value = prefPayment;
+                
+                // Toggle Direct Option Group based on pre-populated Fund Category
+                toggleDirectOption(prefFund, 'direct_option_group');
             });
         });
 

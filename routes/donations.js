@@ -18,13 +18,18 @@ router.get('/donations', isAuthenticated, async (req, res) => {
         const { searchDonor } = req.query;
 
         // Fetch all donors (filtered if searchDonor is provided)
-        let donorsQuery = 'SELECT * FROM donors WHERE tenant_id = ?';
-        const donorsParams = [tenantId];
+        let donorsQuery = `
+            SELECT d.*, 
+                   (SELECT amount FROM donations WHERE donor_id = d.id AND tenant_id = ? ORDER BY date DESC, id DESC LIMIT 1) as last_donation_amount
+            FROM donors d 
+            WHERE d.tenant_id = ?
+        `;
+        const donorsParams = [tenantId, tenantId];
         if (searchDonor) {
-            donorsQuery += ' AND (name LIKE ? OR referred_by LIKE ?)';
+            donorsQuery += ' AND (d.name LIKE ? OR d.referred_by LIKE ?)';
             donorsParams.push(`%${searchDonor}%`, `%${searchDonor}%`);
         }
-        donorsQuery += ' ORDER BY name ASC';
+        donorsQuery += ' ORDER BY d.name ASC';
         const [donors] = await db.execute(donorsQuery, donorsParams);
 
         // Fetch top 5 highest paying donors
@@ -150,13 +155,15 @@ router.get('/donations/matrix', isAuthenticated, async (req, res) => {
 
 // POST /donations/donor/add - create donor
 router.post('/donations/donor/add', isAuthenticated, async (req, res) => {
-    const { name, contact_no, referred_by } = req.body;
+    const { name, contact_no, referred_by, monthly_commitment, preferred_fund_category, preferred_payment_method } = req.body;
     try {
         const tenantId = req.tenant.id;
+        const commitment = monthly_commitment === 'on' || monthly_commitment === '1' ? 1 : 0;
         
         await db.execute(
-            'INSERT INTO donors (name, contact_no, referred_by, tenant_id) VALUES (?, ?, ?, ?)',
-            [name, contact_no || null, referred_by || null, tenantId]
+            `INSERT INTO donors (name, contact_no, referred_by, monthly_commitment, preferred_fund_category, preferred_payment_method, tenant_id) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [name, contact_no || null, referred_by || null, commitment, preferred_fund_category || 'general', preferred_payment_method || 'Online', tenantId]
         );
         res.redirect('/donations');
     } catch (err) {
@@ -167,12 +174,14 @@ router.post('/donations/donor/add', isAuthenticated, async (req, res) => {
 
 // POST /donations/donor/edit/:id - edit donor details
 router.post('/donations/donor/edit/:id', isAuthenticated, async (req, res) => {
-    const { name, contact_no, referred_by } = req.body;
+    const { name, contact_no, referred_by, monthly_commitment, preferred_fund_category, preferred_payment_method } = req.body;
     try {
         const tenantId = req.tenant.id;
+        const commitment = monthly_commitment === 'on' || monthly_commitment === '1' ? 1 : 0;
         await db.execute(
-            'UPDATE donors SET name = ?, contact_no = ?, referred_by = ? WHERE id = ? AND tenant_id = ?',
-            [name, contact_no || null, referred_by || null, req.params.id, tenantId]
+            `UPDATE donors SET name = ?, contact_no = ?, referred_by = ?, monthly_commitment = ?, preferred_fund_category = ?, preferred_payment_method = ? 
+             WHERE id = ? AND tenant_id = ?`,
+            [name, contact_no || null, referred_by || null, commitment, preferred_fund_category || 'general', preferred_payment_method || 'Online', req.params.id, tenantId]
         );
         res.redirect('/donations');
     } catch (err) {
@@ -183,16 +192,20 @@ router.post('/donations/donor/edit/:id', isAuthenticated, async (req, res) => {
 
 // POST /donations/add - record donation payment
 router.post('/donations/add', isAuthenticated, async (req, res) => {
-    const { donor_id, amount, date, fund_category, payment_method, notes } = req.body;
+    const { donor_id, amount, date, fund_category, payment_method, notes, direct_ref } = req.body;
     try {
         const tenantId = req.tenant.id;
+        let finalNotes = notes || null;
+        if (fund_category === 'general' && direct_ref) {
+            finalNotes = `[Direct: ${direct_ref}]` + (notes ? ' ' + notes : '');
+        }
         
         await db.execute(
             `INSERT INTO donations (tenant_id, donor_id, amount, date, fund_category, payment_method, notes)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [
                 tenantId, donor_id, parseFloat(amount), date || new Date(), 
-                fund_category || 'general', payment_method || 'Cash', notes || null
+                fund_category || 'general', payment_method || 'Cash', finalNotes
             ]
         );
         res.redirect('/donations');
@@ -204,12 +217,16 @@ router.post('/donations/add', isAuthenticated, async (req, res) => {
 
 // POST /donations/edit/:id - update a donation record
 router.post('/donations/edit/:id', isAuthenticated, async (req, res) => {
-    const { amount, date, fund_category, payment_method, notes } = req.body;
+    const { amount, date, fund_category, payment_method, notes, direct_ref } = req.body;
     try {
+        let finalNotes = notes || null;
+        if (fund_category === 'general' && direct_ref) {
+            finalNotes = `[Direct: ${direct_ref}]` + (notes ? ' ' + notes : '');
+        }
         await db.execute(
             `UPDATE donations SET amount = ?, date = ?, fund_category = ?, payment_method = ?, notes = ?
              WHERE id = ? AND tenant_id = ?`,
-            [parseFloat(amount), date, fund_category || 'general', payment_method || 'Cash', notes || null, req.params.id, req.tenant.id]
+            [parseFloat(amount), date, fund_category || 'general', payment_method || 'Cash', finalNotes, req.params.id, req.tenant.id]
         );
         res.redirect(req.body.redirect_to || '/donations');
     } catch (err) {
