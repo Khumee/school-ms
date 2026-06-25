@@ -292,25 +292,29 @@
         // Chart 1: Financial Performance Trend
         const ctx1 = document.getElementById('financialChart').getContext('2d');
         new Chart(ctx1, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: labels,
                 datasets: [
                     {
                         label: 'Total Income (PKR)',
                         data: incomeData,
-                        backgroundColor: 'rgba(16, 185, 129, 0.85)',
                         borderColor: '#10b981',
-                        borderWidth: 1.5,
-                        borderRadius: 6,
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 3,
+                        pointRadius: 4
                     },
                     {
                         label: 'Total Expense (PKR)',
                         data: expenseData,
-                        backgroundColor: 'rgba(239, 68, 68, 0.85)',
                         borderColor: '#ef4444',
-                        borderWidth: 1.5,
-                        borderRadius: 6,
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 3,
+                        pointRadius: 4
                     }
                 ]
             },
@@ -340,29 +344,25 @@
         // Chart 2: Fees vs Donations Trend
         const ctx2 = document.getElementById('feesDonationsChart').getContext('2d');
         new Chart(ctx2, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: labels,
                 datasets: [
                     {
                         label: 'Fees Collected (PKR)',
                         data: feesData,
+                        backgroundColor: 'rgba(245, 158, 11, 0.85)',
                         borderColor: '#f59e0b',
-                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                        fill: true,
-                        tension: 0.3,
-                        borderWidth: 3,
-                        pointRadius: 4
+                        borderWidth: 1.5,
+                        borderRadius: 6
                     },
                     {
                         label: 'Donations Received (PKR)',
                         data: donationsData,
+                        backgroundColor: 'rgba(99, 102, 241, 0.85)',
                         borderColor: '#6366f1',
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                        fill: true,
-                        tension: 0.3,
-                        borderWidth: 3,
-                        pointRadius: 4
+                        borderWidth: 1.5,
+                        borderRadius: 6
                     }
                 ]
             },
