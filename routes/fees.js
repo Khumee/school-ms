@@ -42,16 +42,17 @@ router.get('/fees/concessions', isAuthenticated, async (req, res) => {
 
 // POST /fees/concessions/update - save concession overrides
 router.post('/fees/concessions/update', isAuthenticated, async (req, res) => {
-    const { student_id, custom_monthly_fee, has_concession, concession_notes } = req.body;
+    const { student_id, custom_monthly_fee, has_concession, concession_notes, concession_reason } = req.body;
     try {
         await db.execute(
             `UPDATE students 
-             SET custom_monthly_fee = ?, has_concession = ?, concession_notes = ? 
+             SET custom_monthly_fee = ?, has_concession = ?, concession_notes = ?, concession_reason = ? 
              WHERE id = ? AND tenant_id = ?`,
             [
                 custom_monthly_fee ? parseFloat(custom_monthly_fee) : null,
                 has_concession === '1' ? 1 : 0,
                 concession_notes || null,
+                concession_reason || null,
                 student_id,
                 req.tenant.id
             ]
@@ -92,17 +93,20 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
         
         // Fetch all 2026 payments for these students
         const [payments] = await db.execute(
-            'SELECT student_id, month, amount_paid FROM fee_payments WHERE tenant_id = ? AND year = 2026',
+            'SELECT id, student_id, month, amount_paid FROM fee_payments WHERE tenant_id = ? AND year = 2026',
             [tenantId]
         );
         
-        // Map payments for easy access: student_id -> { month: amount_paid }
+        // Map payments for easy access: student_id -> { month: { id, amount_paid } }
         const paymentMap = {};
         payments.forEach(p => {
             if (!paymentMap[p.student_id]) {
                 paymentMap[p.student_id] = {};
             }
-            paymentMap[p.student_id][p.month] = p.amount_paid;
+            paymentMap[p.student_id][p.month] = {
+                id: p.id,
+                amount_paid: parseFloat(p.amount_paid)
+            };
         });
         
         const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);

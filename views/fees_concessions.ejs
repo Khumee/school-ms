@@ -1,84 +1,271 @@
 <%- include('partials/header') %>
 
+<%
+    // Compute stats
+    let standardCount = 0;
+    let concessionCount = 0;
+    let totalDiscount = 0;
+
+    students.forEach(s => {
+        const standard = parseFloat(s.default_monthly_fee || 0);
+        const active = s.custom_monthly_fee !== null ? parseFloat(s.custom_monthly_fee) : standard;
+        if (s.has_concession) {
+            concessionCount++;
+            totalDiscount += (standard - active);
+        } else {
+            standardCount++;
+        }
+    });
+%>
+
 <div class="section-header">
-    <h1 class="section-title"><i class="bi bi-tags-fill"></i> Student Fee Concessions</h1>
+    <h1 class="section-title"><i class="bi bi-tags-fill"></i> Fee Concessions</h1>
 </div>
 
-<!-- Filters -->
-<form action="/fees/concessions" method="GET" class="filter-bar">
-    <div class="form-group">
-        <label for="classId">Class</label>
-        <select name="classId" id="classId" class="form-control" onchange="this.form.submit()">
-            <option value="">-- All Classes --</option>
-            <% classes.forEach(c => { %>
-                <option value="<%= c.id %>" <%= classId == c.id ? 'selected' : '' %>><%= c.name %></option>
-            <% }) %>
-        </select>
+<!-- Filters Collapsible Panel -->
+<details class="filter-panel" <%= (classId || search) ? 'open' : '' %>>
+    <summary>
+        <span><i class="bi bi-funnel-fill"></i> Filter & Search Students <%= (classId || search) ? '(Active)' : '' %></span>
+        <i class="bi bi-chevron-down toggle-icon"></i>
+    </summary>
+    <form action="/fees/concessions" method="GET" class="filter-content">
+        <div class="form-group">
+            <label for="classId">Class</label>
+            <select name="classId" id="classId" class="form-control" onchange="this.form.submit()">
+                <option value="">-- All Classes --</option>
+                <% classes.forEach(c => { %>
+                    <option value="<%= c.id %>" <%= classId == c.id ? 'selected' : '' %>><%= c.name %></option>
+                <% }) %>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="search">Search</label>
+            <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or Reg No...">
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+            <button type="submit" class="btn-secondary" style="height: 38px;">Search</button>
+            <a href="/fees/concessions" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
+        </div>
+    </form>
+</details>
+
+<!-- Quick Statistics Grid -->
+<div class="kpi-grid" style="margin-bottom: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+    <div class="card kpi-card" style="padding: 1rem;">
+        <span class="kpi-label">Concessions Applied</span>
+        <span class="kpi-value" style="font-size: 1.4rem; color: #b91c1c;"><%= concessionCount %> Students</span>
+        <span class="kpi-subtitle">Out of <%= students.length %> enrolled</span>
     </div>
-    
-    <div class="form-group">
-        <label for="search">Search</label>
-        <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or Reg No...">
+    <div class="card kpi-card" style="padding: 1rem;">
+        <span class="kpi-label">Standard Fee Students</span>
+        <span class="kpi-value" style="font-size: 1.4rem; color: #16a34a;"><%= standardCount %> Students</span>
+        <span class="kpi-subtitle">Paying default class fee</span>
     </div>
-    
-    <button type="submit" class="btn-secondary">Search</button>
-    <a href="/fees/concessions" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
-</form>
+    <div class="card kpi-card" style="padding: 1rem;">
+        <span class="kpi-label">Total Monthly Subsidy</span>
+        <span class="kpi-value" style="font-size: 1.4rem; color: #7c3aed;">PKR <%= totalDiscount.toLocaleString() %></span>
+        <span class="kpi-subtitle">Total concession amount</span>
+    </div>
+</div>
+
+<!-- Quick filter checkbox -->
+<div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <input type="checkbox" id="show-concessions-checkbox" onchange="toggleConcessionsOnly(this.checked)" style="width: 18px; height: 18px; cursor: pointer;">
+        <label for="show-concessions-checkbox" style="font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--ink);">Show Concessions Only</label>
+    </div>
+    <div style="font-size: 0.85rem; color: var(--muted); font-weight: 600;">
+        Showing <%= students.length %> students
+    </div>
+</div>
 
 <!-- Table -->
 <div class="table-container">
-    <table>
+    <table class="concessions-table">
         <thead>
             <tr>
-                <th>Reg No</th>
-                <th>Name</th>
-                <th>Class</th>
-                <th style="text-align: right;">Class default Fee (PKR)</th>
+                <th style="text-align: left;">Reg No</th>
+                <th style="text-align: left;">Name</th>
+                <th style="text-align: left;">Class</th>
+                <th style="text-align: right;">Class Default (PKR)</th>
                 <th style="text-align: right;">Active Monthly Fee (PKR)</th>
-                <th>Concession Status</th>
-                <th>Concession Notes</th>
-                <th>Action</th>
+                <th>Status</th>
+                <th>Reason</th>
+                <th>Remarks / Notes</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             <% if (students.length > 0) { %>
                 <% students.forEach(s => { %>
-                    <tr>
-                        <td style="font-weight: 600;"><%= s.reg_no %></td>
-                        <td><%= s.name %></td>
-                        <td><%= s.class_name || 'Unassigned' %></td>
-                        <td style="text-align: right;"><%= s.default_monthly_fee ? s.default_monthly_fee.toLocaleString() : '0.00' %></td>
+                    <% 
+                        const standardFee = s.default_monthly_fee || 0;
+                        const activeFee = s.custom_monthly_fee !== null ? s.custom_monthly_fee : standardFee;
+                    %>
+                    <tr class="concession-row <%= s.has_concession ? 'status-row-concession' : 'status-row-standard' %>">
+                        <td style="font-weight: 600; text-align: left;"><%= s.reg_no %></td>
+                        <td style="text-align: left; font-weight: 500;"><%= s.name %></td>
+                        <td style="text-align: left;"><%= s.class_name || 'Unassigned' %></td>
+                        <td style="text-align: right; color: #64748b;">PKR <%= standardFee.toLocaleString() %></td>
                         <td style="text-align: right; font-weight: 700; color: <%= s.has_concession ? '#b91c1c' : '#1e293b' %>">
-                            <%= s.custom_monthly_fee !== null ? s.custom_monthly_fee.toLocaleString() : (s.default_monthly_fee || '0.00').toLocaleString() %>
+                            PKR <%= activeFee.toLocaleString() %>
                         </td>
                         <td>
-                            <span class="status-cell <%= s.has_concession ? 'status-unpaid' : 'status-paid' %>">
-                                <%= s.has_concession ? 'CONCESSION' : 'STANDARD' %>
-                            </span>
+                            <% if (s.has_concession) { %>
+                                <span class="status-cell status-unpaid"><i class="bi bi-tags-fill"></i> CONCESSION</span>
+                            <% } else { %>
+                                <span class="status-cell status-paid"><i class="bi bi-dash-circle"></i> STANDARD</span>
+                            <% } %>
                         </td>
+                        <td style="font-weight: 500; color: #475569;"><%= s.concession_reason || '-' %></td>
                         <td><%= s.concession_notes || '-' %></td>
                         <td>
-                            <!-- Simple Inline Action Form -->
-                            <form action="/fees/concessions/update" method="POST" style="display: flex; gap: 0.5rem; align-items: center;">
-                                <input type="hidden" name="student_id" value="<%= s.id %>">
-                                <input type="number" step="0.01" name="custom_monthly_fee" class="form-control" style="width: 100px; padding: 0.25rem;" value="<%= s.custom_monthly_fee !== null ? s.custom_monthly_fee : '' %>" placeholder="Amt">
-                                <select name="has_concession" class="form-control" style="width: 110px; padding: 0.25rem;">
-                                    <option value="0" <%= !s.has_concession ? 'selected' : '' %>>Standard</option>
-                                    <option value="1" <%= s.has_concession ? 'selected' : '' %>>Concession</option>
-                                </select>
-                                <input type="text" name="concession_notes" class="form-control" style="width: 120px; padding: 0.25rem;" value="<%= s.concession_notes || '' %>" placeholder="Notes">
-                                <button type="submit" class="btn-primary nav-btn" style="padding: 0.25rem 0.5rem;">Save</button>
-                            </form>
+                            <button type="button" class="btn-secondary nav-btn" onclick="openConcessionModal('<%= s.id %>', '<%= s.name %>', <%= standardFee %>, <%= s.custom_monthly_fee !== null ? s.custom_monthly_fee : '' %>, '<%= s.has_concession ? 1 : 0 %>', '<%= s.concession_notes || '' %>', '<%= s.concession_reason || '' %>')">
+                                <i class="bi bi-pencil-fill"></i> Edit
+                            </button>
                         </td>
                     </tr>
                 <% }) %>
             <% } else { %>
                 <tr>
-                    <td colspan="8" style="text-align: center; color: #64748b;">No students found.</td>
+                    <td colspan="9" style="text-align: center; color: #64748b; padding: 2rem;">No students found.</td>
                 </tr>
             <% } %>
         </tbody>
     </table>
 </div>
+
+<!-- Concession Edit Modal (Hidden by Default) -->
+<div id="concessionModal" class="card" style="display: none; max-width: 450px; margin: 1rem auto; position: fixed; top: 15%; left: 50%; transform: translate(-50%, 0); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+    <h3 style="margin-bottom: 1.25rem;" id="concessionModalTitle">Update Concession</h3>
+    <form action="/fees/concessions/update" method="POST">
+        <input type="hidden" id="modalStudentId" name="student_id">
+        
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="modalStudentName">Student Name</label>
+            <input type="text" id="modalStudentName" class="form-control" readonly style="background-color: #f1f5f9; font-weight: 500;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="modalStandardFee">Standard Class Fee (PKR)</label>
+            <input type="text" id="modalStandardFee" class="form-control" readonly style="background-color: #f1f5f9; font-weight: 500;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="modalCustomFee">Active Monthly Fee (PKR)</label>
+            <input type="number" step="0.01" id="modalCustomFee" name="custom_monthly_fee" class="form-control" required placeholder="Enter fee amount">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="modalHasConcession">Fee Status</label>
+            <select name="has_concession" id="modalHasConcession" class="form-control" onchange="onStatusChange(this.value)">
+                <option value="0">Standard Fee</option>
+                <option value="1">Concession Applied</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1rem;" id="modalConcessionReasonGroup">
+            <label for="modalConcessionReason">Concession Reason</label>
+            <select name="concession_reason" id="modalConcessionReason" class="form-control">
+                <option value="">-- Select Reason --</option>
+                <option value="Low Income Family">Low Income Family</option>
+                <option value="Orphan">Orphan</option>
+                <option value="Sibling Discount">Sibling Discount</option>
+                <option value="Staff Child Discount">Staff Child Discount</option>
+                <option value="Academic Scholarship">Academic Scholarship</option>
+                <option value="Disability Support">Disability Support</option>
+                <option value="Other Welfare">Other Welfare</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label for="modalConcessionNotes">Concession Notes / Remarks</label>
+            <input type="text" id="modalConcessionNotes" name="concession_notes" class="form-control" placeholder="e.g. Scholarship support">
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button type="button" class="btn-secondary" onclick="closeConcessionModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Save Changes</button>
+        </div>
+    </form>
+</div>
+<div id="concessionModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeConcessionModal()"></div>
+
+<script>
+    let defaultClassFee = 0;
+
+    function openConcessionModal(studentId, studentName, standardFee, customFee, hasConcession, notes, reason) {
+        defaultClassFee = standardFee;
+        document.getElementById('modalStudentId').value = studentId;
+        document.getElementById('modalStudentName').value = studentName;
+        document.getElementById('modalStandardFee').value = 'PKR ' + standardFee.toLocaleString();
+        document.getElementById('modalCustomFee').value = customFee !== '' ? customFee : standardFee;
+        document.getElementById('modalHasConcession').value = hasConcession;
+        document.getElementById('modalConcessionNotes').value = notes;
+        document.getElementById('modalConcessionReason').value = reason;
+        
+        onStatusChange(hasConcession);
+        
+        document.getElementById('concessionModal').style.display = 'block';
+        document.getElementById('concessionModalOverlay').style.display = 'block';
+    }
+    
+    function closeConcessionModal() {
+        document.getElementById('concessionModal').style.display = 'none';
+        document.getElementById('concessionModalOverlay').style.display = 'none';
+    }
+
+    function onStatusChange(value) {
+        const customFeeInput = document.getElementById('modalCustomFee');
+        const notesInput = document.getElementById('modalConcessionNotes');
+        const reasonGroup = document.getElementById('modalConcessionReasonGroup');
+        const reasonSelect = document.getElementById('modalConcessionReason');
+        
+        if (value === '0') {
+            customFeeInput.value = defaultClassFee;
+            notesInput.value = '';
+            reasonSelect.value = '';
+            reasonGroup.style.display = 'none';
+        } else {
+            reasonGroup.style.display = 'block';
+            if (parseFloat(customFeeInput.value) >= defaultClassFee) {
+                customFeeInput.value = defaultClassFee * 0.5; // default 50% discount suggestion
+            }
+            if (!notesInput.value) {
+                notesInput.value = 'Fee concession';
+            }
+        }
+    }
+
+    // Quick filter check for concessions only
+    function toggleConcessionsOnly(showConcessionsOnly) {
+        const rows = document.querySelectorAll('.concessions-table tbody tr.concession-row');
+        rows.forEach(row => {
+            if (showConcessionsOnly) {
+                if (row.classList.contains('status-row-standard')) {
+                    row.style.display = 'none';
+                } else {
+                    row.style.display = '';
+                }
+            } else {
+                row.style.display = '';
+            }
+        });
+        localStorage.setItem('concessions_show_only', showConcessionsOnly ? 'true' : 'false');
+    }
+
+    // Restore checkbox state on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedVal = localStorage.getItem('concessions_show_only');
+        const showConcessionsOnly = savedVal === null ? true : savedVal === 'true';
+        const checkbox = document.getElementById('show-concessions-checkbox');
+        if (checkbox) {
+            checkbox.checked = showConcessionsOnly;
+            toggleConcessionsOnly(showConcessionsOnly);
+        }
+    });
+</script>
 
 <%- include('partials/footer') %>

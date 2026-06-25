@@ -1,0 +1,137 @@
+<%- include('partials/header') %>
+
+<% const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December']; %>
+
+<%
+    // Map attendance stats
+    let presentCount = 0;
+    let absentCount = 0;
+    let leaveCount = 0;
+    attendanceStats.forEach(stat => {
+        if (stat.status === 'present') presentCount = stat.count;
+        if (stat.status === 'absent') absentCount = stat.count;
+        if (stat.status === 'leave') leaveCount = stat.count;
+    });
+%>
+
+<div class="section-header">
+    <h1 class="section-title"><i class="bi bi-person-vcard-fill"></i> <%= employee.name %></h1>
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="/employees/edit/<%= employee.id %>" class="btn-secondary"><i class="bi bi-pencil-square"></i> Edit Profile</a>
+        <a href="/employees" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Registry</a>
+    </div>
+</div>
+
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.5rem;">
+    <div class="card kpi-card">
+        <span class="kpi-icon blue"><i class="bi bi-briefcase-fill"></i></span>
+        <span class="kpi-label">Designation</span>
+        <span class="kpi-value" style="font-size: 1.3rem; line-height: 1.2; margin-top: 0.2rem;"><%= employee.designation %></span>
+        <span class="kpi-subtitle">Role: <%= employee.role.toUpperCase() %></span>
+    </div>
+    <div class="card kpi-card">
+        <span class="kpi-icon purple"><i class="bi bi-shield-fill-check"></i></span>
+        <span class="kpi-label">Status</span>
+        <span class="kpi-value" style="font-size: 1.3rem; text-transform: uppercase;"><%= employee.status.replace('_', ' ') %></span>
+        <span class="kpi-subtitle">Onboard Status</span>
+    </div>
+    <div class="card kpi-card">
+        <span class="kpi-icon amber"><i class="bi bi-wallet2"></i></span>
+        <span class="kpi-label">Default Basic Salary</span>
+        <span class="kpi-value" style="font-size: 1.3rem;">PKR <%= parseFloat(employee.default_salary || 0).toLocaleString() %></span>
+        <span class="kpi-subtitle">Standard monthly rate</span>
+    </div>
+    <div class="card kpi-card">
+        <span class="kpi-icon green"><i class="bi bi-cash-stack"></i></span>
+        <span class="kpi-label">Total Paid in 2026</span>
+        <span class="kpi-value" style="font-size: 1.3rem;">PKR <%= totalPaid.toLocaleString() %></span>
+        <span class="kpi-subtitle">Salary + Eid Bonuses</span>
+    </div>
+</div>
+
+<div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 2rem;">
+    <!-- Personal Details -->
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-person-circle"></i> Personal & Demographic Details</h3>
+        <table class="details-table" style="width: 100%; font-size: 0.875rem;">
+            <tr><td style="font-weight: 600; padding: 6px 0; width: 45%;">Contact Email</td><td style="padding: 6px 0;"><%= employee.email || '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Phone Number</td><td style="padding: 6px 0;"><%= employee.phone || '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">CNIC Number</td><td style="padding: 6px 0;"><%= employee.cnic_number || '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Gender</td><td style="padding: 6px 0; text-transform: capitalize;"><%= employee.gender || '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Residential Address</td><td style="padding: 6px 0;"><%= employee.address || '-' %></td></tr>
+        </table>
+    </div>
+
+    <!-- Professional & Bank Details -->
+    <div class="card">
+        <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-mortarboard-fill"></i> Professional & Bank Details</h3>
+        <table class="details-table" style="width: 100%; font-size: 0.875rem;">
+            <tr><td style="font-weight: 600; padding: 6px 0; width: 45%;">Joining Date</td><td style="padding: 6px 0;"><%= employee.date_of_joining ? new Date(employee.date_of_joining).toLocaleDateString() : '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Highest Qualification</td><td style="padding: 6px 0;"><%= employee.qualification || '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Experience (Years)</td><td style="padding: 6px 0;"><%= employee.experience_years %> Year(s)</td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Bank Account Details</td><td style="padding: 6px 0;"><%= employee.bank_account_info || '-' %></td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- Attendance summary section -->
+<div class="card" style="margin-bottom: 2rem; padding: 1.25rem 1.5rem;">
+    <h3 style="margin-bottom: 1rem; color: var(--ink); display: flex; align-items: center; gap: 0.5rem;">
+        <i class="bi bi-calendar2-check-fill"></i> Attendance Summary (2026)
+    </h3>
+    <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="status-cell status-paid" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;"><i class="bi bi-check-circle-fill"></i> Presents: <%= presentCount %></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="status-cell status-unpaid" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;"><i class="bi bi-x-circle-fill"></i> Absents: <%= absentCount %></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="status-cell status-unpaid" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background-color: #fef3c7; color: #d97706;"><i class="bi bi-question-circle-fill"></i> Leaves: <%= leaveCount %></span>
+        </div>
+    </div>
+</div>
+
+<!-- Salary payment history section -->
+<div class="section-header">
+    <h2 class="section-title"><i class="bi bi-clock-history"></i> Salary Payment History</h2>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Year</th>
+                <th style="text-align: right;">Basic Salary (PKR)</th>
+                <th style="text-align: right;">Bonus (PKR)</th>
+                <th>Bonus Description</th>
+                <th style="text-align: right; font-weight: 700;">Total Paid (PKR)</th>
+                <th>Payout Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (salaries.length > 0) { %>
+                <% salaries.forEach(s => { %>
+                    <tr>
+                        <td style="font-weight: 600;"><%= monthNames[s.month - 1] %></td>
+                        <td><%= s.year %></td>
+                        <td style="text-align: right; font-weight: 600;"><%= parseFloat(s.basic_salary).toLocaleString() %></td>
+                        <td style="text-align: right; color: #16a34a;"><%= s.bonus > 0 ? 'PKR ' + parseFloat(s.bonus).toLocaleString() : '-' %></td>
+                        <td><%= s.bonus_description || '-' %></td>
+                        <td style="text-align: right; font-weight: 700; color: #15803d;">
+                            PKR <%= (parseFloat(s.basic_salary) + parseFloat(s.bonus || 0)).toLocaleString() %>
+                        </td>
+                        <td><%= new Date(s.paid_date).toLocaleDateString() %></td>
+                    </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #64748b; padding: 2rem;">No salary payroll payouts recorded yet.</td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('partials/footer') %>

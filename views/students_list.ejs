@@ -5,26 +5,34 @@
     <a href="/students/add" class="btn-primary"><i class="bi bi-person-plus-fill"></i> Add New Student</a>
 </div>
 
-<!-- Filters -->
-<form action="/students" method="GET" class="filter-bar">
-    <div class="form-group">
-        <label for="classId">Class</label>
-        <select name="classId" id="classId" class="form-control" onchange="this.form.submit()">
-            <option value="">-- All Classes --</option>
-            <% classes.forEach(c => { %>
-                <option value="<%= c.id %>" <%= classId == c.id ? 'selected' : '' %>><%= c.name %></option>
-            <% }) %>
-        </select>
-    </div>
-    
-    <div class="form-group">
-        <label for="search">Search</label>
-        <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or Reg No...">
-    </div>
-    
-    <button type="submit" class="btn-secondary">Search</button>
-    <a href="/students" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
-</form>
+<!-- Filters Collapsible Panel -->
+<details class="filter-panel" <%= (classId || search) ? 'open' : '' %>>
+    <summary>
+        <span><i class="bi bi-funnel-fill"></i> Filter & Search Students <%= (classId || search) ? '(Active)' : '' %></span>
+        <i class="bi bi-chevron-down toggle-icon"></i>
+    </summary>
+    <form action="/students" method="GET" class="filter-content">
+        <div class="form-group">
+            <label for="classId">Class</label>
+            <select name="classId" id="classId" class="form-control" onchange="this.form.submit()">
+                <option value="">-- All Classes --</option>
+                <% classes.forEach(c => { %>
+                    <option value="<%= c.id %>" <%= classId == c.id ? 'selected' : '' %>><%= c.name %></option>
+                <% }) %>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="search">Search</label>
+            <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or Reg No...">
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+            <button type="submit" class="btn-secondary" style="height: 38px;">Search</button>
+            <a href="/students" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
+        </div>
+    </form>
+</details>
 
 <!-- Table -->
 <div class="table-container">

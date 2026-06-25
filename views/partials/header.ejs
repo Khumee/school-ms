@@ -44,10 +44,12 @@
                             <a href="/salaries"><i class="bi bi-wallet2"></i> Salaries/Payroll</a>
                         </div>
                     </li>
-                    <li class="user-menu">
-                        <span class="user-greeting"><i class="bi bi-person-circle"></i> Hi, <%= session.username %></span>
-                        <a href="/change-password" class="btn-secondary nav-btn"><i class="bi bi-key-fill"></i> Password</a>
-                        <a href="/logout" class="btn-danger nav-btn"><i class="bi bi-box-arrow-right"></i> Logout</a>
+                    <li class="dropdown user-menu dropdown-right">
+                        <a href="#" class="dropbtn"><i class="bi bi-person-circle"></i> Hi, <%= session.username %> <i class="bi bi-chevron-down" style="font-size: 0.75rem; margin-left: 0.2rem;"></i></a>
+                        <div class="dropdown-content">
+                            <a href="/change-password"><i class="bi bi-key-fill"></i> Change Password</a>
+                            <a href="/logout" style="color: #b91c1c;"><i class="bi bi-box-arrow-right"></i> Logout</a>
+                        </div>
                     </li>
                 </ul>
             </div>

@@ -11,12 +11,33 @@ function monthKey(date) {
     return `${d.getFullYear()}-${d.getMonth() + 1}`;
 }
 
-// GET /donations - modern overview (this month's activity + lapsed recurring donors)
+// GET /donations - modern overview (this month's activity + lapsed recurring donors + search donors)
 router.get('/donations', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
+        const { searchDonor } = req.query;
 
-        const [donors] = await db.execute('SELECT * FROM donors WHERE tenant_id = ? ORDER BY name ASC', [tenantId]);
+        // Fetch all donors (filtered if searchDonor is provided)
+        let donorsQuery = 'SELECT * FROM donors WHERE tenant_id = ?';
+        const donorsParams = [tenantId];
+        if (searchDonor) {
+            donorsQuery += ' AND (name LIKE ? OR referred_by LIKE ?)';
+            donorsParams.push(`%${searchDonor}%`, `%${searchDonor}%`);
+        }
+        donorsQuery += ' ORDER BY name ASC';
+        const [donors] = await db.execute(donorsQuery, donorsParams);
+
+        // Fetch top 5 highest paying donors
+        const [topDonors] = await db.execute(
+            `SELECT d.id, d.name, COALESCE(SUM(dn.amount), 0) as total_amount 
+             FROM donors d 
+             JOIN donations dn ON d.id = dn.donor_id
+             WHERE d.tenant_id = ? 
+             GROUP BY d.id 
+             ORDER BY total_amount DESC 
+             LIMIT 5`,
+            [tenantId]
+        );
 
         const [allDonations] = await db.execute(
             `SELECT d.*, dn.name as donor_name, dn.contact_no, dn.referred_by
@@ -56,7 +77,8 @@ router.get('/donations', isAuthenticated, async (req, res) => {
         });
 
         const donorById = {};
-        donors.forEach(d => { donorById[d.id] = d; });
+        const [allDonorsForLookup] = await db.execute('SELECT * FROM donors WHERE tenant_id = ?', [tenantId]);
+        allDonorsForLookup.forEach(d => { donorById[d.id] = d; });
 
         const lapsedDonors = lapsedDonorIds.map(donorId => {
             const lastDonation = allDonations.find(d => String(d.donor_id) === String(donorId));
@@ -76,8 +98,10 @@ router.get('/donations', isAuthenticated, async (req, res) => {
             thisMonthDonorCount,
             lapsedDonors,
             totalAllTime,
-            totalDonorCount: donors.length,
-            fundLabels: FUND_LABELS
+            totalDonorCount: allDonorsForLookup.length,
+            fundLabels: FUND_LABELS,
+            topDonors,
+            searchDonor: searchDonor || ''
         });
     } catch (err) {
         console.error(err);
@@ -227,6 +251,21 @@ router.get('/donations/receipt/:id', isAuthenticated, async (req, res) => {
         if (rows.length === 0) return res.status(404).send('Donation not found.');
         const donation = rows[0];
 
+        // Fetch last 5 donations for this donor starting from Jan 1, 2026
+        const [recentDonations] = await db.execute(
+            `SELECT id, amount, date FROM donations 
+             WHERE donor_id = ? AND tenant_id = ? AND date >= '2026-01-01' 
+             ORDER BY date DESC, id DESC LIMIT 5`,
+            [donation.donor_id, tenantId]
+        );
+
+        // Fetch total donation for this donor starting from Jan 1, 2026
+        const [[{ total_donated_2026 }]] = await db.execute(
+            `SELECT COALESCE(SUM(amount), 0) as total_donated_2026 FROM donations 
+             WHERE donor_id = ? AND tenant_id = ? AND date >= '2026-01-01'`,
+            [donation.donor_id, tenantId]
+        );
+
         const tenantForPdf = { ...req.tenant, logo_url: resolvePublicAsset(req.tenant.logo_url) };
 
         renderPdf(res, {
@@ -236,7 +275,9 @@ router.get('/donations/receipt/:id', isAuthenticated, async (req, res) => {
                 donor: { name: donation.donor_name, contact_no: donation.contact_no, referred_by: donation.referred_by },
                 donation,
                 fundCategoryLabel: FUND_LABELS[donation.fund_category] || donation.fund_category,
-                dateFormatted: new Date(donation.date).toLocaleDateString('en-GB')
+                dateFormatted: new Date(donation.date).toLocaleDateString('en-GB'),
+                recentDonations,
+                total_donated_2026
             },
             fileBaseName: `donation_receipt_${donation.id}`,
             downloadName: `donation-receipt-${donation.donor_name}-${donation.id}.pdf`

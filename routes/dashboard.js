@@ -13,12 +13,15 @@ router.get('/', isAuthenticated, async (req, res) => {
         const [[{ support_students }]] = await db.execute('SELECT COUNT(*) as support_students FROM students WHERE tenant_id = ? AND has_concession = 1', [tenantId]);
         const [[{ paying_students }]] = await db.execute('SELECT COUNT(*) as paying_students FROM students WHERE tenant_id = ? AND has_concession = 0', [tenantId]);
 
-        // 2. Fetch Employee Metrics
-        const [[{ payroll_teachers }]] = await db.execute("SELECT COUNT(*) as payroll_teachers FROM employees WHERE tenant_id = ? AND role = 'teacher' AND status = 'on_payroll'", [tenantId]);
-        const [[{ volunteer_teachers }]] = await db.execute("SELECT COUNT(*) as volunteer_teachers FROM employees WHERE tenant_id = ? AND role = 'teacher' AND status = 'volunteer'", [tenantId]);
-        
-        const [[{ payroll_admins }]] = await db.execute("SELECT COUNT(*) as payroll_admins FROM employees WHERE tenant_id = ? AND role = 'admin' AND status = 'on_payroll'", [tenantId]);
-        const [[{ volunteer_admins }]] = await db.execute("SELECT COUNT(*) as volunteer_admins FROM employees WHERE tenant_id = ? AND role = 'admin' AND status = 'volunteer'", [tenantId]);
+        // 2. Fetch New Admissions and Hifz Students Metrics
+        const [[{ new_admissions }]] = await db.execute(
+            'SELECT COUNT(*) as new_admissions FROM students WHERE tenant_id = ? AND (YEAR(date_of_admission) = 2026 OR date_of_admission IS NULL)',
+            [tenantId]
+        );
+        const [[{ hifz_students }]] = await db.execute(
+            'SELECT COUNT(*) as hifz_students FROM students s JOIN classes c ON s.class_id = c.id WHERE s.tenant_id = ? AND c.name LIKE "%Hifz%"',
+            [tenantId]
+        );
 
         // 3. Fetch Monthly Financial Summaries for 2026
         const monthsData = [];
@@ -102,10 +105,8 @@ router.get('/', isAuthenticated, async (req, res) => {
             total_students,
             support_students,
             paying_students,
-            payroll_teachers,
-            volunteer_teachers,
-            payroll_admins,
-            volunteer_admins,
+            new_admissions,
+            hifz_students,
             monthsData,
             carryForward,
             totalIncomeAllTime,

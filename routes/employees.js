@@ -35,6 +35,37 @@ router.get('/employees', isAuthenticated, async (req, res) => {
     }
 });
 
+// GET /employees/view/:id - profile + salary history + attendance stats
+router.get('/employees/view/:id', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const [employees] = await db.execute(
+            'SELECT * FROM employees WHERE id = ? AND tenant_id = ? LIMIT 1',
+            [req.params.id, tenantId]
+        );
+        if (employees.length === 0) return res.status(404).send('Employee not found.');
+        
+        const employee = employees[0];
+        
+        const [salaries] = await db.execute(
+            'SELECT * FROM salaries WHERE employee_id = ? AND tenant_id = ? ORDER BY year DESC, month DESC',
+            [req.params.id, tenantId]
+        );
+        
+        const [attendanceStats] = await db.execute(
+            'SELECT status, COUNT(*) as count FROM attendance_employees WHERE employee_id = ? AND tenant_id = ? GROUP BY status',
+            [req.params.id, tenantId]
+        );
+
+        const totalPaid = salaries.reduce((sum, s) => sum + parseFloat(s.basic_salary) + parseFloat(s.bonus || 0), 0);
+        
+        res.render('employee_view', { employee, salaries, attendanceStats, totalPaid });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading employee profile.');
+    }
+});
+
 // GET /employees/add - form
 router.get('/employees/add', isAuthenticated, (req, res) => {
     res.render('employee_add', { error: null });

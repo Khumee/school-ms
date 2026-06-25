@@ -143,6 +143,28 @@
             <span class="value">PKR <%= Number(donation.amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
         </div>
 
+        <h4 style="margin: 20px 0 8px 0; font-size: 13px; text-transform: uppercase; color: <%= tenant.primary_color || '#4f46e5' %>; letter-spacing: 0.05em; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">Donation Summary (Since Jan 1, 2026)</h4>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 11px;">
+            <thead>
+                <tr style="background-color: #f8fafc; font-weight: 600; color: #475569;">
+                    <th style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: left;">Date</th>
+                    <th style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right;">Amount (PKR)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% recentDonations.forEach(d => { %>
+                    <tr style="<%= d.id === donation.id ? 'background-color: #fdf2f8;' : '' %>">
+                        <td style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: left;"><%= new Date(d.date).toLocaleDateString('en-GB') %> <%= d.id === donation.id ? '(This Payment)' : '' %></td>
+                        <td style="padding: 6px 8px; border: 1px solid #e2e8f0; text-align: right; font-weight: 600;">PKR <%= Number(d.amount).toLocaleString('en-US', {minimumFractionDigits: 2}) %></td>
+                    </tr>
+                <% }) %>
+                <tr style="background-color: #f1f5f9; font-weight: 700; color: #0f172a;">
+                    <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: left;">Total Donated in 2026</td>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: right;">PKR <%= Number(total_donated_2026).toLocaleString('en-US', {minimumFractionDigits: 2}) %></td>
+                </tr>
+            </tbody>
+        </table>
+
         <p class="thanks">"On behalf of <%= tenant.school_name %>, we sincerely thank you for your generous contribution."</p>
 
         <p class="footer-note">This is a computer-generated receipt from <%= tenant.school_name %>.</p>

@@ -5,36 +5,44 @@
     <a href="/employees/add" class="btn-primary"><i class="bi bi-person-plus-fill"></i> Add New Employee</a>
 </div>
 
-<!-- Filters -->
-<form action="/employees" method="GET" class="filter-bar">
-    <div class="form-group">
-        <label for="role">Role Type</label>
-        <select name="role" id="role" class="form-control" onchange="this.form.submit()">
-            <option value="">-- All Roles --</option>
-            <option value="teacher" <%= role === 'teacher' ? 'selected' : '' %>>Teacher</option>
-            <option value="admin" <%= role === 'admin' ? 'selected' : '' %>>Administrator</option>
-            <option value="support" <%= role === 'support' ? 'selected' : '' %>>Support Staff</option>
-        </select>
-    </div>
-    
-    <div class="form-group">
-        <label for="status">Payroll Status</label>
-        <select name="status" id="status" class="form-control" onchange="this.form.submit()">
-            <option value="">-- All Statuses --</option>
-            <option value="on_payroll" <%= status === 'on_payroll' ? 'selected' : '' %>>On Payroll</option>
-            <option value="volunteer" <%= status === 'volunteer' ? 'selected' : '' %>>Volunteer</option>
-            <option value="inactive" <%= status === 'inactive' ? 'selected' : '' %>>Inactive</option>
-        </select>
-    </div>
-    
-    <div class="form-group">
-        <label for="search">Search</label>
-        <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or designation...">
-    </div>
-    
-    <button type="submit" class="btn-secondary">Search</button>
-    <a href="/employees" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
-</form>
+<!-- Filters Collapsible Panel -->
+<details class="filter-panel" <%= (role || status || search) ? 'open' : '' %>>
+    <summary>
+        <span><i class="bi bi-funnel-fill"></i> Filter & Search Employees <%= (role || status || search) ? '(Active)' : '' %></span>
+        <i class="bi bi-chevron-down toggle-icon"></i>
+    </summary>
+    <form action="/employees" method="GET" class="filter-content">
+        <div class="form-group">
+            <label for="role">Role Type</label>
+            <select name="role" id="role" class="form-control" onchange="this.form.submit()">
+                <option value="">-- All Roles --</option>
+                <option value="teacher" <%= role === 'teacher' ? 'selected' : '' %>>Teacher</option>
+                <option value="admin" <%= role === 'admin' ? 'selected' : '' %>>Administrator</option>
+                <option value="support" <%= role === 'support' ? 'selected' : '' %>>Support Staff</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="status">Payroll Status</label>
+            <select name="status" id="status" class="form-control" onchange="this.form.submit()">
+                <option value="">-- All Statuses --</option>
+                <option value="on_payroll" <%= status === 'on_payroll' ? 'selected' : '' %>>On Payroll</option>
+                <option value="volunteer" <%= status === 'volunteer' ? 'selected' : '' %>>Volunteer</option>
+                <option value="inactive" <%= status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="search">Search</label>
+            <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or designation...">
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+            <button type="submit" class="btn-secondary" style="height: 38px;">Search</button>
+            <a href="/employees" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
+        </div>
+    </form>
+</details>
 
 <!-- Table -->
 <div class="table-container">
@@ -54,7 +62,7 @@
             <% if (employees.length > 0) { %>
                 <% employees.forEach(e => { %>
                     <tr>
-                        <td style="font-weight: 600;"><%= e.name %></td>
+                        <td style="font-weight: 600;"><a href="/employees/view/<%= e.id %>" style="color: var(--primary-color, #3b82f6); text-decoration: none; hover: underline;"><%= e.name %></a></td>
                         <td><%= e.designation %></td>
                         <td><%= e.role.toUpperCase() %></td>
                         <td>
@@ -66,6 +74,7 @@
                         <td><%= e.date_of_joining ? new Date(e.date_of_joining).toLocaleDateString() : '-' %></td>
                         <td>
                             <div style="display: flex; gap: 0.5rem;">
+                                <a href="/employees/view/<%= e.id %>" class="btn-secondary nav-btn"><i class="bi bi-person-vcard-fill"></i> View</a>
                                 <a href="/employees/edit/<%= e.id %>" class="btn-secondary nav-btn"><i class="bi bi-pencil-square"></i> Edit</a>
                                 <form action="/employees/delete/<%= e.id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this employee?')">
                                     <button type="submit" class="btn-danger nav-btn"><i class="bi bi-trash3-fill"></i> Delete</button>

@@ -1,31 +1,227 @@
 <%- include('partials/header') %>
 
+<%
+    // Current month settings
+    const activeMonthNum = new Date().getMonth() + 1; // Month 6 (June)
+    const monthsList = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const activeMonthName = monthsList[activeMonthNum - 1];
+
+    // Compute simple view statistics
+    let totalExpected = 0;
+    let totalCollected = 0;
+    let paidCount = 0;
+    let defaulterCount = 0;
+
+    students.forEach(s => {
+        const expectedFee = s.custom_monthly_fee !== null ? s.custom_monthly_fee : (s.default_monthly_fee || 0);
+        totalExpected += parseFloat(expectedFee);
+        
+        const payObj = paymentMap[s.id] && paymentMap[s.id][activeMonthNum];
+        if (payObj && payObj.amount_paid > 0) {
+            totalCollected += parseFloat(payObj.amount_paid);
+            paidCount++;
+        } else {
+            defaulterCount++;
+        }
+    });
+%>
+
 <div class="section-header">
-    <h1 class="section-title"><i class="bi bi-cash-coin"></i> 2026 Monthly Fee Ledger Matrix</h1>
+    <h1 class="section-title"><i class="bi bi-cash-coin"></i> Monthly Fee Ledger</h1>
 </div>
 
-<!-- Filters -->
-<form action="/fees/ledger" method="GET" class="filter-bar">
-    <div class="form-group">
-        <label for="classId">Class</label>
-        <select name="classId" id="classId" class="form-control" onchange="this.form.submit()">
-            <option value="">-- All Classes --</option>
-            <% classes.forEach(c => { %>
-                <option value="<%= c.id %>" <%= classId == c.id ? 'selected' : '' %>><%= c.name %></option>
-            <% }) %>
-        </select>
-    </div>
-    
-    <div class="form-group">
-        <label for="search">Search</label>
-        <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or Reg No...">
-    </div>
-    
-    <button type="submit" class="btn-secondary">Search</button>
-    <a href="/fees/ledger" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
-</form>
+<!-- Filters Collapsible Panel -->
+<details class="filter-panel" <%= (classId || search) ? 'open' : '' %>>
+    <summary>
+        <span><i class="bi bi-funnel-fill"></i> Filter & Search Fees <%= (classId || search) ? '(Active)' : '' %></span>
+        <i class="bi bi-chevron-down toggle-icon"></i>
+    </summary>
+    <form action="/fees/ledger" method="GET" class="filter-content">
+        <input type="hidden" name="view" id="filter-view-input" value="simple">
+        <div class="form-group">
+            <label for="classId">Class</label>
+            <select name="classId" id="classId" class="form-control" onchange="this.form.submit()">
+                <option value="">-- All Classes --</option>
+                <% classes.forEach(c => { %>
+                    <option value="<%= c.id %>" <%= classId == c.id ? 'selected' : '' %>><%= c.name %></option>
+                <% }) %>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="search">Search</label>
+            <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or Reg No...">
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+            <button type="submit" class="btn-secondary" style="height: 38px;">Search</button>
+            <a href="/fees/ledger" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
+        </div>
+    </form>
+</details>
 
-<!-- Payment Modal (Hidden by Default) -->
+<!-- View Toggles (Tabs) -->
+<div class="nav-tabs" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem;">
+    <button class="nav-tab active" id="tab-simple-btn" onclick="switchTab('simple')"><i class="bi bi-list-task"></i> Simple View (<%= activeMonthName %>)</button>
+    <button class="nav-tab" id="tab-matrix-btn" onclick="switchTab('matrix')"><i class="bi bi-grid-3x3-gap-fill"></i> Full Year Matrix</button>
+</div>
+
+<!-- Tab 1: Simple View Pane -->
+<div id="pane-simple">
+    <!-- Quick Statistics Grid -->
+    <div class="kpi-grid" style="margin-bottom: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+        <div class="card kpi-card" style="padding: 1rem;">
+            <span class="kpi-label">Month Collection Progress</span>
+            <span class="kpi-value" style="font-size: 1.4rem;">PKR <%= totalCollected.toLocaleString() %> / <%= totalExpected.toLocaleString() %></span>
+            <span class="kpi-subtitle">Progress Rate: <%= totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100) : 0 %>%</span>
+        </div>
+        <div class="card kpi-card" style="padding: 1rem;">
+            <span class="kpi-label">Paid Students</span>
+            <span class="kpi-value" style="font-size: 1.4rem; color: #16a34a;"><%= paidCount %> / <%= students.length %></span>
+            <span class="kpi-subtitle">Received this month</span>
+        </div>
+        <div class="card kpi-card" style="padding: 1rem;">
+            <span class="kpi-label">Defaulters</span>
+            <span class="kpi-value" style="font-size: 1.4rem; color: #dc2626;"><%= defaulterCount %></span>
+            <span class="kpi-subtitle">Awaiting payment</span>
+        </div>
+    </div>
+
+    <!-- Quick filter checkbox -->
+    <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="show-defaulters-checkbox" onchange="toggleDefaultersOnly(this.checked)" style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="show-defaulters-checkbox" style="font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--ink);">Show Defaulters Only</label>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--muted); font-weight: 600;">
+            Showing <%= students.length %> students
+        </div>
+    </div>
+
+    <!-- Simple Table -->
+    <div class="table-container">
+        <table class="simple-ledger-table">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Reg No</th>
+                    <th style="text-align: left;">Student Name</th>
+                    <th style="text-align: left;">Class</th>
+                    <th style="text-align: right;">Monthly Fee</th>
+                    <th style="text-align: right;">Amount Paid</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (students.length > 0) { %>
+                    <% students.forEach(s => { %>
+                        <% 
+                            const expectedFee = s.custom_monthly_fee !== null ? s.custom_monthly_fee : (s.default_monthly_fee || 0);
+                            const payObj = paymentMap[s.id] && paymentMap[s.id][activeMonthNum];
+                            const isPaid = payObj && payObj.amount_paid > 0;
+                        %>
+                        <tr class="student-row <%= isPaid ? 'status-row-paid' : 'status-row-unpaid' %>">
+                            <td style="font-weight: 600; text-align: left;"><%= s.reg_no %></td>
+                            <td style="text-align: left; font-weight: 500;"><%= s.name %></td>
+                            <td style="text-align: left;"><%= s.class_name || 'Unassigned' %></td>
+                            <td style="text-align: right; font-weight: 600;">PKR <%= expectedFee.toLocaleString() %></td>
+                            <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                                <%= isPaid ? 'PKR ' + payObj.amount_paid.toLocaleString() : '-' %>
+                            </td>
+                            <td>
+                                <% if (isPaid) { %>
+                                    <span class="status-cell status-paid"><i class="bi bi-check-circle-fill"></i> PAID</span>
+                                <% } else { %>
+                                    <span class="status-cell status-unpaid"><i class="bi bi-exclamation-triangle-fill"></i> DEFAULTER</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 0.4rem; justify-content: center;">
+                                    <% if (isPaid) { %>
+                                        <a href="/fees/receipt/<%= payObj.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
+                                        <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, <%= payObj.amount_paid %>, <%= expectedFee %>)"><i class="bi bi-pencil-fill"></i> Edit</button>
+                                    <% } else { %>
+                                        <button type="button" class="btn-primary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= expectedFee %>)"><i class="bi bi-credit-card-fill"></i> Collect</button>
+                                    <% } %>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #64748b; padding: 2rem;">No students found.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Tab 2: Full Year Matrix Pane -->
+<div id="pane-matrix" style="display: none;">
+    <div class="table-container">
+        <table class="matrix-table">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Reg No</th>
+                    <th style="text-align: left; min-width: 150px;">Student Name</th>
+                    <th style="text-align: left;">Due Fee</th>
+                    <th>Jan</th>
+                    <th>Feb</th>
+                    <th>Mar</th>
+                    <th>Apr</th>
+                    <th>May</th>
+                    <th>Jun</th>
+                    <th>Jul</th>
+                    <th>Aug</th>
+                    <th>Sep</th>
+                    <th>Oct</th>
+                    <th>Nov</th>
+                    <th>Dec</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (students.length > 0) { %>
+                    <% students.forEach(s => { %>
+                        <% 
+                            const expectedFee = s.custom_monthly_fee !== null ? s.custom_monthly_fee : (s.default_monthly_fee || 0);
+                            const studentPayments = paymentMap[s.id] || {};
+                        %>
+                        <tr>
+                            <td style="font-weight: 600; text-align: left;"><%= s.reg_no %></td>
+                            <td style="text-align: left;"><%= s.name %></td>
+                            <td style="text-align: left; font-weight: 600; color: <%= s.has_concession ? '#b91c1c' : '#1e293b' %>">
+                                <%= expectedFee.toLocaleString() %>
+                            </td>
+                            
+                            <% for (let m = 1; m <= 12; m++) { %>
+                                <% 
+                                    const payObj = studentPayments[m];
+                                    const amtPaid = payObj ? payObj.amount_paid : undefined;
+                                %>
+                                <% if (amtPaid !== undefined && amtPaid > 0) { %>
+                                    <td class="status-cell status-paid cell-amount" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= m %>, <%= amtPaid %>, <%= expectedFee %>)">
+                                        <%= amtPaid %>
+                                    </td>
+                                <% } else { %>
+                                    <td class="status-cell status-unpaid" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= m %>, '', <%= expectedFee %>)">
+                                        -
+                                    </td>
+                                <% } %>
+                            <% } %>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="15" style="text-align: center; color: #64748b;">No students found.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Payment Modal -->
 <div id="paymentModal" class="card" style="display: none; max-width: 400px; margin: 1rem auto; position: fixed; top: 20%; left: 50%; transform: translate(-50%, 0); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
     <h3 style="margin-bottom: 1rem;" id="modalTitle">Record Payment</h3>
     <form action="/fees/pay" method="POST">
@@ -46,65 +242,6 @@
 </div>
 <div id="modalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeModal()"></div>
 
-<!-- Table Matrix -->
-<div class="table-container">
-    <table class="matrix-table">
-        <thead>
-            <tr>
-                <th style="text-align: left;">Reg No</th>
-                <th style="text-align: left; min-width: 150px;">Student Name</th>
-                <th style="text-align: left;">Due Fee</th>
-                <th>Jan</th>
-                <th>Feb</th>
-                <th>Mar</th>
-                <th>Apr</th>
-                <th>May</th>
-                <th>Jun</th>
-                <th>Jul</th>
-                <th>Aug</th>
-                <th>Sep</th>
-                <th>Oct</th>
-                <th>Nov</th>
-                <th>Dec</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% if (students.length > 0) { %>
-                <% students.forEach(s => { %>
-                    <% 
-                        const expectedFee = s.custom_monthly_fee !== null ? s.custom_monthly_fee : (s.default_monthly_fee || 0);
-                        const studentPayments = paymentMap[s.id] || {};
-                    %>
-                    <tr>
-                        <td style="font-weight: 600; text-align: left;"><%= s.reg_no %></td>
-                        <td style="text-align: left;"><%= s.name %></td>
-                        <td style="text-align: left; font-weight: 600; color: <%= s.has_concession ? '#b91c1c' : '#1e293b' %>">
-                            <%= expectedFee.toLocaleString() %>
-                        </td>
-                        
-                        <% for (let m = 1; m <= 12; m++) { %>
-                            <% const amtPaid = studentPayments[m]; %>
-                            <% if (amtPaid !== undefined && amtPaid > 0) { %>
-                                <td class="status-cell status-paid cell-amount" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= m %>, <%= amtPaid %>, <%= expectedFee %>)">
-                                    <%= amtPaid %>
-                                </td>
-                            <% } else { %>
-                                <td class="status-cell status-unpaid" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= m %>, '', <%= expectedFee %>)">
-                                    -
-                                </td>
-                            <% } %>
-                        <% } %>
-                    </tr>
-                <% }) %>
-            <% } else { %>
-                <tr>
-                    <td colspan="15" style="text-align: center; color: #64748b;">No students found.</td>
-                </tr>
-            <% } %>
-        </tbody>
-    </table>
-</div>
-
 <script>
     function openPaymentModal(studentId, studentName, month, currentAmount, expectedFee) {
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -122,6 +259,61 @@
         document.getElementById('paymentModal').style.display = 'none';
         document.getElementById('modalOverlay').style.display = 'none';
     }
+
+    // Tabs switching logic
+    function switchTab(tabType) {
+        const simpleBtn = document.getElementById('tab-simple-btn');
+        const matrixBtn = document.getElementById('tab-matrix-btn');
+        const simplePane = document.getElementById('pane-simple');
+        const matrixPane = document.getElementById('pane-matrix');
+        const filterViewInput = document.getElementById('filter-view-input');
+
+        if (tabType === 'simple') {
+            simpleBtn.classList.add('active');
+            matrixBtn.classList.remove('active');
+            simplePane.style.display = 'block';
+            matrixPane.style.display = 'none';
+            if (filterViewInput) filterViewInput.value = 'simple';
+            localStorage.setItem('fees_ledger_view', 'simple');
+        } else {
+            matrixBtn.classList.add('active');
+            simpleBtn.classList.remove('active');
+            matrixPane.style.display = 'block';
+            simplePane.style.display = 'none';
+            if (filterViewInput) filterViewInput.value = 'matrix';
+            localStorage.setItem('fees_ledger_view', 'matrix');
+        }
+    }
+
+    // Quick filter check for defaulters
+    function toggleDefaultersOnly(showDefaultersOnly) {
+        const rows = document.querySelectorAll('.simple-ledger-table tbody tr.student-row');
+        rows.forEach(row => {
+            if (showDefaultersOnly) {
+                if (row.classList.contains('status-row-paid')) {
+                    row.style.display = 'none';
+                } else {
+                    row.style.display = '';
+                }
+            } else {
+                row.style.display = '';
+            }
+        });
+        localStorage.setItem('fees_ledger_show_defaulters', showDefaultersOnly ? 'true' : 'false');
+    }
+
+    // Restore tab preference and checkbox state on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedView = localStorage.getItem('fees_ledger_view') || 'simple';
+        switchTab(savedView);
+
+        const showDefaultersOnly = localStorage.getItem('fees_ledger_show_defaulters') === 'true';
+        const checkbox = document.getElementById('show-defaulters-checkbox');
+        if (checkbox) {
+            checkbox.checked = showDefaultersOnly;
+            toggleDefaultersOnly(showDefaultersOnly);
+        }
+    });
 </script>
 
 <%- include('partials/footer') %>
