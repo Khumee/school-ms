@@ -117,7 +117,10 @@
                 </div>
                 <div class="form-group">
                     <label for="payment_method">Payment Method</label>
-                    <input type="text" id="payment_method" name="payment_method" class="form-control" value="Cash">
+                    <select id="payment_method" name="payment_method" class="form-control">
+                        <option value="Cash">Cash</option>
+                        <option value="Online">Online</option>
+                    </select>
                 </div>
             </div>
             <button type="submit" class="btn-primary"><i class="bi bi-check-circle-fill"></i> Log Donation</button>
@@ -185,8 +188,8 @@
         </thead>
         <tbody>
             <% if (recentThisMonth.length > 0) { %>
-                <% recentThisMonth.forEach(d => { %>
-                    <tr class="recent-donation-row">
+                <% recentThisMonth.forEach((d, idx) => { %>
+                    <tr class="recent-donation-row <%= idx >= 10 ? 'recent-donation-hidden' : '' %>" style="<%= idx >= 10 ? 'display: none;' : '' %>">
                         <td class="recent-donor-name" style="font-weight: 600;"><a href="/donations/donor/<%= d.donor_id %>" style="color: var(--primary-color); text-decoration: none;"><%= d.donor_name %></a></td>
                         <td><%= new Date(d.date).toLocaleDateString() %></td>
                         <td style="text-align: right; font-weight: 600; color: #15803d;"><%= parseFloat(d.amount).toLocaleString() %></td>
@@ -212,6 +215,14 @@
         </tbody>
     </table>
 </div>
+
+<% if (recentThisMonth.length > 10) { %>
+    <div style="text-align: center; margin-top: 1rem;">
+        <button type="button" id="btn-show-more-recent" class="btn-secondary" style="font-size: 0.9rem; padding: 0.5rem 1.5rem;" onclick="showAllRecentDonations()">
+            <i class="bi bi-chevron-down"></i> Show All Recent Donations (<%= recentThisMonth.length - 10 %> more)
+        </button>
+    </div>
+<% } %>
 
 <!-- Donors Directory & Search Collapsible Panel -->
 <details id="donors-directory-panel" class="ledger-details" <%= searchDonor ? 'open' : '' %> style="margin-top: 2rem;">
@@ -244,8 +255,8 @@
                 </thead>
                 <tbody>
                     <% if (donors.length > 0) { %>
-                        <% donors.forEach(d => { %>
-                            <tr>
+                        <% donors.forEach((d, idx) => { %>
+                            <tr class="donor-directory-row <%= idx >= 10 ? 'donor-directory-hidden' : '' %>" style="<%= idx >= 10 ? 'display: none;' : '' %>">
                                 <td style="font-weight: 600;"><a href="/donations/donor/<%= d.id %>" style="color: var(--primary-color, #4f46e5); text-decoration: none;"><%= d.name %></a></td>
                                 <td><%= d.contact_no || '-' %></td>
                                 <td><%= d.referred_by || '-' %></td>
@@ -265,6 +276,14 @@
                 </tbody>
             </table>
         </div>
+        
+        <% if (donors.length > 10) { %>
+            <div style="text-align: center; margin-top: 1rem;">
+                <button type="button" id="btn-show-more-donors" class="btn-secondary" style="font-size: 0.9rem; padding: 0.5rem 1.5rem;" onclick="showAllDonors()">
+                    <i class="bi bi-chevron-down"></i> Show All Donors (<%= donors.length - 10 %> more)
+                </button>
+            </div>
+        <% } %>
     </div>
 </details>
 
@@ -291,7 +310,10 @@
         </div>
         <div class="form-group" style="margin-bottom: 1rem;">
             <label>Payment Method</label>
-            <input type="text" id="editPaymentMethod" name="payment_method" class="form-control">
+            <select id="editPaymentMethod" name="payment_method" class="form-control">
+                <option value="Cash">Cash</option>
+                <option value="Online">Online</option>
+            </select>
         </div>
         <div class="form-group" style="margin-bottom: 1.5rem;">
             <label>Notes</label>
@@ -359,6 +381,24 @@
         document.getElementById('editDonorModalOverlay').style.display = 'none';
     }
 
+    function showAllRecentDonations() {
+        const hiddenRows = document.querySelectorAll('.recent-donation-hidden');
+        hiddenRows.forEach(row => {
+            row.style.display = '';
+        });
+        const btn = document.getElementById('btn-show-more-recent');
+        if (btn) btn.style.display = 'none';
+    }
+
+    function showAllDonors() {
+        const hiddenRows = document.querySelectorAll('.donor-directory-hidden');
+        hiddenRows.forEach(row => {
+            row.style.display = '';
+        });
+        const btn = document.getElementById('btn-show-more-donors');
+        if (btn) btn.style.display = 'none';
+    }
+
     // Custom Searchable Dropdown
     document.addEventListener('DOMContentLoaded', function() {
         const donorSearch = document.getElementById('donor_search');
@@ -375,14 +415,24 @@
             searchRecent.addEventListener('input', function(e) {
                 const query = e.target.value.toLowerCase().trim();
                 const rows = document.querySelectorAll('.recent-donation-row');
-                rows.forEach(row => {
+                const showMoreBtn = document.getElementById('btn-show-more-recent');
+                
+                rows.forEach((row, idx) => {
                     const name = row.querySelector('.recent-donor-name').textContent.toLowerCase();
                     if (name.includes(query)) {
-                        row.style.display = '';
+                        if (query !== '') {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = idx >= 10 ? 'none' : '';
+                        }
                     } else {
                         row.style.display = 'none';
                     }
                 });
+                
+                if (showMoreBtn) {
+                    showMoreBtn.style.display = query !== '' ? 'none' : '';
+                }
             });
         }
 
