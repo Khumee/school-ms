@@ -70,17 +70,17 @@
 <div id="pane-simple">
     <!-- Quick Statistics Grid -->
     <div class="kpi-grid" style="margin-bottom: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-        <div class="card kpi-card" style="padding: 1rem;">
+        <div class="card kpi-card" style="padding: 1rem; cursor: pointer;" onclick="filterByStatus('all')" title="Click to show all students">
             <span class="kpi-label">Month Collection Progress</span>
             <span class="kpi-value" style="font-size: 1.4rem;">PKR <%= totalCollected.toLocaleString() %> / <%= totalExpected.toLocaleString() %></span>
             <span class="kpi-subtitle">Progress Rate: <%= totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100) : 0 %>%</span>
         </div>
-        <div class="card kpi-card" style="padding: 1rem;">
+        <div class="card kpi-card" style="padding: 1rem; cursor: pointer;" onclick="filterByStatus('paid')" title="Click to show paid students only">
             <span class="kpi-label">Paid Students</span>
             <span class="kpi-value" style="font-size: 1.4rem; color: #16a34a;"><%= paidCount %> / <%= students.length %></span>
             <span class="kpi-subtitle">Received this month</span>
         </div>
-        <div class="card kpi-card" style="padding: 1rem;">
+        <div class="card kpi-card" style="padding: 1rem; cursor: pointer;" onclick="filterByStatus('unpaid')" title="Click to show defaulters only">
             <span class="kpi-label">Defaulters</span>
             <span class="kpi-value" style="font-size: 1.4rem; color: #dc2626;"><%= defaulterCount %></span>
             <span class="kpi-subtitle">Awaiting payment</span>
@@ -431,6 +431,38 @@
             }
         });
         localStorage.setItem('fees_ledger_show_defaulters', showDefaultersOnly ? 'true' : 'false');
+    }
+
+    // Filter table by paid/unpaid status
+    function filterByStatus(status) {
+        const checkbox = document.getElementById('show-defaulters-checkbox');
+        const rows = document.querySelectorAll('.simple-ledger-table tbody tr.student-row');
+        
+        if (status === 'all') {
+            if (checkbox) checkbox.checked = false;
+            rows.forEach(row => row.style.display = '');
+            localStorage.setItem('fees_ledger_show_defaulters', 'false');
+        } else if (status === 'paid') {
+            if (checkbox) checkbox.checked = false;
+            rows.forEach(row => {
+                if (row.classList.contains('status-row-paid')) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            localStorage.setItem('fees_ledger_show_defaulters', 'false');
+        } else if (status === 'unpaid') {
+            if (checkbox) checkbox.checked = true;
+            rows.forEach(row => {
+                if (row.classList.contains('status-row-unpaid')) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            localStorage.setItem('fees_ledger_show_defaulters', 'true');
+        }
     }
 
     // Restore tab preference and checkbox state on load
