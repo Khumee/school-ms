@@ -193,6 +193,17 @@ router.post('/donations/donor/edit/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+// POST /donations/donor/delete/:id - delete a donor
+router.post('/donations/donor/delete/:id', isAuthenticated, async (req, res) => {
+    try {
+        await db.execute('DELETE FROM donors WHERE id = ? AND tenant_id = ?', [req.params.id, req.tenant.id]);
+        res.redirect('/donations');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error deleting donor: ' + err.message);
+    }
+});
+
 // POST /donations/add - record donation payment
 router.post('/donations/add', isAuthenticated, async (req, res) => {
     const { donor_id, amount, date, fund_category, payment_method, notes, direct_ref } = req.body;

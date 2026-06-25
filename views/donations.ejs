@@ -328,6 +328,9 @@
                                     <div style="display: flex; gap: 0.5rem;">
                                         <a href="/donations/donor/<%= d.id %>" class="btn-secondary nav-btn"><i class="bi bi-person-vcard-fill"></i> View Profile</a>
                                         <button type="button" class="btn-secondary nav-btn" onclick='openEditDonorModal(<%- JSON.stringify({ id: d.id, name: d.name, contact_no: d.contact_no || "", referred_by: d.referred_by || "", monthly_commitment: d.monthly_commitment || 0, monthly_commitment_amount: d.monthly_commitment_amount || "", preferred_fund_category: d.preferred_fund_category || "general", preferred_payment_method: d.preferred_payment_method || "Online", preferred_member: d.preferred_member || "" }) %>)'><i class="bi bi-pencil-square"></i> Edit</button>
+                                        <form action="/donations/donor/delete/<%= d.id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this donor and all their donation records?')">
+                                            <button type="submit" class="btn-danger nav-btn"><i class="bi bi-trash3-fill"></i> Delete</button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
