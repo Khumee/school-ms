@@ -44,10 +44,15 @@ async function migrate() {
             
             // Clean up and split by semicolon (a very simple sql splitter)
             // Remove comments and lines that are empty
-            const statements = sql
+            const cleanSql = sql
+                .split('\n')
+                .filter(line => !line.trim().startsWith('--'))
+                .join('\n');
+            
+            const statements = cleanSql
                 .split(';')
                 .map(s => s.trim())
-                .filter(s => s !== '' && !s.startsWith('--'));
+                .filter(s => s !== '');
             
             for (let statement of statements) {
                 if (!statement) continue;

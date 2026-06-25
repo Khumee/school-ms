@@ -102,9 +102,13 @@
                     <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewDirectOption('preferred_member')"><i class="bi bi-plus-lg"></i></button>
                 </div>
             </div>
-            <div class="form-checkbox" style="margin-bottom: 1.5rem; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 0.5rem;">
-                <input type="checkbox" id="monthlyCommitment" name="monthly_commitment" value="1" style="width: 18px; height: 18px; cursor: pointer; margin: 0;">
+            <div class="form-checkbox" style="margin-bottom: 1rem; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 0.5rem;">
+                <input type="checkbox" id="monthlyCommitment" name="monthly_commitment" value="1" style="width: 18px; height: 18px; cursor: pointer; margin: 0;" onchange="toggleCommitmentAmount(this.checked, 'new_commitment_amount_group')">
                 <label for="monthlyCommitment" style="margin-bottom: 0; cursor: pointer; font-weight: 500;">Monthly Commitment Donor</label>
+            </div>
+            <div id="new_commitment_amount_group" class="form-group" style="display: none; margin-bottom: 1.5rem;">
+                <label for="new_commitment_amount">Monthly Commitment Amount (PKR) *</label>
+                <input type="number" step="0.01" id="new_commitment_amount" name="monthly_commitment_amount" class="form-control" placeholder="0.00">
             </div>
             <button type="submit" class="btn-primary"><i class="bi bi-check-circle-fill"></i> Register Donor</button>
         </form>
@@ -126,7 +130,7 @@
                 
                 <div id="donor_dropdown_list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); margin-top: 4px;">
                     <% donors.forEach(d => { %>
-                        <div class="dropdown-donor-item" data-value="<%= d.id %>" data-name="<%= d.name %>" data-last-amount="<%= d.last_donation_amount || '' %>" data-preferred-fund="<%= d.preferred_fund_category || 'general' %>" data-preferred-payment="<%= d.preferred_payment_method || 'Online' %>" data-preferred-member="<%= d.preferred_member || '' %>" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
+                        <div class="dropdown-donor-item" data-value="<%= d.id %>" data-name="<%= d.name %>" data-last-amount="<%= d.last_donation_amount || '' %>" data-commitment-amount="<%= d.monthly_commitment_amount || '' %>" data-preferred-fund="<%= d.preferred_fund_category || 'general' %>" data-preferred-payment="<%= d.preferred_payment_method || 'Online' %>" data-preferred-member="<%= d.preferred_member || '' %>" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
                             <div style="font-weight: 600; color: #1e293b; display: flex; justify-content: space-between; align-items: center;">
                                 <span><%= d.name %></span>
                                 <% if (d.monthly_commitment) { %>
@@ -323,7 +327,7 @@
                                 <td>
                                     <div style="display: flex; gap: 0.5rem;">
                                         <a href="/donations/donor/<%= d.id %>" class="btn-secondary nav-btn"><i class="bi bi-person-vcard-fill"></i> View Profile</a>
-                                        <button type="button" class="btn-secondary nav-btn" onclick='openEditDonorModal(<%- JSON.stringify({ id: d.id, name: d.name, contact_no: d.contact_no || "", referred_by: d.referred_by || "", monthly_commitment: d.monthly_commitment || 0, preferred_fund_category: d.preferred_fund_category || "general", preferred_payment_method: d.preferred_payment_method || "Online", preferred_member: d.preferred_member || "" }) %>)'><i class="bi bi-pencil-square"></i> Edit</button>
+                                        <button type="button" class="btn-secondary nav-btn" onclick='openEditDonorModal(<%- JSON.stringify({ id: d.id, name: d.name, contact_no: d.contact_no || "", referred_by: d.referred_by || "", monthly_commitment: d.monthly_commitment || 0, monthly_commitment_amount: d.monthly_commitment_amount || "", preferred_fund_category: d.preferred_fund_category || "general", preferred_payment_method: d.preferred_payment_method || "Online", preferred_member: d.preferred_member || "" }) %>)'><i class="bi bi-pencil-square"></i> Edit</button>
                                     </div>
                                 </td>
                             </tr>
@@ -449,9 +453,13 @@
                 <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewDirectOption('editDonorPreferredMember')"><i class="bi bi-plus-lg"></i></button>
             </div>
         </div>
-        <div class="form-checkbox" style="margin-bottom: 1.5rem; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 0.5rem;">
-            <input type="checkbox" id="editDonorMonthlyCommitment" name="monthly_commitment" value="1" style="width: 18px; height: 18px; cursor: pointer; margin: 0;">
+        <div class="form-checkbox" style="margin-bottom: 1rem; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 0.5rem;">
+            <input type="checkbox" id="editDonorMonthlyCommitment" name="monthly_commitment" value="1" style="width: 18px; height: 18px; cursor: pointer; margin: 0;" onchange="toggleCommitmentAmount(this.checked, 'edit_commitment_amount_group')">
             <label for="editDonorMonthlyCommitment" style="margin-bottom: 0; cursor: pointer; font-weight: 500;">Monthly Commitment Donor</label>
+        </div>
+        <div id="edit_commitment_amount_group" class="form-group" style="display: none; margin-bottom: 1.5rem;">
+            <label for="editDonorMonthlyCommitmentAmount">Monthly Commitment Amount (PKR) *</label>
+            <input type="number" step="0.01" id="editDonorMonthlyCommitmentAmount" name="monthly_commitment_amount" class="form-control" placeholder="0.00">
         </div>
         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
             <button type="button" class="btn-secondary" onclick="closeEditDonorModal()">Cancel</button>
@@ -570,6 +578,8 @@
         }
         
         document.getElementById('editDonorMonthlyCommitment').checked = d.monthly_commitment === 1;
+        document.getElementById('editDonorMonthlyCommitmentAmount').value = d.monthly_commitment_amount || '';
+        toggleCommitmentAmount(d.monthly_commitment === 1, 'edit_commitment_amount_group');
         
         document.getElementById('editDonorModal').style.display = 'block';
         document.getElementById('editDonorModalOverlay').style.display = 'block';
@@ -709,8 +719,12 @@
                 donorSearch.value = name;
                 donorDropdown.style.display = 'none';
                 
+                const commitmentAmount = item.getAttribute('data-commitment-amount');
+                
                 // Pre-populate fields automatically
-                if (lastAmount) {
+                if (commitmentAmount && commitmentAmount.trim() !== '') {
+                    document.getElementById('amount').value = commitmentAmount;
+                } else if (lastAmount) {
                     document.getElementById('amount').value = lastAmount;
                 } else {
                     document.getElementById('amount').value = '';
@@ -760,6 +774,18 @@
             }
         });
     });
+
+    function toggleCommitmentAmount(checked, elementId) {
+        const el = document.getElementById(elementId);
+        if (el) {
+            el.style.display = checked ? 'block' : 'none';
+            const input = el.querySelector('input');
+            if (input) {
+                input.required = checked;
+                if (!checked) input.value = '';
+            }
+        }
+    }
 </script>
 
 <%- include('partials/footer') %>

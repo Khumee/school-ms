@@ -6,6 +6,11 @@ const { renderPdf, resolvePublicAsset } = require('../utils/pdfGenerator');
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+// GET /fees - redirect to ledger
+router.get('/fees', isAuthenticated, (req, res) => {
+    res.redirect('/fees/ledger');
+});
+
 // GET /fees/concessions - list students & custom fees
 router.get('/fees/concessions', isAuthenticated, async (req, res) => {
     try {
