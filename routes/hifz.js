@@ -28,8 +28,8 @@ async function getStudentHifzData(tenantId, studentId, entryLimit = 30) {
     const enrollment = enrollments[0];
 
     const [entries] = await db.execute(
-        `SELECT * FROM hifz_diary_entries WHERE tenant_id = ? AND student_id = ? ORDER BY entry_date DESC LIMIT ?`,
-        [tenantId, studentId, entryLimit]
+        `SELECT * FROM hifz_diary_entries WHERE tenant_id = ? AND student_id = ? ORDER BY entry_date DESC LIMIT ${parseInt(entryLimit)}`,
+        [tenantId, studentId]
     );
     const [completions] = await db.execute(
         `SELECT * FROM hifz_para_completions WHERE tenant_id = ? AND student_id = ? ORDER BY para_no`,
