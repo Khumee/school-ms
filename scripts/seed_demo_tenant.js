@@ -143,6 +143,11 @@ const SESSION_YEAR = '2026';
                 for (let dIndex = 6; dIndex >= 0; dIndex--) {
                     const entryDate = new Date();
                     entryDate.setDate(today.getDate() - dIndex);
+                    // Skip Sunday logs since classes are 6 days a week
+                    if (entryDate.getDay() === 0) {
+                        continue;
+                    }
+
                     const dateString = entryDate.toISOString().split('T')[0];
 
                     let sabaq_status = 'recited';
