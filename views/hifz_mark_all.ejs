@@ -5,19 +5,49 @@
         font-family: 'Noto Nastaliq Urdu', 'Noto Serif', serif;
         direction: rtl;
     }
-    .quality-select {
-        border-radius: 4px;
-        padding: 0.25rem;
-        font-size: 0.9rem;
-    }
     .absent-row {
         background-color: #fcf2f2 !important;
         opacity: 0.8;
     }
     .absent-row input:not(.absent-check), 
-    .absent-row select {
+    .absent-row select,
+    .absent-row button:not(.btn-toggle-chip) {
         pointer-events: none;
         background-color: #e2e8f0;
+    }
+    .status-group {
+        display: flex;
+        gap: 0.25rem;
+        background-color: #f1f5f9;
+        padding: 0.2rem;
+        border-radius: 8px;
+        width: fit-content;
+    }
+    .btn-toggle-chip {
+        border: none;
+        background: none;
+        padding: 0.3rem 0.6rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+        color: #64748b;
+    }
+    .btn-toggle-chip.active-recited {
+        background-color: #dcfce7;
+        color: #15803d;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .btn-toggle-chip.active-notrecited {
+        background-color: #fef2f2;
+        color: #b91c1c;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .btn-toggle-chip.active-memorized {
+        background-color: #dbeafe;
+        color: #1e40af;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 </style>
 
@@ -44,21 +74,20 @@
     <input type="hidden" name="date" value="<%= today %>">
 
     <div class="table-container" style="overflow-x: auto;">
-        <table style="min-width: 1100px;">
+        <table style="min-width: 1300px; font-size: 0.9rem;">
             <thead>
                 <tr>
                     <th style="width: 50px; text-align: center;">Absent</th>
                     <th style="width: 180px;">Student</th>
-                    <th style="width: 80px;">Phase</th>
                     
                     <!-- Sabaq Column Group -->
-                    <th style="background-color: #eff6ff; border-left: 2px solid #3b82f6; width: 280px; text-align: center;">Sabaq (New Lesson)</th>
+                    <th style="background-color: #eff6ff; border-left: 2px solid #3b82f6; width: 440px; text-align: center;">Sabaq (New Lesson)</th>
                     
                     <!-- Sabqi Column Group -->
                     <th style="background-color: #f0fdf4; border-left: 2px solid #22c55e; width: 220px; text-align: center;">Sabqi (Recent Lessons)</th>
                     
                     <!-- Manzil Column Group -->
-                    <th style="background-color: #fffbeb; border-left: 2px solid #eab308; width: 260px; text-align: center;">Manzil (Revision)</th>
+                    <th style="background-color: #fffbeb; border-left: 2px solid #eab308; width: 220px; text-align: center;">Manzil (Revision)</th>
                     
                     <th>Remarks</th>
                 </tr>
@@ -76,32 +105,47 @@
                             <!-- Student details -->
                             <td>
                                 <strong style="color: #1e293b;"><%= s.student_name %></strong>
-                                <div style="font-size: 0.8rem; color: #64748b;"><%= s.reg_no %> | <%= s.class_name %></div>
-                            </td>
-                            
-                            <!-- Phase -->
-                            <td>
-                                <span style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; text-align: center; background-color: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 4px;">
+                                <div style="font-size: 0.8rem; color: #64748b;"><%= s.reg_no %></div>
+                                <span style="font-size: 0.75rem; font-weight: 600; color: #475569; display: inline-block; background-color: #f1f5f9; padding: 0.1rem 0.3rem; border-radius: 4px; margin-top: 0.25rem;">
                                     <%= s.phase.label %>
                                 </span>
                             </td>
 
                             <!-- SABAQ -->
                             <td style="background-color: #f8fafc; border-left: 2px solid #3b82f6;">
-                                <div style="display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.25rem;">
-                                    <select name="entries[<%= s.student_id %>][sabaq_status]" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 90px;">
-                                        <option value="recited" <%= s.sabaq_status === 'recited' ? 'selected' : (s.prefill ? 'selected' : '') %>>Recited</option>
-                                        <option value="not_recited" <%= s.sabaq_status === 'not_recited' ? 'selected' : '' %>>Not Recited</option>
-                                        <option value="memorized_no_recite" <%= s.sabaq_status === 'memorized_no_recite' ? 'selected' : '' %>>Memorized, No Recite</option>
-                                    </select>
-                                    
-                                    <input type="number" name="entries[<%= s.student_id %>][sabaq_para]" placeholder="Para" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 50px;" min="1" max="30"
-                                           value="<%= s.sabaq_para || (s.prefill ? s.prefill.sabaq_para : '') %>">
+                                <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap;">
+                                    <!-- Colorful Chips for Status selection -->
+                                    <div class="status-group">
+                                        <button type="button" class="btn-toggle-chip <%= (s.sabaq_status === 'recited' || (!s.sabaq_status && s.prefill)) ? 'active-recited' : '' %>" onclick="selectChip('<%= s.student_id %>', 'sabaq', 'recited', this)">Recited</button>
+                                        <button type="button" class="btn-toggle-chip <%= s.sabaq_status === 'not_recited' ? 'active-notrecited' : '' %>" onclick="selectChip('<%= s.student_id %>', 'sabaq', 'not_recited', this)">Not</button>
+                                        <button type="button" class="btn-toggle-chip <%= s.sabaq_status === 'memorized_no_recite' ? 'active-memorized' : '' %>" onclick="selectChip('<%= s.student_id %>', 'sabaq', 'memorized_no_recite', this)">Mem</button>
+                                    </div>
+                                    <input type="hidden" id="sabaq-status-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_status]" value="<%= s.sabaq_status || 'recited' %>">
 
-                                    <input type="number" name="entries[<%= s.student_id %>][sabaq_lines]" placeholder="Lines" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 55px;" min="1" max="30"
-                                           value="<%= s.sabaq_lines || (s.prefill ? s.prefill.sabaq_lines : '') %>">
+                                    <span style="font-size: 0.8rem; font-weight: 600;">Para:</span>
+                                    <input type="number" name="entries[<%= s.student_id %>][sabaq_from_para]" placeholder="F" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 45px;" min="1" max="30"
+                                           value="<%= s.sabaq_from_para || (s.prefill ? s.prefill.sabaq_from_para : '') %>">
+                                    <span style="font-size: 0.8rem; color: #94a3b8;">to</span>
+                                    <input type="number" name="entries[<%= s.student_id %>][sabaq_to_para]" placeholder="T" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 45px;" min="1" max="30"
+                                           value="<%= s.sabaq_to_para || (s.prefill ? s.prefill.sabaq_to_para : '') %>">
                                 </div>
                                 
+                                <div style="display: flex; gap: 0.4rem; margin-bottom: 0.4rem; align-items: center;">
+                                    <span style="font-size: 0.8rem; font-weight: 600; width: 35px;">Page:</span>
+                                    <input type="number" name="entries[<%= s.student_id %>][sabaq_from_page]" placeholder="From Page" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 55px;" min="1" max="100"
+                                           value="<%= s.sabaq_from_page || (s.prefill ? s.prefill.sabaq_from_page : '') %>">
+                                    <span style="font-size: 0.8rem; color: #94a3b8;">to</span>
+                                    <input type="number" name="entries[<%= s.student_id %>][sabaq_to_page]" placeholder="To Page" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 55px;" min="1" max="100"
+                                           value="<%= s.sabaq_to_page || (s.prefill ? s.prefill.sabaq_to_page : '') %>">
+
+                                    <span style="font-size: 0.8rem; font-weight: 600; margin-left: 0.5rem;">Line:</span>
+                                    <input type="number" name="entries[<%= s.student_id %>][sabaq_from_line]" placeholder="From Line" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 55px;" min="1" max="30"
+                                           value="<%= s.sabaq_from_line || (s.prefill ? s.prefill.sabaq_from_line : '') %>">
+                                    <span style="font-size: 0.8rem; color: #94a3b8;">to</span>
+                                    <input type="number" name="entries[<%= s.student_id %>][sabaq_to_line]" placeholder="To Line" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 55px;" min="1" max="30"
+                                           value="<%= s.sabaq_to_line || (s.prefill ? s.prefill.sabaq_to_line : '') %>">
+                                </div>
+
                                 <div style="display: flex; gap: 0.4rem;">
                                     <select name="entries[<%= s.student_id %>][sabaq_quality]" class="form-control quality-select" style="padding: 0.25rem; font-size: 0.85rem; flex: 1;">
                                         <option value="">-- Sabaq Quality --</option>
@@ -121,11 +165,12 @@
 
                             <!-- SABQI -->
                             <td style="background-color: #fcfdfd; border-left: 2px solid #22c55e;">
-                                <div style="display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.25rem;">
-                                    <select name="entries[<%= s.student_id %>][sabqi_status]" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 90px;">
-                                        <option value="recited" <%= s.sabqi_status === 'recited' ? 'selected' : (s.prefill ? 'selected' : '') %>>Recited</option>
-                                        <option value="not_recited" <%= s.sabqi_status === 'not_recited' ? 'selected' : '' %>>Not Recited</option>
-                                    </select>
+                                <div style="display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.4rem;">
+                                    <div class="status-group">
+                                        <button type="button" class="btn-toggle-chip <%= (s.sabqi_status === 'recited' || (!s.sabqi_status && s.prefill)) ? 'active-recited' : '' %>" onclick="selectChip('<%= s.student_id %>', 'sabqi', 'recited', this)">Recited</button>
+                                        <button type="button" class="btn-toggle-chip <%= s.sabqi_status === 'not_recited' ? 'active-notrecited' : '' %>" onclick="selectChip('<%= s.student_id %>', 'sabqi', 'not_recited', this)">Not</button>
+                                    </div>
+                                    <input type="hidden" id="sabqi-status-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabqi_status]" value="<%= s.sabqi_status || 'recited' %>">
                                     
                                     <input type="number" name="entries[<%= s.student_id %>][sabqi_para]" placeholder="Para" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 55px;" min="1" max="30"
                                            value="<%= s.sabqi_para || (s.prefill ? s.prefill.sabqi_para : '') %>">
@@ -143,17 +188,22 @@
 
                             <!-- MANZIL -->
                             <td style="background-color: #fefdfb; border-left: 2px solid #eab308;">
-                                <div style="display: flex; gap: 0.3rem; align-items: center; margin-bottom: 0.25rem;">
-                                    <select name="entries[<%= s.student_id %>][manzil_status]" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 90px;">
-                                        <option value="recited" <%= s.manzil_status === 'recited' ? 'selected' : (s.prefill ? 'selected' : '') %>>Recited</option>
-                                        <option value="not_recited" <%= s.manzil_status === 'not_recited' ? 'selected' : '' %>>Not Recited</option>
-                                    </select>
-                                    
-                                    <input type="number" name="entries[<%= s.student_id %>][manzil_from_para]" placeholder="From" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 50px;" min="1" max="30"
-                                           value="<%= s.manzil_from_para || (s.prefill ? s.prefill.manzil_from_para : '') %>">
-                                    <span style="font-size: 0.8rem; color: #64748b;">to</span>
-                                    <input type="number" name="entries[<%= s.student_id %>][manzil_to_para]" placeholder="To" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 50px;" min="1" max="30"
-                                           value="<%= s.manzil_to_para || (s.prefill ? s.prefill.manzil_to_para : '') %>">
+                                <div style="display: flex; gap: 0.4rem; align-items: center; margin-bottom: 0.4rem;">
+                                    <div class="status-group">
+                                        <button type="button" class="btn-toggle-chip <%= (s.manzil_status === 'recited' || (!s.manzil_status && s.prefill)) ? 'active-recited' : '' %>" onclick="selectChip('<%= s.student_id %>', 'manzil', 'recited', this)">Recited</button>
+                                        <button type="button" class="btn-toggle-chip <%= s.manzil_status === 'not_recited' ? 'active-notrecited' : '' %>" onclick="selectChip('<%= s.student_id %>', 'manzil', 'not_recited', this)">Not</button>
+                                    </div>
+                                    <input type="hidden" id="manzil-status-<%= s.student_id %>" name="entries[<%= s.student_id %>][manzil_status]" value="<%= s.manzil_status || 'recited' %>">
+                                </div>
+
+                                <!-- Three independent inputs for any 3 Paras (non-contiguous) -->
+                                <div style="display: flex; gap: 0.25rem; align-items: center; margin-bottom: 0.4rem;">
+                                    <input type="number" name="entries[<%= s.student_id %>][manzil_para_1]" placeholder="P1" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 42px;" min="1" max="30"
+                                           value="<%= s.manzil_para_1 || (s.prefill ? s.prefill.manzil_para_1 : '') %>">
+                                    <input type="number" name="entries[<%= s.student_id %>][manzil_para_2]" placeholder="P2" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 42px;" min="1" max="30"
+                                           value="<%= s.manzil_para_2 || (s.prefill ? s.prefill.manzil_para_2 : '') %>">
+                                    <input type="number" name="entries[<%= s.student_id %>][manzil_para_3]" placeholder="P3" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 42px;" min="1" max="30"
+                                           value="<%= s.manzil_para_3 || (s.prefill ? s.prefill.manzil_para_3 : '') %>">
                                 </div>
                                 
                                 <select name="entries[<%= s.student_id %>][manzil_quality]" class="form-control quality-select" style="padding: 0.25rem; font-size: 0.85rem; width: 100%;">
@@ -174,7 +224,7 @@
                     <% }) %>
                 <% } else { %>
                     <tr>
-                        <td colspan="7" style="text-align: center; color: #64748b; padding: 2rem;">
+                        <td colspan="6" style="text-align: center; color: #64748b; padding: 2rem;">
                             No active Hifz students.
                         </td>
                     </tr>
@@ -200,6 +250,21 @@
         } else {
             row.classList.remove('absent-row');
         }
+    }
+
+    function selectChip(studentId, section, value, btn) {
+        // Find parent status group
+        const group = btn.parentElement;
+        group.querySelectorAll('.btn-toggle-chip').forEach(b => {
+            b.className = 'btn-toggle-chip';
+        });
+
+        // Set active class
+        const suffix = value.replace(/_/g, '');
+        btn.classList.add('active-' + suffix);
+
+        // Update hidden input
+        document.getElementById(section + '-status-' + studentId).value = value;
     }
 </script>
 

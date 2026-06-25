@@ -60,8 +60,6 @@ router.get('/hifz', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
         const userDesignation = req.session.designation || '';
-        const isNazimOrAdmin = ['admin', 'superadmin'].includes(req.session.role) ||
-                               userDesignation.includes('Nazim') || userDesignation.includes('Principal');
 
         // Get Hifz classes this user can see
         let classQuery = `SELECT * FROM classes WHERE tenant_id = ? AND is_hifz_class = 1 ORDER BY name`;
@@ -73,9 +71,7 @@ router.get('/hifz', isAuthenticated, async (req, res) => {
             `SELECT e.*, s.name as student_name, s.reg_no, s.gender,
                     c.name as class_name,
                     d.id as today_entry_id,
-                    d.is_absent as today_absent,
-                    d.sabaq_quality as today_sabaq_quality,
-                    d.sabaq_lines as today_sabaq_lines
+                    d.is_absent as today_absent
              FROM hifz_enrollment e
              JOIN students s ON e.student_id = s.id
              JOIN classes c ON e.class_id = c.id
@@ -85,7 +81,7 @@ router.get('/hifz', isAuthenticated, async (req, res) => {
             [today, tenantId]
         );
 
-        // Compute alarms count per student (quick check — last 5 entries each)
+        // Compute alarms count per student
         const studentsWithAlarms = await Promise.all(students.map(async (s) => {
             const [entries] = await db.execute(
                 `SELECT * FROM hifz_diary_entries WHERE tenant_id = ? AND student_id = ? ORDER BY entry_date DESC LIMIT 5`,
@@ -117,6 +113,97 @@ router.get('/hifz', isAuthenticated, async (req, res) => {
 });
 
 // ============================================================
+// GET /hifz/student/:studentId/diary — Individual Student Form
+// ============================================================
+router.get('/hifz/student/:studentId/diary', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const studentId = parseInt(req.params.studentId);
+        const data = await getStudentHifzData(tenantId, studentId);
+        if (!data) return res.status(404).send('Student not enrolled in Hifz.');
+
+        res.render('hifz_diary', { ...data, studentId });
+    } catch (err) {
+        console.error('Hifz Diary Form Error:', err);
+        res.status(500).send('Error loading Hifz diary form.');
+    }
+});
+
+// ============================================================
+// POST /hifz/student/:studentId/diary — Save Individual Student Entry
+// ============================================================
+router.post('/hifz/student/:studentId/diary', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const studentId = parseInt(req.params.studentId);
+        const markedBy = req.session.userId;
+        const {
+            entry_date, is_absent,
+            sabaq_status, sabaq_from_para, sabaq_to_para, sabaq_from_page, sabaq_to_page, sabaq_from_line, sabaq_to_line, sabaq_quality, sabaq_tajweed,
+            sabqi_status, sabqi_para, sabqi_quality,
+            manzil_status, manzil_para_1, manzil_para_2, manzil_para_3, manzil_quality,
+            teacher_remarks
+        } = req.body;
+
+        const absentVal = is_absent === 'on' ? 1 : 0;
+
+        await db.execute(
+            `INSERT INTO hifz_diary_entries
+             (tenant_id, student_id, entry_date, is_absent,
+              sabaq_status, sabaq_from_para, sabaq_to_para, sabaq_from_page, sabaq_to_page, sabaq_from_line, sabaq_to_line, sabaq_quality, sabaq_tajweed,
+              sabqi_status, sabqi_para, sabqi_quality,
+              manzil_status, manzil_para_1, manzil_para_2, manzil_para_3, manzil_quality,
+              teacher_remarks, marked_by)
+             VALUES (?,?,?,?, ?,?,?,?,?,?,?,?,?, ?,?,?, ?,?,?,?,?, ?,?)
+             ON DUPLICATE KEY UPDATE
+              is_absent=VALUES(is_absent),
+              sabaq_status=VALUES(sabaq_status), sabaq_from_para=VALUES(sabaq_from_para), sabaq_to_para=VALUES(sabaq_to_para),
+              sabaq_from_page=VALUES(sabaq_from_page), sabaq_to_page=VALUES(sabaq_to_page),
+              sabaq_from_line=VALUES(sabaq_from_line), sabaq_to_line=VALUES(sabaq_to_line),
+              sabaq_quality=VALUES(sabaq_quality), sabaq_tajweed=VALUES(sabaq_tajweed),
+              sabqi_status=VALUES(sabqi_status), sabqi_para=VALUES(sabqi_para), sabqi_quality=VALUES(sabqi_quality),
+              manzil_status=VALUES(manzil_status), manzil_para_1=VALUES(manzil_para_1), manzil_para_2=VALUES(manzil_para_2), manzil_para_3=VALUES(manzil_para_3),
+              manzil_quality=VALUES(manzil_quality), teacher_remarks=VALUES(teacher_remarks), marked_by=VALUES(marked_by)`,
+            [
+                tenantId, studentId, entry_date, absentVal,
+                absentVal ? 'recited' : (sabaq_status || 'not_recited'),
+                absentVal ? null : (sabaq_from_para || null),
+                absentVal ? null : (sabaq_to_para || null),
+                absentVal ? null : (sabaq_from_page || null),
+                absentVal ? null : (sabaq_to_page || null),
+                absentVal ? null : (sabaq_from_line || null),
+                absentVal ? null : (sabaq_to_line || null),
+                absentVal ? null : (sabaq_quality || null),
+                absentVal ? null : (sabaq_tajweed || null),
+                absentVal ? 'recited' : (sabqi_status || 'not_recited'),
+                absentVal ? null : (sabqi_para || null),
+                absentVal ? null : (sabqi_quality || null),
+                absentVal ? 'recited' : (manzil_status || 'not_recited'),
+                absentVal ? null : (manzil_para_1 || null),
+                absentVal ? null : (manzil_para_2 || null),
+                absentVal ? null : (manzil_para_3 || null),
+                absentVal ? null : (manzil_quality || null),
+                teacher_remarks || null,
+                markedBy
+            ]
+        );
+
+        // Update enrollment current_para if sabaq was recited
+        if (!absentVal && sabaq_status === 'recited' && sabaq_to_para) {
+            await db.execute(
+                `UPDATE hifz_enrollment SET current_para = ?, updated_at = NOW() WHERE tenant_id = ? AND student_id = ?`,
+                [parseInt(sabaq_to_para), tenantId, studentId]
+            );
+        }
+
+        res.redirect(`/hifz/student/${studentId}?success=1`);
+    } catch (err) {
+        console.error('Save Hifz Diary Error:', err);
+        res.status(500).send('Error saving Hifz diary entry.');
+    }
+});
+
+// ============================================================
 // GET /hifz/mark-all — Quick Mark All Matrix
 // ============================================================
 router.get('/hifz/mark-all', isAuthenticated, async (req, res) => {
@@ -128,9 +215,9 @@ router.get('/hifz/mark-all', isAuthenticated, async (req, res) => {
             `SELECT e.*, s.name as student_name, s.reg_no,
                     c.name as class_name,
                     d.id as entry_id, d.is_absent,
-                    d.sabaq_status, d.sabaq_lines, d.sabaq_para, d.sabaq_quality, d.sabaq_tajweed,
+                    d.sabaq_status, d.sabaq_from_para, d.sabaq_to_para, d.sabaq_from_page, d.sabaq_to_page, d.sabaq_from_line, d.sabaq_to_line, d.sabaq_quality, d.sabaq_tajweed,
                     d.sabqi_status, d.sabqi_para, d.sabqi_quality,
-                    d.manzil_status, d.manzil_from_para, d.manzil_to_para, d.manzil_quality,
+                    d.manzil_status, d.manzil_para_1, d.manzil_para_2, d.manzil_para_3, d.manzil_quality,
                     d.teacher_remarks
              FROM hifz_enrollment e
              JOIN students s ON e.student_id = s.id
@@ -141,7 +228,7 @@ router.get('/hifz/mark-all', isAuthenticated, async (req, res) => {
             [today, tenantId]
         );
 
-        // For each student without today's entry, get last entry for pre-fill
+        // Prefills mapping
         const studentsWithPrefill = await Promise.all(students.map(async (s) => {
             const phase = getPhaseByKey(s.current_phase);
             if (s.entry_id) return { ...s, phase, prefill: null };
@@ -154,17 +241,27 @@ router.get('/hifz/mark-all', isAuthenticated, async (req, res) => {
             return {
                 ...s, phase,
                 prefill: last ? {
-                    sabaq_para: last.sabaq_para || s.current_para,
-                    sabaq_lines: last.sabaq_lines || phase.minLines,
+                    sabaq_from_para: last.sabaq_from_para || s.current_para,
+                    sabaq_to_para: last.sabaq_to_para || s.current_para,
+                    sabaq_from_page: last.sabaq_from_page || 1,
+                    sabaq_to_page: last.sabaq_to_page || 1,
+                    sabaq_from_line: last.sabaq_from_line || 1,
+                    sabaq_to_line: last.sabaq_to_line || 15,
                     sabqi_para: last.sabqi_para || Math.max(1, s.current_para - 1),
-                    manzil_from_para: last.manzil_from_para || 1,
-                    manzil_to_para: last.manzil_to_para || Math.min(3, s.current_para - 1),
+                    manzil_para_1: last.manzil_para_1 || 1,
+                    manzil_para_2: last.manzil_para_2 || Math.max(1, s.current_para - 2),
+                    manzil_para_3: last.manzil_para_3 || Math.max(1, s.current_para - 1),
                 } : {
-                    sabaq_para: s.current_para,
-                    sabaq_lines: phase.minLines,
+                    sabaq_from_para: s.current_para,
+                    sabaq_to_para: s.current_para,
+                    sabaq_from_page: 1,
+                    sabaq_to_page: 1,
+                    sabaq_from_line: 1,
+                    sabaq_to_line: 15,
                     sabqi_para: Math.max(1, s.current_para - 1),
-                    manzil_from_para: 1,
-                    manzil_to_para: Math.min(3, s.current_para - 1),
+                    manzil_para_1: 1,
+                    manzil_para_2: Math.max(1, s.current_para - 2),
+                    manzil_para_3: Math.max(1, s.current_para - 1),
                 }
             };
         }));
@@ -183,7 +280,7 @@ router.post('/hifz/mark-all', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
         const markedBy = req.session.userId;
-        const { date, entries } = req.body; // entries is an object keyed by student_id
+        const { date, entries } = req.body;
 
         const entryDate = date || new Date().toISOString().split('T')[0];
         const studentIds = Object.keys(entries || {});
@@ -192,53 +289,53 @@ router.post('/hifz/mark-all', isAuthenticated, async (req, res) => {
             const e = entries[studentId];
             const isAbsent = e.is_absent === 'on' ? 1 : 0;
 
-            // UPSERT using INSERT ... ON DUPLICATE KEY UPDATE
             await db.execute(
                 `INSERT INTO hifz_diary_entries
                  (tenant_id, student_id, entry_date, is_absent,
-                  sabaq_status, sabaq_lines, sabaq_para, sabaq_quality, sabaq_tajweed,
+                  sabaq_status, sabaq_from_para, sabaq_to_para, sabaq_from_page, sabaq_to_page, sabaq_from_line, sabaq_to_line, sabaq_quality, sabaq_tajweed,
                   sabqi_status, sabqi_para, sabqi_quality,
-                  manzil_status, manzil_from_para, manzil_to_para, manzil_quality,
+                  manzil_status, manzil_para_1, manzil_para_2, manzil_para_3, manzil_quality,
                   teacher_remarks, marked_by)
-                 VALUES (?,?,?,?, ?,?,?,?,?, ?,?,?, ?,?,?,?, ?,?)
+                 VALUES (?,?,?,?, ?,?,?,?,?,?,?,?,?, ?,?,?, ?,?,?,?,?, ?,?)
                  ON DUPLICATE KEY UPDATE
                   is_absent=VALUES(is_absent),
-                  sabaq_status=VALUES(sabaq_status), sabaq_lines=VALUES(sabaq_lines),
-                  sabaq_para=VALUES(sabaq_para), sabaq_quality=VALUES(sabaq_quality),
-                  sabaq_tajweed=VALUES(sabaq_tajweed),
-                  sabqi_status=VALUES(sabqi_status), sabqi_para=VALUES(sabqi_para),
-                  sabqi_quality=VALUES(sabqi_quality),
-                  manzil_status=VALUES(manzil_status), manzil_from_para=VALUES(manzil_from_para),
-                  manzil_to_para=VALUES(manzil_to_para), manzil_quality=VALUES(manzil_quality),
-                  teacher_remarks=VALUES(teacher_remarks), marked_by=VALUES(marked_by)`,
+                  sabaq_status=VALUES(sabaq_status), 
+                  sabaq_from_para=VALUES(sabaq_from_para), sabaq_to_para=VALUES(sabaq_to_para),
+                  sabaq_from_page=VALUES(sabaq_from_page), sabaq_to_page=VALUES(sabaq_to_page),
+                  sabaq_from_line=VALUES(sabaq_from_line), sabaq_to_line=VALUES(sabaq_to_line),
+                  sabaq_quality=VALUES(sabaq_quality), sabaq_tajweed=VALUES(sabaq_tajweed),
+                  sabqi_status=VALUES(sabqi_status), sabqi_para=VALUES(sabqi_para), sabqi_quality=VALUES(sabqi_quality),
+                  manzil_status=VALUES(manzil_status), manzil_para_1=VALUES(manzil_para_1), manzil_para_2=VALUES(manzil_para_2), manzil_para_3=VALUES(manzil_para_3),
+                  manzil_quality=VALUES(manzil_quality), teacher_remarks=VALUES(teacher_remarks), marked_by=VALUES(marked_by)`,
                 [
                     tenantId, studentId, entryDate, isAbsent,
                     isAbsent ? 'recited' : (e.sabaq_status || 'not_recited'),
-                    isAbsent ? null : (e.sabaq_lines || null),
-                    isAbsent ? null : (e.sabaq_para || null),
+                    isAbsent ? null : (e.sabaq_from_para || null),
+                    isAbsent ? null : (e.sabaq_to_para || null),
+                    isAbsent ? null : (e.sabaq_from_page || null),
+                    isAbsent ? null : (e.sabaq_to_page || null),
+                    isAbsent ? null : (e.sabaq_from_line || null),
+                    isAbsent ? null : (e.sabaq_to_line || null),
                     isAbsent ? null : (e.sabaq_quality || null),
                     isAbsent ? null : (e.sabaq_tajweed || null),
                     isAbsent ? 'recited' : (e.sabqi_status || 'not_recited'),
                     isAbsent ? null : (e.sabqi_para || null),
                     isAbsent ? null : (e.sabqi_quality || null),
                     isAbsent ? 'recited' : (e.manzil_status || 'not_recited'),
-                    isAbsent ? null : (e.manzil_from_para || null),
-                    isAbsent ? null : (e.manzil_to_para || null),
+                    isAbsent ? null : (e.manzil_para_1 || null),
+                    isAbsent ? null : (e.manzil_para_2 || null),
+                    isAbsent ? null : (e.manzil_para_3 || null),
                     isAbsent ? null : (e.manzil_quality || null),
                     e.teacher_remarks || null,
                     markedBy
                 ]
             );
 
-            // Update enrollment totals if not absent and sabaq recited
-            if (!isAbsent && e.sabaq_status === 'recited' && e.sabaq_lines) {
+            // Update enrollment current_para if sabaq recited
+            if (!isAbsent && e.sabaq_status === 'recited' && e.sabaq_to_para) {
                 await db.execute(
-                    `UPDATE hifz_enrollment SET
-                        total_lines_memorized = total_lines_memorized + ?,
-                        current_para = ?,
-                        updated_at = NOW()
-                     WHERE tenant_id = ? AND student_id = ?`,
-                    [parseInt(e.sabaq_lines), parseInt(e.sabaq_para) || null, tenantId, studentId]
+                    `UPDATE hifz_enrollment SET current_para = ?, updated_at = NOW() WHERE tenant_id = ? AND student_id = ?`,
+                    [parseInt(e.sabaq_to_para), tenantId, studentId]
                 );
             }
         }
@@ -424,7 +521,7 @@ router.get('/hifz/report/weekly', isAuthenticated, async (req, res) => {
             `SELECT e.*, s.name as student_name, s.reg_no, c.name as class_name,
                     COUNT(d.id) as days_logged,
                     SUM(CASE WHEN d.is_absent = 1 THEN 1 ELSE 0 END) as days_absent,
-                    AVG(CASE WHEN d.sabaq_status = 'recited' THEN d.sabaq_lines ELSE NULL END) as avg_lines
+                    AVG(CASE WHEN d.sabaq_status = 'recited' THEN d.sabaq_to_line - d.sabaq_from_line + 1 ELSE NULL END) as avg_lines
              FROM hifz_enrollment e
              JOIN students s ON e.student_id = s.id
              JOIN classes c ON e.class_id = c.id

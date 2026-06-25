@@ -19,12 +19,53 @@
     .quality-btn.active-avg { background-color: #fef9c3; color: #ca8a04; border-color: #fde047; font-weight: bold; }
     .quality-btn.active-wk  { background-color: #ffedd5; color: #ea580c; border-color: #fdba74; font-weight: bold; }
     .quality-btn.active-vwk { background-color: #fef2f2; color: #dc2626; border-color: #fca5a5; font-weight: bold; }
+
+    .status-group {
+        display: flex;
+        gap: 0.25rem;
+        background-color: #f1f5f9;
+        padding: 0.2rem;
+        border-radius: 8px;
+        width: fit-content;
+    }
+    .btn-toggle-chip {
+        border: none;
+        background: none;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+        color: #64748b;
+    }
+    .btn-toggle-chip.active-recited {
+        background-color: #dcfce7;
+        color: #15803d;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .btn-toggle-chip.active-notrecited {
+        background-color: #fef2f2;
+        color: #b91c1c;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .btn-toggle-chip.active-memorized {
+        background-color: #dbeafe;
+        color: #1e40af;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
 </style>
 
 <div class="section-header">
     <h1 class="section-title"><i class="bi bi-journal-plus"></i> Daily Hifz Entry Form</h1>
     <a href="/hifz" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Roster</a>
 </div>
+
+<% if (typeof req !== 'undefined' && req.query.success) { %>
+    <div style="background-color: #ecfdf5; color: #065f46; padding: 1rem; border-radius: 6px; border: 1px solid #a7f3d0; margin-bottom: 1.5rem; font-weight: 600;">
+        <i class="bi bi-check-circle-fill"></i> Hifz diary entry saved successfully.
+    </div>
+<% } %>
 
 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; margin-bottom: 2rem;">
     <!-- Left: Student Info Card -->
@@ -55,13 +96,6 @@
                 <td style="padding: 0.5rem 0; text-align: right; font-weight: 600; color: #16a34a;"><i class="bi bi-fire"></i> <%= streak %> Days</td>
             </tr>
         </table>
-
-        <!-- Active Waqaf Alert -->
-        <% if (activeWaqaf) { %>
-            <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; border-radius: 6px; padding: 0.75rem; margin-top: 1rem; font-size: 0.85rem;">
-                <i class="bi bi-info-circle-fill"></i> <strong>Waqaf Test Mode Active:</strong> Student is currently preparing for testing on Para <strong><%= activeWaqaf.para_no %></strong>.
-            </div>
-        <% } %>
     </div>
 
     <!-- Right: Diary Form -->
@@ -69,7 +103,7 @@
         <h3 style="margin-top: 0; font-size: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; color: #0f172a;"><i class="bi bi-pencil-square"></i> Record Entry</h3>
         
         <form action="/hifz/student/<%= studentId %>/diary" method="POST">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                 <div class="form-group">
                     <label for="entry_date" style="font-weight: 600;">Date</label>
                     <input type="date" name="entry_date" id="entry_date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>" required>
@@ -84,29 +118,50 @@
 
             <div id="recitation-sections">
                 <!-- SABAQ -->
-                <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem; border-radius: 0 6px 6px 0; margin-bottom: 1rem;">
-                    <div style="font-weight: 700; color: #1e3a8a; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 1.25rem; border-radius: 0 6px 6px 0; margin-bottom: 1.5rem;">
+                    <div style="font-weight: 700; color: #1e3a8a; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
                         <span>Sabaq (New Lesson)</span>
                         <span style="font-size: 0.8rem; font-weight: normal; color: #475569;">Target: <%= phase.minLines %>-<%= phase.maxLines %> lines</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; margin-bottom: 0.75rem;">
+
+                    <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center;">
+                        <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0; width: 60px;">Status:</label>
+                        <div class="status-group">
+                            <button type="button" class="btn-toggle-chip active-recited" onclick="selectFormChip('sabaq', 'recited', this)">Recited</button>
+                            <button type="button" class="btn-toggle-chip" onclick="selectFormChip('sabaq', 'not_recited', this)">Not Recited</button>
+                            <button type="button" class="btn-toggle-chip" onclick="selectFormChip('sabaq', 'memorized_no_recite', this)">Memorized</button>
+                        </div>
+                        <input type="hidden" id="sabaq_status" name="sabaq_status" value="recited">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
                         <div class="form-group">
-                            <label style="font-size: 0.85rem; font-weight: 600;">Status</label>
-                            <select name="sabaq_status" class="form-control">
-                                <option value="recited" selected>Recited</option>
-                                <option value="not_recited">Not Recited</option>
-                                <option value="memorized_no_recite">Memorized, No Recite</option>
-                            </select>
+                            <label style="font-size: 0.85rem; font-weight: 600;">From Para</label>
+                            <input type="number" name="sabaq_from_para" class="form-control" min="1" max="30" value="<%= enrollment.current_para %>">
                         </div>
                         <div class="form-group">
-                            <label style="font-size: 0.85rem; font-weight: 600;">Para No</label>
-                            <input type="number" name="sabaq_para" class="form-control" min="1" max="30" value="<%= enrollment.current_para %>">
-                        </div>
-                        <div class="form-group">
-                            <label style="font-size: 0.85rem; font-weight: 600;">Lines Memorized</label>
-                            <input type="number" name="sabaq_lines" class="form-control" min="1" max="30" value="<%= phase.minLines %>">
+                            <label style="font-size: 0.85rem; font-weight: 600;">To Para</label>
+                            <input type="number" name="sabaq_to_para" class="form-control" min="1" max="30" value="<%= enrollment.current_para %>">
                         </div>
                     </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label style="font-size: 0.85rem; font-weight: 600;">Pages (From - To)</label>
+                            <div style="display: flex; gap: 0.25rem; align-items: center;">
+                                <input type="number" name="sabaq_from_page" class="form-control" min="1" max="100" placeholder="From">
+                                <input type="number" name="sabaq_to_page" class="form-control" min="1" max="100" placeholder="To">
+                            </div>
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label style="font-size: 0.85rem; font-weight: 600;">Lines (From - To)</label>
+                            <div style="display: flex; gap: 0.25rem; align-items: center;">
+                                <input type="number" name="sabaq_from_line" class="form-control" min="1" max="30" placeholder="From" value="1">
+                                <input type="number" name="sabaq_to_line" class="form-control" min="1" max="30" placeholder="To" value="15">
+                            </div>
+                        </div>
+                    </div>
+
                     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem;">
                         <div class="form-group">
                             <label style="font-size: 0.85rem; font-weight: 600;">Quality</label>
@@ -130,24 +185,26 @@
                 </div>
 
                 <!-- SABQI -->
-                <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 1rem; border-radius: 0 6px 6px 0; margin-bottom: 1rem;">
-                    <div style="font-weight: 700; color: #14532d; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <div style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 1.25rem; border-radius: 0 6px 6px 0; margin-bottom: 1.5rem;">
+                    <div style="font-weight: 700; color: #14532d; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
                         <span>Sabqi (Recent Lessons)</span>
                         <span style="font-size: 0.8rem; font-weight: normal; color: #475569;">Target: Para <%= Math.max(1, enrollment.current_para - 1) %></span>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
-                        <div class="form-group">
-                            <label style="font-size: 0.85rem; font-weight: 600;">Status</label>
-                            <select name="sabqi_status" class="form-control">
-                                <option value="recited" selected>Recited</option>
-                                <option value="not_recited">Not Recited</option>
-                            </select>
+
+                    <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center;">
+                        <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0; width: 60px;">Status:</label>
+                        <div class="status-group">
+                            <button type="button" class="btn-toggle-chip active-recited" onclick="selectFormChip('sabqi', 'recited', this)">Recited</button>
+                            <button type="button" class="btn-toggle-chip" onclick="selectFormChip('sabqi', 'not_recited', this)">Not Recited</button>
                         </div>
-                        <div class="form-group">
-                            <label style="font-size: 0.85rem; font-weight: 600;">Para No</label>
-                            <input type="number" name="sabqi_para" class="form-control" min="1" max="30" value="<%= Math.max(1, enrollment.current_para - 1) %>">
-                        </div>
+                        <input type="hidden" id="sabqi_status" name="sabqi_status" value="recited">
                     </div>
+
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label style="font-size: 0.85rem; font-weight: 600;">Para No</label>
+                        <input type="number" name="sabqi_para" class="form-control" min="1" max="30" value="<%= Math.max(1, enrollment.current_para - 1) %>">
+                    </div>
+
                     <div class="form-group">
                         <label style="font-size: 0.85rem; font-weight: 600;">Quality</label>
                         <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
@@ -162,28 +219,31 @@
                 </div>
 
                 <!-- MANZIL -->
-                <div style="background-color: #fffbeb; border-left: 4px solid #eab308; padding: 1rem; border-radius: 0 6px 6px 0; margin-bottom: 1rem;">
-                    <div style="font-weight: 700; color: #78350f; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <div style="background-color: #fffbeb; border-left: 4px solid #eab308; padding: 1.25rem; border-radius: 0 6px 6px 0; margin-bottom: 1.5rem;">
+                    <div style="font-weight: 700; color: #78350f; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
                         <span>Manzil (Revision)</span>
-                        <span style="font-size: 0.8rem; font-weight: normal; color: #475569;">Target: Para 1 to <%= Math.max(1, enrollment.current_para - 1) %></span>
+                        <span style="font-size: 0.8rem; font-weight: normal; color: #475569;">Target: Up to 3 Paras</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.75rem; margin-bottom: 0.75rem;">
-                        <div class="form-group">
-                            <label style="font-size: 0.85rem; font-weight: 600;">Status</label>
-                            <select name="manzil_status" class="form-control">
-                                <option value="recited" selected>Recited</option>
-                                <option value="not_recited">Not Recited</option>
-                            </select>
+
+                    <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center;">
+                        <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0; width: 60px;">Status:</label>
+                        <div class="status-group">
+                            <button type="button" class="btn-toggle-chip active-recited" onclick="selectFormChip('manzil', 'recited', this)">Recited</button>
+                            <button type="button" class="btn-toggle-chip" onclick="selectFormChip('manzil', 'not_recited', this)">Not Recited</button>
                         </div>
-                        <div class="form-group">
-                            <label style="font-size: 0.85rem; font-weight: 600;">From Para</label>
-                            <input type="number" name="manzil_from_para" class="form-control" min="1" max="30" value="1">
-                        </div>
-                        <div class="form-group">
-                            <label style="font-size: 0.85rem; font-weight: 600;">To Para</label>
-                            <input type="number" name="manzil_to_para" class="form-control" min="1" max="30" value="<%= Math.max(1, enrollment.current_para - 1) %>">
+                        <input type="hidden" id="manzil_status" name="manzil_status" value="recited">
+                    </div>
+
+                    <!-- 3 Independent Paras Selection -->
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label style="font-size: 0.85rem; font-weight: 600;">Select up to 3 Paras to Revise</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="number" name="manzil_para_1" class="form-control" min="1" max="30" placeholder="Para 1" value="1">
+                            <input type="number" name="manzil_para_2" class="form-control" min="1" max="30" placeholder="Para 2" value="<%= Math.max(1, enrollment.current_para - 2) %>">
+                            <input type="number" name="manzil_para_3" class="form-control" min="1" max="30" placeholder="Para 3" value="<%= Math.max(1, enrollment.current_para - 1) %>">
                         </div>
                     </div>
+
                     <div class="form-group">
                         <label style="font-size: 0.85rem; font-weight: 600;">Quality</label>
                         <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
@@ -221,6 +281,18 @@
         } else {
             sections.style.display = 'block';
         }
+    }
+
+    function selectFormChip(section, value, btn) {
+        const group = btn.parentElement;
+        group.querySelectorAll('.btn-toggle-chip').forEach(b => {
+            b.className = 'btn-toggle-chip';
+        });
+
+        const suffix = value.replace(/_/g, '');
+        btn.classList.add('active-' + suffix);
+
+        document.getElementById(section + '_status').value = value;
     }
 
     function setQuality(type, val, btn, classSuffix) {
