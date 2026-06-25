@@ -78,8 +78,8 @@
                 <div class="form-group">
                     <label for="preferred_fund_category">Preferred Account to Transfer Fund</label>
                     <select name="preferred_fund_category" id="preferred_fund_category" class="form-control" onchange="toggleDirectOption(this.value, 'new_preferred_member_group')">
-                        <option value="general" selected>Member Account</option>
-                        <option value="trust">Trust Account</option>
+                        <option value="general">Member Account</option>
+                        <option value="trust" selected>Trust Account</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -90,7 +90,7 @@
                     </select>
                 </div>
             </div>
-            <div id="new_preferred_member_group" class="form-group" style="display: block; margin-bottom: 1rem;">
+            <div id="new_preferred_member_group" class="form-group" style="display: none; margin-bottom: 1rem;">
                 <label for="preferred_member">Preferred Member Account Option</label>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                     <select id="preferred_member" name="preferred_member" class="form-control">
