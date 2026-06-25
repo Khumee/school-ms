@@ -1,25 +1,6 @@
 <%- include('partials/header') %>
 
 <style>
-    .quality-btn {
-        border: 1px solid #cbd5e1;
-        background-color: #f8fafc;
-        padding: 0.35rem 0.75rem;
-        font-size: 0.85rem;
-        cursor: pointer;
-        border-radius: 4px;
-        transition: all 0.2s;
-    }
-    .quality-btn:hover {
-        background-color: #f1f5f9;
-        border-color: #94a3b8;
-    }
-    .quality-btn.active-exc { background-color: #dcfce7; color: #16a34a; border-color: #86efac; font-weight: bold; }
-    .quality-btn.active-gd  { background-color: #e0f2fe; color: #0284c7; border-color: #7dd3fc; font-weight: bold; }
-    .quality-btn.active-avg { background-color: #fef9c3; color: #ca8a04; border-color: #fde047; font-weight: bold; }
-    .quality-btn.active-wk  { background-color: #ffedd5; color: #ea580c; border-color: #fdba74; font-weight: bold; }
-    .quality-btn.active-vwk { background-color: #fef2f2; color: #dc2626; border-color: #fca5a5; font-weight: bold; }
-
     .status-group {
         display: flex;
         gap: 0.25rem;
@@ -38,27 +19,82 @@
         border-radius: 6px;
         transition: all 0.15s ease;
         color: #64748b;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
     }
+    /* Colorful toggle states */
     .btn-toggle-chip.active-recited {
         background-color: #dcfce7;
-        color: #15803d;
+        color: #16a34a;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    .btn-toggle-chip.active-notrecited {
+    .btn-toggle-chip.active-nagha {
         background-color: #fef2f2;
         color: #b91c1c;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    .btn-toggle-chip.active-memorized {
-        background-color: #dbeafe;
-        color: #1e40af;
+    .btn-toggle-chip.active-absent {
+        background-color: #fef3c7;
+        color: #d97706;
         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .btn-toggle-chip.active-leave {
+        background-color: #e0f2fe;
+        color: #0369a1;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .status-disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    .status-disabled input, .status-disabled select {
+        background-color: #f1f5f9 !important;
+    }
+    .sabaq-disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    .sabaq-disabled input {
+        background-color: #f1f5f9 !important;
     }
 </style>
 
+<%
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayEntry = entries.find(e => {
+        const d = new Date(e.entry_date);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}` === todayStr;
+    }) || null;
+    const lastEntry = entries[0] || null;
+
+    const prefill = todayEntry || lastEntry || null;
+
+    // Determine initial status
+    let initialStatus = 'recited';
+    if (prefill) {
+        if (prefill.is_absent) {
+            initialStatus = 'absent';
+        } else if (prefill.sabaq_status === 'not_recited') {
+            initialStatus = 'nagha';
+        } else if (prefill.sabaq_status === 'leave') {
+            initialStatus = 'leave';
+        }
+    }
+%>
+
 <div class="section-header">
     <h1 class="section-title"><i class="bi bi-journal-plus"></i> Daily Hifz Entry Form</h1>
-    <a href="/hifz" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Roster</a>
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <span class="status-cell" style="background-color: #1e3a8a; color: #ffffff; font-size: 1rem; padding: 0.5rem 1rem; font-weight: bold; border-radius: 6px;">
+            Current Para: <%= enrollment.current_para || 'None' %>
+        </span>
+        <a href="/hifz" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Roster</a>
+    </div>
 </div>
 
 <% if (typeof req !== 'undefined' && req.query.success) { %>
@@ -103,83 +139,67 @@
         <h3 style="margin-top: 0; font-size: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; color: #0f172a;"><i class="bi bi-pencil-square"></i> Record Entry</h3>
         
         <form action="/hifz/student/<%= studentId %>/diary" method="POST">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="display: grid; grid-template-columns: 1fr 2.5fr; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end;">
                 <div class="form-group">
                     <label for="entry_date" style="font-weight: 600;">Date</label>
-                    <input type="date" name="entry_date" id="entry_date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>" required>
+                    <input type="date" name="entry_date" id="entry_date" class="form-control" value="<%= todayStr %>" required>
                 </div>
-                <div class="form-group" style="display: flex; align-items: flex-end; padding-bottom: 0.5rem;">
-                    <label style="font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
-                        <input type="checkbox" name="is_absent" id="is_absent" style="transform: scale(1.3);" onchange="toggleAbsentView()">
-                        Student is Absent
-                    </label>
+                <div class="form-group">
+                    <label style="font-weight: 600; display: block; margin-bottom: 0.4rem;">Recitation Status</label>
+                    <div class="status-group">
+                        <button type="button" class="btn-toggle-chip <%= initialStatus === 'recited' ? 'active-recited' : '' %>" onclick="selectStatus('recited', this)" title="Recited">
+                            <i class="bi bi-check-lg"></i> Recited
+                        </button>
+                        <button type="button" class="btn-toggle-chip <%= initialStatus === 'nagha' ? 'active-nagha' : '' %>" onclick="selectStatus('nagha', this)" title="Nagha">
+                            <i class="bi bi-x-lg"></i> Nagha
+                        </button>
+                        <button type="button" class="btn-toggle-chip <%= initialStatus === 'absent' ? 'active-absent' : '' %>" onclick="selectStatus('absent', this)" title="Absent">
+                            <i class="bi bi-person-x"></i> Absent
+                        </button>
+                        <button type="button" class="btn-toggle-chip <%= initialStatus === 'leave' ? 'active-leave' : '' %>" onclick="selectStatus('leave', this)" title="Leave">
+                            <i class="bi bi-airplane"></i> Leave
+                        </button>
+                    </div>
+                    <input type="hidden" id="sabaq_status" name="sabaq_status" value="<%= prefill ? prefill.sabaq_status : 'recited' %>">
+                    <input type="hidden" id="sabqi_status" name="sabqi_status" value="<%= prefill ? prefill.sabqi_status : 'recited' %>">
+                    <input type="hidden" id="manzil_status" name="manzil_status" value="<%= prefill ? prefill.manzil_status : 'recited' %>">
+                    <input type="hidden" id="is_absent" name="is_absent" value="<%= (prefill && prefill.is_absent) ? 'on' : 'off' %>">
                 </div>
             </div>
 
-            <div id="recitation-sections">
+            <div id="recitation-sections" class="<%= (initialStatus === 'absent' || initialStatus === 'leave') ? 'status-disabled' : '' %>">
                 <!-- SABAQ -->
-                <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 1.25rem; border-radius: 0 6px 6px 0; margin-bottom: 1.5rem;">
+                <div id="sabaq-section" class="<%= initialStatus === 'nagha' ? 'sabaq-disabled' : '' %>" style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 1.25rem; border-radius: 0 6px 6px 0; margin-bottom: 1.5rem;">
                     <div style="font-weight: 700; color: #1e3a8a; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
                         <span>Sabaq (New Lesson)</span>
                         <span style="font-size: 0.8rem; font-weight: normal; color: #475569;">Target: <%= phase.minLines %>-<%= phase.maxLines %> lines</span>
                     </div>
 
-                    <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center;">
-                        <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0; width: 60px;">Status:</label>
-                        <div class="status-group">
-                            <button type="button" class="btn-toggle-chip active-recited" onclick="selectFormChip('sabaq', 'recited', this)">Recited</button>
-                            <button type="button" class="btn-toggle-chip" onclick="selectFormChip('sabaq', 'not_recited', this)">Not Recited</button>
-                            <button type="button" class="btn-toggle-chip" onclick="selectFormChip('sabaq', 'memorized_no_recite', this)">Memorized</button>
-                        </div>
-                        <input type="hidden" id="sabaq_status" name="sabaq_status" value="recited">
-                    </div>
-
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
                         <div class="form-group">
                             <label style="font-size: 0.85rem; font-weight: 600;">From Para</label>
-                            <input type="number" name="sabaq_from_para" class="form-control" min="1" max="30" value="<%= enrollment.current_para %>">
+                            <input type="number" name="sabaq_from_para" class="form-control" min="1" max="30" value="<%= prefill ? prefill.sabaq_from_para : enrollment.current_para %>">
                         </div>
                         <div class="form-group">
                             <label style="font-size: 0.85rem; font-weight: 600;">To Para</label>
-                            <input type="number" name="sabaq_to_para" class="form-control" min="1" max="30" value="<%= enrollment.current_para %>">
+                            <input type="number" name="sabaq_to_para" class="form-control" min="1" max="30" value="<%= prefill ? prefill.sabaq_to_para : enrollment.current_para %>">
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
                         <div class="form-group" style="grid-column: span 2;">
-                            <label style="font-size: 0.85rem; font-weight: 600;">Pages (From - To)</label>
+                            <label style="font-size: 0.85rem; font-weight: 600;">Pages (From - To) (1-20)</label>
                             <div style="display: flex; gap: 0.25rem; align-items: center;">
-                                <input type="number" name="sabaq_from_page" class="form-control" min="1" max="100" placeholder="From">
-                                <input type="number" name="sabaq_to_page" class="form-control" min="1" max="100" placeholder="To">
+                                <input type="number" name="sabaq_from_page" class="form-control" min="1" max="20" placeholder="From" value="<%= prefill ? prefill.sabaq_from_page : 1 %>">
+                                <input type="number" name="sabaq_to_page" class="form-control" min="1" max="20" placeholder="To" value="<%= prefill ? prefill.sabaq_to_page : 1 %>">
                             </div>
                         </div>
                         <div class="form-group" style="grid-column: span 2;">
-                            <label style="font-size: 0.85rem; font-weight: 600;">Lines (From - To)</label>
+                            <label style="font-size: 0.85rem; font-weight: 600;">Lines (From - To) (1-15)</label>
                             <div style="display: flex; gap: 0.25rem; align-items: center;">
-                                <input type="number" name="sabaq_from_line" class="form-control" min="1" max="30" placeholder="From" value="1">
-                                <input type="number" name="sabaq_to_line" class="form-control" min="1" max="30" placeholder="To" value="15">
+                                <input type="number" name="sabaq_from_line" class="form-control" min="1" max="15" placeholder="From" value="<%= prefill ? prefill.sabaq_from_line : 1 %>">
+                                <input type="number" name="sabaq_to_line" class="form-control" min="1" max="15" placeholder="To" value="<%= prefill ? prefill.sabaq_to_line : 15 %>">
                             </div>
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem;">
-                        <div class="form-group">
-                            <label style="font-size: 0.85rem; font-weight: 600;">Quality</label>
-                            <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
-                                <button type="button" class="quality-btn" onclick="setQuality('sabaq', 'Excellent', this, 'exc')">ممتاز (Exc)</button>
-                                <button type="button" class="quality-btn" onclick="setQuality('sabaq', 'Good', this, 'gd')">جید جداً (Gd)</button>
-                                <button type="button" class="quality-btn" onclick="setQuality('sabaq', 'Average', this, 'avg')">جید (Avg)</button>
-                                <button type="button" class="quality-btn" onclick="setQuality('sabaq', 'Weak', this, 'wk')">مقبول (Wk)</button>
-                                <button type="button" class="quality-btn" onclick="setQuality('sabaq', 'Very Weak', this, 'vwk')">غیر مقبول (V.Wk)</button>
-                            </div>
-                            <input type="hidden" name="sabaq_quality" id="sabaq_quality" value="">
-                        </div>
-                        <div class="form-group">
-                            <label style="font-size: 0.85rem; font-weight: 600;">Tajweed</label>
-                            <select name="sabaq_tajweed" class="form-control">
-                                <option value="clear" selected>Clear</option>
-                                <option value="mistakes">Mistakes</option>
-                            </select>
                         </div>
                     </div>
                 </div>
@@ -191,30 +211,9 @@
                         <span style="font-size: 0.8rem; font-weight: normal; color: #475569;">Target: Para <%= Math.max(1, enrollment.current_para - 1) %></span>
                     </div>
 
-                    <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center;">
-                        <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0; width: 60px;">Status:</label>
-                        <div class="status-group">
-                            <button type="button" class="btn-toggle-chip active-recited" onclick="selectFormChip('sabqi', 'recited', this)">Recited</button>
-                            <button type="button" class="btn-toggle-chip" onclick="selectFormChip('sabqi', 'not_recited', this)">Not Recited</button>
-                        </div>
-                        <input type="hidden" id="sabqi_status" name="sabqi_status" value="recited">
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                    <div class="form-group" style="margin-bottom: 0;">
                         <label style="font-size: 0.85rem; font-weight: 600;">Para No</label>
-                        <input type="number" name="sabqi_para" class="form-control" min="1" max="30" value="<%= Math.max(1, enrollment.current_para - 1) %>">
-                    </div>
-
-                    <div class="form-group">
-                        <label style="font-size: 0.85rem; font-weight: 600;">Quality</label>
-                        <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
-                            <button type="button" class="quality-btn" onclick="setQuality('sabqi', 'Excellent', this, 'exc')">ممتاز (Exc)</button>
-                            <button type="button" class="quality-btn" onclick="setQuality('sabqi', 'Good', this, 'gd')">جید جداً (Gd)</button>
-                            <button type="button" class="quality-btn" onclick="setQuality('sabqi', 'Average', this, 'avg')">جید (Avg)</button>
-                            <button type="button" class="quality-btn" onclick="setQuality('sabqi', 'Weak', this, 'wk')">مقبول (Wk)</button>
-                            <button type="button" class="quality-btn" onclick="setQuality('sabqi', 'Very Weak', this, 'vwk')">غیر مقبول (V.Wk)</button>
-                        </div>
-                        <input type="hidden" name="sabqi_quality" id="sabqi_quality" value="">
+                        <input type="number" name="sabqi_para" class="form-control" min="1" max="30" value="<%= prefill ? prefill.sabqi_para : Math.max(1, enrollment.current_para - 1) %>">
                     </div>
                 </div>
 
@@ -225,35 +224,14 @@
                         <span style="font-size: 0.8rem; font-weight: normal; color: #475569;">Target: Up to 3 Paras</span>
                     </div>
 
-                    <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center;">
-                        <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0; width: 60px;">Status:</label>
-                        <div class="status-group">
-                            <button type="button" class="btn-toggle-chip active-recited" onclick="selectFormChip('manzil', 'recited', this)">Recited</button>
-                            <button type="button" class="btn-toggle-chip" onclick="selectFormChip('manzil', 'not_recited', this)">Not Recited</button>
-                        </div>
-                        <input type="hidden" id="manzil_status" name="manzil_status" value="recited">
-                    </div>
-
                     <!-- 3 Independent Paras Selection -->
-                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                    <div class="form-group" style="margin-bottom: 0;">
                         <label style="font-size: 0.85rem; font-weight: 600;">Select up to 3 Paras to Revise</label>
                         <div style="display: flex; gap: 0.5rem;">
-                            <input type="number" name="manzil_para_1" class="form-control" min="1" max="30" placeholder="Para 1" value="1">
-                            <input type="number" name="manzil_para_2" class="form-control" min="1" max="30" placeholder="Para 2" value="<%= Math.max(1, enrollment.current_para - 2) %>">
-                            <input type="number" name="manzil_para_3" class="form-control" min="1" max="30" placeholder="Para 3" value="<%= Math.max(1, enrollment.current_para - 1) %>">
+                            <input type="number" name="manzil_para_1" class="form-control" min="1" max="30" placeholder="Para 1" value="<%= prefill ? prefill.manzil_para_1 : 1 %>">
+                            <input type="number" name="manzil_para_2" class="form-control" min="1" max="30" placeholder="Para 2" value="<%= prefill ? prefill.manzil_para_2 : Math.max(1, enrollment.current_para - 2) %>">
+                            <input type="number" name="manzil_para_3" class="form-control" min="1" max="30" placeholder="Para 3" value="<%= prefill ? prefill.manzil_para_3 : Math.max(1, enrollment.current_para - 1) %>">
                         </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label style="font-size: 0.85rem; font-weight: 600;">Quality</label>
-                        <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
-                            <button type="button" class="quality-btn" onclick="setQuality('manzil', 'Excellent', this, 'exc')">ممتاز (Exc)</button>
-                            <button type="button" class="quality-btn" onclick="setQuality('manzil', 'Good', this, 'gd')">جید جداً (Gd)</button>
-                            <button type="button" class="quality-btn" onclick="setQuality('manzil', 'Average', this, 'avg')">جید (Avg)</button>
-                            <button type="button" class="quality-btn" onclick="setQuality('manzil', 'Weak', this, 'wk')">مقبول (Wk)</button>
-                            <button type="button" class="quality-btn" onclick="setQuality('manzil', 'Very Weak', this, 'vwk')">غیر مقبول (V.Wk)</button>
-                        </div>
-                        <input type="hidden" name="manzil_quality" id="manzil_quality" value="">
                     </div>
                 </div>
             </div>
@@ -261,7 +239,7 @@
             <!-- Remarks -->
             <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label for="teacher_remarks" style="font-weight: 600;">Teacher Remarks</label>
-                <textarea name="teacher_remarks" id="teacher_remarks" class="form-control" rows="2" placeholder="Write any specific feedback or mistakes here..."></textarea>
+                <textarea name="teacher_remarks" id="teacher_remarks" class="form-control" rows="2" placeholder="Write any specific feedback or mistakes here..."><%= todayEntry ? todayEntry.teacher_remarks : '' %></textarea>
             </div>
 
             <div style="display: flex; gap: 1rem; justify-content: flex-end;">
@@ -273,35 +251,53 @@
 </div>
 
 <script>
-    function toggleAbsentView() {
-        const isAbsent = document.getElementById('is_absent').checked;
+    function selectStatus(status, btn) {
         const sections = document.getElementById('recitation-sections');
-        if (isAbsent) {
-            sections.style.display = 'none';
-        } else {
-            sections.style.display = 'block';
-        }
-    }
+        const sabaqSection = document.getElementById('sabaq-section');
+        
+        // Remove old styling
+        sections.classList.remove('status-disabled');
+        sabaqSection.classList.remove('sabaq-disabled');
 
-    function selectFormChip(section, value, btn) {
+        // Reset toggles in this group
         const group = btn.parentElement;
         group.querySelectorAll('.btn-toggle-chip').forEach(b => {
             b.className = 'btn-toggle-chip';
         });
 
-        const suffix = value.replace(/_/g, '');
-        btn.classList.add('active-' + suffix);
+        const statusInput = document.getElementById('sabaq_status');
+        const sabqiInput = document.getElementById('sabqi_status');
+        const manzilInput = document.getElementById('manzil_status');
+        const absentInput = document.getElementById('is_absent');
 
-        document.getElementById(section + '_status').value = value;
-    }
-
-    function setQuality(type, val, btn, classSuffix) {
-        const parent = btn.parentElement;
-        parent.querySelectorAll('.quality-btn').forEach(b => {
-            b.className = 'quality-btn';
-        });
-        btn.classList.add('active-' + classSuffix);
-        document.getElementById(type + '_quality').value = val;
+        if (status === 'recited') {
+            btn.classList.add('active-recited');
+            statusInput.value = 'recited';
+            sabqiInput.value = 'recited';
+            manzilInput.value = 'recited';
+            absentInput.value = 'off';
+        } else if (status === 'nagha') {
+            btn.classList.add('active-nagha');
+            sabaqSection.classList.add('sabaq-disabled');
+            statusInput.value = 'not_recited';
+            sabqiInput.value = 'recited'; // Sabqi is active/recited
+            manzilInput.value = 'recited'; // Manzil is active/recited
+            absentInput.value = 'off';
+        } else if (status === 'absent') {
+            btn.classList.add('active-absent');
+            sections.classList.add('status-disabled');
+            statusInput.value = 'not_recited';
+            sabqiInput.value = 'not_recited';
+            manzilInput.value = 'not_recited';
+            absentInput.value = 'on';
+        } else if (status === 'leave') {
+            btn.classList.add('active-leave');
+            sections.classList.add('status-disabled');
+            statusInput.value = 'leave';
+            sabqiInput.value = 'leave';
+            manzilInput.value = 'leave';
+            absentInput.value = 'off';
+        }
     }
 </script>
 

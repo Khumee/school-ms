@@ -70,9 +70,10 @@ const SESSION_YEAR = '2026';
         ];
         const classMap = {};
         for (const c of classNames) {
+            const isHifz = c.name === 'Hifz Class' ? 1 : 0;
             const [res] = await conn.execute(
-                'INSERT INTO classes (name, default_monthly_fee, tenant_id) VALUES (?, ?, ?)',
-                [c.name, c.fee, tenantId]
+                'INSERT INTO classes (name, default_monthly_fee, tenant_id, is_hifz_class) VALUES (?, ?, ?, ?)',
+                [c.name, c.fee, tenantId, isHifz]
             );
             classMap[c.name] = res.insertId;
         }
@@ -151,8 +152,6 @@ const SESSION_YEAR = '2026';
                     const dateString = entryDate.toISOString().split('T')[0];
 
                     let sabaq_status = 'recited';
-                    let sabaq_lines = s.pace === 'fast' ? 15 : (s.pace === 'average' ? 7 : 2);
-                    let sabaq_quality = s.pace === 'fast' ? 'Excellent' : (s.pace === 'average' ? 'Average' : 'Weak');
                     let is_absent = 0;
 
                     // Bad students miss days or fail to recite
@@ -161,17 +160,32 @@ const SESSION_YEAR = '2026';
                         sabaq_status = 'not_recited';
                     }
 
+                    // Average students might have a leave day
+                    if (s.pace === 'average' && dIndex === 4) {
+                        sabaq_status = 'leave';
+                    }
+
                     await conn.execute(
                         `INSERT INTO hifz_diary_entries 
-                         (tenant_id, student_id, entry_date, is_absent, sabaq_status, sabaq_lines, sabaq_para, sabaq_quality, sabqi_status, sabqi_para, sabqi_quality, manzil_status, manzil_from_para, manzil_to_para, manzil_quality)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'recited', ?, 'Good', 'recited', 1, ?, 'Good')`,
+                         (tenant_id, student_id, entry_date, is_absent, 
+                          sabaq_status, sabaq_from_para, sabaq_to_para, sabaq_from_page, sabaq_to_page, sabaq_from_line, sabaq_to_line,
+                          sabqi_status, sabqi_para, 
+                          manzil_status, manzil_para_1, manzil_para_2, manzil_para_3)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                         [
                             tenantId, res.insertId, dateString, is_absent, 
-                            is_absent ? 'not_recited' : sabaq_status, 
-                            is_absent ? null : sabaq_lines, 
-                            is_absent ? null : s.current_para, 
-                            is_absent ? null : sabaq_quality,
+                            sabaq_status,
+                            is_absent ? null : s.current_para,
+                            is_absent ? null : s.current_para,
+                            is_absent ? null : 1,
+                            is_absent ? null : 2,
+                            is_absent ? null : 1,
+                            is_absent ? null : 15,
+                            sabaq_status,
                             is_absent ? null : Math.max(1, s.current_para - 1),
+                            sabaq_status,
+                            is_absent ? null : 1,
+                            is_absent ? null : Math.max(1, s.current_para - 2),
                             is_absent ? null : Math.max(1, s.current_para - 1)
                         ]
                     );
