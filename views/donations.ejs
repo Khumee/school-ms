@@ -26,12 +26,14 @@
     <div class="card kpi-card">
         <span class="kpi-icon purple"><i class="bi bi-piggy-bank-fill"></i></span>
         <span class="kpi-label">All-Time Total</span>
-        <span class="kpi-value" style="font-size: 1.6rem;">PKR <%= totalAllTime.toLocaleString() %></span>
+        <span class="kpi-value" style="font-size: 1.6rem; font-weight: 700;">PKR <%= totalAllTime.toLocaleString() %></span>
+        <span class="kpi-subtitle">From <%= totalDonationsCount %> total donations</span>
     </div>
     <div class="card kpi-card" style="cursor: pointer;" onclick="const panel = document.getElementById('donors-directory-panel'); if (panel) { panel.open = true; panel.scrollIntoView({ behavior: 'smooth' }); }">
         <span class="kpi-icon blue"><i class="bi bi-people-fill"></i></span>
         <span class="kpi-label">Total Donors Registered</span>
-        <span class="kpi-value" style="font-size: 1.6rem;"><%= totalDonorCount %></span>
+        <span class="kpi-value" style="font-size: 2.2rem; font-weight: 800; color: var(--primary-color); line-height: 1.1; margin-top: 0.2rem; margin-bottom: 0.2rem;"><%= totalDonorCount %></span>
+        <span class="kpi-subtitle"><%= monthlyDonorsCount %> monthly commitment donor(s)</span>
     </div>
     <div class="card kpi-card" style="grid-row: span 1; min-height: 160px;">
         <span class="kpi-icon teal"><i class="bi bi-trophy-fill"></i></span>

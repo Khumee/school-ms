@@ -95,6 +95,8 @@ router.get('/donations', isAuthenticated, async (req, res) => {
         }).filter(x => x.donor);
 
         const totalAllTime = allDonations.reduce((sum, d) => sum + parseFloat(d.amount), 0);
+        const monthlyDonorsCount = allDonorsForLookup.filter(d => d.monthly_commitment).length;
+        const totalDonationsCount = allDonations.length;
 
         res.render('donations', {
             donors,
@@ -104,6 +106,8 @@ router.get('/donations', isAuthenticated, async (req, res) => {
             lapsedDonors,
             totalAllTime,
             totalDonorCount: allDonorsForLookup.length,
+            monthlyDonorsCount,
+            totalDonationsCount,
             fundLabels: FUND_LABELS,
             topDonors,
             searchDonor: searchDonor || ''
