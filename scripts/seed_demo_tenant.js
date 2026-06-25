@@ -175,9 +175,8 @@ const SESSION_YEAR = '2026';
                 // Seed completed paras for advanced/mid students
                 if (s.current_para > 1) {
                     for (let pNo = 1; pNo < s.current_para; pNo++) {
-                        // Very good students passed all, slow/average might have some pending or failed
-                        let test_result = 'passed';
-                        if (s.pace === 'slow' && pNo === 1) test_result = 'failed';
+                        let test_result = 'pass';
+                        if (s.pace === 'slow' && pNo === 1) test_result = 'fail';
                         
                         await conn.execute(
                             `INSERT INTO hifz_para_completions (tenant_id, student_id, para_no, completed_date, test_date, test_result, test_evaluator_name, evaluated_by_self)
