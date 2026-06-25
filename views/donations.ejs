@@ -428,21 +428,19 @@
                 <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewReferredOption('editDonorReferred')"><i class="bi bi-plus-lg"></i></button>
             </div>
         </div>
-        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-            <div class="form-group">
-                <label for="editDonorPreferredFund">Preferred Account to Transfer Fund</label>
-                <select name="preferred_fund_category" id="editDonorPreferredFund" class="form-control" onchange="toggleDirectOption(this.value, 'edit_preferred_member_group')">
-                    <option value="general">Member Account</option>
-                    <option value="trust">Trust Account</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="editDonorPreferredMethod">Preferred Method</label>
-                <select name="preferred_payment_method" id="editDonorPreferredMethod" class="form-control">
-                    <option value="Online">Online</option>
-                    <option value="Cash">Cash</option>
-                </select>
-            </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="editDonorPreferredFund">Preferred Account to Transfer Fund</label>
+            <select name="preferred_fund_category" id="editDonorPreferredFund" class="form-control" onchange="toggleDirectOption(this.value, 'edit_preferred_member_group')">
+                <option value="general">Member Account</option>
+                <option value="trust">Trust Account</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="editDonorPreferredMethod">Preferred Method</label>
+            <select name="preferred_payment_method" id="editDonorPreferredMethod" class="form-control">
+                <option value="Online">Online</option>
+                <option value="Cash">Cash</option>
+            </select>
         </div>
         <div id="edit_preferred_member_group" class="form-group" style="display: none; margin-bottom: 1rem;">
             <label for="editDonorPreferredMember">Preferred Member Account Option</label>
