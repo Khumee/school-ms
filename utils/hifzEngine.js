@@ -9,8 +9,7 @@ const TOTAL_QURAN_LINES = 6236; // approximate total lines in the Quran
 // Phase Detection (auto-computed from enrolled_date)
 // ============================================================
 const PHASES = [
-    { key: 'tajweed_correction', label: 'Tajweed Correction',  labelUr: 'تجوید اصلاح',    minMonth: 0,  maxMonth: 1,  minLines: 1,  maxLines: 10  },
-    { key: 'early',             label: 'Early Memorization',   labelUr: 'ابتدائی حفظ',    minMonth: 1,  maxMonth: 6,  minLines: 10, maxLines: 16  },
+    { key: 'early',             label: 'Early Memorization',   labelUr: 'ابتدائی حفظ',    minMonth: 0,  maxMonth: 6,  minLines: 10, maxLines: 16  },
     { key: 'mid',               label: 'Mid Memorization',     labelUr: 'درمیانی حفظ',    minMonth: 6,  maxMonth: 12, minLines: 16, maxLines: 24  },
     { key: 'advanced',          label: 'Advanced',             labelUr: 'اعلی درجہ',      minMonth: 12, maxMonth: 999, minLines: 24, maxLines: null },
 ];
@@ -101,7 +100,7 @@ const ALARM_RULES = [
         label: 'Persistent Tajweed Issues',
         labelUr: 'مسلسل تجوید کی غلطیاں',
         check: (entries, enrollment) => {
-            if (!['tajweed_correction', 'early'].includes(enrollment.current_phase)) return false;
+            if (!['early'].includes(enrollment.current_phase)) return false;
             const recent = entries.slice(0, 5).filter(e => !e.is_absent && e.sabaq_status === 'recited' && e.sabaq_tajweed);
             if (recent.length < 5) return false;
             return recent.every(e => ['poor', 'needs_work'].includes(e.sabaq_tajweed));

@@ -104,10 +104,10 @@
                     <!-- Sabaq Column Group -->
                     <th style="background-color: #eff6ff; border-left: 2px solid #3b82f6; width: 440px; text-align: center;">Sabaq (New Lesson)</th>
                     <!-- Sabqi Column Group -->
-                    <th style="background-color: #f0fdf4; border-left: 2px solid #22c55e; width: 180px; text-align: center;">Sabqi (Recent Para)</th>
+                    <th style="background-color: #f0fdf4; border-left: 2px solid #22c55e; width: 140px; text-align: center;">Sabqi (Recent Para)</th>
                     <!-- Manzil Column Group -->
                     <th style="background-color: #fffbeb; border-left: 2px solid #eab308; width: 220px; text-align: center;">Manzil (Revision)</th>
-                    <th>Remarks</th>
+                    <th style="width: 350px;">Remarks</th>
                 </tr>
             </thead>
             <tbody>
@@ -192,13 +192,9 @@
                                     <button type="button" class="btn-toggle-chip <%= sabqiStatus === 'not_recited' ? 'active-nagha' : '' %>" onclick="selectColStatus('<%= s.student_id %>', 'sabqi', 'not_recited', this)" title="Nagha"><i class="bi bi-x-lg"></i> Nagha</button>
                                 </div>
 
-                                <div class="sabqi-inputs <%= sabqiStatus === 'not_recited' ? 'sabqi-disabled' : '' %>" style="display: flex; flex-direction: column; gap: 0.35rem; align-items: center;">
-                                    <div style="display: flex; gap: 0.35rem; justify-content: center;">
-                                        <input type="number" name="entries[<%= s.student_id %>][sabqi_para]" placeholder="P1" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 50px;" min="1" max="30"
-                                               value="<%= s.sabqi_para || (s.prefill ? s.prefill.sabqi_para : '') %>">
-                                        <input type="number" name="entries[<%= s.student_id %>][sabqi_para_2]" placeholder="P2" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 50px;" min="1" max="30"
-                                               value="<%= s.sabqi_para_2 || (s.prefill ? s.prefill.sabqi_para_2 : '') %>">
-                                    </div>
+                                <div class="sabqi-inputs <%= sabqiStatus === 'not_recited' ? 'sabqi-disabled' : '' %>" style="display: flex; gap: 0.35rem; justify-content: center; align-items: center;">
+                                    <input type="number" name="entries[<%= s.student_id %>][sabqi_para]" placeholder="Para" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 60px;" min="1" max="30"
+                                           value="<%= s.sabqi_para || (s.prefill ? s.prefill.sabqi_para : '') %>">
                                 </div>
                             </td>
 

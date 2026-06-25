@@ -117,8 +117,8 @@ const SESSION_YEAR = '2026';
             { name: 'Abu Ubaidah Jarrah', class: 'Hifz Class', reg: 'REG-110', fee: null, concession: 0, notes: null, hifz: true, phase: 'early', current_para: 5, lines: 75, streak: 4, pace: 'average' },
             
             // VERY BAD (Alarm triggers, failing, no streak, absent, slow pace)
-            { name: 'Bilal Khan', class: 'Hifz Class', reg: 'REG-111', fee: 1000.00, concession: 1, notes: 'Sibling Discount', hifz: true, phase: 'tajweed_correction', current_para: 1, lines: 10, streak: 0, pace: 'slow' },
-            { name: 'Anas Malik', class: 'Hifz Class', reg: 'REG-112', fee: null, concession: 0, notes: null, hifz: true, phase: 'tajweed_correction', current_para: 2, lines: 15, streak: 0, pace: 'slow' }
+            { name: 'Bilal Khan', class: 'Hifz Class', reg: 'REG-111', fee: 1000.00, concession: 1, notes: 'Sibling Discount', hifz: true, phase: 'early', current_para: 1, lines: 10, streak: 0, pace: 'slow' },
+            { name: 'Anas Malik', class: 'Hifz Class', reg: 'REG-112', fee: null, concession: 0, notes: null, hifz: true, phase: 'early', current_para: 2, lines: 15, streak: 0, pace: 'slow' }
         ];
 
         const studentMap = {};

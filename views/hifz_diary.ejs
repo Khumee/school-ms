@@ -228,11 +228,8 @@
                     </div>
 
                     <div class="sabqi-inputs-div" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-size: 0.85rem; font-weight: 600;">Recent Paras Selection</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="number" name="sabqi_para" class="form-control" min="1" max="30" placeholder="Para 1" value="<%= prefill ? prefill.sabqi_para : Math.max(1, enrollment.current_para - 1) %>">
-                            <input type="number" name="sabqi_para_2" class="form-control" min="1" max="30" placeholder="Para 2" value="<%= prefill ? prefill.sabqi_para_2 : '' %>">
-                        </div>
+                        <label style="font-size: 0.85rem; font-weight: 600;">Recent Para No</label>
+                        <input type="number" name="sabqi_para" class="form-control" min="1" max="30" placeholder="Para" value="<%= prefill ? prefill.sabqi_para : Math.max(1, enrollment.current_para - 1) %>">
                     </div>
                 </div>
 
