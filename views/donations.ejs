@@ -28,7 +28,7 @@
         <span class="kpi-label">All-Time Total</span>
         <span class="kpi-value" style="font-size: 1.6rem;">PKR <%= totalAllTime.toLocaleString() %></span>
     </div>
-    <div class="card kpi-card">
+    <div class="card kpi-card" style="cursor: pointer;" onclick="const panel = document.getElementById('donors-directory-panel'); if (panel) { panel.open = true; panel.scrollIntoView({ behavior: 'smooth' }); }">
         <span class="kpi-icon blue"><i class="bi bi-people-fill"></i></span>
         <span class="kpi-label">Total Donors Registered</span>
         <span class="kpi-value" style="font-size: 1.6rem;"><%= totalDonorCount %></span>
@@ -195,7 +195,7 @@
 </div>
 
 <!-- Donors Directory & Search Collapsible Panel -->
-<details class="ledger-details" <%= searchDonor ? 'open' : '' %> style="margin-top: 2rem;">
+<details id="donors-directory-panel" class="ledger-details" <%= searchDonor ? 'open' : '' %> style="margin-top: 2rem;">
     <summary class="ledger-summary">
         <span><i class="bi bi-people-fill"></i> View & Search Donors Directory <%= searchDonor ? '(Active Search)' : '' %></span>
         <i class="bi bi-chevron-down toggle-icon"></i>
