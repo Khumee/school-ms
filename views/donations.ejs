@@ -73,14 +73,28 @@
     <div class="card">
         <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-cash-coin"></i> Record Donation Received</h3>
         <form action="/donations/add" method="POST">
-            <div class="form-group" style="margin-bottom: 1rem;">
-                <label for="donor_id">Select Donor *</label>
-                <select name="donor_id" id="donor_id" class="form-control" required>
+            <div class="form-group" style="margin-bottom: 1rem; position: relative;">
+                <label for="donor_search">Select Donor *</label>
+                <input type="text" id="donor_search" class="form-control" placeholder="Type to search donor..." autocomplete="off" required>
+                <!-- Hidden select to submit the donor_id -->
+                <select name="donor_id" id="donor_id" style="display: none;" required>
                     <option value="">-- Select Donor --</option>
                     <% donors.forEach(d => { %>
                         <option value="<%= d.id %>"><%= d.name %> (Ref: <%= d.referred_by || 'Direct' %>)</option>
                     <% }) %>
                 </select>
+                
+                <div id="donor_dropdown_list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); margin-top: 4px;">
+                    <% donors.forEach(d => { %>
+                        <div class="dropdown-donor-item" data-value="<%= d.id %>" data-name="<%= d.name %>" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
+                            <div style="font-weight: 600; color: #1e293b;"><%= d.name %></div>
+                            <div style="font-size: 0.75rem; color: #64748b;">Referred by: <%= d.referred_by || 'Direct' %></div>
+                        </div>
+                    <% }) %>
+                    <div id="no_results" style="display: none; padding: 1rem; text-align: center; color: #94a3b8; font-size: 0.9rem;">
+                        No donors found
+                    </div>
+                </div>
             </div>
             <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div class="form-group">
@@ -301,6 +315,74 @@
         document.getElementById('editModal').style.display = 'none';
         document.getElementById('editModalOverlay').style.display = 'none';
     }
+
+    // Custom Searchable Dropdown
+    document.addEventListener('DOMContentLoaded', function() {
+        const donorSearch = document.getElementById('donor_search');
+        const donorDropdown = document.getElementById('donor_dropdown_list');
+        const donorSelect = document.getElementById('donor_id');
+        const dropdownItems = donorDropdown.querySelectorAll('.dropdown-donor-item');
+        const noResults = document.getElementById('no_results');
+
+        if (!donorSearch) return;
+
+        // Show dropdown on focus
+        donorSearch.addEventListener('focus', () => {
+            donorDropdown.style.display = 'block';
+        });
+
+        // Filter items on input
+        donorSearch.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            let matchCount = 0;
+            
+            dropdownItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(query)) {
+                    item.style.display = 'block';
+                    matchCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            if (matchCount === 0) {
+                noResults.style.display = 'block';
+            } else {
+                noResults.style.display = 'none';
+            }
+        });
+
+        // Click item to select
+        dropdownItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const val = item.getAttribute('data-value');
+                const name = item.getAttribute('data-name');
+                
+                donorSelect.value = val;
+                donorSearch.value = name;
+                donorDropdown.style.display = 'none';
+            });
+        });
+
+        // Close dropdown if clicking outside
+        document.addEventListener('click', (e) => {
+            if (!donorSearch.contains(e.target) && !donorDropdown.contains(e.target)) {
+                donorDropdown.style.display = 'none';
+                
+                // Reset search box if no valid selection is made
+                if (donorSelect.value === "") {
+                    donorSearch.value = "";
+                } else {
+                    // Match select option name
+                    const activeItem = Array.from(dropdownItems).find(item => item.getAttribute('data-value') === donorSelect.value);
+                    if (activeItem) {
+                        donorSearch.value = activeItem.getAttribute('data-name');
+                    }
+                }
+            }
+        });
+    });
 </script>
 
 <%- include('partials/footer') %>
