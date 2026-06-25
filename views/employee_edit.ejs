@@ -1,126 +1,147 @@
 <%- include('partials/header') %>
 
-<div class="section-header">
-    <h1 class="section-title"><i class="bi bi-pencil-square"></i> Edit Employee Profile</h1>
-    <a href="/employees" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Directory</a>
-</div>
+    <div class="section-header">
+        <h1 class="section-title"><i class="bi bi-pencil-square"></i> Edit Employee Profile</h1>
+        <a href="/employees" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Directory</a>
+    </div>
 
-<% if (error) { %>
-    <div class="alert alert-danger"><%= error %></div>
-<% } %>
-
-<div class="card">
-    <form action="/employees/edit/<%= employee.id %>" method="POST">
-        <h3 style="margin-bottom: 1rem; color: var(--primary-color);">1. Employment Details</h3>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="name">Employee Full Name *</label>
-                <input type="text" id="name" name="name" class="form-control" required value="<%= employee.name %>">
-            </div>
-            
-            <div class="form-group">
-                <label for="designation">Designation *</label>
-                <select id="designation" name="designation" class="form-control" required>
-                    <option value="">-- Select Designation --</option>
-                    <% 
-                        const designations = [
-                            'Primary Teacher', 'Montessori Teacher', 'Qari', 'Qaria', 
-                            'Principal', 'Admin Office', 'Course Coordinator', 
-                            'Class Coordinator', 'Cleaner', 'Aya', 'Caretaker'
-                        ];
-                        let isCustom = employee.designation && !designations.includes(employee.designation);
-                    %>
-                    <% designations.forEach(d => { %>
-                        <option value="<%= d %>" <%= employee.designation === d ? 'selected' : '' %>><%= d %></option>
-                    <% }) %>
-                    <% if (isCustom) { %>
-                        <option value="<%= employee.designation %>" selected><%= employee.designation %> (Custom)</option>
-                    <% } %>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="role">Role Type</label>
-                <select name="role" id="role" class="form-control">
-                    <option value="teacher" <%= employee.role === 'teacher' ? 'selected' : '' %>>Teacher</option>
-                    <option value="admin" <%= employee.role === 'admin' ? 'selected' : '' %>>Administrator / Principal</option>
-                    <option value="support" <%= employee.role === 'support' ? 'selected' : '' %>>Support / Cleaning Staff</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="status">Payroll Status</label>
-                <select name="status" id="status" class="form-control">
-                    <option value="on_payroll" <%= employee.status === 'on_payroll' ? 'selected' : '' %>>On Payroll</option>
-                    <option value="volunteer" <%= employee.status === 'volunteer' ? 'selected' : '' %>>Volunteer</option>
-                    <option value="inactive" <%= employee.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="date_of_joining">Date of Joining</label>
-                <input type="date" id="date_of_joining" name="date_of_joining" class="form-control" value="<%= employee.date_of_joining ? new Date(employee.date_of_joining).toISOString().substring(0,10) : '' %>">
-            </div>
-            
-            <div class="form-group">
-                <label for="default_salary">Default Monthly Salary (PKR)</label>
-                <input type="number" step="0.01" id="default_salary" name="default_salary" class="form-control" value="<%= employee.default_salary %>">
-            </div>
+    <% if (error) { %>
+        <div class="alert alert-danger">
+            <%= error %>
         </div>
+        <% } %>
 
-        <h3 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary-color);">2. Personal & Contact Details</h3>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" class="form-control" value="<%= employee.email || '' %>">
-            </div>
-            
-            <div class="form-group">
-                <label for="phone">Phone Number</label>
-                <input type="text" id="phone" name="phone" class="form-control" value="<%= employee.phone || '' %>">
-            </div>
-            
-            <div class="form-group">
-                <label for="cnic_number">CNIC / ID Card Number</label>
-                <input type="text" id="cnic_number" name="cnic_number" class="form-control" value="<%= employee.cnic_number || '' %>">
-            </div>
-            
-            <div class="form-group">
-                <label for="gender">Gender</label>
-                <select name="gender" id="gender" class="form-control">
-                    <option value="male" <%= employee.gender === 'male' ? 'selected' : '' %>>Male</option>
-                    <option value="female" <%= employee.gender === 'female' ? 'selected' : '' %>>Female</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="qualification">Highest Qualification</label>
-                <input type="text" id="qualification" name="qualification" class="form-control" value="<%= employee.qualification || '' %>">
-            </div>
-            
-            <div class="form-group">
-                <label for="experience_years">Years of Experience</label>
-                <input type="number" id="experience_years" name="experience_years" class="form-control" value="<%= employee.experience_years %>">
-            </div>
-        </div>
-        
-        <div class="form-grid" style="margin-top: 1rem;">
-            <div class="form-group" style="grid-column: span 2;">
-                <label for="address">Residential Address</label>
-                <textarea id="address" name="address" class="form-control" rows="2"><%= employee.address || '' %></textarea>
-            </div>
-            
-            <div class="form-group" style="grid-column: span 2;">
-                <label for="bank_account_info">Bank Account Details</label>
-                <input type="text" id="bank_account_info" name="bank_account_info" class="form-control" value="<%= employee.bank_account_info || '' %>">
-            </div>
-        </div>
+            <div class="card">
+                <form action="/employees/edit/<%= employee.id %>" method="POST">
+                    <h3 style="margin-bottom: 1rem; color: var(--primary-color);">1. Employment Details</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="name">Employee Full Name *</label>
+                            <input type="text" id="name" name="name" class="form-control" required
+                                value="<%= employee.name %>">
+                        </div>
 
-        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
-            <button type="submit" class="btn-primary">Save Changes</button>
-            <a href="/employees" class="btn-secondary">Cancel</a>
-        </div>
-    </form>
-</div>
+                        <div class="form-group">
+                            <label for="designation">Designation *</label>
+                            <select id="designation" name="designation" class="form-control" required>
+                                <option value="">-- Select Designation --</option>
+                                <% 
+                                    const designations = [
+                                        'Principal', 'Vice Principal / Coordinator', 'Primary School Teacher',
+                                        'Montessori Teacher', 'Qari (Male Quran Teacher)', 'Qaria (Female Quran Teacher)',
+                                        'Course Coordinator', 'Class Coordinator', 'Admin / Office Staff',
+                                        'Caretaker / Security', 'Aya / Nanny', 'Cleaner / Support Staff'
+                                    ];
+                                    let isCustom = employee.designation && !designations.includes(employee.designation);
+                                %>
+                                <% designations.forEach(d => { %>
+                                    <option value="<%= d %>" <%= employee.designation === d ? 'selected' : '' %>><%= d %></option>
+                                <% }) %>
+                                <% if (isCustom) { %>
+                                    <option value="<%= employee.designation %>" selected><%= employee.designation %> (Custom)</option>
+                                <% } %>
+                            </select>
+                        </div>
 
-<%- include('partials/footer') %>
+                        <div class="form-group">
+                            <label for="role">Role Type</label>
+                            <select name="role" id="role" class="form-control">
+                                <option value="teacher" <%=employee.role==='teacher' ? 'selected' : '' %>>Teacher
+                                </option>
+                                <option value="admin" <%=employee.role==='admin' ? 'selected' : '' %>>Administrator /
+                                    Principal</option>
+                                <option value="support" <%=employee.role==='support' ? 'selected' : '' %>>Support /
+                                    Cleaning Staff</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="status">Payroll Status</label>
+                            <select name="status" id="status" class="form-control">
+                                <option value="on_payroll" <%=employee.status==='on_payroll' ? 'selected' : '' %>>On
+                                    Payroll</option>
+                                <option value="volunteer" <%=employee.status==='volunteer' ? 'selected' : '' %>
+                                    >Volunteer</option>
+                                <option value="inactive" <%=employee.status==='inactive' ? 'selected' : '' %>>Inactive
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="date_of_joining">Date of Joining</label>
+                            <input type="date" id="date_of_joining" name="date_of_joining" class="form-control"
+                                value="<%= employee.date_of_joining ? new Date(employee.date_of_joining).toISOString().substring(0,10) : '' %>">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="default_salary">Default Monthly Salary (PKR)</label>
+                            <input type="number" step="0.01" id="default_salary" name="default_salary"
+                                class="form-control" value="<%= employee.default_salary %>">
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 2rem; margin-bottom: 1rem; color: var(--primary-color);">2. Personal &
+                        Contact Details</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" class="form-control"
+                                value="<%= employee.email || '' %>">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="text" id="phone" name="phone" class="form-control"
+                                value="<%= employee.phone || '' %>">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cnic_number">CNIC / ID Card Number</label>
+                            <input type="text" id="cnic_number" name="cnic_number" class="form-control"
+                                value="<%= employee.cnic_number || '' %>">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="gender">Gender</label>
+                            <select name="gender" id="gender" class="form-control">
+                                <option value="male" <%=employee.gender==='male' ? 'selected' : '' %>>Male</option>
+                                <option value="female" <%=employee.gender==='female' ? 'selected' : '' %>>Female
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="qualification">Highest Qualification</label>
+                            <input type="text" id="qualification" name="qualification" class="form-control"
+                                value="<%= employee.qualification || '' %>">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="experience_years">Years of Experience</label>
+                            <input type="number" id="experience_years" name="experience_years" class="form-control"
+                                value="<%= employee.experience_years %>">
+                        </div>
+                    </div>
+
+                    <div class="form-grid" style="margin-top: 1rem;">
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label for="address">Residential Address</label>
+                            <textarea id="address" name="address" class="form-control"
+                                rows="2"><%= employee.address || '' %></textarea>
+                        </div>
+
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label for="bank_account_info">Bank Account Details</label>
+                            <input type="text" id="bank_account_info" name="bank_account_info" class="form-control"
+                                value="<%= employee.bank_account_info || '' %>">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                        <a href="/employees" class="btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+
+            <%- include('partials/footer') %>
