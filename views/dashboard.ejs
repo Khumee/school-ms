@@ -242,6 +242,7 @@
 
 <!-- Include Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script>
     function openKpiModal(title, content) {
         document.getElementById('kpiModalTitle').innerText = title;
@@ -318,6 +319,7 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'top', labels: { font: { family: "'Inter', sans-serif", weight: '600' }, color: '#475569' } },
+                    datalabels: { display: false },
                     tooltip: {
                         padding: 12,
                         backgroundColor: '#0f172a',
@@ -369,6 +371,7 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'top', labels: { font: { family: "'Inter', sans-serif", weight: '600' }, color: '#475569' } },
+                    datalabels: { display: false },
                     tooltip: {
                         padding: 12,
                         backgroundColor: '#0f172a',
@@ -390,6 +393,7 @@
         const ctx3 = document.getElementById('expenseBreakdownChart').getContext('2d');
         new Chart(ctx3, {
             type: 'doughnut',
+            plugins: [ChartDataLabels],
             data: {
                 labels: ['Salaries', 'Rent', 'Utilities', 'Office', 'Other'],
                 datasets: [{
@@ -410,6 +414,16 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'bottom', labels: { font: { family: "'Inter', sans-serif", weight: '600' }, color: '#475569' } },
+                    datalabels: {
+                        color: '#ffffff',
+                        font: { family: "'Inter', sans-serif", weight: 'bold', size: 11 },
+                        formatter: (value, ctx) => {
+                            let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            if (sum === 0 || value === 0) return '';
+                            let percentage = ((value / sum) * 100).toFixed(0);
+                            return percentage > 4 ? percentage + '%' : '';
+                        }
+                    },
                     tooltip: {
                         padding: 12,
                         backgroundColor: '#0f172a',
@@ -430,6 +444,7 @@
         const ctx4 = document.getElementById('studentSponsorshipChart').getContext('2d');
         new Chart(ctx4, {
             type: 'pie',
+            plugins: [ChartDataLabels],
             data: {
                 labels: ['Paying Students', 'Supported (Concession)'],
                 datasets: [{
@@ -444,6 +459,16 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'bottom', labels: { font: { family: "'Inter', sans-serif", weight: '600' }, color: '#475569' } },
+                    datalabels: {
+                        color: '#ffffff',
+                        font: { family: "'Inter', sans-serif", weight: 'bold', size: 12 },
+                        formatter: (value, ctx) => {
+                            let sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            if (sum === 0 || value === 0) return '';
+                            let percentage = ((value / sum) * 100).toFixed(0);
+                            return percentage > 4 ? percentage + '%' : '';
+                        }
+                    },
                     tooltip: {
                         padding: 12,
                         backgroundColor: '#0f172a',
