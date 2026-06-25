@@ -2,7 +2,8 @@
 
 <%
     // Current month settings
-    const activeMonthNum = new Date().getMonth() + 1; // Month 6 (June)
+    const activeMonthNum = locals.activeMonthNum !== undefined ? locals.activeMonthNum : (new Date().getMonth() + 1);
+    const activeYear = locals.activeYear !== undefined ? locals.activeYear : new Date().getFullYear();
     const monthsList = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const activeMonthName = monthsList[activeMonthNum - 1];
 
@@ -31,9 +32,9 @@
 </div>
 
 <!-- Filters Collapsible Panel -->
-<details class="filter-panel" <%= (classId || search) ? 'open' : '' %>>
+<details class="filter-panel" <%= (classId || search || locals.activeMonthNum || locals.activeYear) ? 'open' : '' %>>
     <summary>
-        <span><i class="bi bi-funnel-fill"></i> Filter & Search Fees <%= (classId || search) ? '(Active)' : '' %></span>
+        <span><i class="bi bi-funnel-fill"></i> Filter & Search Fees</span>
         <i class="bi bi-chevron-down toggle-icon"></i>
     </summary>
     <form action="/fees/ledger" method="GET" class="filter-content">
@@ -44,6 +45,24 @@
                 <option value="">-- All Classes --</option>
                 <% classes.forEach(c => { %>
                     <option value="<%= c.id %>" <%= classId == c.id ? 'selected' : '' %>><%= c.name %></option>
+                <% }) %>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="month">Month</label>
+            <select name="month" id="month" class="form-control" onchange="this.form.submit()">
+                <% monthsList.forEach((mName, idx) => { %>
+                    <option value="<%= idx + 1 %>" <%= activeMonthNum == (idx + 1) ? 'selected' : '' %>><%= mName %></option>
+                <% }) %>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="year">Year</label>
+            <select name="year" id="year" class="form-control" onchange="this.form.submit()">
+                <% [2024, 2025, 2026, 2027, 2028].forEach(y => { %>
+                    <option value="<%= y %>" <%= activeYear == y ? 'selected' : '' %>><%= y %></option>
                 <% }) %>
             </select>
         </div>
@@ -227,6 +246,7 @@
     <form action="/fees/pay" method="POST">
         <input type="hidden" id="modalStudentId" name="student_id">
         <input type="hidden" id="modalMonth" name="month">
+        <input type="hidden" id="modalYear" name="year">
         
         <div class="form-group" style="margin-bottom: 1.25rem;">
             <label for="modalAmount">Amount Paid (PKR)</label>
@@ -285,18 +305,22 @@
         document.getElementById('modalTitle').innerText = 'Pay Fee: ' + studentName + ' (' + months[month - 1] + ')';
         document.getElementById('modalExpectedFee').innerText = 'Expected Fee: PKR ' + expectedFee;
         
-        // Calculate late fee automatically
+        // Calculate late fee automatically based on year context
         const today = new Date();
         const currentDay = today.getDate();
         let calculatedFine = 0;
         const currentMonth = today.getMonth() + 1; // 1-indexed
+        const currentYear = today.getFullYear();
+        const selectedYear = document.getElementById('year') ? parseInt(document.getElementById('year').value) : currentYear;
 
-        if (month < currentMonth) {
-            const dueDate = new Date(today.getFullYear(), month - 1, 10);
+        document.getElementById('modalYear').value = selectedYear;
+
+        if (selectedYear < currentYear || (selectedYear === currentYear && month < currentMonth)) {
+            const dueDate = new Date(selectedYear, month - 1, 10);
             const diffTime = Math.max(0, today - dueDate);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             calculatedFine = diffDays * 20;
-        } else if (month == currentMonth && currentDay > 10) {
+        } else if (selectedYear === currentYear && month == currentMonth && currentDay > 10) {
             calculatedFine = (currentDay - 10) * 20;
         }
 
@@ -320,12 +344,15 @@
             const currentDay = today.getDate();
             let calculatedFine = 0;
             const currentMonth = today.getMonth() + 1;
-            if (month < currentMonth) {
-                const dueDate = new Date(today.getFullYear(), month - 1, 10);
+            const currentYear = today.getFullYear();
+            const selectedYear = document.getElementById('year') ? parseInt(document.getElementById('year').value) : currentYear;
+
+            if (selectedYear < currentYear || (selectedYear === currentYear && month < currentMonth)) {
+                const dueDate = new Date(selectedYear, month - 1, 10);
                 const diffTime = Math.max(0, today - dueDate);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 calculatedFine = diffDays * 20;
-            } else if (month == currentMonth && currentDay > 10) {
+            } else if (selectedYear === currentYear && month == currentMonth && currentDay > 10) {
                 calculatedFine = (currentDay - 10) * 20;
             }
             fineInput.value = calculatedFine;

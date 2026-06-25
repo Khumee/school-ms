@@ -68,7 +68,10 @@ router.post('/fees/concessions/update', isAuthenticated, async (req, res) => {
 router.get('/fees/ledger', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        const { classId, search } = req.query;
+        const { classId, search, month, year } = req.query;
+        
+        const activeYear = year ? parseInt(year) : new Date().getFullYear();
+        const activeMonth = month ? parseInt(month) : (new Date().getMonth() + 1);
         
         let queryStr = `
             SELECT s.id, s.reg_no, s.name, s.custom_monthly_fee, s.has_concession, 
@@ -91,10 +94,10 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
         
         const [students] = await db.execute(queryStr, params);
         
-        // Fetch all 2026 payments for these students
+        // Fetch all payments for the active year for these students
         const [payments] = await db.execute(
-            'SELECT id, student_id, month, amount_paid FROM fee_payments WHERE tenant_id = ? AND year = 2026',
-            [tenantId]
+            'SELECT id, student_id, month, amount_paid FROM fee_payments WHERE tenant_id = ? AND year = ?',
+            [tenantId, activeYear]
         );
         
         // Map payments for easy access: student_id -> { month: { id, amount_paid } }
@@ -111,7 +114,15 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
         
         const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
         
-        res.render('fees_ledger', { students, classes, classId, search, paymentMap });
+        res.render('fees_ledger', { 
+            students, 
+            classes, 
+            classId, 
+            search, 
+            paymentMap, 
+            activeMonthNum: activeMonth, 
+            activeYear: activeYear 
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading fee ledger.');
@@ -120,23 +131,24 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
 
 // POST /fees/pay - record payment
 router.post('/fees/pay', isAuthenticated, async (req, res) => {
-    const { student_id, month, amount, fine_amount, fine_waived } = req.body;
+    const { student_id, month, year, amount, fine_amount, fine_waived } = req.body;
     try {
         const tenantId = req.tenant.id;
         const waived = fine_waived === 'on' || fine_waived === '1' ? 1 : 0;
         const fineVal = fine_amount ? parseFloat(fine_amount) : 0.00;
+        const activeYear = year ? parseInt(year) : new Date().getFullYear();
         
         // Delete any existing payment first to allow updates
         await db.execute(
-            'DELETE FROM fee_payments WHERE student_id = ? AND month = ? AND year = 2026 AND tenant_id = ?',
-            [student_id, month, tenantId]
+            'DELETE FROM fee_payments WHERE student_id = ? AND month = ? AND year = ? AND tenant_id = ?',
+            [student_id, month, activeYear, tenantId]
         );
         
         if (amount && parseFloat(amount) > 0) {
             await db.execute(
                 `INSERT INTO fee_payments (tenant_id, student_id, month, year, amount_paid, payment_date, recorded_by, fine_amount, fine_waived)
-                 VALUES (?, ?, ?, 2026, ?, ?, ?, ?, ?)`,
-                [tenantId, student_id, month, parseFloat(amount), new Date(), req.session.userId, fineVal, waived]
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [tenantId, student_id, month, activeYear, parseFloat(amount), new Date(), req.session.userId, fineVal, waived]
             );
         }
         
