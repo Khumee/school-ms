@@ -57,6 +57,17 @@ app.use(donationRoutes);
 app.use(attendanceRoutes);
 app.use(expenseRoutes);
 
-app.listen(PORT, () => {
-    console.log(`School Management Portal running on http://localhost:${PORT}`);
+const migrate = require('./migrate');
+
+migrate().then(() => {
+    app.listen(PORT, () => {
+        console.log(`School Management Portal running on http://localhost:${PORT}`);
+    });
+}).catch(err => {
+    console.error('Migrations failed at startup:', err);
+    // Start server anyway so the process doesn't enter a crash loop
+    app.listen(PORT, () => {
+        console.log(`School Management Portal running on http://localhost:${PORT}`);
+    });
 });
+
