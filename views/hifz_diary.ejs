@@ -169,13 +169,23 @@
 
             <div id="recitation-sections" class="<%= (initialStatus === 'absent' || initialStatus === 'leave') ? 'status-disabled' : '' %>">
                 <!-- SABAQ -->
-                <div id="sabaq-section" class="<%= sabaqStatus === 'not_recited' ? 'sabaq-disabled' : '' %>" style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 1.25rem; border-radius: 0 6px 6px 0; margin-bottom: 1.5rem;">
+                <% const isWaqafActive = activeWaqaf && activeWaqaf.status === 'active'; %>
+                <div id="sabaq-section" class="<%= (sabaqStatus === 'not_recited' || isWaqafActive) ? 'sabaq-disabled' : '' %>" style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 1.25rem; border-radius: 0 6px 6px 0; margin-bottom: 1.5rem; <%= isWaqafActive ? 'opacity: 0.55; pointer-events: none;' : '' %>">
                     <div style="font-weight: 700; color: #1e3a8a; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
-                        <span>Sabaq (New Lesson)</span>
-                        <div class="status-group">
-                            <button type="button" class="btn-toggle-chip <%= sabaqStatus === 'recited' ? 'active-recited' : '' %>" onclick="selectColStatus('sabaq', 'recited', this)" title="Recited"><i class="bi bi-check-lg"></i> Recited</button>
-                            <button type="button" class="btn-toggle-chip <%= sabaqStatus === 'not_recited' ? 'active-nagha' : '' %>" onclick="selectColStatus('sabaq', 'not_recited', this)" title="Nagha"><i class="bi bi-x-lg"></i> Nagha</button>
-                        </div>
+                        <span>
+                            Sabaq (New Lesson)
+                            <% if (isWaqafActive) { %>
+                                <span class="status-cell" style="background-color: #fef3c7; color: #d97706; font-size: 0.75rem; padding: 0.15rem 0.4rem; font-weight: 600; margin-left: 0.5rem;"><i class="bi bi-lock-fill"></i> WAQAF REVISION ACTIVE</span>
+                            <% } %>
+                        </span>
+                        <% if (!isWaqafActive) { %>
+                            <div class="status-group">
+                                <button type="button" class="btn-toggle-chip <%= sabaqStatus === 'recited' ? 'active-recited' : '' %>" onclick="selectColStatus('sabaq', 'recited', this)" title="Recited"><i class="bi bi-check-lg"></i> Recited</button>
+                                <button type="button" class="btn-toggle-chip <%= sabaqStatus === 'not_recited' ? 'active-nagha' : '' %>" onclick="selectColStatus('sabaq', 'not_recited', this)" title="Nagha"><i class="bi bi-x-lg"></i> Nagha</button>
+                            </div>
+                        <% } else { %>
+                            <span style="font-size: 0.8rem; font-weight: 600; color: #b45309;"><i class="bi bi-shield-fill-exclamation"></i> Revision Break Only</span>
+                        <% } %>
                     </div>
 
                     <div class="sabaq-inputs-div" style="display: flex; flex-direction: column; gap: 0.5rem;">
@@ -195,7 +205,7 @@
                                 <label style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a;">Start:</label>
                                 <div style="display: flex; gap: 0.35rem; align-items: center;">
                                     <span style="font-size: 0.8rem; color: #475569;">Page</span>
-                                    <input type="number" id="sabaq_from_page" name="sabaq_from_page" class="form-control" min="1" max="30" value="<%= prefill ? prefill.sabaq_from_page : '' %>" onchange="calcTotalLines()">
+                                    <input type="number" id="sabaq_from_page" name="sabaq_from_page" class="form-control" min="1" max="30" value="<%= prefill ? prefill.sabaq_from_page : 1 %>" onchange="calcTotalLines()">
                                     <span style="font-size: 0.8rem; color: #475569;">Line</span>
                                     <input type="number" id="sabaq_from_line" name="sabaq_from_line" class="form-control" min="1" max="16" value="<%= prefill ? prefill.sabaq_from_line : 1 %>" onchange="calcTotalLines()">
                                 </div>
@@ -204,7 +214,7 @@
                                 <label style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a;">End:</label>
                                 <div style="display: flex; gap: 0.35rem; align-items: center;">
                                     <span style="font-size: 0.8rem; color: #475569;">Page</span>
-                                    <input type="number" id="sabaq_to_page" name="sabaq_to_page" class="form-control" min="1" max="30" value="<%= prefill ? prefill.sabaq_to_page : '' %>" onchange="calcTotalLines()">
+                                    <input type="number" id="sabaq_to_page" name="sabaq_to_page" class="form-control" min="1" max="30" value="<%= prefill ? prefill.sabaq_to_page : 1 %>" onchange="calcTotalLines()">
                                     <span style="font-size: 0.8rem; color: #475569;">Line</span>
                                     <input type="number" id="sabaq_to_line" name="sabaq_to_line" class="form-control" min="1" max="16" value="<%= prefill ? prefill.sabaq_to_line : 16 %>" onchange="calcTotalLines()">
                                 </div>

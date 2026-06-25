@@ -96,140 +96,146 @@
 <form action="/hifz/mark-all" method="POST">
     <input type="hidden" name="date" value="<%= today %>">
 
-    <div class="table-container" style="overflow-x: auto;">
-        <table style="min-width: 1200px; font-size: 0.9rem;">
-            <thead>
-                <tr>
-                    <th style="width: 250px;">Student & Attendance</th>
-                    <!-- Sabaq Column Group -->
-                    <th style="background-color: #eff6ff; border-left: 2px solid #3b82f6; width: 440px; text-align: center;">Sabaq (New Lesson)</th>
-                    <!-- Sabqi Column Group -->
-                    <th style="background-color: #f0fdf4; border-left: 2px solid #22c55e; width: 140px; text-align: center;">Sabqi (Recent Para)</th>
-                    <!-- Manzil Column Group -->
-                    <th style="background-color: #fffbeb; border-left: 2px solid #eab308; width: 220px; text-align: center;">Manzil (Revision)</th>
-                    <th style="width: 350px;">Remarks</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if (students.length > 0) { %>
-                    <% students.forEach(s => { %>
-                        <% 
-                            let rowClass = '';
-                            let initialStatus = 'present';
-                            if (s.is_absent) {
-                                rowClass = 'row-absent';
-                                initialStatus = 'absent';
-                            } else if (s.sabaq_status === 'leave') {
-                                rowClass = 'row-leave';
-                                initialStatus = 'leave';
-                            }
+    <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+        <% if (students.length > 0) { %>
+            <% students.forEach(s => { %>
+                <% 
+                    let rowClass = '';
+                    let initialStatus = 'present';
+                    if (s.is_absent) {
+                        rowClass = 'row-absent';
+                        initialStatus = 'absent';
+                    } else if (s.sabaq_status === 'leave') {
+                        rowClass = 'row-leave';
+                        initialStatus = 'leave';
+                    }
 
-                            const sabaqStatus = s.sabaq_status || 'recited';
-                            const sabqiStatus = s.sabqi_status || 'recited';
-                            const manzilStatus = s.manzil_status || 'recited';
-                        %>
-                        <tr id="row-<%= s.student_id %>" class="<%= rowClass %>">
-                            <!-- Student & Attendance Toggle -->
-                            <td>
-                                <strong style="color: #1e293b; display: block; margin-bottom: 0.4rem;"><%= s.student_name %></strong>
-                                <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.5rem;"><%= s.reg_no %> | <%= s.phase.label %></div>
-                                
-                                <div class="status-group">
-                                    <button type="button" class="btn-toggle-chip <%= initialStatus === 'present' ? 'active-recited' : '' %>" onclick="selectAttendance('<%= s.student_id %>', 'present', this)" title="Present"><i class="bi bi-check-lg"></i> Present</button>
-                                    <button type="button" class="btn-toggle-chip <%= initialStatus === 'absent' ? 'active-absent' : '' %>" onclick="selectAttendance('<%= s.student_id %>', 'absent', this)" title="Absent"><i class="bi bi-person-x"></i> Absent</button>
-                                    <button type="button" class="btn-toggle-chip <%= initialStatus === 'leave' ? 'active-leave' : '' %>" onclick="selectAttendance('<%= s.student_id %>', 'leave', this)" title="Leave">Leave</button>
-                                </div>
-                                <input type="hidden" id="status-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_status]" value="<%= s.sabaq_status || 'recited' %>">
-                                <input type="hidden" id="sabqi-status-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabqi_status]" value="<%= s.sabqi_status || 'recited' %>">
-                                <input type="hidden" id="manzil-status-<%= s.student_id %>" name="entries[<%= s.student_id %>][manzil_status]" value="<%= s.manzil_status || 'recited' %>">
-                                <input type="hidden" id="absent-<%= s.student_id %>" name="entries[<%= s.student_id %>][is_absent]" value="<%= s.is_absent ? 'on' : 'off' %>">
-                            </td>
+                    const sabaqStatus = s.sabaq_status || 'recited';
+                    const sabqiStatus = s.sabqi_status || 'recited';
+                    const manzilStatus = s.manzil_status || 'recited';
+                    const isWaqafActive = s.is_in_waqaf > 0;
+                %>
+                <div id="row-<%= s.student_id %>" class="card student-diary-card <%= rowClass %>" style="padding: 1.25rem; border-left: 5px solid #3b82f6; transition: border-color 0.2s;">
+                    <!-- Student Info & Attendance Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+                        <div>
+                            <strong style="color: #0f172a; font-size: 1.05rem;"><%= s.student_name %></strong>
+                            <span style="font-size: 0.8rem; color: #64748b; margin-left: 0.5rem;"><%= s.reg_no %> | <%= s.phase.label %></span>
+                            <% if (isWaqafActive) { %>
+                                <span class="status-cell" style="background-color: #fef3c7; color: #d97706; font-size: 0.75rem; padding: 0.15rem 0.4rem; font-weight: 600; margin-left: 0.5rem;"><i class="bi bi-lock-fill"></i> WAQAF REVISION ACTIVE</span>
+                            <% } %>
+                        </div>
+                        <div class="status-group">
+                            <button type="button" class="btn-toggle-chip <%= initialStatus === 'present' ? 'active-recited' : '' %>" onclick="selectAttendance('<%= s.student_id %>', 'present', this)" title="Present"><i class="bi bi-check-lg"></i> Present</button>
+                            <button type="button" class="btn-toggle-chip <%= initialStatus === 'absent' ? 'active-absent' : '' %>" onclick="selectAttendance('<%= s.student_id %>', 'absent', this)" title="Absent"><i class="bi bi-person-x"></i> Absent</button>
+                            <button type="button" class="btn-toggle-chip <%= initialStatus === 'leave' ? 'active-leave' : '' %>" onclick="selectAttendance('<%= s.student_id %>', 'leave', this)" title="Leave">Leave</button>
+                        </div>
+                        <input type="hidden" id="status-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_status]" value="<%= s.sabaq_status || 'recited' %>">
+                        <input type="hidden" id="sabqi-status-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabqi_status]" value="<%= s.sabqi_status || 'recited' %>">
+                        <input type="hidden" id="manzil-status-<%= s.student_id %>" name="entries[<%= s.student_id %>][manzil_status]" value="<%= s.manzil_status || 'recited' %>">
+                        <input type="hidden" id="absent-<%= s.student_id %>" name="entries[<%= s.student_id %>][is_absent]" value="<%= s.is_absent ? 'on' : 'off' %>">
+                    </div>
 
-                            <!-- SABAQ -->
-                            <td style="background-color: #f8fafc; border-left: 2px solid #3b82f6; vertical-align: middle;">
-                                <div class="status-group" style="margin-bottom: 0.5rem; justify-content: center;">
-                                    <button type="button" class="btn-toggle-chip <%= sabaqStatus === 'recited' ? 'active-recited' : '' %>" onclick="selectColStatus('<%= s.student_id %>', 'sabaq', 'recited', this)" title="Recited"><i class="bi bi-check-lg"></i> Recited</button>
-                                    <button type="button" class="btn-toggle-chip <%= sabaqStatus === 'not_recited' ? 'active-nagha' : '' %>" onclick="selectColStatus('<%= s.student_id %>', 'sabaq', 'not_recited', this)" title="Nagha"><i class="bi bi-x-lg"></i> Nagha</button>
-                                </div>
-
-                                <div class="sabaq-inputs <%= sabaqStatus === 'not_recited' ? 'sabaq-disabled' : '' %>" style="display: flex; flex-direction: column; gap: 0.4rem;">
-                                    <div class="grid-input-row" style="margin-bottom: 0.2rem;">
-                                        <span style="font-weight: 600; width: 45px; font-size: 0.85rem;">Para:</span>
-                                        <input type="number" name="entries[<%= s.student_id %>][sabaq_from_para]" placeholder="From" class="form-control" style="padding: 0.2rem; font-size: 0.85rem; width: 55px;" min="1" max="30"
-                                               value="<%= s.sabaq_from_para || (s.prefill ? s.prefill.sabaq_from_para : '') %>">
-                                        <span style="color: #94a3b8; font-size: 0.85rem;">to</span>
-                                        <input type="number" name="entries[<%= s.student_id %>][sabaq_to_para]" placeholder="To" class="form-control" style="padding: 0.2rem; font-size: 0.85rem; width: 55px;" min="1" max="30"
-                                               value="<%= s.sabaq_to_para || (s.prefill ? s.prefill.sabaq_to_para : '') %>">
+                    <!-- Recitation Components: Sabaq, Sabqi, Manzil -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; align-items: start;">
+                        <!-- Sabaq Section -->
+                        <div class="sabaq-section" style="background-color: #eff6ff; border: 1px solid #dbeafe; border-radius: 8px; padding: 0.75rem; <%= isWaqafActive ? 'opacity: 0.55; pointer-events: none;' : '' %>">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="font-weight: 700; color: #1e3a8a; font-size: 0.85rem;"><i class="bi bi-book"></i> Sabaq (New Lesson)</span>
+                                <% if (!isWaqafActive) { %>
+                                    <div class="status-group" style="padding: 0.1rem;">
+                                        <button type="button" class="btn-toggle-chip <%= sabaqStatus === 'recited' ? 'active-recited' : '' %>" onclick="selectColStatus('<%= s.student_id %>', 'sabaq', 'recited', this)" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;"><i class="bi bi-check-lg"></i> Recited</button>
+                                        <button type="button" class="btn-toggle-chip <%= sabaqStatus === 'not_recited' ? 'active-nagha' : '' %>" onclick="selectColStatus('<%= s.student_id %>', 'sabaq', 'not_recited', this)" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;"><i class="bi bi-x-lg"></i> Nagha</button>
                                     </div>
-                                    <div class="grid-input-row">
-                                        <span style="font-weight: 700; width: 45px; font-size: 0.85rem; color: #1e3a8a;">Start:</span>
-                                        <span style="font-size: 0.8rem; color: #475569;">Page</span>
-                                        <input type="number" id="from-page-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_from_page]" class="form-control" style="padding: 0.2rem; font-size: 0.85rem; width: 50px;" min="1" max="30"
-                                               value="<%= s.sabaq_from_page || (s.prefill ? s.prefill.sabaq_from_page : '') %>" onchange="calcTotalLines('<%= s.student_id %>')">
-                                        <span style="font-size: 0.8rem; color: #475569;">Line</span>
-                                        <input type="number" id="from-line-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_from_line]" class="form-control" style="padding: 0.2rem; font-size: 0.85rem; width: 50px;" min="1" max="16"
-                                               value="<%= s.sabaq_from_line || (s.prefill ? s.prefill.sabaq_from_line : 1) %>" onchange="calcTotalLines('<%= s.student_id %>')">
-                                    </div>
-                                    <div class="grid-input-row">
-                                        <span style="font-weight: 700; width: 45px; font-size: 0.85rem; color: #1e3a8a;">End:</span>
-                                        <span style="font-size: 0.8rem; color: #475569;">Page</span>
-                                        <input type="number" id="to-page-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_to_page]" class="form-control" style="padding: 0.2rem; font-size: 0.85rem; width: 50px;" min="1" max="30"
-                                               value="<%= s.sabaq_to_page || (s.prefill ? s.prefill.sabaq_to_page : '') %>" onchange="calcTotalLines('<%= s.student_id %>')">
-                                        <span style="font-size: 0.8rem; color: #475569;">Line</span>
-                                        <input type="number" id="to-line-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_to_line]" class="form-control" style="padding: 0.2rem; font-size: 0.85rem; width: 50px;" min="1" max="16"
-                                               value="<%= s.sabaq_to_line || (s.prefill ? s.prefill.sabaq_to_line : 16) %>" onchange="calcTotalLines('<%= s.student_id %>')">
-                                    </div>
-                                    <div style="font-size: 0.85rem; font-weight: 700; color: #0284c7; margin-top: 0.25rem;">
-                                        Total lines: <span id="total-lines-<%= s.student_id %>">--</span>
-                                    </div>
-                                </div>
-                            </td>
+                                <% } else { %>
+                                    <span style="font-size: 0.75rem; font-weight: 600; color: #b45309;"><i class="bi bi-shield-fill-exclamation"></i> Revision Break</span>
+                                <% } %>
+                            </div>
 
-                            <!-- SABQI (Recent Para) -->
-                            <td style="background-color: #fcfdfd; border-left: 2px solid #22c55e; vertical-align: middle; text-align: center;">
-                                <div class="status-group" style="margin-bottom: 0.5rem; justify-content: center; margin-left: auto; margin-right: auto;">
-                                    <button type="button" class="btn-toggle-chip <%= sabqiStatus === 'recited' ? 'active-recited' : '' %>" onclick="selectColStatus('<%= s.student_id %>', 'sabqi', 'recited', this)" title="Recited"><i class="bi bi-check-lg"></i> Recited</button>
-                                    <button type="button" class="btn-toggle-chip <%= sabqiStatus === 'not_recited' ? 'active-nagha' : '' %>" onclick="selectColStatus('<%= s.student_id %>', 'sabqi', 'not_recited', this)" title="Nagha"><i class="bi bi-x-lg"></i> Nagha</button>
+                            <div class="sabaq-inputs <%= (sabaqStatus === 'not_recited' || isWaqafActive) ? 'sabaq-disabled' : '' %>" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 0.8rem; font-weight: 600; width: 40px;">Para:</span>
+                                    <input type="number" name="entries[<%= s.student_id %>][sabaq_from_para]" placeholder="From" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 60px;" min="1" max="30"
+                                           value="<%= s.sabaq_from_para || (s.prefill ? s.prefill.sabaq_from_para : '') %>">
+                                    <span style="font-size: 0.8rem; color: #64748b;">to</span>
+                                    <input type="number" name="entries[<%= s.student_id %>][sabaq_to_para]" placeholder="To" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 60px;" min="1" max="30"
+                                           value="<%= s.sabaq_to_para || (s.prefill ? s.prefill.sabaq_to_para : '') %>">
                                 </div>
-
-                                <div class="sabqi-inputs <%= sabqiStatus === 'not_recited' ? 'sabqi-disabled' : '' %>" style="display: flex; gap: 0.35rem; justify-content: center; align-items: center;">
-                                    <input type="number" name="entries[<%= s.student_id %>][sabqi_para]" placeholder="Para" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 60px;" min="1" max="30"
-                                           value="<%= s.sabqi_para || (s.prefill ? s.prefill.sabqi_para : '') %>">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                    <span style="font-size: 0.8rem; font-weight: 600; width: 40px; color: #1e3a8a;">Start:</span>
+                                    <span style="font-size: 0.8rem;">Page</span>
+                                    <input type="number" id="from-page-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_from_page]" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="30"
+                                           value="<%= s.sabaq_from_page || (s.prefill ? s.prefill.sabaq_from_page : 1) %>" onchange="calcTotalLines('<%= s.student_id %>')">
+                                    <span style="font-size: 0.8rem;">Line</span>
+                                    <input type="number" id="from-line-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_from_line]" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="16"
+                                           value="<%= s.sabaq_from_line || (s.prefill ? s.prefill.sabaq_from_line : 1) %>" onchange="calcTotalLines('<%= s.student_id %>')">
                                 </div>
-                            </td>
-
-                            <!-- MANZIL (Revision 3 Paras) -->
-                            <td style="background-color: #fefdfb; border-left: 2px solid #eab308; vertical-align: middle;">
-                                <div class="status-group" style="margin-bottom: 0.5rem; justify-content: center; margin-left: auto; margin-right: auto;">
-                                    <button type="button" class="btn-toggle-chip <%= manzilStatus === 'recited' ? 'active-recited' : '' %>" onclick="selectColStatus('<%= s.student_id %>', 'manzil', 'recited', this)" title="Recited"><i class="bi bi-check-lg"></i> Recited</button>
-                                    <button type="button" class="btn-toggle-chip <%= manzilStatus === 'not_recited' ? 'active-nagha' : '' %>" onclick="selectColStatus('<%= s.student_id %>', 'manzil', 'not_recited', this)" title="Nagha"><i class="bi bi-x-lg"></i> Nagha</button>
+                                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                    <span style="font-size: 0.8rem; font-weight: 600; width: 40px; color: #1e3a8a;">End:</span>
+                                    <span style="font-size: 0.8rem;">Page</span>
+                                    <input type="number" id="to-page-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_to_page]" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="30"
+                                           value="<%= s.sabaq_to_page || (s.prefill ? s.prefill.sabaq_to_page : 1) %>" onchange="calcTotalLines('<%= s.student_id %>')">
+                                    <span style="font-size: 0.8rem;">Line</span>
+                                    <input type="number" id="to-line-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_to_line]" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="16"
+                                           value="<%= s.sabaq_to_line || (s.prefill ? s.prefill.sabaq_to_line : 16) %>" onchange="calcTotalLines('<%= s.student_id %>')">
                                 </div>
-
-                                <div class="manzil-inputs <%= manzilStatus === 'not_recited' ? 'manzil-disabled' : '' %>" style="display: flex; gap: 0.35rem; justify-content: center;">
-                                    <input type="number" name="entries[<%= s.student_id %>][manzil_para_1]" placeholder="P1" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 45px;" min="1" max="30"
-                                           value="<%= s.manzil_para_1 || (s.prefill ? s.prefill.manzil_para_1 : '') %>">
-                                    <input type="number" name="entries[<%= s.student_id %>][manzil_para_2]" placeholder="P2" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 45px;" min="1" max="30"
-                                           value="<%= s.manzil_para_2 || (s.prefill ? s.prefill.manzil_para_2 : '') %>">
-                                    <input type="number" name="entries[<%= s.student_id %>][manzil_para_3]" placeholder="P3" class="form-control" style="padding: 0.25rem; font-size: 0.85rem; width: 45px;" min="1" max="30"
-                                           value="<%= s.manzil_para_3 || (s.prefill ? s.prefill.manzil_para_3 : '') %>">
+                                <div style="font-size: 0.8rem; font-weight: 700; color: #0284c7; margin-top: 0.15rem;">
+                                    Total lines: <span id="total-lines-<%= s.student_id %>">--</span>
                                 </div>
-                            </td>
+                            </div>
+                        </div>
 
-                            <!-- Remarks -->
-                            <td style="vertical-align: middle;">
-                                <input type="text" name="entries[<%= s.student_id %>][teacher_remarks]" class="form-control" style="padding: 0.25rem 0.5rem; font-size: 0.85rem;" placeholder="Remarks..." value="<%= s.teacher_remarks || '' %>">
-                            </td>
-                        </tr>
-                    <% }) %>
-                <% } else { %>
-                    <tr>
-                        <td colspan="5" style="text-align: center; color: #64748b; padding: 2rem;">
-                            No active Hifz students.
-                        </td>
-                    </tr>
-                <% } %>
-            </tbody>
-        </table>
+                        <!-- Sabqi Section -->
+                        <div class="sabqi-section" style="background-color: #f0fdf4; border: 1px solid #dcfce7; border-radius: 8px; padding: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="font-weight: 700; color: #166534; font-size: 0.85rem;"><i class="bi bi-journal-text"></i> Sabqi (Recent Para)</span>
+                                <div class="status-group" style="padding: 0.1rem;">
+                                    <button type="button" class="btn-toggle-chip <%= sabqiStatus === 'recited' ? 'active-recited' : '' %>" onclick="selectColStatus('<%= s.student_id %>', 'sabqi', 'recited', this)" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;"><i class="bi bi-check-lg"></i> Recited</button>
+                                    <button type="button" class="btn-toggle-chip <%= sabqiStatus === 'not_recited' ? 'active-nagha' : '' %>" onclick="selectColStatus('<%= s.student_id %>', 'sabqi', 'not_recited', this)" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;"><i class="bi bi-x-lg"></i> Nagha</button>
+                                </div>
+                            </div>
+
+                            <div class="sabqi-inputs <%= sabqiStatus === 'not_recited' ? 'sabqi-disabled' : '' %>" style="display: flex; align-items: center; gap: 0.5rem; padding-top: 0.5rem;">
+                                <span style="font-size: 0.8rem; font-weight: 600;">Para:</span>
+                                <input type="number" name="entries[<%= s.student_id %>][sabqi_para]" placeholder="Para" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 65px;" min="1" max="30"
+                                       value="<%= s.sabqi_para || (s.prefill ? s.prefill.sabqi_para : '') %>">
+                            </div>
+                        </div>
+
+                        <!-- Manzil Section -->
+                        <div class="manzil-section" style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                                <span style="font-weight: 700; color: #854d0e; font-size: 0.85rem;"><i class="bi bi-bookmark-star"></i> Manzil (Revision)</span>
+                                <div class="status-group" style="padding: 0.1rem;">
+                                    <button type="button" class="btn-toggle-chip <%= manzilStatus === 'recited' ? 'active-recited' : '' %>" onclick="selectColStatus('<%= s.student_id %>', 'manzil', 'recited', this)" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;"><i class="bi bi-check-lg"></i> Recited</button>
+                                    <button type="button" class="btn-toggle-chip <%= manzilStatus === 'not_recited' ? 'active-nagha' : '' %>" onclick="selectColStatus('<%= s.student_id %>', 'manzil', 'not_recited', this)" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;"><i class="bi bi-x-lg"></i> Nagha</button>
+                                </div>
+                            </div>
+
+                            <div class="manzil-inputs <%= manzilStatus === 'not_recited' ? 'manzil-disabled' : '' %>" style="display: flex; gap: 0.4rem; padding-top: 0.5rem; flex-wrap: wrap; align-items: center;">
+                                <span style="font-size: 0.8rem; font-weight: 600; width: 100%; margin-bottom: -0.15rem;">Revision Paras:</span>
+                                <input type="number" name="entries[<%= s.student_id %>][manzil_para_1]" placeholder="P1" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="30"
+                                       value="<%= s.manzil_para_1 || (s.prefill ? s.prefill.manzil_para_1 : '') %>">
+                                <input type="number" name="entries[<%= s.student_id %>][manzil_para_2]" placeholder="P2" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="30"
+                                       value="<%= s.manzil_para_2 || (s.prefill ? s.prefill.manzil_para_2 : '') %>">
+                                <input type="number" name="entries[<%= s.student_id %>][manzil_para_3]" placeholder="P3" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="30"
+                                       value="<%= s.manzil_para_3 || (s.prefill ? s.prefill.manzil_para_3 : '') %>">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Remarks Line -->
+                    <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-weight: 600; font-size: 0.8rem; color: #475569; width: 60px;">Remarks:</span>
+                        <input type="text" name="entries[<%= s.student_id %>][teacher_remarks]" class="form-control" style="padding: 0.3rem 0.5rem; font-size: 0.85rem; flex: 1;" placeholder="Enter assessment notes or corrections..." value="<%= s.teacher_remarks || '' %>">
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="card" style="text-align: center; color: #64748b; padding: 2rem;">
+                No active Hifz students enrolled.
+            </div>
+        <% } %>
     </div>
 
     <% if (students.length > 0) { %>
