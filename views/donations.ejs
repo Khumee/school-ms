@@ -76,9 +76,9 @@
             </div>
             <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div class="form-group">
-                    <label for="preferred_fund_category">Preferred Fund</label>
-                    <select name="preferred_fund_category" id="preferred_fund_category" class="form-control">
-                        <option value="general">General / Direct</option>
+                    <label for="preferred_fund_category">Preferred Account to Transfer Fund</label>
+                    <select name="preferred_fund_category" id="preferred_fund_category" class="form-control" onchange="toggleDirectOption(this.value, 'new_preferred_member_group')">
+                        <option value="general" selected>Member Account</option>
                         <option value="trust">Trust Account</option>
                     </select>
                 </div>
@@ -88,6 +88,18 @@
                         <option value="Online">Online</option>
                         <option value="Cash">Cash</option>
                     </select>
+                </div>
+            </div>
+            <div id="new_preferred_member_group" class="form-group" style="display: block; margin-bottom: 1rem;">
+                <label for="preferred_member">Preferred Member Account Option</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <select id="preferred_member" name="preferred_member" class="form-control">
+                        <option value="">-- Select Member --</option>
+                        <option value="Faheem Zafar">Faheem Zafar</option>
+                        <option value="Kamal Muhammad">Kamal Muhammad</option>
+                        <option value="Khurram Shahzad">Khurram Shahzad</option>
+                    </select>
+                    <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewDirectOption('preferred_member')"><i class="bi bi-plus-lg"></i></button>
                 </div>
             </div>
             <div class="form-checkbox" style="margin-bottom: 1.5rem; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 0.5rem;">
@@ -114,7 +126,7 @@
                 
                 <div id="donor_dropdown_list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); margin-top: 4px;">
                     <% donors.forEach(d => { %>
-                        <div class="dropdown-donor-item" data-value="<%= d.id %>" data-name="<%= d.name %>" data-last-amount="<%= d.last_donation_amount || '' %>" data-preferred-fund="<%= d.preferred_fund_category || 'general' %>" data-preferred-payment="<%= d.preferred_payment_method || 'Online' %>" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
+                        <div class="dropdown-donor-item" data-value="<%= d.id %>" data-name="<%= d.name %>" data-last-amount="<%= d.last_donation_amount || '' %>" data-preferred-fund="<%= d.preferred_fund_category || 'general' %>" data-preferred-payment="<%= d.preferred_payment_method || 'Online' %>" data-preferred-member="<%= d.preferred_member || '' %>" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
                             <div style="font-weight: 600; color: #1e293b; display: flex; justify-content: space-between; align-items: center;">
                                 <span><%= d.name %></span>
                                 <% if (d.monthly_commitment) { %>
@@ -141,9 +153,9 @@
             </div>
             <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div class="form-group">
-                    <label for="fund_category">Fund Category</label>
+                    <label for="fund_category">Account to Transfer Fund</label>
                     <select name="fund_category" id="fund_category" class="form-control" onchange="toggleDirectOption(this.value, 'direct_option_group')">
-                        <option value="general">General / Direct</option>
+                        <option value="general">Member Account</option>
                         <option value="trust">Trust Account</option>
                     </select>
                 </div>
@@ -157,7 +169,7 @@
             </div>
             
             <div id="direct_option_group" class="form-group" style="display: block; margin-bottom: 1.5rem;">
-                <label for="direct_ref">Direct Received By / Option *</label>
+                <label for="direct_ref">Member Account Option *</label>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                     <select id="direct_ref" name="direct_ref" class="form-control">
                         <option value="Faheem Zafar">Faheem Zafar</option>
@@ -311,7 +323,7 @@
                                 <td>
                                     <div style="display: flex; gap: 0.5rem;">
                                         <a href="/donations/donor/<%= d.id %>" class="btn-secondary nav-btn"><i class="bi bi-person-vcard-fill"></i> View Profile</a>
-                                        <button type="button" class="btn-secondary nav-btn" onclick='openEditDonorModal(<%- JSON.stringify({ id: d.id, name: d.name, contact_no: d.contact_no || "", referred_by: d.referred_by || "", monthly_commitment: d.monthly_commitment || 0 }) %>)'><i class="bi bi-pencil-square"></i> Edit</button>
+                                        <button type="button" class="btn-secondary nav-btn" onclick='openEditDonorModal(<%- JSON.stringify({ id: d.id, name: d.name, contact_no: d.contact_no || "", referred_by: d.referred_by || "", monthly_commitment: d.monthly_commitment || 0, preferred_fund_category: d.preferred_fund_category || "general", preferred_payment_method: d.preferred_payment_method || "Online", preferred_member: d.preferred_member || "" }) %>)'><i class="bi bi-pencil-square"></i> Edit</button>
                                     </div>
                                 </td>
                             </tr>
@@ -349,14 +361,14 @@
             <input type="date" id="editDate" name="date" class="form-control" required>
         </div>
         <div class="form-group" style="margin-bottom: 1rem;">
-            <label>Fund Category</label>
+            <label>Account to Transfer Fund</label>
             <select id="editFundCategory" name="fund_category" class="form-control" onchange="toggleDirectOption(this.value, 'edit_direct_option_group')">
-                <option value="general">General / Direct</option>
+                <option value="general">Member Account</option>
                 <option value="trust">Trust Account</option>
             </select>
         </div>
         <div id="edit_direct_option_group" class="form-group" style="display: none; margin-bottom: 1rem;">
-            <label>Direct Received By / Option *</label>
+            <label>Member Account Option *</label>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <select id="edit_direct_ref" name="direct_ref" class="form-control">
                     <option value="Faheem Zafar">Faheem Zafar</option>
@@ -411,9 +423,9 @@
         </div>
         <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
             <div class="form-group">
-                <label for="editDonorPreferredFund">Preferred Fund</label>
-                <select name="preferred_fund_category" id="editDonorPreferredFund" class="form-control">
-                    <option value="general">General / Direct</option>
+                <label for="editDonorPreferredFund">Preferred Account to Transfer Fund</label>
+                <select name="preferred_fund_category" id="editDonorPreferredFund" class="form-control" onchange="toggleDirectOption(this.value, 'edit_preferred_member_group')">
+                    <option value="general">Member Account</option>
                     <option value="trust">Trust Account</option>
                 </select>
             </div>
@@ -423,6 +435,18 @@
                     <option value="Online">Online</option>
                     <option value="Cash">Cash</option>
                 </select>
+            </div>
+        </div>
+        <div id="edit_preferred_member_group" class="form-group" style="display: none; margin-bottom: 1rem;">
+            <label for="editDonorPreferredMember">Preferred Member Account Option</label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <select id="editDonorPreferredMember" name="preferred_member" class="form-control">
+                    <option value="">-- Select Member --</option>
+                    <option value="Faheem Zafar">Faheem Zafar</option>
+                    <option value="Kamal Muhammad">Kamal Muhammad</option>
+                    <option value="Khurram Shahzad">Khurram Shahzad</option>
+                </select>
+                <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewDirectOption('editDonorPreferredMember')"><i class="bi bi-plus-lg"></i></button>
             </div>
         </div>
         <div class="form-checkbox" style="margin-bottom: 1.5rem; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 0.5rem;">
@@ -514,8 +538,37 @@
             refSelect.value = '';
         }
         
-        document.getElementById('editDonorPreferredFund').value = d.preferred_fund_category || 'general';
+        const prefFund = d.preferred_fund_category || 'general';
+        document.getElementById('editDonorPreferredFund').value = prefFund;
         document.getElementById('editDonorPreferredMethod').value = d.preferred_payment_method || 'Online';
+        
+        const prefMemberSelect = document.getElementById('editDonorPreferredMember');
+        const prefMemberVal = d.preferred_member || '';
+        if (prefFund === 'general') {
+            document.getElementById('edit_preferred_member_group').style.display = 'block';
+            if (prefMemberVal) {
+                let exists = false;
+                for (let i = 0; i < prefMemberSelect.options.length; i++) {
+                    if (prefMemberSelect.options[i].value === prefMemberVal) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    const opt = document.createElement('option');
+                    opt.value = prefMemberVal;
+                    opt.textContent = prefMemberVal;
+                    prefMemberSelect.appendChild(opt);
+                }
+                prefMemberSelect.value = prefMemberVal;
+            } else {
+                prefMemberSelect.value = '';
+            }
+        } else {
+            document.getElementById('edit_preferred_member_group').style.display = 'none';
+            prefMemberSelect.value = '';
+        }
+        
         document.getElementById('editDonorMonthlyCommitment').checked = d.monthly_commitment === 1;
         
         document.getElementById('editDonorModal').style.display = 'block';
@@ -650,6 +703,7 @@
                 const lastAmount = item.getAttribute('data-last-amount');
                 const prefFund = item.getAttribute('data-preferred-fund') || 'general';
                 const prefPayment = item.getAttribute('data-preferred-payment') || 'Online';
+                const prefMember = item.getAttribute('data-preferred-member') || '';
                 
                 donorSelect.value = val;
                 donorSearch.value = name;
@@ -667,6 +721,24 @@
                 
                 // Toggle Direct Option Group based on pre-populated Fund Category
                 toggleDirectOption(prefFund, 'direct_option_group');
+                
+                if (prefFund === 'general' && prefMember) {
+                    const directRefSelect = document.getElementById('direct_ref');
+                    let exists = false;
+                    for (let i = 0; i < directRefSelect.options.length; i++) {
+                        if (directRefSelect.options[i].value === prefMember) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (!exists) {
+                        const opt = document.createElement('option');
+                        opt.value = prefMember;
+                        opt.textContent = prefMember;
+                        directRefSelect.appendChild(opt);
+                    }
+                    directRefSelect.value = prefMember;
+                }
             });
         });
 

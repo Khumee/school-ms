@@ -4,7 +4,7 @@ const db = require('../db');
 const { isAuthenticated } = require('../middleware/auth');
 const { renderPdf, resolvePublicAsset } = require('../utils/pdfGenerator');
 
-const FUND_LABELS = { general: 'General / Direct', trust: 'Trust Account', student_support: 'Student Sponsorship' };
+const FUND_LABELS = { general: 'Member Account', trust: 'Trust Account', student_support: 'Student Sponsorship' };
 
 function monthKey(date) {
     const d = new Date(date);
@@ -155,15 +155,15 @@ router.get('/donations/matrix', isAuthenticated, async (req, res) => {
 
 // POST /donations/donor/add - create donor
 router.post('/donations/donor/add', isAuthenticated, async (req, res) => {
-    const { name, contact_no, referred_by, monthly_commitment, preferred_fund_category, preferred_payment_method } = req.body;
+    const { name, contact_no, referred_by, monthly_commitment, preferred_fund_category, preferred_payment_method, preferred_member } = req.body;
     try {
         const tenantId = req.tenant.id;
         const commitment = monthly_commitment === 'on' || monthly_commitment === '1' ? 1 : 0;
         
         await db.execute(
-            `INSERT INTO donors (name, contact_no, referred_by, monthly_commitment, preferred_fund_category, preferred_payment_method, tenant_id) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [name, contact_no || null, referred_by || null, commitment, preferred_fund_category || 'general', preferred_payment_method || 'Online', tenantId]
+            `INSERT INTO donors (name, contact_no, referred_by, monthly_commitment, preferred_fund_category, preferred_payment_method, preferred_member, tenant_id) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [name, contact_no || null, referred_by || null, commitment, preferred_fund_category || 'general', preferred_payment_method || 'Online', preferred_member || null, tenantId]
         );
         res.redirect('/donations');
     } catch (err) {
@@ -174,14 +174,14 @@ router.post('/donations/donor/add', isAuthenticated, async (req, res) => {
 
 // POST /donations/donor/edit/:id - edit donor details
 router.post('/donations/donor/edit/:id', isAuthenticated, async (req, res) => {
-    const { name, contact_no, referred_by, monthly_commitment, preferred_fund_category, preferred_payment_method } = req.body;
+    const { name, contact_no, referred_by, monthly_commitment, preferred_fund_category, preferred_payment_method, preferred_member } = req.body;
     try {
         const tenantId = req.tenant.id;
         const commitment = monthly_commitment === 'on' || monthly_commitment === '1' ? 1 : 0;
         await db.execute(
-            `UPDATE donors SET name = ?, contact_no = ?, referred_by = ?, monthly_commitment = ?, preferred_fund_category = ?, preferred_payment_method = ? 
+            `UPDATE donors SET name = ?, contact_no = ?, referred_by = ?, monthly_commitment = ?, preferred_fund_category = ?, preferred_payment_method = ?, preferred_member = ? 
              WHERE id = ? AND tenant_id = ?`,
-            [name, contact_no || null, referred_by || null, commitment, preferred_fund_category || 'general', preferred_payment_method || 'Online', req.params.id, tenantId]
+            [name, contact_no || null, referred_by || null, commitment, preferred_fund_category || 'general', preferred_payment_method || 'Online', preferred_member || null, req.params.id, tenantId]
         );
         res.redirect('/donations');
     } catch (err) {
