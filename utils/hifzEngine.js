@@ -207,12 +207,17 @@ function computeStreak(recentEntries) {
 function buildParaMap(currentPara, completions = []) {
     const completionMap = {};
     for (const c of completions) {
-        completionMap[c.para_no] = c.test_result;
+        completionMap[c.para_no] = c;
     }
     const map = [];
     for (let i = 1; i <= 30; i++) {
         if (completionMap[i]) {
-            map.push({ para: i, status: 'completed', test: completionMap[i] });
+            const comp = completionMap[i];
+            map.push({ 
+                para: i, 
+                status: comp.test_result === 'pass' ? 'completed' : 'test-pending', 
+                test: comp 
+            });
         } else if (i === currentPara) {
             map.push({ para: i, status: 'in_progress', test: null });
         } else {
