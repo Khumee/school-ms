@@ -20,7 +20,23 @@
             
             <div class="form-group">
                 <label for="designation">Designation *</label>
-                <input type="text" id="designation" name="designation" class="form-control" required value="<%= employee.designation %>">
+                <select id="designation" name="designation" class="form-control" required>
+                    <option value="">-- Select Designation --</option>
+                    <% 
+                        const designations = [
+                            'Primary Teacher', 'Montessori Teacher', 'Qari', 'Qaria', 
+                            'Principal', 'Admin Office', 'Course Coordinator', 
+                            'Class Coordinator', 'Cleaner', 'Aya', 'Caretaker'
+                        ];
+                        let isCustom = employee.designation && !designations.includes(employee.designation);
+                    %>
+                    <% designations.forEach(d => { %>
+                        <option value="<%= d %>" <%= employee.designation === d ? 'selected' : '' %>><%= d %></option>
+                    <% }) %>
+                    <% if (isCustom) { %>
+                        <option value="<%= employee.designation %>" selected><%= employee.designation %> (Custom)</option>
+                    <% } %>
+                </select>
             </div>
             
             <div class="form-group">
