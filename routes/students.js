@@ -184,7 +184,24 @@ router.get('/students/view/:id', isAuthenticated, async (req, res) => {
 
         const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.amount_paid), 0);
 
-        res.render('student_view', { student: students[0], payments, totalPaid });
+        // Fetch Hifz enrollment details if Hifz module is enabled
+        let hifzEnrollment = null;
+        if (req.tenant && req.tenant.enable_hifz_module) {
+            const [hRows] = await db.execute(
+                `SELECT * FROM hifz_enrollment WHERE student_id = ? AND tenant_id = ? AND status = 'active' LIMIT 1`,
+                [req.params.id, tenantId]
+            );
+            if (hRows.length > 0) {
+                hifzEnrollment = hRows[0];
+            }
+        }
+
+        res.render('student_view', { 
+            student: students[0], 
+            payments, 
+            totalPaid,
+            hifzEnrollment
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading student profile.');

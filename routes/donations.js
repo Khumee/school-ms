@@ -2,9 +2,14 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { isAuthenticated } = require('../middleware/auth');
+const { requireModule } = require('../middleware/modules');
 const { renderPdf, resolvePublicAsset } = require('../utils/pdfGenerator');
 
+// Block all donation routes if module is disabled for this tenant
+router.use(requireModule('donations'));
+
 const FUND_LABELS = { general: 'Member Account', trust: 'Trust Account', student_support: 'Student Sponsorship' };
+
 
 function monthKey(date) {
     const d = new Date(date);

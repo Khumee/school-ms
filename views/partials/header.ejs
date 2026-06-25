@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= tenant ? tenant.school_name : 'School Management System' %></title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/css/style.css">
     <style>
@@ -35,7 +35,10 @@
                             <a href="/fees/concessions"><i class="bi bi-tags-fill"></i> Concessions</a>
                         </div>
                     </li>
+                    <%# Donations — optional module %>
+                    <% if (tenant && tenant.enable_donations_module) { %>
                     <li><a href="/donations"><i class="bi bi-heart-fill"></i> Donations</a></li>
+                    <% } %>
                     <li><a href="/attendance/employees"><i class="bi bi-calendar2-check-fill"></i> Attendance</a></li>
                     <li class="dropdown">
                         <a href="#" class="dropbtn"><i class="bi bi-journal-richtext"></i> Ledgers</a>
@@ -44,6 +47,10 @@
                             <a href="/salaries"><i class="bi bi-wallet2"></i> Salaries/Payroll</a>
                         </div>
                     </li>
+                    <%# Hifz Diary — optional module %>
+                    <% if (tenant && tenant.enable_hifz_module) { %>
+                    <li><a href="/hifz"><i class="bi bi-book-half"></i> Hifz Diary</a></li>
+                    <% } %>
                     <li class="dropdown user-menu dropdown-right">
                         <a href="#" class="dropbtn"><i class="bi bi-person-circle"></i> Hi, <%= session.username %> <i class="bi bi-chevron-down" style="font-size: 0.75rem; margin-left: 0.2rem;"></i></a>
                         <div class="dropdown-content">

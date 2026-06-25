@@ -77,8 +77,14 @@ router.post('/admin/tenants/:id', isSuperAdmin, (req, res) => {
         }
 
         const { school_name, subdomain, custom_domain, status, primary_color, secondary_color } = req.body;
-        const fields = [school_name, subdomain, custom_domain || null, status, primary_color, secondary_color];
-        let sql = `UPDATE tenants SET school_name = ?, subdomain = ?, custom_domain = ?, status = ?, primary_color = ?, secondary_color = ?`;
+        const enable_donations_module = req.body.enable_donations_module === 'on' ? 1 : 0;
+        const enable_hifz_module      = req.body.enable_hifz_module === 'on' ? 1 : 0;
+
+        const fields = [school_name, subdomain, custom_domain || null, status, primary_color, secondary_color,
+                        enable_donations_module, enable_hifz_module];
+        let sql = `UPDATE tenants SET school_name = ?, subdomain = ?, custom_domain = ?, status = ?, 
+                   primary_color = ?, secondary_color = ?,
+                   enable_donations_module = ?, enable_hifz_module = ?`;
 
         if (req.file) {
             sql += `, logo_url = ?`;
@@ -91,5 +97,6 @@ router.post('/admin/tenants/:id', isSuperAdmin, (req, res) => {
         res.redirect('/admin?success=Tenant updated successfully');
     });
 });
+
 
 module.exports = router;

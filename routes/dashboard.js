@@ -18,20 +18,29 @@ router.get('/', isAuthenticated, async (req, res) => {
             'SELECT COUNT(*) as new_admissions FROM students WHERE tenant_id = ? AND (YEAR(date_of_admission) = 2026 OR date_of_admission IS NULL)',
             [tenantId]
         );
-        const [[{ hifz_students }]] = await db.execute(
-            'SELECT COUNT(*) as hifz_students FROM students s JOIN classes c ON s.class_id = c.id WHERE s.tenant_id = ? AND c.name LIKE "%Hifz%"',
-            [tenantId]
-        );
-        
         // 2b. Fetch Employee and Donor metrics
         const [[{ total_employees }]] = await db.execute(
             "SELECT COUNT(*) as total_employees FROM employees WHERE tenant_id = ? AND status != 'inactive'",
             [tenantId]
         );
-        const [[{ total_donors }]] = await db.execute(
-            "SELECT COUNT(*) as total_donors FROM donors WHERE tenant_id = ?",
-            [tenantId]
-        );
+
+        let hifz_students = 0;
+        if (req.tenant && req.tenant.enable_hifz_module) {
+            const [[{ count }]] = await db.execute(
+                'SELECT COUNT(*) as count FROM hifz_enrollment WHERE tenant_id = ? AND status = "active"',
+                [tenantId]
+            );
+            hifz_students = count;
+        }
+
+        let total_donors = 0;
+        if (req.tenant && req.tenant.enable_donations_module) {
+            const [[{ count }]] = await db.execute(
+                "SELECT COUNT(*) as count FROM donors WHERE tenant_id = ?",
+                [tenantId]
+            );
+            total_donors = count;
+        }
 
         // 3. Fetch Monthly Financial Summaries for 2026
         const monthsData = [];
