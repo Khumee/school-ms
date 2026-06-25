@@ -169,7 +169,7 @@ router.post('/donations/donor/add', isAuthenticated, async (req, res) => {
         res.redirect('/donations');
     } catch (err) {
         console.error(err);
-        res.status(500).send('Error adding donor.');
+        res.status(500).send('Error adding donor: ' + err.message);
     }
 });
 
@@ -189,7 +189,7 @@ router.post('/donations/donor/edit/:id', isAuthenticated, async (req, res) => {
         res.redirect('/donations');
     } catch (err) {
         console.error(err);
-        res.status(500).send('Error updating donor.');
+        res.status(500).send('Error updating donor: ' + err.message);
     }
 });
 
