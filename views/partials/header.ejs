@@ -47,10 +47,6 @@
                             <a href="/salaries"><i class="bi bi-wallet2"></i> Salaries/Payroll</a>
                         </div>
                     </li>
-                    <%# Hifz Diary — optional module %>
-                    <% if (tenant && tenant.enable_hifz_module) { %>
-                    <li><a href="/hifz"><i class="bi bi-book-half"></i> Hifz Diary</a></li>
-                    <% } %>
                     <li class="dropdown user-menu dropdown-right">
                         <a href="#" class="dropbtn"><i class="bi bi-person-circle"></i> Hi, <%= session.username %> <i class="bi bi-chevron-down" style="font-size: 0.75rem; margin-left: 0.2rem;"></i></a>
                         <div class="dropdown-content">
