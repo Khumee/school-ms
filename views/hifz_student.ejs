@@ -1,0 +1,368 @@
+<%- include('partials/header') %>
+
+<style>
+    .khatam-box {
+        background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .khatam-title {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.85;
+    }
+    .khatam-date {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin: 0.25rem 0;
+    }
+    .khatam-prediction {
+        font-size: 0.85rem;
+        opacity: 0.9;
+    }
+    
+    .heatmap-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
+        gap: 0.5rem;
+    }
+    .heatmap-cell {
+        aspect-ratio: 1;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        transition: transform 0.2s;
+        border: 1px solid #e2e8f0;
+        position: relative;
+    }
+    .heatmap-cell:hover {
+        transform: translateY(-2px);
+    }
+    .heatmap-cell.completed {
+        background-color: #dcfce7;
+        color: #15803d;
+        border-color: #bbf7d0;
+    }
+    .heatmap-cell.current {
+        background-color: #dbeafe;
+        color: #1d4ed8;
+        border-color: #bfdbfe;
+        box-shadow: 0 0 0 2px #3b82f6;
+    }
+    .heatmap-cell.pending {
+        background-color: #f8fafc;
+        color: #64748b;
+    }
+    .heatmap-cell.test-pending {
+        background-color: #fef3c7;
+        color: #b45309;
+        border-color: #fde68a;
+    }
+    .heatmap-cell.milestone-cell {
+        border: 2px dashed #d97706;
+    }
+    .heatmap-cell.milestone-cell.completed {
+        border: 2px solid #d97706;
+        background-color: #fffbeb;
+        color: #b45309;
+    }
+
+    .timeline-item {
+        border-left: 2px solid #e2e8f0;
+        padding-left: 1.25rem;
+        position: relative;
+        padding-bottom: 1.25rem;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -6px;
+        top: 4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #cbd5e1;
+    }
+    .timeline-item.absent::before { background-color: #ef4444; }
+    .timeline-item.recited::before { background-color: #10b981; }
+</style>
+
+<div class="section-header">
+    <h1 class="section-title"><i class="bi bi-person-badge"></i> Hifz Student Profile</h1>
+    <div style="display: flex; gap: 0.75rem;">
+        <a href="/hifz" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Roster</a>
+        <a href="/hifz/test/<%= studentId %>" class="btn-primary"><i class="bi bi-award"></i> Log Para Test</a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Left Column: Metrics & Streak -->
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <!-- Khatam Prediction Box -->
+        <div class="khatam-box">
+            <span class="khatam-title">Estimated Khatam Date</span>
+            <div class="khatam-date">
+                <% if (enrollment.predicted_khatam_date) { %>
+                    <%= new Date(enrollment.predicted_khatam_date).toLocaleDateString(undefined, {month: 'long', year: 'numeric'}) %>
+                <% } else { %>
+                    Calculating...
+                <% } %>
+            </div>
+            <p class="khatam-prediction">
+                Based on memorization pace of last 30 active days (~<%= (enrollment.avg_lines_30d || 4.5).toFixed(1) %> lines/day).
+            </p>
+        </div>
+
+        <!-- Streak Card -->
+        <div class="card" style="padding: 1.25rem; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid #f97316;">
+            <div>
+                <span style="font-size: 0.85rem; text-transform: uppercase; color: #64748b; font-weight: 600;">Active Daily Streak</span>
+                <div style="font-size: 1.75rem; font-weight: 800; color: #ea580c; margin-top: 0.25rem;">
+                    <i class="bi bi-fire"></i> <%= streak %> Days
+                </div>
+            </div>
+            <div style="font-size: 2.5rem; color: #ffedd5; line-height: 1;">
+                <i class="bi bi-trophy"></i>
+            </div>
+        </div>
+
+        <!-- Student General Stats Card -->
+        <div class="card" style="padding: 1.25rem;">
+            <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">Memorization Summary</h3>
+            <table style="width: 100%; font-size: 0.9rem;">
+                <tr style="height: 2.2rem;">
+                    <td style="color: #64748b;">Class Group</td>
+                    <td style="text-align: right; font-weight: 600;"><%= enrollment.class_name %></td>
+                </tr>
+                <tr style="height: 2.2rem;">
+                    <td style="color: #64748b;">Enrolled On</td>
+                    <td style="text-align: right; font-weight: 600;"><%= new Date(enrollment.enrolled_date).toLocaleDateString() %></td>
+                </tr>
+                <tr style="height: 2.2rem;">
+                    <td style="color: #64748b;">Total Memorized</td>
+                    <td style="text-align: right; font-weight: 600;"><%= enrollment.total_lines_memorized %> lines</td>
+                </tr>
+                <tr style="height: 2.2rem;">
+                    <td style="color: #64748b;">Approx. Pages</td>
+                    <td style="text-align: right; font-weight: 600;"><%= (enrollment.total_lines_memorized / 15).toFixed(1) %> pages</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Weekly Progress Card -->
+        <div class="card" style="padding: 1.25rem; border-top: 4px solid var(--primary-color);">
+            <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+                <i class="bi bi-calendar-check"></i> Weekly Progress Report
+            </h3>
+            <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem;">
+                Week Starting: <%= new Date(weeklyStats.startDate).toLocaleDateString() %>
+            </div>
+            <table style="width: 100%; font-size: 0.9rem;">
+                <tr style="height: 2.2rem;">
+                    <td style="color: #64748b;">Pace (Avg Lines/Day)</td>
+                    <td style="text-align: right; font-weight: 600; color: #0f766e;">
+                        <%= weeklyStats.avgLines > 0 ? `${weeklyStats.avgLines.toFixed(1)} lines/day` : 'No lessons recited' %>
+                    </td>
+                </tr>
+                <tr style="height: 2.2rem;">
+                    <td style="color: #64748b;">Days Active</td>
+                    <td style="text-align: right; font-weight: 600;"><%= weeklyStats.daysLogged %> days</td>
+                </tr>
+                <tr style="height: 2.2rem;">
+                    <td style="color: #64748b;">Days Absent</td>
+                    <td style="text-align: right; font-weight: 600; color: <%= weeklyStats.daysAbsent > 0 ? '#dc2626' : '#16a34a' %>;">
+                        <%= weeklyStats.daysAbsent %> days
+                    </td>
+                </tr>
+                <tr style="height: 2.2rem;">
+                    <td style="color: #64748b;">Weekly Alarm Status</td>
+                    <td style="text-align: right; font-weight: 600;">
+                        <% 
+                            const isCritical = alarms.some(a => a.severity === 'critical');
+                            const isWarning = alarms.some(a => a.severity === 'warning' || a.severity === 'alert');
+                        %>
+                        <% if (isCritical) { %>
+                            <span class="status-cell status-unpaid" style="font-size: 0.75rem;"><i class="bi bi-exclamation-octagon-fill"></i> CRITICAL</span>
+                        <% } else if (isWarning) { %>
+                            <span class="status-cell" style="background-color: #fffbeb; color: #b45309; font-size: 0.75rem; border: 1px solid #fde68a;"><i class="bi bi-exclamation-triangle-fill"></i> WARNING</span>
+                        <% } else { %>
+                            <span class="status-cell status-paid" style="font-size: 0.75rem;"><i class="bi bi-check-circle"></i> CLEAR</span>
+                        <% } %>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Right Column: Para Heatmap -->
+    <div class="card" style="padding: 1.5rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1.25rem; font-size: 1.2rem; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+            <i class="bi bi-grid-3x3-gap"></i> Quran Memorization Progress Heatmap (30 Paras)
+        </h3>
+        
+        <div class="heatmap-grid">
+            <% paraMap.forEach(p => { 
+                const isMilestone = [5, 15, 25, 30].includes(p.para);
+                let cellTitle = `Para ${p.para}: Not Started`;
+                if (p.status === 'completed' && p.test) {
+                    const passDate = p.test.completed_date ? new Date(p.test.completed_date).toLocaleDateString() : 'N/A';
+                    cellTitle = `Para ${p.para}: Passed on ${passDate}`;
+                } else if (p.status === 'in_progress') {
+                    cellTitle = `Para ${p.para}: In Progress`;
+                } else if (p.status === 'test-pending') {
+                    cellTitle = `Para ${p.para}: Test Pending`;
+                }
+            %>
+                <div class="heatmap-cell <%= p.status %> <%= isMilestone ? 'milestone-cell' : '' %>" title="<%= cellTitle %>">
+                    <span style="font-size: 0.65rem; opacity: 0.8; font-weight: 700;"><%= isMilestone ? '★ Para' : 'P.' %></span>
+                    <span style="font-size: 1.1rem;"><%= p.para %></span>
+                    <% if (p.status === 'completed' && p.test && p.test.completed_date) { %>
+                        <span style="font-size: 0.55rem; opacity: 0.9; margin-top: 0.1rem; display: block; font-weight: 500;">
+                            <%= new Date(p.test.completed_date).toLocaleDateString(undefined, {month: 'short', day: 'numeric'}) %>
+                        </span>
+                    <% } %>
+                </div>
+            <% }) %>
+        </div>
+
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; justify-content: center; font-size: 0.8rem; color: #64748b;">
+            <div style="display: flex; align-items: center; gap: 0.25rem;">
+                <span style="width: 12px; height: 12px; border-radius: 3px; background-color: #dcfce7; border: 1px solid #bbf7d0; display: inline-block;"></span> Completed (Tested)
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.25rem;">
+                <span style="width: 12px; height: 12px; border-radius: 3px; background-color: #fef3c7; border: 1px solid #fde68a; display: inline-block;"></span> Pending Test
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.25rem;">
+                <span style="width: 12px; height: 12px; border-radius: 3px; background-color: #dbeafe; border: 1px solid #bfdbfe; display: inline-block;"></span> Current Para
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.25rem;">
+                <span style="width: 12px; height: 12px; border-radius: 3px; background-color: #f8fafc; border: 1px solid #e2e8f0; display: inline-block;"></span> Remaining
+            </div>
+        </div>
+
+        <!-- Milestone intermediate tests checklist -->
+        <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e2e8f0;">
+            <h4 style="margin-top: 0; margin-bottom: 0.75rem; color: #0f172a;"><i class="bi bi-star-fill" style="color: #d97706;"></i> Milestone Intermediate Tests</h4>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                <% [5, 15, 25].forEach(milestone => { 
+                    const record = paraMap.find(p => p.para === milestone && p.status === 'completed');
+                %>
+                    <div style="padding: 0.75rem; border-radius: 8px; border: 1px solid <%= record ? '#bbf7d0' : '#e2e8f0' %>; background-color: <%= record ? '#f0fdf4' : '#f8fafc' %>; text-align: center;">
+                        <div style="font-weight: 700; color: <%= record ? '#16a34a' : '#64748b' %>;"><%= milestone %> Paras Test</div>
+                        <div style="font-size: 0.8rem; margin-top: 0.25rem; color: #475569;">
+                            <% if (record && record.test && record.test.completed_date) { %>
+                                <span class="status-cell status-paid" style="font-size: 0.75rem; padding: 0.15rem 0.4rem;"><i class="bi bi-check-circle-fill"></i> PASSED</span>
+                                <div style="margin-top: 0.35rem; font-weight: 600; font-size: 0.8rem;"><%= new Date(record.test.completed_date).toLocaleDateString() %></div>
+                            <% } else { %>
+                                <span class="status-cell" style="background-color: #e2e8f0; color: #64748b; font-size: 0.75rem; padding: 0.15rem 0.4rem;">PENDING</span>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Diary History & Timeline -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    <!-- Recent Logs -->
+    <div class="card" style="padding: 1.5rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1.25rem; font-size: 1.2rem; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+            <i class="bi bi-clock-history"></i> Recent Daily Entries
+        </h3>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Sabaq (Lesson)</th>
+                        <th>Sabqi</th>
+                        <th>Manzil</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (entries.length > 0) { %>
+                        <% entries.forEach(e => { %>
+                            <tr>
+                                <td style="font-weight: 600;"><%= new Date(e.entry_date).toLocaleDateString() %></td>
+                                <td>
+                                    <% if (e.is_absent) { %>
+                                        <span class="status-cell status-unpaid" style="font-size: 0.75rem;">ABSENT</span>
+                                    <% } else if (e.sabaq_status === 'leave') { %>
+                                        <span class="status-cell status-paid" style="font-size: 0.75rem; background-color: #e0f2fe; color: #0369a1; border-color: #bae6fd;">LEAVE</span>
+                                    <% } else if (e.sabaq_status === 'not_recited') { %>
+                                        <span class="status-cell status-unpaid" style="font-size: 0.75rem;">NAGHA</span>
+                                    <% } else { %>
+                                        Para <%= e.sabaq_from_para %>-<%= e.sabaq_to_para %>
+                                        <small style="color: #64748b; display: block;">Pages <%= e.sabaq_from_page %>-<%= e.sabaq_to_page %> (Lines <%= e.sabaq_from_line %>-<%= e.sabaq_to_line %>)</small>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (!e.is_absent && e.sabqi_status === 'recited' && e.sabqi_para) { %>
+                                        Para <%= e.sabqi_para %>
+                                    <% } else if (!e.is_absent && e.sabqi_status === 'not_recited') { %>
+                                        <span style="color: #ef4444; font-weight: 600;">Nagha</span>
+                                    <% } else { %>
+                                        -
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (!e.is_absent && e.manzil_status === 'recited' && e.manzil_para_1) { %>
+                                        Paras <%= [e.manzil_para_1, e.manzil_para_2, e.manzil_para_3].filter(Boolean).join(', ') %>
+                                    <% } else if (!e.is_absent && e.manzil_status === 'not_recited') { %>
+                                        <span style="color: #ef4444; font-weight: 600;">Nagha</span>
+                                    <% } else { %>
+                                        -
+                                    <% } %>
+                                </td>
+                                <td style="font-size: 0.85rem; color: #475569;"><%= e.teacher_remarks || '-' %></td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #64748b; padding: 2rem;">No entries logged yet.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Active Alarms / Critical Events -->
+    <div class="card" style="padding: 1.5rem; height: fit-content;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem;">
+            <i class="bi bi-bell-fill"></i> Health & Alarms
+        </h3>
+        
+        <% if (alarms.length > 0) { %>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <% alarms.forEach(a => { %>
+                    <div style="padding: 0.75rem; border-radius: 6px; border: 1px solid; font-size: 0.85rem; display: flex; gap: 0.5rem;
+                                <%= a.severity === 'critical' ? 'background-color:#fef2f2; border-color:#fca5a5; color:#991b1b;' : 'background-color:#fffbeb; border-color:#fde68a; color:#92400e;' %>">
+                        <i class="bi <%= a.severity === 'critical' ? 'bi-exclamation-octagon-fill' : 'bi-exclamation-triangle-fill' %>" style="font-size: 1.1rem;"></i>
+                        <div>
+                            <strong style="display: block; text-transform: uppercase; font-size: 0.75rem;"><%= a.key %></strong>
+                            <%= a.label %>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <div style="text-align: center; color: #16a34a; padding: 1.5rem 0;">
+                <i class="bi bi-shield-check-fill" style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem;"></i>
+                All clear! No current alarms or slow progress warnings active.
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

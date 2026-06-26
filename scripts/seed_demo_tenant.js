@@ -25,6 +25,10 @@ const SESSION_YEAR = '2026';
             console.log(`Tenant "${TENANT_SUBDOMAIN}" already exists (ID: ${tenantId}). Cleaning up old demo data...`);
             // Clean up to make seeding idempotent and clean
             await conn.execute('DELETE FROM fee_payments WHERE tenant_id = ?', [tenantId]);
+            await conn.execute('DELETE FROM hifz_school_holidays WHERE tenant_id = ?', [tenantId]);
+            await conn.execute('DELETE FROM hifz_para_completions WHERE tenant_id = ?', [tenantId]);
+            await conn.execute('DELETE FROM hifz_diary_entries WHERE tenant_id = ?', [tenantId]);
+            await conn.execute('DELETE FROM hifz_enrollment WHERE tenant_id = ?', [tenantId]);
             await conn.execute('DELETE FROM students WHERE tenant_id = ?', [tenantId]);
             await conn.execute('DELETE FROM classes WHERE tenant_id = ?', [tenantId]);
             await conn.execute('DELETE FROM donations WHERE tenant_id = ?', [tenantId]);
@@ -35,8 +39,8 @@ const SESSION_YEAR = '2026';
             await conn.execute('DELETE FROM users WHERE tenant_id = ?', [tenantId]);
         } else {
             const [result] = await conn.execute(
-                `INSERT INTO tenants (name, subdomain, school_name, status, plan_tier, enable_donations_module, primary_color, secondary_color) 
-                 VALUES (?, ?, ?, ?, ?, 1, ?, ?)` ,
+                `INSERT INTO tenants (name, subdomain, school_name, status, plan_tier, enable_hifz_module, enable_donations_module, primary_color, secondary_color) 
+                 VALUES (?, ?, ?, ?, ?, 1, 1, ?, ?)` ,
                 ['Demo Academy', TENANT_SUBDOMAIN, 'Demo Islamic Academy Rawalpindi', 'active', 'pro', '#0f766e', '#0d9488']
             );
             tenantId = result.insertId;
@@ -66,9 +70,10 @@ const SESSION_YEAR = '2026';
         ];
         const classMap = {};
         for (const c of classNames) {
+            const isHifz = c.name === 'Hifz Class' ? 1 : 0;
             const [res] = await conn.execute(
-                'INSERT INTO classes (name, default_monthly_fee, tenant_id) VALUES (?, ?, ?)',
-                [c.name, c.fee, tenantId]
+                'INSERT INTO classes (name, default_monthly_fee, tenant_id, is_hifz_class) VALUES (?, ?, ?, ?)',
+                [c.name, c.fee, tenantId, isHifz]
             );
             classMap[c.name] = res.insertId;
         }
@@ -90,10 +95,30 @@ const SESSION_YEAR = '2026';
             employeeIds.push({ id: res.insertId, salary: emp.salary });
         }
 
+        // 6. Create Hifz Students with varying progress
         console.log('Seeding students & concessions...');
+        // We will seed 12 Hifz students (10 + 2 standard) to fulfill the request for different levels
         const students = [
-            { name: 'Muhammad Ali', class: 'Class One', reg: 'REG-101', fee: null, concession: 0, notes: null },
-            { name: 'Fatima Zahra', class: 'Class Two', reg: 'REG-102', fee: 1200.00, concession: 1, notes: 'Orphan Concession' }
+            // Standard non-Hifz Students
+            { name: 'Muhammad Ali', class: 'Class One', reg: 'REG-101', fee: null, concession: 0, notes: null, hifz: false },
+            { name: 'Fatima Zahra', class: 'Class Two', reg: 'REG-102', fee: 1200.00, concession: 1, notes: 'Orphan Concession', hifz: false },
+            
+            // Hifz Students
+            // VERY GOOD (Fast progress, high streak, passed tests)
+            { name: 'Hamza Yusuf', class: 'Hifz Class', reg: 'REG-103', fee: null, concession: 0, notes: null, hifz: true, phase: 'mid', current_para: 12, lines: 180, streak: 15, pace: 'fast' },
+            { name: 'Omar Farooq', class: 'Hifz Class', reg: 'REG-104', fee: null, concession: 0, notes: null, hifz: true, phase: 'advanced', current_para: 22, lines: 330, streak: 20, pace: 'fast' },
+            
+            // AVERAGE (Regular lines progress, normal streak, average quality)
+            { name: 'Zubair Ibn Awwam', class: 'Hifz Class', reg: 'REG-105', fee: null, concession: 0, notes: null, hifz: true, phase: 'early', current_para: 4, lines: 60, streak: 8, pace: 'average' },
+            { name: 'Talha Ubaidullah', class: 'Hifz Class', reg: 'REG-106', fee: null, concession: 0, notes: null, hifz: true, phase: 'early', current_para: 6, lines: 90, streak: 5, pace: 'average' },
+            { name: 'Saad Abi Waqas', class: 'Hifz Class', reg: 'REG-107', fee: null, concession: 0, notes: null, hifz: true, phase: 'mid', current_para: 8, lines: 120, streak: 12, pace: 'average' },
+            { name: 'Abdur Rahman Awf', class: 'Hifz Class', reg: 'REG-108', fee: null, concession: 0, notes: null, hifz: true, phase: 'mid', current_para: 9, lines: 135, streak: 9, pace: 'average' },
+            { name: 'Saeed Zaid', class: 'Hifz Class', reg: 'REG-109', fee: null, concession: 0, notes: null, hifz: true, phase: 'early', current_para: 3, lines: 45, streak: 7, pace: 'average' },
+            { name: 'Abu Ubaidah Jarrah', class: 'Hifz Class', reg: 'REG-110', fee: null, concession: 0, notes: null, hifz: true, phase: 'early', current_para: 5, lines: 75, streak: 4, pace: 'average' },
+            
+            // VERY BAD (Alarm triggers, failing, no streak, absent, slow pace)
+            { name: 'Bilal Khan', class: 'Hifz Class', reg: 'REG-111', fee: 1000.00, concession: 1, notes: 'Sibling Discount', hifz: true, phase: 'early', current_para: 1, lines: 10, streak: 0, pace: 'slow' },
+            { name: 'Anas Malik', class: 'Hifz Class', reg: 'REG-112', fee: null, concession: 0, notes: null, hifz: true, phase: 'early', current_para: 2, lines: 15, streak: 0, pace: 'slow' }
         ];
 
         const studentMap = {};
@@ -105,6 +130,82 @@ const SESSION_YEAR = '2026';
                 [s.reg, s.name, classId, s.fee, s.concession, s.notes, tenantId]
             );
             studentMap[s.name] = res.insertId;
+            // Enroll Hifz students
+            if (s.hifz) {
+                const avgLines = s.pace === 'fast' ? 12.5 : s.pace === 'average' ? 6.5 : 4.0;
+                await conn.execute(
+                    `INSERT INTO hifz_enrollment (tenant_id, student_id, class_id, current_phase, current_para, total_lines_memorized, avg_lines_30d, current_streak_days, status, enrolled_date)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', '2025-01-15')`,
+                    [tenantId, res.insertId, classId, s.phase, s.current_para, s.lines, avgLines, s.streak]
+                );
+
+                // Seed historical diary logs to back up the pace & streak metrics (last 7 days of entries)
+                const today = new Date();
+                for (let dIndex = 6; dIndex >= 0; dIndex--) {
+                    const entryDate = new Date();
+                    entryDate.setDate(today.getDate() - dIndex);
+                    // Skip Sunday logs since classes are 6 days a week
+                    if (entryDate.getDay() === 0) {
+                        continue;
+                    }
+
+                    const dateString = entryDate.toISOString().split('T')[0];
+
+                    let sabaq_status = 'recited';
+                    let is_absent = 0;
+
+                    // Bad students miss days or fail to recite
+                    if (s.pace === 'slow' && (dIndex === 2 || dIndex === 5)) {
+                        is_absent = 1;
+                        sabaq_status = 'not_recited';
+                    }
+
+                    // Average students might have a leave day
+                    if (s.pace === 'average' && dIndex === 4) {
+                        sabaq_status = 'leave';
+                    }
+
+                    await conn.execute(
+                        `INSERT INTO hifz_diary_entries 
+                         (tenant_id, student_id, entry_date, is_absent, 
+                          sabaq_status, sabaq_from_para, sabaq_to_para, sabaq_from_page, sabaq_to_page, sabaq_from_line, sabaq_to_line,
+                          sabqi_status, sabqi_para, sabqi_para_2, 
+                          manzil_status, manzil_para_1, manzil_para_2, manzil_para_3)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [
+                            tenantId, res.insertId, dateString, is_absent, 
+                            sabaq_status,
+                            is_absent ? null : s.current_para,
+                            is_absent ? null : s.current_para,
+                            is_absent ? null : 1,
+                            is_absent ? null : 2,
+                            is_absent ? null : 1,
+                            is_absent ? null : 16,
+                            sabaq_status,
+                            is_absent ? null : Math.max(1, s.current_para - 1),
+                            is_absent ? null : (s.current_para > 2 ? Math.max(1, s.current_para - 2) : null),
+                            sabaq_status,
+                            is_absent ? null : 1,
+                            is_absent ? null : Math.max(1, s.current_para - 2),
+                            is_absent ? null : Math.max(1, s.current_para - 1)
+                        ]
+                    );
+                }
+
+                // Seed completed paras for advanced/mid students
+                if (s.current_para > 1) {
+                    for (let pNo = 1; pNo < s.current_para; pNo++) {
+                        let test_result = 'pass';
+                        if (s.pace === 'slow' && pNo === 1) test_result = 'fail';
+                        
+                        await conn.execute(
+                            `INSERT INTO hifz_para_completions (tenant_id, student_id, para_no, completed_date, test_date, test_result, test_evaluator_name, evaluated_by_self)
+                             VALUES (?, ?, ?, '2025-11-20', '2025-11-25', ?, 'Qari Muhammad Ahmad', 0)`,
+                            [tenantId, res.insertId, pNo, test_result]
+                        );
+                    }
+                }
+            }
         }
 
         // 7. Seed Fee Payments (January to June)

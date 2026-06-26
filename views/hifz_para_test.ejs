@@ -1,0 +1,140 @@
+<%- include('partials/header') %>
+
+<div class="section-header">
+    <h1 class="section-title"><i class="bi bi-award-fill"></i> Quran Para Completion Test</h1>
+    <a href="/hifz/student/<%= studentId %>" class="btn-secondary"><i class="bi bi-arrow-left"></i> Student Profile</a>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Left Column: Student Details -->
+    <div class="card" style="padding: 1.5rem; height: fit-content;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; color: #0f172a;">Student details</h3>
+        <div style="font-weight: 700; font-size: 1.25rem; color: var(--primary-color);"><%= enrollment.student_name %></div>
+        <div style="font-size: 0.9rem; color: #64748b; margin-bottom: 1rem;">Reg No: <%= enrollment.reg_no %></div>
+        
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 0.75rem; font-size: 0.85rem; color: #475569;">
+            <p style="margin: 0 0 0.5rem 0;"><strong style="color: #0f172a;">Para Test Rules:</strong></p>
+            <ul style="margin: 0; padding-left: 1.2rem; line-height: 1.4;">
+                <li>Tests are conducted by Qari Sb or external supervisors.</li>
+                <li>Tests should be recorded when a student finishes memorizing a Para.</li>
+                <li>A Para status updates to "Completed" on passing.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Right Column: Record Test Form -->
+    <div class="card" style="padding: 1.5rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; color: #0f172a;"><i class="bi bi-file-earmark-check"></i> Record Test Result</h3>
+        
+        <form action="/hifz/test/<%= studentId %>" method="POST">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label for="para_no" style="font-weight: 600;">Para Number</label>
+                    <select name="para_no" id="para_no" class="form-control" required>
+                        <% for (let p = 1; p <= 30; p++) { %>
+                            <% 
+                                const comp = completions.find(c => c.para_no === p); 
+                                const isCurrent = enrollment.current_para === p;
+                                let labelSuffix = '';
+                                if (p === 5) labelSuffix = ' (5 Paras Milestone Test)';
+                                if (p === 15) labelSuffix = ' (15 Paras Milestone Test)';
+                                if (p === 25) labelSuffix = ' (25 Paras Milestone Test)';
+                            %>
+                            <option value="<%= p %>" <%= isCurrent ? 'selected' : '' %>>
+                                Para <%= p %><%= labelSuffix %> <%= comp ? `(${comp.test_result.toUpperCase()})` : '' %>
+                            </option>
+                        <% } %>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="test_date" style="font-weight: 600;">Test Date</label>
+                    <input type="date" name="test_date" id="test_date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label for="test_result" style="font-weight: 600;">Test Result</label>
+                    <select name="test_result" id="test_result" class="form-control" required>
+                        <option value="passed">Passed (Sunaa Diya)</option>
+                        <option value="failed">Failed / Retest Required</option>
+                        <option value="pending">Pending Test (Waqaf Milestone)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="evaluator_name" style="font-weight: 600;">Evaluator / Qari Name</label>
+                    <input type="text" name="evaluator_name" id="evaluator_name" class="form-control" placeholder="e.g. Qari Abdullah" required>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label style="font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" name="evaluated_by_self" style="transform: scale(1.2);">
+                    Self-evaluated (Evaluated by class teacher rather than external Nazim/Qari)
+                </label>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="test_notes" style="font-weight: 600;">Assessment Notes / Remarks</label>
+                <textarea name="test_notes" id="test_notes" class="form-control" rows="3" placeholder="Describe mistakes, fluency, tajweed quality or re-testing needs..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <a href="/hifz/student/<%= studentId %>" class="btn-secondary" style="height: 42px; display: inline-flex; align-items: center;">Cancel</a>
+                <button type="submit" class="btn-primary" style="height: 42px; padding: 0 2rem; font-weight: 600;"><i class="bi bi-save"></i> Save Test Result</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Past Tests Log -->
+<div class="card" style="padding: 1.5rem;">
+    <h3 style="margin-top: 0; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; color: #0f172a;"><i class="bi bi-award"></i> Assessment Log History</h3>
+    
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Para</th>
+                    <th>Completed Date</th>
+                    <th>Test Date</th>
+                    <th>Result</th>
+                    <th>Evaluator</th>
+                    <th>Evaluated By</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (completions.length > 0) { %>
+                    <% completions.forEach(c => { %>
+                        <tr>
+                            <td style="font-weight: 700; color: #1e3a8a;">Para <%= c.para_no %></td>
+                            <td><%= new Date(c.completed_date).toLocaleDateString() %></td>
+                            <td><%= c.test_date ? new Date(c.test_date).toLocaleDateString() : '-' %></td>
+                            <td>
+                                <% if (c.test_result === 'pass' || c.test_result === 'passed') { %>
+                                    <span class="status-cell status-paid"><i class="bi bi-check-circle-fill"></i> PASSED</span>
+                                <% } else if (c.test_result === 'fail' || c.test_result === 'failed') { %>
+                                    <span class="status-cell status-unpaid"><i class="bi bi-x-circle-fill"></i> FAILED</span>
+                                <% } else { %>
+                                    <span class="status-cell" style="background-color: #fef3c7; color: #d97706;"><i class="bi bi-clock"></i> PENDING</span>
+                                <% } %>
+                            </td>
+                            <td><%= c.test_evaluator_name || '-' %></td>
+                            <td><%= c.evaluated_by_self ? 'Self (Class Qari)' : 'External Nazim' %></td>
+                            <td style="font-size: 0.85rem; color: #475569;"><%= c.test_notes || '-' %></td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #64748b; padding: 2rem;">No test history found.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

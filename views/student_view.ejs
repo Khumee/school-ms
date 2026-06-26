@@ -65,6 +65,29 @@
     </div>
 </div>
 
+<% if (hifzEnrollment) { %>
+<div class="card" style="margin-bottom: 2rem; border-left: 4px solid var(--primary-color);">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+        <h3 style="margin: 0; color: var(--primary-color);"><i class="bi bi-book"></i> Hifz Memorization Status</h3>
+        <a href="/hifz/student/<%= student.id %>" class="btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;"><i class="bi bi-eye"></i> View Hifz Profile</a>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.9rem;">
+        <div>
+            <span style="color: #64748b; font-size: 0.8rem; display: block; text-transform: uppercase;">Current Para</span>
+            <strong style="font-size: 1.1rem; color: #1e3a8a;">Para <%= hifzEnrollment.current_para || 'None' %></strong>
+        </div>
+        <div>
+            <span style="color: #64748b; font-size: 0.8rem; display: block; text-transform: uppercase;">Phase</span>
+            <strong style="font-size: 1.1rem; text-transform: capitalize;"><%= hifzEnrollment.current_phase.replace(/_/g, ' ') %></strong>
+        </div>
+        <div>
+            <span style="color: #64748b; font-size: 0.8rem; display: block; text-transform: uppercase;">Total Lines Memorized</span>
+            <strong style="font-size: 1.1rem;"><%= hifzEnrollment.total_lines_memorized %> lines</strong>
+        </div>
+    </div>
+</div>
+<% } %>
+
 <div class="section-header">
     <h2 class="section-title"><i class="bi bi-clock-history"></i> Fee Payment History</h2>
 </div>

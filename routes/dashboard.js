@@ -24,6 +24,15 @@ router.get('/', isAuthenticated, async (req, res) => {
             [tenantId]
         );
 
+        let hifz_students = 0;
+        if (req.tenant && req.tenant.enable_hifz_module) {
+            const [[{ count }]] = await db.execute(
+                'SELECT COUNT(*) as count FROM hifz_enrollment WHERE tenant_id = ? AND status = "active"',
+                [tenantId]
+            );
+            hifz_students = count;
+        }
+
         let total_donors = 0;
         if (req.tenant && req.tenant.enable_donations_module) {
             const [[{ count }]] = await db.execute(
@@ -116,6 +125,7 @@ router.get('/', isAuthenticated, async (req, res) => {
             support_students,
             paying_students,
             new_admissions,
+            hifz_students,
             monthsData,
             carryForward,
             totalIncomeAllTime,

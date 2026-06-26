@@ -15,7 +15,7 @@
 <!-- KPI Cards Grid -->
 <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
     <!-- Total Students -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Total Students', '<h3>Student Enrollment Breakdown</h3><table style=\'width:100%; border-collapse:collapse; margin-top:0.5rem;\'><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Paying Students</td><td style=\'text-align:right; font-weight:bold;\'><%= paying_students %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Supported (Concession)</td><td style=\'text-align:right; font-weight:bold;\'><%= support_students %></td></tr><tr style=\'font-weight:bold;\'><td style=\'padding:0.5rem 0;\'>Total Enrollment</td><td style=\'text-align:right;\'><%= total_students %></td></tr></table><a href=\'/students\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>View Students List</a>')">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Total Students', '<h3>Student Enrollment Breakdown</h3><table style=\'width:100%; border-collapse:collapse; margin-top:0.5rem;\'><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Paying Students</td><td style=\'text-align:right; font-weight:bold;\'><%= paying_students %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Supported (Concession)</td><td style=\'text-align:right; font-weight:bold;\'><%= support_students %></td></tr><% if (req.tenant && req.tenant.enable_hifz_module) { %><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Hifz Enrolled</td><td style=\'text-align:right; font-weight:bold;\'><%= hifz_students %></td></tr><% } %><tr style=\'font-weight:bold;\'><td style=\'padding:0.5rem 0;\'>Total Enrollment</td><td style=\'text-align:right;\'><%= total_students %></td></tr></table><a href=\'/students\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>View Students List</a>')">
         <span class="kpi-icon blue"><i class="bi bi-mortarboard-fill"></i></span>
         <span class="kpi-label">Total Students</span>
         <span class="kpi-value"><%= total_students %></span>
@@ -29,6 +29,16 @@
         <span class="kpi-value"><%= new_admissions %></span>
         <span class="kpi-subtitle">Registered this academic year</span>
     </div>
+
+    <% if (req.tenant && req.tenant.enable_hifz_module) { %>
+    <!-- Hifz Students -->
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Hifz Students', '<h3>Hifz Memorization Program</h3><p>Total students enrolled in Hifz class: <strong><%= hifz_students %></strong></p><p>These students focus on Quran memorization and Islamic study tracks.</p><a href=\'/hifz\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>Go to Hifz Roster</a>')">
+        <span class="kpi-icon pink"><i class="bi bi-book-fill"></i></span>
+        <span class="kpi-label">Hifz Students</span>
+        <span class="kpi-value"><%= hifz_students %></span>
+        <span class="kpi-subtitle">Enrolled in Hifz class</span>
+    </div>
+    <% } %>
 
     <!-- Total Employees -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Total Employees', '<h3>Active Employees</h3><p>Total active employees currently registered on the system: <strong><%= total_employees %></strong></p><p>Includes teaching and non-teaching staff members currently active.</p><a href=\'/employees\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>Go to Employees Directory</a>')">

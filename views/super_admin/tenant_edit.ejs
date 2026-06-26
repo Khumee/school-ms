@@ -95,6 +95,16 @@
                             </div>
                         </label>
 
+                        <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; border: 1px solid #e6e9f0; border-radius: 10px; cursor: pointer; background: #f8fafc;">
+                            <input type="checkbox" name="enable_hifz_module" id="enable_hifz_module"
+                                   <%= tenant.enable_hifz_module ? 'checked' : '' %>
+                                   style="width: 18px; height: 18px; margin-top: 2px; accent-color: var(--primary-color);">
+                            <div>
+                                <div style="font-weight: 600; color: #1e293b;"><i class="bi bi-book-half" style="color: #059669;"></i> Hifz Diary Module</div>
+                                <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Daily Sabaq / Sabqi / Manzil tracking, para tests, alarm system, and student progress reports.</div>
+                            </div>
+                        </label>
+
                     </div>
                 </div>
 

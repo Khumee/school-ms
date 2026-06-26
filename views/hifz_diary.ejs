@@ -1,0 +1,397 @@
+<%- include('partials/header') %>
+
+<style>
+    .status-group {
+        display: flex;
+        gap: 0.25rem;
+        background-color: #f1f5f9;
+        padding: 0.2rem;
+        border-radius: 8px;
+        width: fit-content;
+    }
+    .btn-toggle-chip {
+        border: none;
+        background: none;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+        color: #64748b;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    /* Vibrant active states */
+    .btn-toggle-chip.active-recited {
+        background-color: #10b981;
+        color: #ffffff;
+        box-shadow: 0 2px 4px rgba(16,185,129,0.3);
+    }
+    .btn-toggle-chip.active-nagha {
+        background-color: #ef4444;
+        color: #ffffff;
+        box-shadow: 0 2px 4px rgba(239,68,68,0.3);
+    }
+    .btn-toggle-chip.active-absent {
+        background-color: #f59e0b;
+        color: #ffffff;
+        box-shadow: 0 2px 4px rgba(245,158,11,0.3);
+    }
+    .btn-toggle-chip.active-leave {
+        background-color: #3b82f6;
+        color: #ffffff;
+        box-shadow: 0 2px 4px rgba(59,130,246,0.3);
+    }
+
+    .status-disabled {
+        opacity: 0.55;
+        pointer-events: none;
+    }
+    .status-disabled input, .status-disabled select {
+        background-color: #cbd5e1 !important;
+    }
+
+    .sabaq-disabled, .sabqi-disabled, .manzil-disabled {
+        opacity: 0.45;
+        pointer-events: none;
+    }
+    .sabaq-disabled input, .sabqi-disabled input, .manzil-disabled input {
+        background-color: #f1f5f9 !important;
+    }
+</style>
+
+<%
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayEntry = entries.find(e => {
+        const d = new Date(e.entry_date);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}` === todayStr;
+    }) || null;
+    const lastEntry = entries[0] || null;
+
+    const prefill = todayEntry || lastEntry || null;
+
+    // Determine initial attendance status
+    let initialStatus = 'present';
+    if (prefill) {
+        if (prefill.is_absent) {
+            initialStatus = 'absent';
+        } else if (prefill.sabaq_status === 'leave') {
+            initialStatus = 'leave';
+        }
+    }
+
+    const sabaqStatus = prefill ? prefill.sabaq_status : 'recited';
+    const sabqiStatus = prefill ? prefill.sabqi_status : 'recited';
+    const manzilStatus = prefill ? prefill.manzil_status : 'recited';
+%>
+
+<div class="section-header">
+    <h1 class="section-title"><i class="bi bi-journal-plus"></i> Daily Hifz Entry Form</h1>
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <span class="status-cell" style="background-color: #1e3a8a; color: #ffffff; font-size: 1rem; padding: 0.5rem 1rem; font-weight: bold; border-radius: 6px;">
+            Current Para: <%= enrollment.current_para || 'None' %>
+        </span>
+        <a href="/hifz" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Roster</a>
+    </div>
+</div>
+
+<% if (typeof req !== 'undefined' && req.query.success) { %>
+    <div style="background-color: #ecfdf5; color: #065f46; padding: 1rem; border-radius: 6px; border: 1px solid #a7f3d0; margin-bottom: 1.5rem; font-weight: 600;">
+        <i class="bi bi-check-circle-fill"></i> Hifz diary entry saved successfully.
+    </div>
+<% } %>
+
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; margin-bottom: 2rem;">
+    <!-- Left: Student Info Card -->
+    <div class="card" style="padding: 1.5rem; height: fit-content;">
+        <h3 style="margin-top: 0; font-size: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; color: #0f172a;">Student details</h3>
+        <div style="font-weight: 700; font-size: 1.2rem; color: var(--primary-color); margin-bottom: 0.25rem;"><%= enrollment.student_name %></div>
+        <div style="font-size: 0.9rem; color: #64748b; margin-bottom: 1rem;">Reg No: <strong><%= enrollment.reg_no %></strong></div>
+        
+        <table style="width: 100%; font-size: 0.9rem; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 0.5rem 0; color: #64748b;">Class</td>
+                <td style="padding: 0.5rem 0; text-align: right; font-weight: 600;"><%= enrollment.class_name %></td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 0.5rem 0; color: #64748b;">Phase</td>
+                <td style="padding: 0.5rem 0; text-align: right; font-weight: 600;"><span class="status-cell" style="background-color: #e2e8f0; color: #1e293b;"><%= phase.label %></span></td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 0.5rem 0; color: #64748b;">Current Para</td>
+                <td style="padding: 0.5rem 0; text-align: right; font-weight: 600;"><%= enrollment.current_para || 'None' %></td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 0.5rem 0; color: #64748b;">Total Memorized</td>
+                <td style="padding: 0.5rem 0; text-align: right; font-weight: 600;"><%= enrollment.total_lines_memorized %> lines (~<%= (enrollment.total_lines_memorized/15).toFixed(1) %> pages)</td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem 0; color: #64748b;">Current Streak</td>
+                <td style="padding: 0.5rem 0; text-align: right; font-weight: 600; color: #16a34a;"><i class="bi bi-fire"></i> <%= streak %> Days</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Right: Diary Form -->
+    <div class="card" id="diary-form" style="padding: 1.5rem;">
+        <h3 style="margin-top: 0; font-size: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; color: #0f172a;"><i class="bi bi-pencil-square"></i> Record Entry</h3>
+        
+        <form action="/hifz/student/<%= studentId %>/diary" method="POST">
+            <div style="display: grid; grid-template-columns: 1fr 2.5fr; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end;">
+                <div class="form-group">
+                    <label for="entry_date" style="font-weight: 600;">Date</label>
+                    <input type="date" name="entry_date" id="entry_date" class="form-control" value="<%= todayStr %>" required>
+                </div>
+                <div class="form-group">
+                    <label style="font-weight: 600; display: block; margin-bottom: 0.4rem;">Student Attendance</label>
+                    <div class="status-group">
+                        <button type="button" class="btn-toggle-chip <%= initialStatus === 'present' ? 'active-recited' : '' %>" onclick="selectAttendance('present', this)" title="Present">
+                            <i class="bi bi-check-lg"></i> Present
+                        </button>
+                        <button type="button" class="btn-toggle-chip <%= initialStatus === 'absent' ? 'active-absent' : '' %>" onclick="selectAttendance('absent', this)" title="Absent">
+                            <i class="bi bi-person-x"></i> Absent
+                        </button>
+                        <button type="button" class="btn-toggle-chip <%= initialStatus === 'leave' ? 'active-leave' : '' %>" onclick="selectAttendance('leave', this)" title="Leave">
+                            Leave
+                        </button>
+                    </div>
+                    <input type="hidden" id="sabaq_status" name="sabaq_status" value="<%= sabaqStatus %>">
+                    <input type="hidden" id="sabqi_status" name="sabqi_status" value="<%= sabqiStatus %>">
+                    <input type="hidden" id="manzil_status" name="manzil_status" value="<%= manzilStatus %>">
+                    <input type="hidden" id="is_absent" name="is_absent" value="<%= (prefill && prefill.is_absent) ? 'on' : 'off' %>">
+                </div>
+            </div>
+
+            <div id="recitation-sections" class="<%= (initialStatus === 'absent' || initialStatus === 'leave') ? 'status-disabled' : '' %>">
+                <!-- SABAQ -->
+                <% const isWaqafActive = activeWaqaf && activeWaqaf.status === 'active'; %>
+                <div id="sabaq-section" class="<%= (sabaqStatus === 'not_recited' || isWaqafActive) ? 'sabaq-disabled' : '' %>" style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 1.25rem; border-radius: 0 6px 6px 0; margin-bottom: 1.5rem; <%= isWaqafActive ? 'opacity: 0.55; pointer-events: none;' : '' %>">
+                    <div style="font-weight: 700; color: #1e3a8a; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                        <span>
+                            Sabaq (New Lesson)
+                            <% if (isWaqafActive) { %>
+                                <span class="status-cell" style="background-color: #fef3c7; color: #d97706; font-size: 0.75rem; padding: 0.15rem 0.4rem; font-weight: 600; margin-left: 0.5rem;"><i class="bi bi-lock-fill"></i> WAQAF REVISION ACTIVE</span>
+                            <% } %>
+                        </span>
+                        <% if (!isWaqafActive) { %>
+                            <div class="status-group">
+                                <button type="button" class="btn-toggle-chip <%= sabaqStatus === 'recited' ? 'active-recited' : '' %>" onclick="selectColStatus('sabaq', 'recited', this)" title="Recited"><i class="bi bi-check-lg"></i> Recited</button>
+                                <button type="button" class="btn-toggle-chip <%= sabaqStatus === 'not_recited' ? 'active-nagha' : '' %>" onclick="selectColStatus('sabaq', 'not_recited', this)" title="Nagha"><i class="bi bi-x-lg"></i> Nagha</button>
+                            </div>
+                        <% } else { %>
+                            <span style="font-size: 0.8rem; font-weight: 600; color: #b45309;"><i class="bi bi-shield-fill-exclamation"></i> Revision Break Only</span>
+                        <% } %>
+                    </div>
+
+                    <div class="sabaq-inputs-div" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div class="form-group">
+                                <label style="font-size: 0.85rem; font-weight: 600;">From Para</label>
+                                <input type="number" name="sabaq_from_para" class="form-control" min="1" max="30" value="<%= prefill ? prefill.sabaq_from_para : enrollment.current_para %>">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size: 0.85rem; font-weight: 600;">To Para</label>
+                                <input type="number" name="sabaq_to_para" class="form-control" min="1" max="30" value="<%= prefill ? prefill.sabaq_to_para : enrollment.current_para %>">
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; align-items: center;">
+                            <div class="form-group">
+                                <label style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a;">Start:</label>
+                                <div style="display: flex; gap: 0.35rem; align-items: center;">
+                                    <span style="font-size: 0.8rem; color: #475569;">Page</span>
+                                    <input type="number" id="sabaq_from_page" name="sabaq_from_page" class="form-control" min="1" max="30" value="<%= prefill ? prefill.sabaq_from_page : 1 %>" onchange="calcTotalLines()">
+                                    <span style="font-size: 0.8rem; color: #475569;">Line</span>
+                                    <input type="number" id="sabaq_from_line" name="sabaq_from_line" class="form-control" min="1" max="16" value="<%= prefill ? prefill.sabaq_from_line : 1 %>" onchange="calcTotalLines()">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a;">End:</label>
+                                <div style="display: flex; gap: 0.35rem; align-items: center;">
+                                    <span style="font-size: 0.8rem; color: #475569;">Page</span>
+                                    <input type="number" id="sabaq_to_page" name="sabaq_to_page" class="form-control" min="1" max="30" value="<%= prefill ? prefill.sabaq_to_page : 1 %>" onchange="calcTotalLines()">
+                                    <span style="font-size: 0.8rem; color: #475569;">Line</span>
+                                    <input type="number" id="sabaq_to_line" name="sabaq_to_line" class="form-control" min="1" max="16" value="<%= prefill ? prefill.sabaq_to_line : 16 %>" onchange="calcTotalLines()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="font-size: 0.9rem; font-weight: 700; color: #0284c7; margin-top: 0.25rem;">
+                            Total lines: <span id="sabaq_total_lines">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SABQI -->
+                <div id="sabqi-section" class="<%= sabqiStatus === 'not_recited' ? 'sabqi-disabled' : '' %>" style="background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 1.25rem; border-radius: 0 6px 6px 0; margin-bottom: 1.5rem;">
+                    <div style="font-weight: 700; color: #14532d; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                        <span>Sabqi (Recent Lessons)</span>
+                        <div class="status-group">
+                            <button type="button" class="btn-toggle-chip <%= sabqiStatus === 'recited' ? 'active-recited' : '' %>" onclick="selectColStatus('sabqi', 'recited', this)" title="Recited"><i class="bi bi-check-lg"></i> Recited</button>
+                            <button type="button" class="btn-toggle-chip <%= sabqiStatus === 'not_recited' ? 'active-nagha' : '' %>" onclick="selectColStatus('sabqi', 'not_recited', this)" title="Nagha"><i class="bi bi-x-lg"></i> Nagha</button>
+                        </div>
+                    </div>
+
+                    <div class="sabqi-inputs-div" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-size: 0.85rem; font-weight: 600;">Recent Para No</label>
+                        <input type="number" name="sabqi_para" class="form-control" min="1" max="30" placeholder="Para" value="<%= prefill ? prefill.sabqi_para : Math.max(1, enrollment.current_para - 1) %>">
+                    </div>
+                </div>
+
+                <!-- MANZIL -->
+                <div id="manzil-section" class="<%= manzilStatus === 'not_recited' ? 'manzil-disabled' : '' %>" style="background-color: #fffbeb; border-left: 4px solid #eab308; padding: 1.25rem; border-radius: 0 6px 6px 0; margin-bottom: 1.5rem;">
+                    <div style="font-weight: 700; color: #78350f; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                        <span>Manzil (Revision)</span>
+                        <div class="status-group">
+                            <button type="button" class="btn-toggle-chip <%= manzilStatus === 'recited' ? 'active-recited' : '' %>" onclick="selectColStatus('manzil', 'recited', this)" title="Recited"><i class="bi bi-check-lg"></i> Recited</button>
+                            <button type="button" class="btn-toggle-chip <%= manzilStatus === 'not_recited' ? 'active-nagha' : '' %>" onclick="selectColStatus('manzil', 'not_recited', this)" title="Nagha"><i class="bi bi-x-lg"></i> Nagha</button>
+                        </div>
+                    </div>
+
+                    <div class="manzil-inputs-div" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <label style="font-size: 0.85rem; font-weight: 600;">Select up to 3 Paras to Revise</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <input type="number" name="manzil_para_1" class="form-control" min="1" max="30" placeholder="Para 1" value="<%= prefill ? prefill.manzil_para_1 : 1 %>">
+                            <input type="number" name="manzil_para_2" class="form-control" min="1" max="30" placeholder="Para 2" value="<%= prefill ? prefill.manzil_para_2 : Math.max(1, enrollment.current_para - 2) %>">
+                            <input type="number" name="manzil_para_3" class="form-control" min="1" max="30" placeholder="Para 3" value="<%= prefill ? prefill.manzil_para_3 : Math.max(1, enrollment.current_para - 1) %>">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Remarks -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="teacher_remarks" style="font-weight: 600;">Teacher Remarks</label>
+                <textarea name="teacher_remarks" id="teacher_remarks" class="form-control" rows="2" placeholder="Write any specific feedback or mistakes here..."><%= todayEntry ? todayEntry.teacher_remarks : '' %></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <a href="/hifz" class="btn-secondary" style="height: 42px; display: inline-flex; align-items: center;">Cancel</a>
+                <button type="submit" class="btn-primary" style="height: 42px; padding: 0 2rem; font-weight: 600;"><i class="bi bi-save"></i> Save Diary Entry</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function calcTotalLines() {
+        const fromPage = parseInt(document.getElementById('sabaq_from_page').value) || 0;
+        const toPage = parseInt(document.getElementById('sabaq_to_page').value) || 0;
+        const fromLine = parseInt(document.getElementById('sabaq_from_line').value) || 0;
+        const toLine = parseInt(document.getElementById('sabaq_to_line').value) || 0;
+        const display = document.getElementById('sabaq_total_lines');
+
+        if (fromPage > 0 && toPage >= fromPage) {
+            const linesPerPage = 15; // standard Quran lines per page
+            let total = 0;
+            if (toPage === fromPage) {
+                total = Math.max(0, toLine - fromLine + 1);
+            } else {
+                total = Math.max(0, (linesPerPage - fromLine + 1) + (toPage - fromPage - 1) * linesPerPage + toLine);
+            }
+            display.textContent = total;
+        } else {
+            display.textContent = '--';
+        }
+    }
+
+    function selectColStatus(colType, status, btn) {
+        const section = document.getElementById(colType + '-section');
+        
+        // Reset toggles in this group
+        const group = btn.parentElement;
+        group.querySelectorAll('.btn-toggle-chip').forEach(b => {
+            b.className = 'btn-toggle-chip';
+        });
+
+        // Set status hidden input
+        const statusInput = document.getElementById(colType + '_status');
+        statusInput.value = status;
+
+        if (status === 'recited') {
+            btn.classList.add('active-recited');
+            section.classList.remove(colType + '-disabled');
+        } else {
+            btn.classList.add('active-nagha');
+            section.classList.add(colType + '-disabled');
+        }
+    }
+
+    function selectAttendance(status, btn) {
+        const sections = document.getElementById('recitation-sections');
+        
+        // Remove old styling
+        sections.classList.remove('status-disabled');
+
+        // Reset toggles in this group
+        const group = btn.parentElement;
+        group.querySelectorAll('.btn-toggle-chip').forEach(b => {
+            b.className = 'btn-toggle-chip';
+        });
+
+        const absentInput = document.getElementById('is_absent');
+        const sabaqStatusInput = document.getElementById('sabaq_status');
+        const sabqiStatusInput = document.getElementById('sabqi_status');
+        const manzilStatusInput = document.getElementById('manzil_status');
+
+        if (status === 'present') {
+            btn.classList.add('active-recited');
+            absentInput.value = 'off';
+
+            // Restore hidden values to inputs
+            sabaqStatusInput.value = sabaqStatusInput.getAttribute('data-prev') || 'recited';
+            sabqiStatusInput.value = sabqiStatusInput.getAttribute('data-prev') || 'recited';
+            manzilStatusInput.value = manzilStatusInput.getAttribute('data-prev') || 'recited';
+
+            // Re-apply sub-section disabled states
+            const sabaqSection = document.getElementById('sabaq-section');
+            if (sabaqStatusInput.value === 'not_recited') {
+                sabaqSection.classList.add('sabaq-disabled');
+            } else {
+                sabaqSection.classList.remove('sabaq-disabled');
+            }
+
+            const sabqiSection = document.getElementById('sabqi-section');
+            if (sabqiStatusInput.value === 'not_recited') {
+                sabqiSection.classList.add('sabqi-disabled');
+            } else {
+                sabqiSection.classList.remove('sabqi-disabled');
+            }
+
+            const manzilSection = document.getElementById('manzil-section');
+            if (manzilStatusInput.value === 'not_recited') {
+                manzilSection.classList.add('manzil-disabled');
+            } else {
+                manzilSection.classList.remove('manzil-disabled');
+            }
+        } else if (status === 'absent') {
+            btn.classList.add('active-absent');
+            sections.classList.add('status-disabled');
+            absentInput.value = 'on';
+        } else if (status === 'leave') {
+            btn.classList.add('active-leave');
+            sections.classList.add('status-disabled');
+            absentInput.value = 'off';
+
+            // Backup previous statuses before setting them to leave
+            sabaqStatusInput.setAttribute('data-prev', sabaqStatusInput.value);
+            sabqiStatusInput.setAttribute('data-prev', sabqiStatusInput.value);
+            manzilStatusInput.setAttribute('data-prev', manzilStatusInput.value);
+
+            sabaqStatusInput.value = 'leave';
+            sabqiStatusInput.value = 'leave';
+            manzilStatusInput.value = 'leave';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        calcTotalLines();
+    });
+</script>
+
+<%- include('partials/footer') %>
