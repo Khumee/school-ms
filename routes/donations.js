@@ -215,7 +215,7 @@ router.post('/donations/donor/delete/:id', isAuthenticated, async (req, res) => 
 
 // POST /donations/add - record donation payment
 router.post('/donations/add', isAuthenticated, async (req, res) => {
-    const { donor_id, amount, date, fund_category, payment_method, notes, direct_ref } = req.body;
+    const { donor_id, amount, date, fund_category, payment_method, notes, direct_ref, donation_type } = req.body;
     try {
         const tenantId = req.tenant.id;
         let finalNotes = notes || null;
@@ -224,11 +224,11 @@ router.post('/donations/add', isAuthenticated, async (req, res) => {
         }
         
         await db.execute(
-            `INSERT INTO donations (tenant_id, donor_id, amount, date, fund_category, payment_method, notes)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO donations (tenant_id, donor_id, amount, date, fund_category, payment_method, notes, donation_type)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 tenantId, donor_id, parseFloat(amount), date || new Date(), 
-                fund_category || 'general', payment_method || 'Cash', finalNotes
+                fund_category || 'general', payment_method || 'Cash', finalNotes, donation_type || 'Sadqa'
             ]
         );
         res.redirect('/donations');
@@ -240,16 +240,16 @@ router.post('/donations/add', isAuthenticated, async (req, res) => {
 
 // POST /donations/edit/:id - update a donation record
 router.post('/donations/edit/:id', isAuthenticated, async (req, res) => {
-    const { amount, date, fund_category, payment_method, notes, direct_ref } = req.body;
+    const { amount, date, fund_category, payment_method, notes, direct_ref, donation_type } = req.body;
     try {
         let finalNotes = notes || null;
         if (fund_category === 'general' && direct_ref) {
             finalNotes = `[Direct: ${direct_ref}]` + (notes ? ' ' + notes : '');
         }
         await db.execute(
-            `UPDATE donations SET amount = ?, date = ?, fund_category = ?, payment_method = ?, notes = ?
+            `UPDATE donations SET amount = ?, date = ?, fund_category = ?, payment_method = ?, notes = ?, donation_type = ?
              WHERE id = ? AND tenant_id = ?`,
-            [parseFloat(amount), date, fund_category || 'general', payment_method || 'Cash', finalNotes, req.params.id, req.tenant.id]
+            [parseFloat(amount), date, fund_category || 'general', payment_method || 'Cash', finalNotes, donation_type || 'Sadqa', req.params.id, req.tenant.id]
         );
         res.redirect(req.body.redirect_to || '/donations');
     } catch (err) {

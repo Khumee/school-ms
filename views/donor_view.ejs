@@ -39,6 +39,7 @@
                 <th>Date</th>
                 <th style="text-align: right;">Amount (PKR)</th>
                 <th>Fund Category</th>
+                <th>Type</th>
                 <th>Payment Method</th>
                 <th>Notes</th>
                 <th></th>
@@ -51,12 +52,13 @@
                         <td><%= new Date(d.date).toLocaleDateString() %></td>
                         <td style="text-align: right; font-weight: 600; color: #15803d;"><%= parseFloat(d.amount).toLocaleString() %></td>
                         <td><%= fundLabels[d.fund_category] || d.fund_category %></td>
+                        <td><%= d.donation_type || 'Sadqa' %></td>
                         <td><%= d.payment_method || '-' %></td>
                         <td><%= d.notes || '-' %></td>
                         <td>
                             <div style="display: flex; gap: 0.4rem;">
                                 <a href="/donations/receipt/<%= d.id %>" class="btn-secondary nav-btn" target="_blank"><i class="bi bi-file-earmark-pdf-fill"></i></a>
-                                <button type="button" class="btn-secondary nav-btn" onclick='openEditModal(<%- JSON.stringify({ id: d.id, amount: d.amount, date: new Date(d.date).toISOString().slice(0,10), fund_category: d.fund_category, payment_method: d.payment_method, notes: d.notes || "", donor_name: donor.name }) %>)'><i class="bi bi-pencil-square"></i></button>
+                                <button type="button" class="btn-secondary nav-btn" onclick='openEditModal(<%- JSON.stringify({ id: d.id, amount: d.amount, date: new Date(d.date).toISOString().slice(0,10), fund_category: d.fund_category, payment_method: d.payment_method, notes: d.notes || "", donor_name: donor.name, donation_type: d.donation_type }) %>)'><i class="bi bi-pencil-square"></i></button>
                                 <form action="/donations/delete/<%= d.id %>" method="POST" onsubmit="return confirm('Delete this donation record?')">
                                     <input type="hidden" name="redirect_to" value="/donations/donor/<%= donor.id %>">
                                     <button type="submit" class="btn-danger nav-btn"><i class="bi bi-trash3-fill"></i></button>
@@ -67,7 +69,7 @@
                 <% }) %>
             <% } else { %>
                 <tr>
-                    <td colspan="6" style="text-align: center; color: #64748b;">No donations recorded yet.</td>
+                    <td colspan="7" style="text-align: center; color: #64748b;">No donations recorded yet.</td>
                 </tr>
             <% } %>
         </tbody>
@@ -96,6 +98,13 @@
             </select>
         </div>
         <div class="form-group" style="margin-bottom: 1rem;">
+            <label>Donation Type</label>
+            <select id="editDonationType" name="donation_type" class="form-control">
+                <option value="Sadqa">Sadqa</option>
+                <option value="Zakat">Zakat</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
             <label>Payment Method</label>
             <input type="text" id="editPaymentMethod" name="payment_method" class="form-control">
         </div>
@@ -118,6 +127,7 @@
         document.getElementById('editAmount').value = d.amount;
         document.getElementById('editDate').value = d.date;
         document.getElementById('editFundCategory').value = d.fund_category;
+        document.getElementById('editDonationType').value = d.donation_type || 'Sadqa';
         document.getElementById('editPaymentMethod').value = d.payment_method || '';
         document.getElementById('editNotes').value = d.notes || '';
         document.getElementById('editModal').style.display = 'block';

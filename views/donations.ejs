@@ -162,7 +162,7 @@
                     <label for="fund_category">Account to Transfer Fund</label>
                     <select name="fund_category" id="fund_category" class="form-control" onchange="toggleDirectOption(this.value, 'direct_option_group')">
                         <option value="general">Member Account</option>
-                        <option value="trust">Trust Account</option>
+                        <option value="trust" selected>Trust Account</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -174,15 +174,24 @@
                 </div>
             </div>
             
-            <div id="direct_option_group" class="form-group" style="display: block; margin-bottom: 1.5rem;">
-                <label for="direct_ref">Member Account Option *</label>
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <select id="direct_ref" name="direct_ref" class="form-control">
-                        <option value="Faheem Zafar">Faheem Zafar</option>
-                        <option value="Kamal Muhammad">Kamal Muhammad</option>
-                        <option value="Khurram Shahzad">Khurram Shahzad</option>
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label for="donation_type">Donation Type</label>
+                    <select name="donation_type" id="donation_type" class="form-control">
+                        <option value="Sadqa" selected>Sadqa</option>
+                        <option value="Zakat">Zakat</option>
                     </select>
-                    <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewDirectOption('direct_ref')"><i class="bi bi-plus-lg"></i></button>
+                </div>
+                <div id="direct_option_group" class="form-group" style="display: none; margin-bottom: 0;">
+                    <label for="direct_ref">Member Account Option *</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <select id="direct_ref" name="direct_ref" class="form-control">
+                            <option value="Faheem Zafar">Faheem Zafar</option>
+                            <option value="Kamal Muhammad">Kamal Muhammad</option>
+                            <option value="Khurram Shahzad">Khurram Shahzad</option>
+                        </select>
+                        <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewDirectOption('direct_ref')"><i class="bi bi-plus-lg"></i></button>
+                    </div>
                 </div>
             </div>
             <button type="submit" class="btn-primary" style="margin-top: 0.5rem;"><i class="bi bi-check-circle-fill"></i> Log Donation</button>
@@ -244,6 +253,7 @@
                 <th>Date</th>
                 <th style="text-align: right;">Amount (PKR)</th>
                 <th>Fund</th>
+                <th>Type</th>
                 <th>Method</th>
                 <th></th>
             </tr>
@@ -256,11 +266,12 @@
                         <td><%= new Date(d.date).toLocaleDateString() %></td>
                         <td style="text-align: right; font-weight: 600; color: #15803d;"><%= parseFloat(d.amount).toLocaleString() %></td>
                         <td><%= fundLabels[d.fund_category] || d.fund_category %></td>
+                        <td><%= d.donation_type || 'Sadqa' %></td>
                         <td><%= d.payment_method || '-' %></td>
                         <td>
                             <div style="display: flex; gap: 0.4rem;">
                                 <a href="/donations/receipt/<%= d.id %>" class="btn-secondary nav-btn" target="_blank"><i class="bi bi-file-earmark-pdf-fill"></i></a>
-                                <button type="button" class="btn-secondary nav-btn" onclick='openEditModal(<%- JSON.stringify({ id: d.id, amount: d.amount, date: new Date(d.date).toISOString().slice(0,10), fund_category: d.fund_category, payment_method: d.payment_method, notes: d.notes || "", donor_name: d.donor_name }) %>)'><i class="bi bi-pencil-square"></i></button>
+                                <button type="button" class="btn-secondary nav-btn" onclick='openEditModal(<%- JSON.stringify({ id: d.id, amount: d.amount, date: new Date(d.date).toISOString().slice(0,10), fund_category: d.fund_category, payment_method: d.payment_method, notes: d.notes || "", donor_name: d.donor_name, donation_type: d.donation_type }) %>)'><i class="bi bi-pencil-square"></i></button>
                                 <form action="/donations/delete/<%= d.id %>" method="POST" onsubmit="return confirm('Delete this donation record?')">
                                     <input type="hidden" name="redirect_to" value="/donations">
                                     <button type="submit" class="btn-danger nav-btn"><i class="bi bi-trash3-fill"></i></button>
@@ -271,7 +282,7 @@
                 <% }) %>
             <% } else { %>
                 <tr>
-                    <td colspan="6" style="text-align: center; color: #64748b;">No donations logged this month yet.</td>
+                    <td colspan="7" style="text-align: center; color: #64748b;">No donations logged this month yet.</td>
                 </tr>
             <% } %>
         </tbody>
@@ -388,6 +399,13 @@
             </div>
         </div>
         <div class="form-group" style="margin-bottom: 1rem;">
+            <label>Donation Type</label>
+            <select id="editDonationType" name="donation_type" class="form-control">
+                <option value="Sadqa">Sadqa</option>
+                <option value="Zakat">Zakat</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
             <label>Payment Method</label>
             <select id="editPaymentMethod" name="payment_method" class="form-control">
                 <option value="Cash">Cash</option>
@@ -479,6 +497,7 @@
         document.getElementById('editAmount').value = d.amount;
         document.getElementById('editDate').value = d.date;
         document.getElementById('editFundCategory').value = d.fund_category;
+        document.getElementById('editDonationType').value = d.donation_type || 'Sadqa';
         document.getElementById('editPaymentMethod').value = d.payment_method || '';
         
         let directVal = '';
