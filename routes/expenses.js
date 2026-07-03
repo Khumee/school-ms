@@ -10,7 +10,8 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 router.get('/expenses', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        const { category, month, year } = req.query;
+        const activeMonth = (month === undefined) ? String(new Date().getMonth() + 1) : month;
+        const activeYear = (year === undefined) ? '2026' : year;
         
         let queryStr = 'SELECT * FROM expenses WHERE tenant_id = ?';
         const params = [tenantId];
@@ -19,21 +20,19 @@ router.get('/expenses', isAuthenticated, async (req, res) => {
             queryStr += ' AND category = ?';
             params.push(category);
         }
-        if (month) {
+        if (activeMonth) {
             queryStr += ' AND MONTH(date) = ?';
-            params.push(month);
+            params.push(activeMonth);
         }
-        if (year) {
+        if (activeYear) {
             queryStr += ' AND YEAR(date) = ?';
-            params.push(year);
-        } else {
-            queryStr += ' AND YEAR(date) = 2026';
+            params.push(activeYear);
         }
         
         queryStr += ' ORDER BY date DESC';
         
         const [expenses] = await db.execute(queryStr, params);
-        res.render('expenses', { expenses, category, month, year });
+        res.render('expenses', { expenses, category, month: activeMonth, year: activeYear });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading expenses.');
