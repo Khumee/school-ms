@@ -14,8 +14,8 @@
     let defaulterCount = 0;
 
     students.forEach(s => {
-        const expectedFee = s.custom_monthly_fee !== null ? s.custom_monthly_fee : (s.default_monthly_fee || 0);
-        totalExpected += parseFloat(expectedFee);
+        const expectedFee = parseFloat(s.default_monthly_fee || 0) - parseFloat(s.custom_monthly_fee || 0);
+        totalExpected += expectedFee;
         
         const payObj = paymentMap[s.id] && paymentMap[s.id][activeMonthNum];
         if (payObj && payObj.amount_paid > 0) {
@@ -135,7 +135,7 @@
                 <% if (students.length > 0) { %>
                     <% students.forEach(s => { %>
                         <% 
-                            const expectedFee = s.custom_monthly_fee !== null ? s.custom_monthly_fee : (s.default_monthly_fee || 0);
+                            const expectedFee = parseFloat(s.default_monthly_fee || 0) - parseFloat(s.custom_monthly_fee || 0);
                             const payObj = paymentMap[s.id] && paymentMap[s.id][activeMonthNum];
                             const isPaid = payObj && payObj.amount_paid > 0;
                         %>
@@ -158,9 +158,9 @@
                                 <div style="display: flex; gap: 0.4rem; justify-content: center;">
                                     <% if (isPaid) { %>
                                         <a href="/fees/receipt/<%= payObj.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
-                                        <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, <%= payObj.amount_paid %>, <%= expectedFee %>)"><i class="bi bi-pencil-fill"></i> Edit</button>
+                                        <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, <%= payObj.amount_paid %>, <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, <%= payObj.additional_fee || 0 %>, '<%= payObj.additional_fee_description || '' %>')"><i class="bi bi-pencil-fill"></i> Edit</button>
                                     <% } else { %>
-                                        <button type="button" class="btn-primary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= expectedFee %>)"><i class="bi bi-credit-card-fill"></i> Collect</button>
+                                        <button type="button" class="btn-primary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, 0, '')"><i class="bi bi-credit-card-fill"></i> Collect</button>
                                     <% } %>
                                 </div>
                             </td>
@@ -203,7 +203,7 @@
                 <% if (students.length > 0) { %>
                     <% students.forEach(s => { %>
                         <% 
-                            const expectedFee = s.custom_monthly_fee !== null ? s.custom_monthly_fee : (s.default_monthly_fee || 0);
+                            const expectedFee = parseFloat(s.default_monthly_fee || 0) - parseFloat(s.custom_monthly_fee || 0);
                             const studentPayments = paymentMap[s.id] || {};
                         %>
                         <tr>
@@ -219,14 +219,14 @@
                                     const amtPaid = payObj ? payObj.amount_paid : undefined;
                                 %>
                                 <% if (amtPaid !== undefined && amtPaid > 0) { %>
-                                    <td class="status-cell status-paid cell-amount" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= m %>, <%= amtPaid %>, <%= expectedFee %>)">
+                                    <td class="status-cell status-paid cell-amount" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= m %>, <%= amtPaid %>, <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, <%= payObj.additional_fee || 0 %>, '<%= payObj.additional_fee_description || '' %>')">
                                         <%= amtPaid %>
                                     </td>
-                                <% } else { %>
-                                    <td class="status-cell status-unpaid" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= m %>, '', <%= expectedFee %>)">
+                                  <% } else { %>
+                                    <td class="status-cell status-unpaid" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= m %>, '', <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, 0, '')">
                                         -
                                     </td>
-                                <% } %>
+                                  <% } %>
                             <% } %>
                         </tr>
                     <% }) %>
@@ -248,10 +248,37 @@
         <input type="hidden" id="modalMonth" name="month">
         <input type="hidden" id="modalYear" name="year">
         
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1.25rem; font-size: 0.85rem; line-height: 1.5;">
+            <div style="display: flex; justify-content: space-between;">
+                <span>Total Class Fee:</span>
+                <strong id="modalClassFeeDisplay">PKR 0</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; color: #b91c1c;">
+                <span>Concession Support:</span>
+                <strong id="modalConcessionDisplay">PKR 0</strong>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 0.5rem 0;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.95rem;">
+                <span>Fee to Collect:</span>
+                <strong id="modalExpectedFeeDisplay" style="color: var(--primary-color);">PKR 0</strong>
+            </div>
+        </div>
+
         <div class="form-group" style="margin-bottom: 1.25rem;">
             <label for="modalAmount">Amount Paid (PKR)</label>
             <input type="number" step="0.01" id="modalAmount" name="amount" class="form-control" required>
-            <small style="color: #64748b; margin-top: 0.25rem; display: block;" id="modalExpectedFee"></small>
+        </div>
+
+        <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+            <div class="form-group">
+                <label for="modalAdditionalFee">Additional Fee (PKR)</label>
+                <input type="number" step="0.01" id="modalAdditionalFee" name="additional_fee" class="form-control" value="0">
+            </div>
+            
+            <div class="form-group">
+                <label for="modalAdditionalFeeDesc">Fee Description</label>
+                <input type="text" id="modalAdditionalFeeDesc" name="additional_fee_description" class="form-control" placeholder="e.g. Exam fee">
+            </div>
         </div>
         
         <div class="form-group" style="margin-bottom: 1.25rem;">
@@ -273,13 +300,19 @@
 <div id="modalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeModal()"></div>
 
 <script>
-    function openPaymentModal(studentId, studentName, month, currentAmount, expectedFee) {
+    function openPaymentModal(studentId, studentName, month, currentAmount, expectedFee, classFee, concession, additionalFee, additionalFeeDesc) {
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         document.getElementById('modalStudentId').value = studentId;
         document.getElementById('modalMonth').value = month;
         document.getElementById('modalAmount').value = currentAmount || expectedFee;
         document.getElementById('modalTitle').innerText = 'Pay Fee: ' + studentName + ' (' + months[month - 1] + ')';
-        document.getElementById('modalExpectedFee').innerText = 'Expected Fee: PKR ' + expectedFee;
+        
+        document.getElementById('modalClassFeeDisplay').innerText = 'PKR ' + parseFloat(classFee || 0).toLocaleString();
+        document.getElementById('modalConcessionDisplay').innerText = 'PKR ' + parseFloat(concession || 0).toLocaleString();
+        document.getElementById('modalExpectedFeeDisplay').innerText = 'PKR ' + parseFloat(expectedFee || 0).toLocaleString();
+
+        document.getElementById('modalAdditionalFee').value = additionalFee || 0;
+        document.getElementById('modalAdditionalFeeDesc').value = additionalFeeDesc || '';
         
         // Calculate late fee automatically based on year context
         const today = new Date();

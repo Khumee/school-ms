@@ -8,10 +8,11 @@
 
     students.forEach(s => {
         const standard = parseFloat(s.default_monthly_fee || 0);
-        const active = s.custom_monthly_fee !== null ? parseFloat(s.custom_monthly_fee) : standard;
+        const concession = parseFloat(s.custom_monthly_fee || 0);
+        const active = standard - concession;
         if (s.has_concession) {
             concessionCount++;
-            totalDiscount += (standard - active);
+            totalDiscount += concession;
         } else {
             standardCount++;
         }
@@ -100,9 +101,10 @@
         <tbody>
             <% if (students.length > 0) { %>
                 <% students.forEach(s => { %>
-                    <% 
+                     <% 
                         const standardFee = s.default_monthly_fee || 0;
-                        const activeFee = s.custom_monthly_fee !== null ? s.custom_monthly_fee : standardFee;
+                        const concessionAmt = s.custom_monthly_fee !== null ? s.custom_monthly_fee : 0;
+                        const activeFee = parseFloat(standardFee) - parseFloat(concessionAmt);
                     %>
                     <tr class="concession-row <%= s.has_concession ? 'status-row-concession' : 'status-row-standard' %>">
                         <td style="font-weight: 600; text-align: left;"><%= s.reg_no %></td>
@@ -110,7 +112,7 @@
                         <td style="text-align: left;"><%= s.class_name || 'Unassigned' %></td>
                         <td style="text-align: right; color: #64748b;">PKR <%= standardFee.toLocaleString() %></td>
                         <td style="text-align: right; font-weight: 700; color: <%= s.has_concession ? '#b91c1c' : '#1e293b' %>">
-                            PKR <%= activeFee.toLocaleString() %>
+                            PKR <%= activeFee.toLocaleString() %> (Concession: PKR <%= parseFloat(concessionAmt).toLocaleString() %>)
                         </td>
                         <td>
                             <% if (s.has_concession) { %>
@@ -154,8 +156,8 @@
         </div>
 
         <div class="form-group" style="margin-bottom: 1rem;">
-            <label for="modalCustomFee">Active Monthly Fee (PKR)</label>
-            <input type="number" step="0.01" id="modalCustomFee" name="custom_monthly_fee" class="form-control" required placeholder="Enter fee amount">
+            <label for="modalCustomFee">Concession Amount (PKR)</label>
+            <input type="number" step="0.01" id="modalCustomFee" name="custom_monthly_fee" class="form-control" required placeholder="Enter concession discount amount" value="0">
         </div>
 
         <div class="form-group" style="margin-bottom: 1rem;">
@@ -201,7 +203,7 @@
         document.getElementById('modalStudentId').value = studentId;
         document.getElementById('modalStudentName').value = studentName;
         document.getElementById('modalStandardFee').value = 'PKR ' + standardFee.toLocaleString();
-        document.getElementById('modalCustomFee').value = customFee !== '' ? customFee : standardFee;
+        document.getElementById('modalCustomFee').value = customFee !== '' ? customFee : 0;
         document.getElementById('modalHasConcession').value = hasConcession;
         document.getElementById('modalConcessionNotes').value = notes;
         document.getElementById('modalConcessionReason').value = reason;
@@ -224,14 +226,14 @@
         const reasonSelect = document.getElementById('modalConcessionReason');
         
         if (value === '0') {
-            customFeeInput.value = defaultClassFee;
+            customFeeInput.value = 0;
             notesInput.value = '';
             reasonSelect.value = '';
             reasonGroup.style.display = 'none';
         } else {
             reasonGroup.style.display = 'block';
-            if (parseFloat(customFeeInput.value) >= defaultClassFee) {
-                customFeeInput.value = defaultClassFee * 0.5; // default 50% discount suggestion
+            if (parseFloat(customFeeInput.value) <= 0) {
+                customFeeInput.value = defaultClassFee * 0.3; // suggest a 30% discount suggestion
             }
             if (!notesInput.value) {
                 notesInput.value = 'Fee concession';

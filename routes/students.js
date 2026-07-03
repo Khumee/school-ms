@@ -10,7 +10,7 @@ router.get('/students', isAuthenticated, async (req, res) => {
         const { classId, search } = req.query;
         
         let queryStr = `
-            SELECT s.*, c.name as class_name 
+            SELECT s.*, c.name as class_name, c.default_monthly_fee
             FROM students s 
             LEFT JOIN classes c ON s.class_id = c.id 
             WHERE s.tenant_id = ?

@@ -101,7 +101,7 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
         
         // Fetch all payments for the active year for these students
         const [payments] = await db.execute(
-            'SELECT id, student_id, month, amount_paid FROM fee_payments WHERE tenant_id = ? AND year = ?',
+            'SELECT id, student_id, month, amount_paid, fine_amount, fine_waived, additional_fee, additional_fee_description FROM fee_payments WHERE tenant_id = ? AND year = ?',
             [tenantId, activeYear]
         );
         
@@ -113,7 +113,11 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
             }
             paymentMap[p.student_id][p.month] = {
                 id: p.id,
-                amount_paid: parseFloat(p.amount_paid)
+                amount_paid: parseFloat(p.amount_paid),
+                fine_amount: parseFloat(p.fine_amount || 0),
+                fine_waived: p.fine_waived,
+                additional_fee: parseFloat(p.additional_fee || 0),
+                additional_fee_description: p.additional_fee_description || ''
             };
         });
         
@@ -136,12 +140,13 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
 
 // POST /fees/pay - record payment
 router.post('/fees/pay', isAuthenticated, async (req, res) => {
-    const { student_id, month, year, amount, fine_amount, fine_waived } = req.body;
+    const { student_id, month, year, amount, fine_amount, fine_waived, additional_fee, additional_fee_description } = req.body;
     try {
         const tenantId = req.tenant.id;
         const waived = fine_waived === 'on' || fine_waived === '1' ? 1 : 0;
         const fineVal = fine_amount ? parseFloat(fine_amount) : 0.00;
         const activeYear = year ? parseInt(year) : new Date().getFullYear();
+        const addFeeVal = additional_fee ? parseFloat(additional_fee) : 0.00;
         
         // Delete any existing payment first to allow updates
         await db.execute(
@@ -151,9 +156,9 @@ router.post('/fees/pay', isAuthenticated, async (req, res) => {
         
         if (amount && parseFloat(amount) > 0) {
             await db.execute(
-                `INSERT INTO fee_payments (tenant_id, student_id, month, year, amount_paid, payment_date, recorded_by, fine_amount, fine_waived)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [tenantId, student_id, month, activeYear, parseFloat(amount), new Date(), req.session.userId, fineVal, waived]
+                `INSERT INTO fee_payments (tenant_id, student_id, month, year, amount_paid, payment_date, recorded_by, fine_amount, fine_waived, additional_fee, additional_fee_description)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [tenantId, student_id, month, activeYear, parseFloat(amount), new Date(), req.session.userId, fineVal, waived, addFeeVal, additional_fee_description || null]
             );
         }
         

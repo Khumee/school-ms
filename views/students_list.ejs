@@ -71,7 +71,7 @@
                 <th>Name</th>
                 <th>Class</th>
                 <th>Status</th>
-                <th>Fees Override</th>
+                <th>Monthly Tuition Fee</th>
                 <th>Admission Date</th>
                 <th>Actions</th>
             </tr>
@@ -90,11 +90,12 @@
                         </td>
                         <td>
                             <% if (s.has_concession) { %>
-                                <span style="color: #b91c1c; font-weight: 600;">PKR <%= s.custom_monthly_fee %> (Concession)</span>
-                            <% } else if (s.custom_monthly_fee !== null) { %>
-                                <span>PKR <%= s.custom_monthly_fee %> (Standard)</span>
+                                <span style="color: #b91c1c; font-weight: 600;">
+                                    PKR <%= (parseFloat(s.default_monthly_fee || 0) - parseFloat(s.custom_monthly_fee || 0)).toLocaleString() %>
+                                </span>
+                                <br><span style="font-size: 0.75rem; color: #64748b;">(Concession: PKR <%= parseFloat(s.custom_monthly_fee || 0).toLocaleString() %>)</span>
                             <% } else { %>
-                                <span style="color: #64748b; font-style: italic;">Class Default</span>
+                                <span>PKR <%= parseFloat(s.default_monthly_fee || 0).toLocaleString() %></span>
                             <% } %>
                         </td>
                         <td><%= s.date_of_admission ? new Date(s.date_of_admission).toLocaleDateString() : '-' %></td>

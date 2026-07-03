@@ -84,7 +84,7 @@ router.get('/salaries', isAuthenticated, async (req, res) => {
 
 // POST /salaries/pay - execute payout
 router.post('/salaries/pay', isAuthenticated, async (req, res) => {
-    const { employee_id, month, year, basic_salary, bonus, bonus_description, paid_date } = req.body;
+    const { employee_id, month, year, basic_salary, bonus, bonus_description, paid_date, deduction, deduction_description } = req.body;
     try {
         const tenantId = req.tenant.id;
         
@@ -97,15 +97,34 @@ router.post('/salaries/pay', isAuthenticated, async (req, res) => {
         if (existing.length > 0) {
             await db.execute(
                 `UPDATE salaries 
-                 SET basic_salary = ?, bonus = ?, bonus_description = ?, paid_date = ? 
+                 SET basic_salary = ?, bonus = ?, bonus_description = ?, paid_date = ?, deduction = ?, deduction_description = ? 
                  WHERE id = ?`,
-                [parseFloat(basic_salary), parseFloat(bonus || 0), bonus_description || null, paid_date || new Date(), existing[0].id]
+                [
+                    parseFloat(basic_salary), 
+                    parseFloat(bonus || 0), 
+                    bonus_description || null, 
+                    paid_date || new Date(), 
+                    parseFloat(deduction || 0), 
+                    deduction_description || null, 
+                    existing[0].id
+                ]
             );
         } else {
             await db.execute(
-                `INSERT INTO salaries (tenant_id, employee_id, month, year, basic_salary, bonus, bonus_description, paid_date)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [tenantId, employee_id, month, year, parseFloat(basic_salary), parseFloat(bonus || 0), bonus_description || null, paid_date || new Date()]
+                `INSERT INTO salaries (tenant_id, employee_id, month, year, basic_salary, bonus, bonus_description, paid_date, deduction, deduction_description)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    tenantId, 
+                    employee_id, 
+                    month, 
+                    year, 
+                    parseFloat(basic_salary), 
+                    parseFloat(bonus || 0), 
+                    bonus_description || null, 
+                    paid_date || new Date(), 
+                    parseFloat(deduction || 0), 
+                    deduction_description || null
+                ]
             );
         }
         res.redirect('/salaries');
@@ -130,7 +149,7 @@ router.get('/salaries/slip/:id', isAuthenticated, async (req, res) => {
         const salary = rows[0];
 
         const tenantForPdf = { ...req.tenant, logo_url: resolvePublicAsset(req.tenant.logo_url) };
-        const totalPaid = parseFloat(salary.basic_salary) + parseFloat(salary.bonus);
+        const totalPaid = parseFloat(salary.basic_salary) + parseFloat(salary.bonus) - parseFloat(salary.deduction || 0);
 
         renderPdf(res, {
             templateName: 'salary_slip',
