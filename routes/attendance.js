@@ -76,7 +76,7 @@ router.post('/attendance/employees', isAuthenticated, async (req, res) => {
                     await db.execute(
                         `INSERT INTO attendance_employees (tenant_id, employee_id, date, status, marked_by)
                          VALUES (?, ?, ?, ?, ?)`,
-                        [tenantId, empId, dateStr, status, req.session.userId]
+                        [tenantId, empId, dateStr, status, req.session.userId || null]
                     );
                 }
             }

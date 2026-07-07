@@ -25,9 +25,19 @@
         <span class="kpi-icon amber"><i class="bi bi-tags-fill"></i></span>
         <span class="kpi-label">Monthly Fee (Net)</span>
         <span class="kpi-value" style="font-size: 1.4rem;">
-            PKR <%= (parseFloat(student.default_monthly_fee || 0) - parseFloat(student.custom_monthly_fee || 0)).toLocaleString() %>
+            <% if (student.is_hifz_class) { %>
+                PKR 0 (Hifz)
+            <% } else { %>
+                PKR <%= (parseFloat(student.default_monthly_fee || 0) - parseFloat(student.custom_monthly_fee || 0)).toLocaleString() %>
+            <% } %>
         </span>
-        <span class="kpi-subtitle"><%= student.has_concession ? 'Concessional Rate' : 'Standard Rate' %></span>
+        <span class="kpi-subtitle">
+            <% if (student.is_hifz_class) { %>
+                Hifz Student
+            <% } else { %>
+                <%= student.has_concession ? 'Concessional Rate' : 'Standard Rate' %>
+            <% } %>
+        </span>
     </div>
     <div class="card kpi-card">
         <span class="kpi-icon green"><i class="bi bi-cash-stack"></i></span>
@@ -56,11 +66,19 @@
     <div class="card">
         <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-tags-fill"></i> Fee Concession Details</h3>
         <table class="details-table" style="width: 100%; font-size: 0.875rem;">
-            <tr><td style="font-weight: 600; padding: 6px 0; width: 45%;">Class Standard Fee</td><td style="padding: 6px 0;">PKR <%= (student.default_monthly_fee || 0).toLocaleString() %></td></tr>
-            <tr><td style="font-weight: 600; padding: 6px 0;">Concession Amount</td><td style="padding: 6px 0;">PKR <%= parseFloat(student.custom_monthly_fee || 0).toLocaleString() %></td></tr>
-            <tr><td style="font-weight: 600; padding: 6px 0;">Net Monthly Fee</td><td style="padding: 6px 0;">PKR <%= (parseFloat(student.default_monthly_fee || 0) - parseFloat(student.custom_monthly_fee || 0)).toLocaleString() %></td></tr>
-            <tr><td style="font-weight: 600; padding: 6px 0;">Has Concession</td><td style="padding: 6px 0;"><%= student.has_concession ? 'Yes' : 'No' %></td></tr>
-            <tr><td style="font-weight: 600; padding: 6px 0;">Notes</td><td style="padding: 6px 0;"><%= student.concession_notes || '-' %></td></tr>
+            <% if (student.is_hifz_class) { %>
+                <tr><td style="font-weight: 600; padding: 6px 0; width: 45%;">Class Standard Fee</td><td style="padding: 6px 0;">PKR 0 (Hifz Class)</td></tr>
+                <tr><td style="font-weight: 600; padding: 6px 0;">Concession Amount</td><td style="padding: 6px 0;">-</td></tr>
+                <tr><td style="font-weight: 600; padding: 6px 0;">Net Monthly Fee</td><td style="padding: 6px 0;">PKR 0</td></tr>
+                <tr><td style="font-weight: 600; padding: 6px 0;">Has Concession</td><td style="padding: 6px 0;">N/A (Hifz)</td></tr>
+                <tr><td style="font-weight: 600; padding: 6px 0;">Notes</td><td style="padding: 6px 0;">Hifz student exemption</td></tr>
+            <% } else { %>
+                <tr><td style="font-weight: 600; padding: 6px 0; width: 45%;">Class Standard Fee</td><td style="padding: 6px 0;">PKR <%= (student.default_monthly_fee || 0).toLocaleString() %></td></tr>
+                <tr><td style="font-weight: 600; padding: 6px 0;">Concession Amount</td><td style="padding: 6px 0;">PKR <%= parseFloat(student.custom_monthly_fee || 0).toLocaleString() %></td></tr>
+                <tr><td style="font-weight: 600; padding: 6px 0;">Net Monthly Fee</td><td style="padding: 6px 0;">PKR <%= (parseFloat(student.default_monthly_fee || 0) - parseFloat(student.custom_monthly_fee || 0)).toLocaleString() %></td></tr>
+                <tr><td style="font-weight: 600; padding: 6px 0;">Has Concession</td><td style="padding: 6px 0;"><%= student.has_concession ? 'Yes' : 'No' %></td></tr>
+                <tr><td style="font-weight: 600; padding: 6px 0;">Notes</td><td style="padding: 6px 0;"><%= student.concession_notes || '-' %></td></tr>
+            <% } %>
         </table>
     </div>
 </div>

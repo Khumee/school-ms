@@ -10,7 +10,7 @@ router.get('/students', isAuthenticated, async (req, res) => {
         const { classId, search } = req.query;
         
         let queryStr = `
-            SELECT s.*, c.name as class_name, c.default_monthly_fee
+            SELECT s.*, c.name as class_name, c.default_monthly_fee, c.is_hifz_class
             FROM students s 
             LEFT JOIN classes c ON s.class_id = c.id 
             WHERE s.tenant_id = ?
@@ -78,7 +78,7 @@ router.post('/students/add', isAuthenticated, async (req, res) => {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 reg_no, name, class_id || null, 
-                custom_monthly_fee ? parseFloat(custom_monthly_fee) : null,
+                (custom_monthly_fee !== undefined && custom_monthly_fee !== null && custom_monthly_fee !== '') ? parseFloat(custom_monthly_fee) : null,
                 has_concession === 'on' || has_concession === '1' ? 1 : 0,
                 concession_notes || null,
                 father_name || null, father_phone || null, emergency_contact || null,
@@ -146,7 +146,7 @@ router.post('/students/edit/:id', isAuthenticated, async (req, res) => {
              WHERE id = ? AND tenant_id = ?`,
             [
                 reg_no, name, class_id || null,
-                custom_monthly_fee ? parseFloat(custom_monthly_fee) : null,
+                (custom_monthly_fee !== undefined && custom_monthly_fee !== null && custom_monthly_fee !== '') ? parseFloat(custom_monthly_fee) : null,
                 has_concession === 'on' || has_concession === '1' ? 1 : 0,
                 concession_notes || null,
                 father_name || null, father_phone || null, emergency_contact || null,
@@ -169,7 +169,7 @@ router.get('/students/view/:id', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
         const [students] = await db.execute(
-            `SELECT s.*, c.name as class_name, c.default_monthly_fee
+            `SELECT s.*, c.name as class_name, c.default_monthly_fee, c.is_hifz_class
              FROM students s
              LEFT JOIN classes c ON s.class_id = c.id
              WHERE s.id = ? AND s.tenant_id = ?`,

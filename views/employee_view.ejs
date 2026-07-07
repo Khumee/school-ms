@@ -101,6 +101,7 @@
         <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-mortarboard-fill"></i> Professional & Bank Details</h3>
         <table class="details-table" style="width: 100%; font-size: 0.875rem;">
             <tr><td style="font-weight: 600; padding: 6px 0; width: 45%;">Joining Date</td><td style="padding: 6px 0;"><%= employee.date_of_joining ? new Date(employee.date_of_joining).toLocaleDateString() : '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Leaving / Discharge Date</td><td style="padding: 6px 0;"><%= employee.date_of_leaving ? new Date(employee.date_of_leaving).toLocaleDateString() : '-' %></td></tr>
             <tr><td style="font-weight: 600; padding: 6px 0;">Highest Qualification</td><td style="padding: 6px 0;"><%= employee.qualification || '-' %></td></tr>
             <tr><td style="font-weight: 600; padding: 6px 0;">Previous Experience</td><td style="padding: 6px 0;"><%= previousExperience %> Year(s)</td></tr>
             <tr><td style="font-weight: 600; padding: 6px 0;">Experience at School</td><td style="padding: 6px 0;"><%= currentExperienceStr %></td></tr>

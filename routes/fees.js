@@ -18,7 +18,7 @@ router.get('/fees/concessions', isAuthenticated, async (req, res) => {
         const { classId, search } = req.query;
         
         let queryStr = `
-            SELECT s.*, c.name as class_name, c.default_monthly_fee 
+            SELECT s.*, c.name as class_name, c.default_monthly_fee, c.is_hifz_class 
             FROM students s 
             LEFT JOIN classes c ON s.class_id = c.id 
             WHERE s.tenant_id = ?
@@ -54,7 +54,7 @@ router.post('/fees/concessions/update', isAuthenticated, async (req, res) => {
              SET custom_monthly_fee = ?, has_concession = ?, concession_notes = ?, concession_reason = ? 
              WHERE id = ? AND tenant_id = ?`,
             [
-                custom_monthly_fee ? parseFloat(custom_monthly_fee) : null,
+                (custom_monthly_fee !== undefined && custom_monthly_fee !== null && custom_monthly_fee !== '') ? parseFloat(custom_monthly_fee) : null,
                 has_concession === '1' ? 1 : 0,
                 concession_notes || null,
                 concession_reason || null,
@@ -80,7 +80,7 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
         
         let queryStr = `
             SELECT s.id, s.reg_no, s.name, s.custom_monthly_fee, s.has_concession, 
-                   c.name as class_name, c.default_monthly_fee
+                   c.name as class_name, c.default_monthly_fee, c.is_hifz_class
             FROM students s
             LEFT JOIN classes c ON s.class_id = c.id
             WHERE s.tenant_id = ?
@@ -193,7 +193,7 @@ router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
         const [rows] = await db.execute(
-            `SELECT fp.*, s.name as student_name, s.reg_no, s.has_concession, s.custom_monthly_fee, c.name as class_name, c.default_monthly_fee
+            `SELECT fp.*, s.name as student_name, s.reg_no, s.has_concession, s.custom_monthly_fee, c.name as class_name, c.default_monthly_fee, c.is_hifz_class
              FROM fee_payments fp
              JOIN students s ON fp.student_id = s.id
              LEFT JOIN classes c ON s.class_id = c.id
@@ -215,9 +215,9 @@ router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
 
         const tenantForPdf = { ...req.tenant, logo_url: resolvePublicAsset(req.tenant.logo_url) };
 
-        const standardFee = parseFloat(payment.default_monthly_fee || 0);
-        const customFee = payment.custom_monthly_fee !== null ? parseFloat(payment.custom_monthly_fee) : standardFee;
-        const concession = Math.max(0, standardFee - customFee);
+        const standardFee = payment.is_hifz_class ? 0 : parseFloat(payment.default_monthly_fee || 0);
+        const customFee = payment.is_hifz_class ? 0 : (payment.custom_monthly_fee !== null ? parseFloat(payment.custom_monthly_fee) : standardFee);
+        const concession = payment.is_hifz_class ? 0 : Math.max(0, standardFee - customFee);
 
         renderPdf(res, {
             templateName: 'fee_receipt',

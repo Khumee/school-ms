@@ -74,7 +74,7 @@ router.get('/employees/add', isAuthenticated, (req, res) => {
 // POST /employees/add - save
 router.post('/employees/add', isAuthenticated, async (req, res) => {
     const {
-        name, designation, role, status, date_of_joining, default_salary,
+        name, designation, role, status, date_of_joining, date_of_leaving, default_salary,
         email, phone, cnic_number, address, gender, qualification,
         previous_experience_years, bank_account_info
     } = req.body;
@@ -84,13 +84,13 @@ router.post('/employees/add', isAuthenticated, async (req, res) => {
         
         await db.execute(
             `INSERT INTO employees (
-                name, designation, role, status, date_of_joining, default_salary,
+                name, designation, role, status, date_of_joining, date_of_leaving, default_salary,
                 email, phone, cnic_number, address, gender, qualification,
                 previous_experience_years, bank_account_info, tenant_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 name, designation, role || 'teacher', status || 'on_payroll',
-                date_of_joining || null, default_salary ? parseFloat(default_salary) : 0.00,
+                date_of_joining || null, date_of_leaving || null, default_salary ? parseFloat(default_salary) : 0.00,
                 email || null, phone || null, cnic_number || null, address || null,
                 gender || 'male', qualification || null,
                 previous_experience_years ? parseInt(previous_experience_years) : 0,
@@ -125,7 +125,7 @@ router.get('/employees/edit/:id', isAuthenticated, async (req, res) => {
 // POST /employees/edit/:id - update
 router.post('/employees/edit/:id', isAuthenticated, async (req, res) => {
     const {
-        name, designation, role, status, date_of_joining, default_salary,
+        name, designation, role, status, date_of_joining, date_of_leaving, default_salary,
         email, phone, cnic_number, address, gender, qualification,
         previous_experience_years, bank_account_info
     } = req.body;
@@ -135,13 +135,13 @@ router.post('/employees/edit/:id', isAuthenticated, async (req, res) => {
         
         await db.execute(
             `UPDATE employees SET 
-                name = ?, designation = ?, role = ?, status = ?, date_of_joining = ?, 
+                name = ?, designation = ?, role = ?, status = ?, date_of_joining = ?, date_of_leaving = ?, 
                 default_salary = ?, email = ?, phone = ?, cnic_number = ?, 
                 address = ?, gender = ?, qualification = ?, previous_experience_years = ?, 
                 bank_account_info = ?
              WHERE id = ? AND tenant_id = ?`,
             [
-                name, designation, role, status, date_of_joining || null,
+                name, designation, role, status, date_of_joining || null, date_of_leaving || null,
                 default_salary ? parseFloat(default_salary) : 0.00,
                 email || null, phone || null, cnic_number || null, address || null,
                 gender || 'male', qualification || null,

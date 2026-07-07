@@ -10,6 +10,7 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'Ju
 router.get('/expenses', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
+        const { category, month, year } = req.query;
         const activeMonth = (month === undefined) ? String(new Date().getMonth() + 1) : month;
         const activeYear = (year === undefined) ? '2026' : year;
         
