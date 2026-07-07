@@ -113,7 +113,20 @@
         document.getElementById('editClassForm').action = '/classes/edit/' + id;
         document.getElementById('modalClassName').value = name;
         document.getElementById('modalClassFee').value = fee;
-        document.getElementById('modalIsHifz').checked = (isHifz === '1' || isHifz === 1);
+        
+        const isHifzChecked = (isHifz === '1' || isHifz === 1);
+        const modalIsHifzCheckbox = document.getElementById('modalIsHifz');
+        modalIsHifzCheckbox.checked = isHifzChecked;
+        
+        const feeInput = document.getElementById('modalClassFee');
+        if (isHifzChecked) {
+            feeInput.value = 0;
+            feeInput.readOnly = true;
+            feeInput.style.backgroundColor = '#f1f5f9';
+        } else {
+            feeInput.readOnly = false;
+            feeInput.style.backgroundColor = '';
+        }
         
         document.getElementById('classModal').style.display = 'block';
         document.getElementById('classModalOverlay').style.display = 'block';
@@ -123,6 +136,32 @@
         document.getElementById('classModal').style.display = 'none';
         document.getElementById('classModalOverlay').style.display = 'none';
     }
+
+    // Add Class Form fee reset logic
+    document.getElementById('is_hifz_class').addEventListener('change', function() {
+        const feeInput = document.getElementById('default_monthly_fee');
+        if (this.checked) {
+            feeInput.value = 0;
+            feeInput.readOnly = true;
+            feeInput.style.backgroundColor = '#f1f5f9';
+        } else {
+            feeInput.readOnly = false;
+            feeInput.style.backgroundColor = '';
+        }
+    });
+
+    // Edit Class Form fee reset logic
+    document.getElementById('modalIsHifz').addEventListener('change', function() {
+        const feeInput = document.getElementById('modalClassFee');
+        if (this.checked) {
+            feeInput.value = 0;
+            feeInput.readOnly = true;
+            feeInput.style.backgroundColor = '#f1f5f9';
+        } else {
+            feeInput.readOnly = false;
+            feeInput.style.backgroundColor = '';
+        }
+    });
 </script>
 
 <%- include('partials/footer') %>
