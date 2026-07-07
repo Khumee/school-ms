@@ -46,6 +46,7 @@
                         <th>Class Name</th>
                         <th style="text-align: right;">Class Fee (PKR)</th>
                         <th style="text-align: center;">Is Hifz?</th>
+                        <th style="text-align: center;">Students</th>
                         <th style="text-align: right;">Actions</th>
                     </tr>
                 </thead>
@@ -63,6 +64,11 @@
                                         <span class="status-cell status-unpaid" style="background-color: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1;">NO</span>
                                     <% } %>
                                 </td>
+                                <td style="text-align: center;">
+                                    <a href="/students?classId=<%= c.id %>" style="color: #2563eb; font-weight: 700; text-decoration: none; border-bottom: 1px dashed #2563eb;" title="View all students in <%= c.name %>">
+                                        <%= c.student_count || 0 %>
+                                    </a>
+                                </td>
                                 <td style="text-align: right;">
                                     <div style="display: flex; gap: 0.35rem; justify-content: flex-end;">
                                         <button type="button" class="btn-secondary nav-btn" onclick="openClassModal('<%= c.id %>', '<%= c.name %>', '<%= c.default_monthly_fee %>', '<%= c.is_hifz_class ? 1 : 0 %>')">
@@ -79,7 +85,7 @@
                         <% }) %>
                     <% } else { %>
                         <tr>
-                            <td colspan="5" style="text-align: center; color: #64748b;">No classes defined yet.</td>
+                            <td colspan="6" style="text-align: center; color: #64748b;">No classes defined yet.</td>
                         </tr>
                     <% } %>
                 </tbody>

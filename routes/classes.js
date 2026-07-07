@@ -8,7 +8,12 @@ router.get('/classes', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
         const [classes] = await db.execute(
-            'SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC',
+            `SELECT c.*, COUNT(s.id) as student_count 
+             FROM classes c 
+             LEFT JOIN students s ON c.id = s.class_id
+             WHERE c.tenant_id = ? 
+             GROUP BY c.id 
+             ORDER BY c.id ASC`,
             [tenantId]
         );
         res.render('classes', { classes, error: null });
@@ -24,7 +29,15 @@ router.post('/classes/add', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
         if (!name || name.trim() === '') {
-            const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
+            const [classes] = await db.execute(
+                `SELECT c.*, COUNT(s.id) as student_count 
+                 FROM classes c 
+                 LEFT JOIN students s ON c.id = s.class_id
+                 WHERE c.tenant_id = ? 
+                 GROUP BY c.id 
+                 ORDER BY c.id ASC`,
+                [tenantId]
+            );
             return res.render('classes', { classes, error: 'Class name is required.' });
         }
         
@@ -50,7 +63,15 @@ router.post('/classes/edit/:id', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
         if (!name || name.trim() === '') {
-            const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
+            const [classes] = await db.execute(
+                `SELECT c.*, COUNT(s.id) as student_count 
+                 FROM classes c 
+                 LEFT JOIN students s ON c.id = s.class_id
+                 WHERE c.tenant_id = ? 
+                 GROUP BY c.id 
+                 ORDER BY c.id ASC`,
+                [tenantId]
+            );
             return res.render('classes', { classes, error: 'Class name is required.' });
         }
         
@@ -84,7 +105,15 @@ router.post('/classes/delete/:id', isAuthenticated, async (req, res) => {
         );
         
         if (count > 0) {
-            const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
+            const [classes] = await db.execute(
+                `SELECT c.*, COUNT(s.id) as student_count 
+                 FROM classes c 
+                 LEFT JOIN students s ON c.id = s.class_id
+                 WHERE c.tenant_id = ? 
+                 GROUP BY c.id 
+                 ORDER BY c.id ASC`,
+                [tenantId]
+            );
             return res.render('classes', { 
                 classes, 
                 error: `Cannot delete class. There are ${count} student(s) currently enrolled in it. Please reassign them first.` 
