@@ -6,7 +6,8 @@ const { requireModule } = require('../middleware/modules');
 const { renderPdf, resolvePublicAsset } = require('../utils/pdfGenerator');
 
 // Block all donation routes if module is disabled for this tenant
-router.use(requireModule('donations'));
+router.use('/donations', requireModule('donations'));
+router.use('/donors', requireModule('donations'));
 
 const FUND_LABELS = { general: 'Member Account', trust: 'Trust Account', student_support: 'Student Sponsorship' };
 

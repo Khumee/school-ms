@@ -10,7 +10,7 @@ const {
 } = require('../utils/hifzEngine');
 
 // Block all Hifz routes if module is disabled
-router.use(requireModule('hifz'));
+router.use('/hifz', requireModule('hifz'));
 
 // ============================================================
 // Helper: get enrollment + recent entries for a student
