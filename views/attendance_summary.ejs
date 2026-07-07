@@ -1,0 +1,125 @@
+<%- include('partials/header') %>
+
+<div class="section-header">
+    <h1 class="section-title"><i class="bi bi-calendar2-range"></i> Employee Attendance Summary</h1>
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="/attendance/employees" class="btn-secondary"><i class="bi bi-arrow-left"></i> Mark Attendance</a>
+    </div>
+</div>
+
+<!-- Filter Panel -->
+<div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem 1.5rem;">
+    <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-funnel-fill"></i> Filter Attendance Period</h3>
+    
+    <form action="/attendance/employees/summary" method="GET" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
+        <div class="form-group" style="flex: 1 1 200px; min-width: 150px;">
+            <label for="filterType">Preset Range</label>
+            <select name="filterType" id="filterType" class="form-control" onchange="toggleCustomDates(this.value)">
+                <option value="month" <%= filterType === 'month' ? 'selected' : '' %>>Current Month</option>
+                <option value="today" <%= filterType === 'today' ? 'selected' : '' %>>Today (One Day)</option>
+                <option value="week" <%= filterType === 'week' ? 'selected' : '' %>>This Week (Mon-Sun)</option>
+                <option value="custom" <%= filterType === 'custom' ? 'selected' : '' %>>Custom Date Range</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="custom-start-group" style="flex: 1 1 180px; min-width: 130px; <%= filterType !== 'custom' ? 'display: none;' : '' %>">
+            <label for="startDate">Start Date</label>
+            <input type="date" name="startDate" id="startDate" class="form-control" value="<%= startDate %>">
+        </div>
+
+        <div class="form-group" id="custom-end-group" style="flex: 1 1 180px; min-width: 130px; <%= filterType !== 'custom' ? 'display: none;' : '' %>">
+            <label for="endDate">End Date</label>
+            <input type="date" name="endDate" id="endDate" class="form-control" value="<%= endDate %>">
+        </div>
+
+        <div style="flex: 0 0 auto;">
+            <button type="submit" class="btn-primary" style="height: 38px; display: inline-flex; align-items: center;"><i class="bi bi-search"></i> Apply Filter</button>
+            <a href="/attendance/employees/summary" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center; margin-left: 0.5rem;">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- Info banner showing current range -->
+<div style="background-color: #f8fafc; border-left: 4px solid var(--primary-color); color: #334155; padding: 0.85rem 1.25rem; border-radius: 6px; margin-bottom: 1.5rem; font-weight: 500; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center;">
+    <span>
+        <i class="bi bi-clock-history" style="margin-right: 0.5rem; color: var(--primary-color);"></i>
+        Showing summary from <strong><%= new Date(startDate).toLocaleDateString('en-GB') %></strong> to <strong><%= new Date(endDate).toLocaleDateString('en-GB') %></strong>.
+    </span>
+    <span class="status-cell status-paid" style="text-transform: uppercase; font-size: 0.75rem;">
+        Range: <%= filterType %>
+    </span>
+</div>
+
+<!-- Table Card -->
+<div class="card">
+    <div class="table-container" style="border: none;">
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Employee Name</th>
+                    <th style="text-align: left;">Designation</th>
+                    <th style="text-align: center;">Presents</th>
+                    <th style="text-align: center;">Absents</th>
+                    <th style="text-align: center;">Leaves</th>
+                    <th style="text-align: center;">Total Days</th>
+                    <th style="text-align: right;">Attendance Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (summary.length > 0) { %>
+                    <% summary.forEach(e => { %>
+                        <% 
+                            const presents = parseInt(e.presents || 0);
+                            const absents = parseInt(e.absents || 0);
+                            const leaves = parseInt(e.leaves || 0);
+                            const totalDays = presents + absents + leaves;
+                            const rate = totalDays > 0 ? Math.round((presents / totalDays) * 100) : 0;
+                            
+                            let rateColor = '#16a34a'; // Green
+                            if (rate < 75) rateColor = '#d97706'; // Amber
+                            if (rate < 50) rateColor = '#dc2626'; // Red
+                        %>
+                        <tr>
+                            <td style="font-weight: 600; text-align: left;"><%= e.name %></td>
+                            <td style="text-align: left; color: #475569;"><%= e.designation %></td>
+                            <td style="text-align: center; font-weight: 700; color: #16a34a;"><%= presents %></td>
+                            <td style="text-align: center; font-weight: 700; color: #dc2626;"><%= absents %></td>
+                            <td style="text-align: center; font-weight: 700; color: #d97706;"><%= leaves %></td>
+                            <td style="text-align: center; font-weight: 600; color: #475569;"><%= totalDays %></td>
+                            <td style="text-align: right;">
+                                <div style="display: inline-flex; align-items: center; gap: 0.5rem; justify-content: flex-end; width: 100%;">
+                                    <div style="width: 70px; background-color: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; display: inline-block;">
+                                        <div style="width: <%= rate %>%; background-color: <%= rateColor %>; height: 100%;"></div>
+                                    </div>
+                                    <strong style="color: <%= rateColor %>; font-size: 0.95rem; width: 42px; text-align: right;"><%= rate %>%</strong>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #64748b; padding: 2rem;">No active employees found to display summary.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function toggleCustomDates(val) {
+        const startGroup = document.getElementById('custom-start-group');
+        const endGroup = document.getElementById('custom-end-group');
+        if (val === 'custom') {
+            startGroup.style.display = 'block';
+            endGroup.style.display = 'block';
+        } else {
+            startGroup.style.display = 'none';
+            endGroup.style.display = 'none';
+            // Submit form automatically on preset range changes
+            document.forms[0].submit();
+        }
+    }
+</script>
+
+<%- include('partials/footer') %>

@@ -155,4 +155,57 @@ router.get('/attendance/employees/:id/history', isAuthenticated, async (req, res
     }
 });
 
+// GET /attendance/employees/summary
+router.get('/attendance/employees/summary', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const filterType = req.query.filterType || 'month';
+        
+        let startDate, endDate;
+        const today = DateTime.now().toISODate();
+        
+        if (filterType === 'today') {
+            startDate = today;
+            endDate = today;
+        } else if (filterType === 'week') {
+            startDate = DateTime.now().startOf('week').toISODate(); // Monday
+            endDate = DateTime.now().endOf('week').toISODate(); // Sunday
+        } else if (filterType === 'custom') {
+            startDate = req.query.startDate || DateTime.now().startOf('month').toISODate();
+            endDate = req.query.endDate || today;
+        } else {
+            // Default to 'month'
+            startDate = DateTime.now().startOf('month').toISODate();
+            endDate = DateTime.now().endOf('month').toISODate();
+        }
+        
+        const [summary] = await db.execute(
+            `SELECT 
+                e.id as employee_id, 
+                e.name, 
+                e.designation,
+                COUNT(CASE WHEN ae.status = 'present' THEN 1 END) as presents,
+                COUNT(CASE WHEN ae.status = 'absent' THEN 1 END) as absents,
+                COUNT(CASE WHEN ae.status = 'leave' THEN 1 END) as leaves
+             FROM employees e
+             LEFT JOIN attendance_employees ae ON e.id = ae.employee_id AND ae.date BETWEEN ? AND ? AND ae.tenant_id = ?
+             WHERE e.tenant_id = ? AND e.status != 'inactive'
+             GROUP BY e.id, e.name, e.designation
+             ORDER BY e.name ASC`,
+            [startDate, endDate, tenantId, tenantId]
+        );
+        
+        res.render('attendance_summary', {
+            summary,
+            filterType,
+            startDate,
+            endDate,
+            today
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading attendance summary.');
+    }
+});
+
 module.exports = router;
