@@ -71,4 +71,32 @@ router.post('/classes/edit/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+// POST /classes/delete/:id - delete a class
+router.post('/classes/delete/:id', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const classId = req.params.id;
+        
+        // Check if there are active students associated with this class
+        const [[{ count }]] = await db.execute(
+            'SELECT COUNT(*) as count FROM students WHERE class_id = ? AND tenant_id = ?',
+            [classId, tenantId]
+        );
+        
+        if (count > 0) {
+            const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
+            return res.render('classes', { 
+                classes, 
+                error: `Cannot delete class. There are ${count} student(s) currently enrolled in it. Please reassign them first.` 
+            });
+        }
+        
+        await db.execute('DELETE FROM classes WHERE id = ? AND tenant_id = ?', [classId, tenantId]);
+        res.redirect('/classes');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error deleting class.');
+    }
+});
+
 module.exports = router;
