@@ -85,13 +85,13 @@
                                 <td><%= e.designation %></td>
                                 <td><%= e.role.toUpperCase() %></td>
                                 <td style="text-align: center;">
-                                    <input type="radio" name="attendance[<%= e.id %>]" value="present" <%= currentStatus === 'present' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #10b981;">
+                                    <input type="radio" name="attendance[emp_<%= e.id %>]" value="present" <%= currentStatus === 'present' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #10b981;">
                                 </td>
                                 <td style="text-align: center;">
-                                    <input type="radio" name="attendance[<%= e.id %>]" value="absent" <%= currentStatus === 'absent' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #ef4444;">
+                                    <input type="radio" name="attendance[emp_<%= e.id %>]" value="absent" <%= currentStatus === 'absent' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #ef4444;">
                                 </td>
                                 <td style="text-align: center;">
-                                    <input type="radio" name="attendance[<%= e.id %>]" value="leave" <%= currentStatus === 'leave' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #f59e0b;">
+                                    <input type="radio" name="attendance[emp_<%= e.id %>]" value="leave" <%= currentStatus === 'leave' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #f59e0b;">
                                 </td>
                             </tr>
                         <% }) %>

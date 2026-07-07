@@ -66,11 +66,12 @@ router.post('/attendance/employees', isAuthenticated, async (req, res) => {
         
         if (attendance) {
             console.log('Attendance payload:', attendance);
-            for (const [empId, status] of Object.entries(attendance)) {
+            for (const [key, status] of Object.entries(attendance)) {
+                const empId = key.replace('emp_', '');
                 // Check if employee exists in employees table
                 const [empRows] = await db.execute('SELECT id, name FROM employees WHERE id = ?', [empId]);
                 if (empRows.length === 0) {
-                    throw new Error(`Employee ID "${empId}" does not exist in the database. Current Tenant ID: ${tenantId}. Payload keys: ${Object.keys(attendance).join(', ')}`);
+                    throw new Error(`Employee ID "${empId}" (raw key: "${key}") does not exist in the database. Current Tenant ID: ${tenantId}. Payload keys: ${Object.keys(attendance).join(', ')}`);
                 }
 
                 // Delete existing first
