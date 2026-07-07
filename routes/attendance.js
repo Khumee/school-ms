@@ -84,7 +84,7 @@ router.post('/attendance/employees', isAuthenticated, async (req, res) => {
         res.redirect(`/attendance/employees?date=${dateStr}`);
     } catch (err) {
         console.error(err);
-        res.status(500).send('Error saving attendance.');
+        res.status(500).send('Error saving attendance: ' + err.message);
     }
 });
 
