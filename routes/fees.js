@@ -140,13 +140,14 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
 
 // POST /fees/pay - record payment
 router.post('/fees/pay', isAuthenticated, async (req, res) => {
-    const { student_id, month, year, amount, fine_amount, fine_waived, additional_fee, additional_fee_description } = req.body;
+    const { student_id, month, year, amount, fine_amount, fine_waived, additional_fee, additional_fee_description, redirect_url, payment_date } = req.body;
     try {
         const tenantId = req.tenant.id;
         const waived = fine_waived === 'on' || fine_waived === '1' ? 1 : 0;
         const fineVal = fine_amount ? parseFloat(fine_amount) : 0.00;
         const activeYear = year ? parseInt(year) : new Date().getFullYear();
         const addFeeVal = additional_fee ? parseFloat(additional_fee) : 0.00;
+        const payDate = payment_date ? new Date(payment_date) : new Date();
         
         // Delete any existing payment first to allow updates
         await db.execute(
@@ -158,11 +159,11 @@ router.post('/fees/pay', isAuthenticated, async (req, res) => {
             await db.execute(
                 `INSERT INTO fee_payments (tenant_id, student_id, month, year, amount_paid, payment_date, recorded_by, fine_amount, fine_waived, additional_fee, additional_fee_description)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [tenantId, student_id, month, activeYear, parseFloat(amount), new Date(), req.session.userId, fineVal, waived, addFeeVal, additional_fee_description || null]
+                [tenantId, student_id, month, activeYear, parseFloat(amount), payDate, req.session.userId, fineVal, waived, addFeeVal, additional_fee_description || null]
             );
         }
         
-        res.redirect('/fees/ledger');
+        res.redirect(redirect_url || '/fees/ledger');
     } catch (err) {
         console.error(err);
         res.status(500).send('Error recording fee payment.');
