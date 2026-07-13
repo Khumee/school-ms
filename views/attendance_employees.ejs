@@ -3,6 +3,7 @@
 <div class="section-header">
     <h1 class="section-title"><i class="bi bi-calendar2-check-fill"></i> Employee Attendance Dashboard</h1>
     <div style="display: flex; gap: 0.5rem;">
+        <button type="button" onclick="openSettingsModal()" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center; gap: 0.35rem;"><i class="bi bi-gear-fill"></i> Settings</button>
         <a href="/attendance/employees/summary" class="btn-primary" style="height: 38px; display: inline-flex; align-items: center;"><i class="bi bi-calendar2-range" style="margin-right: 0.35rem;"></i> Attendance Summary</a>
     </div>
 </div>
@@ -59,39 +60,51 @@
     </div>
 </div>
 
-<!-- School settings configuration card -->
-<div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
-    <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1rem; color: #1e293b; font-weight: 700;">
-        <i class="bi bi-clock-fill"></i> School Work Hours Settings
-    </h3>
-    <form action="/attendance/settings" method="POST" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
-        <input type="hidden" name="redirectDate" value="<%= dateStr %>">
-        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
-            <label for="school_start_time" style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 0.35rem;">School Start Time</label>
-            <input type="time" name="school_start_time" id="school_start_time" class="form-control" value="<%= tenantSettings.school_start_time || '08:00:00' %>" required>
-        </div>
-        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
-            <label for="school_end_time" style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 0.35rem;">School End Time</label>
-            <input type="time" name="school_end_time" id="school_end_time" class="form-control" value="<%= tenantSettings.school_end_time || '14:00:00' %>" required>
-        </div>
-        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 180px;">
-            <label for="late_threshold_minutes" style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 0.35rem;">Late Threshold Margin</label>
-            <select name="late_threshold_minutes" id="late_threshold_minutes" class="form-control" required>
-                <option value="0" <%= tenantSettings.late_threshold_minutes == 0 ? 'selected' : '' %>>No Threshold (0 min)</option>
-                <option value="5" <%= tenantSettings.late_threshold_minutes == 5 ? 'selected' : '' %>>5 Minutes</option>
-                <option value="10" <%= tenantSettings.late_threshold_minutes == 10 ? 'selected' : '' %>>10 Minutes</option>
-                <option value="15" <%= tenantSettings.late_threshold_minutes == 15 ? 'selected' : '' %>>15 Minutes</option>
-                <option value="30" <%= tenantSettings.late_threshold_minutes == 30 ? 'selected' : '' %>>30 Minutes</option>
-                <option value="45" <%= tenantSettings.late_threshold_minutes == 45 ? 'selected' : '' %>>45 Minutes</option>
-                <option value="60" <%= tenantSettings.late_threshold_minutes == 60 ? 'selected' : '' %>>1 Hour (60 min)</option>
-            </select>
-        </div>
-        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
-            <label for="late_days_deduction_trigger" style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 0.35rem;">Late Marks for 1 Day Ded.</label>
-            <input type="number" name="late_days_deduction_trigger" id="late_days_deduction_trigger" class="form-control" min="1" value="<%= tenantSettings.late_days_deduction_trigger !== undefined ? tenantSettings.late_days_deduction_trigger : 4 %>" required>
-        </div>
-        <button type="submit" class="btn-primary" style="height: 38px; padding: 0 1.25rem;"><i class="bi bi-gear-fill"></i> Save Settings</button>
-    </form>
+<!-- Settings Modal -->
+<div id="settingsModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(4px); transition: opacity 0.3s ease;">
+    <div class="modal-content" style="background-color: #ffffff; margin: 10% auto; padding: 2rem; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; position: relative; animation: slideIn 0.3s ease-out; box-sizing: border-box;">
+        <span class="close-btn" onclick="closeSettingsModal()" style="position: absolute; right: 1.5rem; top: 1.5rem; font-size: 1.5rem; font-weight: bold; color: #94a3b8; cursor: pointer; transition: color 0.2s;">&times;</span>
+        <h2 style="margin-top: 0; font-size: 1.25rem; color: #1e293b; margin-bottom: 1.5rem; font-weight: 700;"><i class="bi bi-gear-fill"></i> School Work Hours Settings</h2>
+        
+        <form action="/attendance/settings" method="POST" style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <input type="hidden" name="redirectDate" value="<%= dateStr %>">
+            
+            <% 
+                const formattedStartTime = (tenantSettings.school_start_time || '08:00:00').slice(0, 5);
+                const formattedEndTime = (tenantSettings.school_end_time || '14:00:00').slice(0, 5);
+            %>
+            
+            <div class="form-group">
+                <label for="school_start_time" style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 0.35rem;">School Start Time</label>
+                <input type="time" name="school_start_time" id="school_start_time" class="form-control" value="<%= formattedStartTime %>" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="school_end_time" style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 0.35rem;">School End Time</label>
+                <input type="time" name="school_end_time" id="school_end_time" class="form-control" value="<%= formattedEndTime %>" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="late_threshold_minutes" style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 0.35rem;">Late Threshold Margin</label>
+                <select name="late_threshold_minutes" id="late_threshold_minutes" class="form-control" required>
+                    <option value="0" <%= tenantSettings.late_threshold_minutes == 0 ? 'selected' : '' %>>No Threshold (0 min)</option>
+                    <option value="5" <%= tenantSettings.late_threshold_minutes == 5 ? 'selected' : '' %>>5 Minutes</option>
+                    <option value="10" <%= tenantSettings.late_threshold_minutes == 10 ? 'selected' : '' %>>10 Minutes</option>
+                    <option value="15" <%= tenantSettings.late_threshold_minutes == 15 ? 'selected' : '' %>>15 Minutes</option>
+                    <option value="30" <%= tenantSettings.late_threshold_minutes == 30 ? 'selected' : '' %>>30 Minutes</option>
+                    <option value="45" <%= tenantSettings.late_threshold_minutes == 45 ? 'selected' : '' %>>45 Minutes</option>
+                    <option value="60" <%= tenantSettings.late_threshold_minutes == 60 ? 'selected' : '' %>>1 Hour (60 min)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="late_days_deduction_trigger" style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 0.35rem;">Late Marks triggering 1 Day Salary Deduction</label>
+                <input type="number" name="late_days_deduction_trigger" id="late_days_deduction_trigger" class="form-control" min="1" value="<%= tenantSettings.late_days_deduction_trigger !== undefined ? tenantSettings.late_days_deduction_trigger : 4 %>" required>
+            </div>
+            
+            <button type="submit" class="btn-primary" style="margin-top: 0.5rem; justify-content: center;"><i class="bi bi-gear-fill"></i> Save Settings</button>
+        </form>
+    </div>
 </div>
 
 <!-- Table Form -->
@@ -110,6 +123,7 @@
                         <th style="text-align: center;">Present</th>
                         <th style="text-align: center;">Absent</th>
                         <th style="text-align: center;">Leave</th>
+                        <th style="text-align: center;">Reset</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -131,11 +145,11 @@
                         %>
                         <% employees.forEach(e => { %>
                             <% 
-                                const currentStatus = attendanceMap[e.id] || (holiday || isSunday ? '' : 'present'); 
+                                const currentStatus = attendanceMap[e.id] || ''; 
                                 const details = attendanceDetailsMap[e.id] || {};
                                 const parsed = parseTime(details.arrival_time) || parseTime(tenantSettings.school_start_time) || { hour: 8, minute: 0, ampm: 'AM' };
                             %>
-                            <tr>
+                            <tr id="row_emp_<%= e.id %>">
                                 <td style="font-weight: 600;">
                                     <a href="#" onclick="showHistory('<%= e.id %>'); return false;" style="color: #2563eb; text-decoration: none; border-bottom: 1px dashed #2563eb;" title="Click to view attendance history"><%= e.name %></a>
                                     <a href="/employees/view/<%= e.id %>" style="margin-left: 8px; color: #64748b;" title="View Full Profile"><i class="bi bi-person-bounding-box"></i></a>
@@ -177,11 +191,16 @@
                                 <td style="text-align: center;">
                                     <input type="radio" name="attendance[emp_<%= e.id %>]" value="leave" <%= currentStatus === 'leave' ? 'checked' : '' %> onchange="toggleArrivalTime('<%= e.id %>', false)" style="width: 20px; height: 20px; accent-color: #f59e0b;">
                                 </td>
+                                <td style="text-align: center;">
+                                    <button type="button" onclick="resetRow('<%= e.id %>')" class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; height: auto;" title="Reset selection">
+                                        <i class="bi bi-arrow-counterclockwise"></i> Reset
+                                    </button>
+                                </td>
                             </tr>
                         <% }) %>
                     <% } else { %>
                         <tr>
-                            <td colspan="7" style="text-align: center; color: #64748b;">No active employees found to mark attendance.</td>
+                            <td colspan="8" style="text-align: center; color: #64748b;">No active employees found to mark attendance.</td>
                         </tr>
                     <% } %>
                 </tbody>
@@ -385,15 +404,37 @@ function toggleArrivalTime(empId, show) {
     }
 }
 
+function resetRow(empId) {
+    // Uncheck all radio buttons in that row
+    const radios = document.getElementsByName('attendance[emp_' + empId + ']');
+    radios.forEach(radio => {
+        radio.checked = false;
+    });
+    // Hide arrival time inputs
+    toggleArrivalTime(empId, false);
+}
+
+function openSettingsModal() {
+    document.getElementById('settingsModal').style.display = 'block';
+}
+
+function closeSettingsModal() {
+    document.getElementById('settingsModal').style.display = 'none';
+}
+
 function closeModal() {
     document.getElementById('historyModal').style.display = 'none';
 }
 
-// Close modal if clicked outside
+// Close modals if clicked outside
 window.onclick = function(event) {
-    const modal = document.getElementById('historyModal');
-    if (event.target == modal) {
+    const historyModal = document.getElementById('historyModal');
+    const settingsModal = document.getElementById('settingsModal');
+    if (event.target == historyModal) {
         closeModal();
+    }
+    if (event.target == settingsModal) {
+        closeSettingsModal();
     }
 }
 </script>
