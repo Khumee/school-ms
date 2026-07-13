@@ -60,19 +60,21 @@ router.post('/expenses/add', isAuthenticated, async (req, res) => {
 router.get('/salaries', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
+        const activeMonth = req.query.month ? parseInt(req.query.month, 10) : new Date().getMonth() + 1;
+
         const [employees] = await db.execute(
             "SELECT * FROM employees WHERE tenant_id = ? AND status = 'on_payroll' ORDER BY name ASC",
             [tenantId]
         );
         
-        // Fetch payroll records for 2026
+        // Fetch payroll records for 2026, filtered by month
         const [salaries] = await db.execute(
             `SELECT s.*, e.name as employee_name, e.designation 
              FROM salaries s 
              JOIN employees e ON s.employee_id = e.id 
-             WHERE s.tenant_id = ? AND s.year = 2026 
-             ORDER BY s.month DESC, e.name ASC`,
-            [tenantId]
+             WHERE s.tenant_id = ? AND s.year = 2026 AND s.month = ?
+             ORDER BY e.name ASC`,
+            [tenantId, activeMonth]
         );
 
         // Fetch late attendance counts for 2026
@@ -100,7 +102,7 @@ router.get('/salaries', isAuthenticated, async (req, res) => {
         );
         const lateDaysTrigger = tenantRow ? tenantRow.late_days_deduction_trigger : 4;
         
-        res.render('salaries', { employees, salaries, lateMarksMap, lateDaysTrigger });
+        res.render('salaries', { employees, salaries, lateMarksMap, lateDaysTrigger, activeMonth });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading salaries ledger.');

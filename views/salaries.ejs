@@ -1,5 +1,20 @@
 <%- include('partials/header') %>
 
+<style>
+    /* Sticky table headers for payroll transactions log */
+    .table-container {
+        position: relative;
+        overflow-y: auto;
+    }
+    .table-container th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background-color: #f8fafc !important;
+        box-shadow: inset 0 -2px 0 #e2e8f0;
+    }
+</style>
+
 <div class="section-header">
     <h1 class="section-title"><i class="bi bi-wallet2"></i> Staff Salaries & Payroll Ledger</h1>
 </div>
@@ -23,12 +38,21 @@
                 <div class="form-group">
                     <label for="basic_salary">Basic Salary *</label>
                     <input type="number" step="0.01" id="basic_salary" name="basic_salary" class="form-control" required placeholder="0.00">
+                    <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.35rem;">
+                        <input type="checkbox" id="prorate_check" onchange="toggleProrate()" style="width: 16px; height: 16px; accent-color: var(--primary-color);">
+                        <label for="prorate_check" style="font-size: 0.8rem; font-weight: 500; color: #475569; cursor: pointer; margin-bottom: 0;">Prorate Salary</label>
+                    </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="paid_date">Paid Date</label>
                     <input type="date" id="paid_date" name="paid_date" class="form-control">
                 </div>
+            </div>
+
+            <div class="form-group" id="prorate_day_container" style="display: none; margin-bottom: 1rem;">
+                <label for="prorate_day" style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 0.35rem;">Prorate up to day of month (1 to 31)</label>
+                <input type="number" id="prorate_day" class="form-control" min="1" max="31" value="15" oninput="calculateProrate()">
             </div>
             
             <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
@@ -70,16 +94,25 @@
                 <input type="number" id="waived_late_count" name="waived_late_count" class="form-control" placeholder="0" min="0" value="0">
             </div>
 
-            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <!-- Hidden actual fields for DB submission -->
+            <input type="hidden" id="deduction" name="deduction" value="0.00">
+            <input type="hidden" id="deduction_description" name="deduction_description" value="">
+
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                 <div class="form-group">
-                    <label for="deduction">Deduction Amount (PKR)</label>
-                    <input type="number" step="0.01" id="deduction" name="deduction" class="form-control" placeholder="0.00" value="0.00">
+                    <label style="font-weight: 600; font-size: 0.85rem; color: #475569;">Late Marks Deduction (PKR)</label>
+                    <input type="number" step="0.01" id="late_deduction" class="form-control" readonly value="0.00" style="background-color: #f1f5f9; cursor: not-allowed;">
                 </div>
                 
                 <div class="form-group">
-                    <label for="deduction_description">Deduction Description</label>
-                    <input type="text" id="deduction_description" name="deduction_description" class="form-control" placeholder="e.g. Unpaid leaves, Advance tax">
+                    <label for="other_deduction" style="font-weight: 600; font-size: 0.85rem; color: #475569;">Other Deduction (PKR)</label>
+                    <input type="number" step="0.01" id="other_deduction" class="form-control" placeholder="0.00" value="0.00" oninput="updateLateDeductions()">
                 </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="other_deduction_description" style="font-weight: 600; font-size: 0.85rem; color: #475569;">Other Deduction Description</label>
+                <input type="text" id="other_deduction_description" class="form-control" placeholder="e.g. Advance tax, Unpaid leaves" oninput="updateLateDeductions()">
             </div>
             
             <button type="submit" class="btn-primary" style="width: 100%;">Record Payment</button>
@@ -88,7 +121,17 @@
     
     <!-- Table list -->
     <div class="card">
-        <h3 style="margin-bottom: 1rem;">Payroll Transactions Log (2026)</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h3 style="margin: 0;">Payroll Transactions Log (2026)</h3>
+            <form action="/salaries" method="GET" style="display: flex; align-items: center; gap: 0.5rem;">
+                <label for="filter_month" style="font-size: 0.85rem; font-weight: 600; color: #475569;">Filter Month:</label>
+                <select name="month" id="filter_month" class="form-control" style="width: 130px; padding: 0.25rem 0.5rem; height: auto;" onchange="this.form.submit()">
+                    <% monthsList.forEach((m, idx) => { %>
+                        <option value="<%= idx + 1 %>" <%= activeMonth === (idx + 1) ? 'selected' : '' %>><%= m %></option>
+                    <% }) %>
+                </select>
+            </form>
+        </div>
         
         <div class="table-container" style="border: none; max-height: 420px; overflow-y: auto;">
             <table>
@@ -136,7 +179,7 @@
                         <% }) %>
                     <% } else { %>
                         <tr>
-                            <td colspan="7" style="text-align: center; color: #64748b;">No payroll payments logged.</td>
+                            <td colspan="8" style="text-align: center; color: #64748b;">No payroll payments logged.</td>
                         </tr>
                     <% } %>
                 </tbody>
@@ -153,23 +196,58 @@
         const select = document.getElementById('employee_id');
         const selectedOption = select.options[select.selectedIndex];
         const salaryVal = selectedOption.getAttribute('data-salary');
+        
+        // Reset prorate state when employee changes
+        document.getElementById('prorate_check').checked = false;
+        document.getElementById('prorate_day_container').style.display = 'none';
+        
         if (salaryVal) {
             document.getElementById('basic_salary').value = parseFloat(salaryVal);
         } else {
             document.getElementById('basic_salary').value = '0.00';
         }
         document.getElementById('waived_late_count').value = '0';
+        document.getElementById('other_deduction').value = '0.00';
+        document.getElementById('other_deduction_description').value = '';
         updateLateDeductions();
+    }
+
+    function calculateProrate() {
+        const select = document.getElementById('employee_id');
+        const selectedOption = select.options[select.selectedIndex];
+        if (!selectedOption || !selectedOption.value) return;
+        const defaultSalary = parseFloat(selectedOption.getAttribute('data-salary') || 0);
+        const isProrated = document.getElementById('prorate_check').checked;
+        const dayVal = parseInt(document.getElementById('prorate_day').value || 15, 10);
+        
+        if (isProrated && dayVal > 0 && dayVal <= 31) {
+            const proratedSalary = (defaultSalary / 30) * dayVal;
+            document.getElementById('basic_salary').value = proratedSalary.toFixed(2);
+        } else {
+            document.getElementById('basic_salary').value = defaultSalary.toFixed(2);
+        }
+    }
+    
+    function toggleProrate() {
+        const checked = document.getElementById('prorate_check').checked;
+        const container = document.getElementById('prorate_day_container');
+        if (checked) {
+            container.style.display = 'block';
+            const today = new Date().getDate();
+            document.getElementById('prorate_day').value = today <= 31 ? today : 15;
+            calculateProrate();
+        } else {
+            container.style.display = 'none';
+            calculateProrate();
+        }
     }
 
     function updateLateDeductions() {
         const select = document.getElementById('employee_id');
         const employeeId = select.value;
         const month = document.getElementById('month').value;
-        const year = document.getElementById('year').value;
         const infoDiv = document.getElementById('late_attendance_info');
-        const deductionInput = document.getElementById('deduction');
-        const deductionDescInput = document.getElementById('deduction_description');
+        const lateDeductionInput = document.getElementById('late_deduction');
         const waiveContainer = document.getElementById('waive_container');
         const waivedInput = document.getElementById('waived_late_count');
 
@@ -179,7 +257,6 @@
             return;
         }
 
-        // Get count of late marks for this employee in selected month
         const lateCount = (lateMarksMap[employeeId] && lateMarksMap[employeeId][month]) || 0;
         const selectedOption = select.options[select.selectedIndex];
         const defaultSalary = parseFloat(selectedOption.getAttribute('data-salary') || 0);
@@ -203,18 +280,14 @@
                 infoDiv.style.borderLeftColor = '#ef4444';
                 infoDiv.style.color = '#991b1b';
 
-                deductionInput.value = suggestedDeduction.toFixed(2);
-                deductionDescInput.value = `${deductionDays} day(s) salary deduction due to ${effectiveLateCount} late marks (${waivedCount} waived)`;
+                lateDeductionInput.value = suggestedDeduction.toFixed(2);
             } else {
                 message += `Less than ${lateDaysTrigger} effective late marks. No salary deduction suggested yet.`;
                 infoDiv.style.backgroundColor = '#fffbeb';
                 infoDiv.style.borderLeftColor = '#f59e0b';
                 infoDiv.style.color = '#92400e';
                 
-                if (deductionDescInput.value.includes('salary deduction due to')) {
-                    deductionInput.value = '0.00';
-                    deductionDescInput.value = '';
-                }
+                lateDeductionInput.value = '0.00';
             }
             infoDiv.innerHTML = message;
             infoDiv.style.display = 'block';
@@ -222,11 +295,40 @@
             infoDiv.style.display = 'none';
             waiveContainer.style.display = 'none';
             waivedInput.value = '0';
-            if (deductionDescInput.value.includes('salary deduction due to')) {
-                deductionInput.value = '0.00';
-                deductionDescInput.value = '';
+            lateDeductionInput.value = '0.00';
+        }
+        combineDeductions();
+    }
+
+    function combineDeductions() {
+        const select = document.getElementById('employee_id');
+        if (!select.value) return;
+
+        const lateDeduction = parseFloat(document.getElementById('late_deduction').value || 0);
+        const otherDeduction = parseFloat(document.getElementById('other_deduction').value || 0);
+        const otherDescription = document.getElementById('other_deduction_description').value.trim();
+
+        const totalDeduction = lateDeduction + otherDeduction;
+        document.getElementById('deduction').value = totalDeduction.toFixed(2);
+
+        const month = document.getElementById('month').value;
+        const lateCount = (lateMarksMap[select.value] && lateMarksMap[select.value][month]) || 0;
+        const waivedCount = parseInt(document.getElementById('waived_late_count').value || 0, 10);
+        const effectiveLateCount = Math.max(0, lateCount - waivedCount);
+        const deductionDays = Math.floor(effectiveLateCount / lateDaysTrigger);
+
+        let desc = '';
+        if (deductionDays > 0) {
+            desc = `${deductionDays} day(s) salary deduction due to ${effectiveLateCount} late marks (${waivedCount} waived)`;
+        }
+        if (otherDescription) {
+            if (desc) {
+                desc += `. Other: ${otherDescription}`;
+            } else {
+                desc = otherDescription;
             }
         }
+        document.getElementById('deduction_description').value = desc;
     }
 
     document.getElementById('month').addEventListener('change', updateLateDeductions);

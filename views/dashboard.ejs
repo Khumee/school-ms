@@ -15,7 +15,7 @@
 <!-- KPI Cards Grid -->
 <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
     <!-- Total Students -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Total Students', '<h3>Student Enrollment Breakdown</h3><table style=\'width:100%; border-collapse:collapse; margin-top:0.5rem;\'><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Paying Students</td><td style=\'text-align:right; font-weight:bold;\'><%= paying_students %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Supported (Concession)</td><td style=\'text-align:right; font-weight:bold;\'><%= support_students %></td></tr><% if (req.tenant && req.tenant.enable_hifz_module) { %><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Hifz Enrolled</td><td style=\'text-align:right; font-weight:bold;\'><%= hifz_students %></td></tr><% } %><tr style=\'font-weight:bold;\'><td style=\'padding:0.5rem 0;\'>Total Enrollment</td><td style=\'text-align:right;\'><%= total_students %></td></tr></table><a href=\'/students\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>View Students List</a>')">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students'">
         <span class="kpi-icon blue"><i class="bi bi-mortarboard-fill"></i></span>
         <span class="kpi-label">Total Students</span>
         <span class="kpi-value"><%= total_students %></span>
@@ -23,7 +23,7 @@
     </div>
 
     <!-- New Admissions this Year -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('New Admissions (2026)', '<h3>Academic Year 2026 Admissions</h3><p>New student registrations recorded during the 2026 academic year: <strong><%= new_admissions %></strong></p><a href=\'/students\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>View Students List</a>')">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students'">
         <span class="kpi-icon teal"><i class="bi bi-person-plus-fill"></i></span>
         <span class="kpi-label">New Admissions (2026)</span>
         <span class="kpi-value"><%= new_admissions %></span>
@@ -32,7 +32,7 @@
 
     <% if (req.tenant && req.tenant.enable_hifz_module) { %>
     <!-- Hifz Students -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Hifz Students', '<h3>Hifz Memorization Program</h3><p>Total students enrolled in Hifz class: <strong><%= hifz_students %></strong></p><p>These students focus on Quran memorization and Islamic study tracks.</p><a href=\'/hifz\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>Go to Hifz Roster</a>')">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/hifz'">
         <span class="kpi-icon pink"><i class="bi bi-book-fill"></i></span>
         <span class="kpi-label">Hifz Students</span>
         <span class="kpi-value"><%= hifz_students %></span>
@@ -41,7 +41,7 @@
     <% } %>
 
     <!-- Total Employees -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Total Employees', '<h3>Active Employees</h3><p>Total active employees currently registered on the system: <strong><%= total_employees %></strong></p><p>Includes teaching and non-teaching staff members currently active.</p><a href=\'/employees\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>Go to Employees Directory</a>')">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/employees'">
         <span class="kpi-icon orange" style="background-color: #ffedd5; color: #ea580c;"><i class="bi bi-person-badge-fill"></i></span>
         <span class="kpi-label">Total Employees</span>
         <span class="kpi-value"><%= total_employees %></span>
@@ -50,7 +50,7 @@
 
     <% if (req.tenant && req.tenant.enable_donations_module) { %>
     <!-- Registered Donors -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Registered Donors', '<h3>Donors Directory</h3><p>Total donors registered in the database: <strong><%= total_donors %></strong></p><p>These donors support student sponsorships, general funds, and trust accounts.</p><a href=\'/donations\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>Go to Donations Dashboard</a>')">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/donations'">
         <span class="kpi-icon indigo" style="background-color: #e0e7ff; color: #4f46e5;"><i class="bi bi-people-fill"></i></span>
         <span class="kpi-label">Registered Donors</span>
         <span class="kpi-value"><%= total_donors %></span>
@@ -67,7 +67,7 @@
     </div>
 
     <!-- Monthly Income -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Income (<%= currentMonthName %>)', '<h3><%= currentMonthName %> Revenue Breakdown</h3><table style=\'width:100%; border-collapse:collapse; margin-top:0.5rem;\'><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Fees Collected</td><td style=\'text-align:right; font-weight:bold; color:#16a34a;\'>PKR <%= currentMonthData.fees.toLocaleString() %></td></tr><% if (req.tenant && req.tenant.enable_donations_module) { %><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Donations Collected</td><td style=\'text-align:right; font-weight:bold; color:#16a34a;\'>PKR <%= currentMonthData.donations.toLocaleString() %></td></tr><% } %><tr style=\'font-weight:bold;\'><td style=\'padding:0.5rem 0;\'>Total Monthly Income</td><td style=\'text-align:right;\'>PKR <%= currentMonthData.income.toLocaleString() %></td></tr></table>')">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/fees/ledger'">
         <span class="kpi-icon green"><i class="bi bi-graph-up-arrow"></i></span>
         <span class="kpi-label">Income (<%= currentMonthName %>)</span>
         <span class="kpi-value">PKR <%= currentMonthData.income.toLocaleString() %></span>
@@ -75,7 +75,7 @@
     </div>
 
     <!-- Monthly Expense -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Expense (<%= currentMonthName %>)', '<h3><%= currentMonthName %> Outflow Breakdown</h3><table style=\'width:100%; border-collapse:collapse; margin-top:0.5rem;\'><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Salaries Paid</td><td style=\'text-align:right; font-weight:bold;\'>PKR <%= currentMonthData.salaries.toLocaleString() %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Rent paid</td><td style=\'text-align:right; font-weight:bold;\'>PKR <%= currentMonthData.rent.toLocaleString() %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Utilities</td><td style=\'text-align:right; font-weight:bold;\'>PKR <%= currentMonthData.utilities.toLocaleString() %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Office Expenses</td><td style=\'text-align:right; font-weight:bold;\'>PKR <%= currentMonthData.office.toLocaleString() %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Other Expenses</td><td style=\'text-align:right; font-weight:bold;\'>PKR <%= currentMonthData.other.toLocaleString() %></td></tr><tr style=\'font-weight:bold;\'><td style=\'padding:0.5rem 0;\'>Total Monthly Expense</td><td style=\'text-align:right; color:#dc2626;\'>PKR <%= currentMonthData.expense.toLocaleString() %></td></tr></table>')">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/expenses'">
         <span class="kpi-icon red"><i class="bi bi-graph-down-arrow"></i></span>
         <span class="kpi-label">Expense (<%= currentMonthName %>)</span>
         <span class="kpi-value">PKR <%= currentMonthData.expense.toLocaleString() %></span>
@@ -84,7 +84,7 @@
 
     <% if (req.tenant && req.tenant.enable_donations_module) { %>
     <!-- Monthly Donations -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Donations (<%= currentMonthName %>)', '<h3><%= currentMonthName %> Donations Details</h3><p>Total donations received this month: <strong>PKR <%= currentMonthData.donations.toLocaleString() %></strong></p><p>These funds support student sponsorships and trust accounts.</p><a href=\'/donations\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>Go to Donations Dashboard</a>')">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/donations'">
         <span class="kpi-icon indigo"><i class="bi bi-heart-fill"></i></span>
         <span class="kpi-label">Donations (<%= currentMonthName %>)</span>
         <span class="kpi-value">PKR <%= currentMonthData.donations.toLocaleString() %></span>
@@ -93,7 +93,7 @@
     <% } %>
 
     <!-- Monthly Fees -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Fees Collected (<%= currentMonthName %>)', '<h3><%= currentMonthName %> Fee Collections</h3><p>Total tuition fee collections recorded this month: <strong>PKR <%= currentMonthData.fees.toLocaleString() %></strong></p><p>Check details inside the Fees Ledger.</p><a href=\'/fees\' class=\'btn-primary\' style=\'display:block; text-align:center; text-decoration:none; margin-top:1.25rem;\'>View Fees Ledger</a>')">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/fees/ledger'">
         <span class="kpi-icon amber"><i class="bi bi-cash-coin"></i></span>
         <span class="kpi-label">Fees Collected (<%= currentMonthName %>)</span>
         <span class="kpi-value">PKR <%= currentMonthData.fees.toLocaleString() %></span>
