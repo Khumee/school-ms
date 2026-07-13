@@ -74,8 +74,33 @@ router.get('/salaries', isAuthenticated, async (req, res) => {
              ORDER BY s.month DESC, e.name ASC`,
             [tenantId]
         );
+
+        // Fetch late attendance counts for 2026
+        const [lateMarks] = await db.execute(
+            `SELECT employee_id, MONTH(date) as month, COUNT(*) as late_count 
+             FROM attendance_employees 
+             WHERE tenant_id = ? AND YEAR(date) = 2026 AND is_late = 1 
+             GROUP BY employee_id, MONTH(date)`,
+            [tenantId]
+        );
         
-        res.render('salaries', { employees, salaries });
+        // Structure as { employee_id: { month: count } }
+        const lateMarksMap = {};
+        lateMarks.forEach(lm => {
+            if (!lateMarksMap[lm.employee_id]) {
+                lateMarksMap[lm.employee_id] = {};
+            }
+            lateMarksMap[lm.employee_id][lm.month] = lm.late_count;
+        });
+        
+        // Fetch current tenant to get settings
+        const [[tenantRow]] = await db.execute(
+            'SELECT late_days_deduction_trigger FROM tenants WHERE id = ?',
+            [tenantId]
+        );
+        const lateDaysTrigger = tenantRow ? tenantRow.late_days_deduction_trigger : 4;
+        
+        res.render('salaries', { employees, salaries, lateMarksMap, lateDaysTrigger });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading salaries ledger.');
@@ -84,7 +109,7 @@ router.get('/salaries', isAuthenticated, async (req, res) => {
 
 // POST /salaries/pay - execute payout
 router.post('/salaries/pay', isAuthenticated, async (req, res) => {
-    const { employee_id, month, year, basic_salary, bonus, bonus_description, paid_date, deduction, deduction_description } = req.body;
+    const { employee_id, month, year, basic_salary, bonus, bonus_description, paid_date, deduction, deduction_description, waived_late_count } = req.body;
     try {
         const tenantId = req.tenant.id;
         
@@ -97,7 +122,7 @@ router.post('/salaries/pay', isAuthenticated, async (req, res) => {
         if (existing.length > 0) {
             await db.execute(
                 `UPDATE salaries 
-                 SET basic_salary = ?, bonus = ?, bonus_description = ?, paid_date = ?, deduction = ?, deduction_description = ? 
+                 SET basic_salary = ?, bonus = ?, bonus_description = ?, paid_date = ?, deduction = ?, deduction_description = ?, waived_late_count = ?
                  WHERE id = ?`,
                 [
                     parseFloat(basic_salary), 
@@ -106,13 +131,14 @@ router.post('/salaries/pay', isAuthenticated, async (req, res) => {
                     paid_date || new Date(), 
                     parseFloat(deduction || 0), 
                     deduction_description || null, 
+                    parseInt(waived_late_count || 0, 10),
                     existing[0].id
                 ]
             );
         } else {
             await db.execute(
-                `INSERT INTO salaries (tenant_id, employee_id, month, year, basic_salary, bonus, bonus_description, paid_date, deduction, deduction_description)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT INTO salaries (tenant_id, employee_id, month, year, basic_salary, bonus, bonus_description, paid_date, deduction, deduction_description, waived_late_count)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     tenantId, 
                     employee_id, 
@@ -123,7 +149,8 @@ router.post('/salaries/pay', isAuthenticated, async (req, res) => {
                     bonus_description || null, 
                     paid_date || new Date(), 
                     parseFloat(deduction || 0), 
-                    deduction_description || null
+                    deduction_description || null,
+                    parseInt(waived_late_count || 0, 10)
                 ]
             );
         }

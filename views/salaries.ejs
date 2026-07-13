@@ -60,6 +60,16 @@
                 </div>
             </div>
 
+            <!-- Late attendance warning and deduction display -->
+            <div id="late_attendance_info" style="display: none; background-color: #fffbeb; border-left: 4px solid #f59e0b; color: #92400e; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; font-size: 0.85rem; font-weight: 500;">
+                <!-- Dynamic late info -->
+            </div>
+
+            <div class="form-group" id="waive_container" style="display: none; margin-bottom: 1rem;">
+                <label for="waived_late_count">Waive Late Marks (Deduct from total late marks)</label>
+                <input type="number" id="waived_late_count" name="waived_late_count" class="form-control" placeholder="0" min="0" value="0">
+            </div>
+
             <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                 <div class="form-group">
                     <label for="deduction">Deduction Amount (PKR)</label>
@@ -114,6 +124,9 @@
                                     <% if (s.deduction_description) { %>
                                         <div style="font-size: 0.8rem; color: #dc2626;"><strong>Deduction:</strong> <%= s.deduction_description %></div>
                                     <% } %>
+                                    <% if (s.waived_late_count > 0) { %>
+                                        <div style="font-size: 0.8rem; color: #475569;"><strong>Waived Late Marks:</strong> <%= s.waived_late_count %></div>
+                                    <% } %>
                                 </td>
                                 <td style="text-align: right; font-weight: 700; background-color: #f8fafc;">
                                     <%= (parseFloat(s.basic_salary) + parseFloat(s.bonus) - parseFloat(s.deduction || 0)).toLocaleString() %>
@@ -133,6 +146,9 @@
 </div>
 
 <script>
+    const lateMarksMap = <%- JSON.stringify(lateMarksMap) %>;
+    const lateDaysTrigger = <%= lateDaysTrigger %>;
+
     function setSalaryDefault() {
         const select = document.getElementById('employee_id');
         const selectedOption = select.options[select.selectedIndex];
@@ -142,7 +158,82 @@
         } else {
             document.getElementById('basic_salary').value = '0.00';
         }
+        document.getElementById('waived_late_count').value = '0';
+        updateLateDeductions();
     }
+
+    function updateLateDeductions() {
+        const select = document.getElementById('employee_id');
+        const employeeId = select.value;
+        const month = document.getElementById('month').value;
+        const year = document.getElementById('year').value;
+        const infoDiv = document.getElementById('late_attendance_info');
+        const deductionInput = document.getElementById('deduction');
+        const deductionDescInput = document.getElementById('deduction_description');
+        const waiveContainer = document.getElementById('waive_container');
+        const waivedInput = document.getElementById('waived_late_count');
+
+        if (!employeeId) {
+            infoDiv.style.display = 'none';
+            waiveContainer.style.display = 'none';
+            return;
+        }
+
+        // Get count of late marks for this employee in selected month
+        const lateCount = (lateMarksMap[employeeId] && lateMarksMap[employeeId][month]) || 0;
+        const selectedOption = select.options[select.selectedIndex];
+        const defaultSalary = parseFloat(selectedOption.getAttribute('data-salary') || 0);
+
+        if (lateCount > 0) {
+            waiveContainer.style.display = 'block';
+            const waivedCount = parseInt(waivedInput.value || 0, 10);
+            const effectiveLateCount = Math.max(0, lateCount - waivedCount);
+            const deductionDays = Math.floor(effectiveLateCount / lateDaysTrigger);
+            
+            let message = `<i class="bi bi-exclamation-triangle-fill"></i> Employee has <strong>${lateCount} late mark(s)</strong> in this month. `;
+            if (waivedCount > 0) {
+                message += `(Waived: ${waivedCount}, Effective: ${effectiveLateCount}). `;
+            }
+            
+            if (deductionDays > 0) {
+                const dayRate = defaultSalary / 30;
+                const suggestedDeduction = deductionDays * dayRate;
+                message += `${lateDaysTrigger} late marks = 1 day salary deduction. Suggested deduction for <strong>${deductionDays} day(s)</strong> is <strong>PKR ${suggestedDeduction.toFixed(2)}</strong>.`;
+                infoDiv.style.backgroundColor = '#fef2f2';
+                infoDiv.style.borderLeftColor = '#ef4444';
+                infoDiv.style.color = '#991b1b';
+
+                deductionInput.value = suggestedDeduction.toFixed(2);
+                deductionDescInput.value = `${deductionDays} day(s) salary deduction due to ${effectiveLateCount} late marks (${waivedCount} waived)`;
+            } else {
+                message += `Less than ${lateDaysTrigger} effective late marks. No salary deduction suggested yet.`;
+                infoDiv.style.backgroundColor = '#fffbeb';
+                infoDiv.style.borderLeftColor = '#f59e0b';
+                infoDiv.style.color = '#92400e';
+                
+                if (deductionDescInput.value.includes('salary deduction due to')) {
+                    deductionInput.value = '0.00';
+                    deductionDescInput.value = '';
+                }
+            }
+            infoDiv.innerHTML = message;
+            infoDiv.style.display = 'block';
+        } else {
+            infoDiv.style.display = 'none';
+            waiveContainer.style.display = 'none';
+            waivedInput.value = '0';
+            if (deductionDescInput.value.includes('salary deduction due to')) {
+                deductionInput.value = '0.00';
+                deductionDescInput.value = '';
+            }
+        }
+    }
+
+    document.getElementById('month').addEventListener('change', updateLateDeductions);
+    document.getElementById('year').addEventListener('input', updateLateDeductions);
+    document.getElementById('year').addEventListener('change', updateLateDeductions);
+    document.getElementById('waived_late_count').addEventListener('input', updateLateDeductions);
+    document.getElementById('waived_late_count').addEventListener('change', updateLateDeductions);
 </script>
 
 <%- include('partials/footer') %>

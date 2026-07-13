@@ -59,6 +59,41 @@
     </div>
 </div>
 
+<!-- School settings configuration card -->
+<div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+    <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1rem; color: #1e293b; font-weight: 700;">
+        <i class="bi bi-clock-fill"></i> School Work Hours Settings
+    </h3>
+    <form action="/attendance/settings" method="POST" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
+        <input type="hidden" name="redirectDate" value="<%= dateStr %>">
+        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+            <label for="school_start_time" style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 0.35rem;">School Start Time</label>
+            <input type="time" name="school_start_time" id="school_start_time" class="form-control" value="<%= tenantSettings.school_start_time || '08:00:00' %>" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+            <label for="school_end_time" style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 0.35rem;">School End Time</label>
+            <input type="time" name="school_end_time" id="school_end_time" class="form-control" value="<%= tenantSettings.school_end_time || '14:00:00' %>" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 180px;">
+            <label for="late_threshold_minutes" style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 0.35rem;">Late Threshold Margin</label>
+            <select name="late_threshold_minutes" id="late_threshold_minutes" class="form-control" required>
+                <option value="0" <%= tenantSettings.late_threshold_minutes == 0 ? 'selected' : '' %>>No Threshold (0 min)</option>
+                <option value="5" <%= tenantSettings.late_threshold_minutes == 5 ? 'selected' : '' %>>5 Minutes</option>
+                <option value="10" <%= tenantSettings.late_threshold_minutes == 10 ? 'selected' : '' %>>10 Minutes</option>
+                <option value="15" <%= tenantSettings.late_threshold_minutes == 15 ? 'selected' : '' %>>15 Minutes</option>
+                <option value="30" <%= tenantSettings.late_threshold_minutes == 30 ? 'selected' : '' %>>30 Minutes</option>
+                <option value="45" <%= tenantSettings.late_threshold_minutes == 45 ? 'selected' : '' %>>45 Minutes</option>
+                <option value="60" <%= tenantSettings.late_threshold_minutes == 60 ? 'selected' : '' %>>1 Hour (60 min)</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+            <label for="late_days_deduction_trigger" style="font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 0.35rem;">Late Marks for 1 Day Ded.</label>
+            <input type="number" name="late_days_deduction_trigger" id="late_days_deduction_trigger" class="form-control" min="1" value="<%= tenantSettings.late_days_deduction_trigger !== undefined ? tenantSettings.late_days_deduction_trigger : 4 %>" required>
+        </div>
+        <button type="submit" class="btn-primary" style="height: 38px; padding: 0 1.25rem;"><i class="bi bi-gear-fill"></i> Save Settings</button>
+    </form>
+</div>
+
 <!-- Table Form -->
 <div class="card">
     <form action="/attendance/employees" method="POST">
@@ -71,6 +106,7 @@
                         <th>Employee Name</th>
                         <th>Designation</th>
                         <th>Role</th>
+                        <th>Arrival Time (Hours & Mins)</th>
                         <th style="text-align: center;">Present</th>
                         <th style="text-align: center;">Absent</th>
                         <th style="text-align: center;">Leave</th>
@@ -78,8 +114,27 @@
                 </thead>
                 <tbody>
                     <% if (employees.length > 0) { %>
+                        <% 
+                            function parseTime(timeStr) {
+                                if (!timeStr) return null;
+                                const parts = timeStr.split(':');
+                                let hour = parseInt(parts[0], 10);
+                                const minute = parseInt(parts[1], 10);
+                                let ampm = 'AM';
+                                if (hour >= 12) {
+                                    ampm = 'PM';
+                                    if (hour > 12) hour -= 12;
+                                }
+                                if (hour === 0) hour = 12;
+                                return { hour, minute, ampm };
+                            }
+                        %>
                         <% employees.forEach(e => { %>
-                            <% const currentStatus = attendanceMap[e.id] || (holiday || isSunday ? '' : 'present'); %>
+                            <% 
+                                const currentStatus = attendanceMap[e.id] || (holiday || isSunday ? '' : 'present'); 
+                                const details = attendanceDetailsMap[e.id] || {};
+                                const parsed = parseTime(details.arrival_time) || parseTime(tenantSettings.school_start_time) || { hour: 8, minute: 0, ampm: 'AM' };
+                            %>
                             <tr>
                                 <td style="font-weight: 600;">
                                     <a href="#" onclick="showHistory('<%= e.id %>'); return false;" style="color: #2563eb; text-decoration: none; border-bottom: 1px dashed #2563eb;" title="Click to view attendance history"><%= e.name %></a>
@@ -87,20 +142,46 @@
                                 </td>
                                 <td><%= e.designation %></td>
                                 <td><%= e.role.toUpperCase() %></td>
-                                <td style="text-align: center;">
-                                    <input type="radio" name="attendance[emp_<%= e.id %>]" value="present" <%= currentStatus === 'present' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #10b981;">
+                                <td>
+                                    <div id="arrival_time_container_<%= e.id %>" style="display: <%= currentStatus === 'present' ? 'flex' : 'none' %>; gap: 0.35rem; align-items: center;">
+                                        <select name="arrival_hour_emp_<%= e.id %>" class="form-control" style="width: 60px; padding: 0.25rem; font-size: 0.85rem; height: auto;">
+                                            <% for (let h = 1; h <= 12; h++) { %>
+                                                <option value="<%= h %>" <%= parsed.hour === h ? 'selected' : '' %>><%= h %></option>
+                                            <% } %>
+                                        </select>
+                                        <span style="font-weight: bold; color: #64748b;">:</span>
+                                        <select name="arrival_minute_emp_<%= e.id %>" class="form-control" style="width: 60px; padding: 0.25rem; font-size: 0.85rem; height: auto;">
+                                            <% for (let m = 0; m < 60; m++) { %>
+                                                <% const mStr = String(m).padStart(2, '0'); %>
+                                                <option value="<%= mStr %>" <%= parsed.minute === m ? 'selected' : '' %>><%= mStr %></option>
+                                            <% } %>
+                                        </select>
+                                        <select name="arrival_ampm_emp_<%= e.id %>" class="form-control" style="width: 65px; padding: 0.25rem; font-size: 0.85rem; height: auto;">
+                                            <option value="AM" <%= parsed.ampm === 'AM' ? 'selected' : '' %>>AM</option>
+                                            <option value="PM" <%= parsed.ampm === 'PM' ? 'selected' : '' %>>PM</option>
+                                        </select>
+                                        <% if (details.is_late === 1) { %>
+                                            <span class="badge-absent" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; border-radius: 9999px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.15rem; background-color: #fee2e2; color: #991b1b;"><i class="bi bi-clock-fill"></i> Late</span>
+                                        <% } %>
+                                    </div>
+                                    <div id="arrival_time_placeholder_<%= e.id %>" style="display: <%= currentStatus === 'present' ? 'none' : 'block' %>; color: #94a3b8; font-style: italic; font-size: 0.85rem;">
+                                        N/A
+                                    </div>
                                 </td>
                                 <td style="text-align: center;">
-                                    <input type="radio" name="attendance[emp_<%= e.id %>]" value="absent" <%= currentStatus === 'absent' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #ef4444;">
+                                    <input type="radio" name="attendance[emp_<%= e.id %>]" value="present" <%= currentStatus === 'present' ? 'checked' : '' %> onchange="toggleArrivalTime('<%= e.id %>', true)" style="width: 20px; height: 20px; accent-color: #10b981;">
                                 </td>
                                 <td style="text-align: center;">
-                                    <input type="radio" name="attendance[emp_<%= e.id %>]" value="leave" <%= currentStatus === 'leave' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #f59e0b;">
+                                    <input type="radio" name="attendance[emp_<%= e.id %>]" value="absent" <%= currentStatus === 'absent' ? 'checked' : '' %> onchange="toggleArrivalTime('<%= e.id %>', false)" style="width: 20px; height: 20px; accent-color: #ef4444;">
+                                </td>
+                                <td style="text-align: center;">
+                                    <input type="radio" name="attendance[emp_<%= e.id %>]" value="leave" <%= currentStatus === 'leave' ? 'checked' : '' %> onchange="toggleArrivalTime('<%= e.id %>', false)" style="width: 20px; height: 20px; accent-color: #f59e0b;">
                                 </td>
                             </tr>
                         <% }) %>
                     <% } else { %>
                         <tr>
-                            <td colspan="6" style="text-align: center; color: #64748b;">No active employees found to mark attendance.</td>
+                            <td colspan="7" style="text-align: center; color: #64748b;">No active employees found to mark attendance.</td>
                         </tr>
                     <% } %>
                 </tbody>
@@ -288,6 +369,20 @@ function showHistory(employeeId) {
             alert('Failed to load history.');
             closeModal();
         });
+}
+
+function toggleArrivalTime(empId, show) {
+    const container = document.getElementById('arrival_time_container_' + empId);
+    const placeholder = document.getElementById('arrival_time_placeholder_' + empId);
+    if (container && placeholder) {
+        if (show) {
+            container.style.display = 'flex';
+            placeholder.style.display = 'none';
+        } else {
+            container.style.display = 'none';
+            placeholder.style.display = 'block';
+        }
+    }
 }
 
 function closeModal() {

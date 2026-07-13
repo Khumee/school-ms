@@ -57,9 +57,15 @@ router.get('/employees/view/:id', isAuthenticated, async (req, res) => {
             [req.params.id, tenantId]
         );
 
-        const totalPaid = salaries.reduce((sum, s) => sum + parseFloat(s.basic_salary) + parseFloat(s.bonus || 0), 0);
+        const [[lateCountRow]] = await db.execute(
+            'SELECT COUNT(*) as count FROM attendance_employees WHERE employee_id = ? AND tenant_id = ? AND is_late = 1',
+            [req.params.id, tenantId]
+        );
+        const lateCount = lateCountRow ? lateCountRow.count : 0;
+
+        const totalPaid = salaries.reduce((sum, s) => sum + parseFloat(s.basic_salary) + parseFloat(s.bonus || 0) - parseFloat(s.deduction || 0), 0);
         
-        res.render('employee_view', { employee, salaries, attendanceStats, totalPaid });
+        res.render('employee_view', { employee, salaries, attendanceStats, lateCount, totalPaid });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading employee profile.');

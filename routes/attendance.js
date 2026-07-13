@@ -18,14 +18,19 @@ router.get('/attendance/employees', isAuthenticated, async (req, res) => {
         
         // Fetch today's attendance
         const [attendance] = await db.execute(
-            'SELECT employee_id, status FROM attendance_employees WHERE tenant_id = ? AND date = ?',
+            'SELECT employee_id, status, arrival_time, is_late FROM attendance_employees WHERE tenant_id = ? AND date = ?',
             [tenantId, dateStr]
         );
         
-        // Map attendance: employee_id -> status
+        // Map attendance
         const attendanceMap = {};
+        const attendanceDetailsMap = {};
         attendance.forEach(a => {
             attendanceMap[a.employee_id] = a.status;
+            attendanceDetailsMap[a.employee_id] = {
+                arrival_time: a.arrival_time,
+                is_late: a.is_late
+            };
         });
 
         // Check if this date is a Sunday
@@ -42,18 +47,52 @@ router.get('/attendance/employees', isAuthenticated, async (req, res) => {
             'SELECT * FROM holidays WHERE tenant_id = ? ORDER BY date ASC',
             [tenantId]
         );
+
+        // Fetch current tenant to get the settings
+        const [[tenantRow]] = await db.execute(
+            'SELECT school_start_time, school_end_time, late_threshold_minutes, late_days_deduction_trigger FROM tenants WHERE id = ?',
+            [tenantId]
+        );
         
         res.render('attendance_employees', { 
             employees, 
             dateStr, 
             attendanceMap,
+            attendanceDetailsMap,
             isSunday,
             holiday: holiday || null,
-            holidaysList
+            holidaysList,
+            tenantSettings: tenantRow || { school_start_time: '08:00:00', school_end_time: '14:00:00', late_threshold_minutes: 15, late_days_deduction_trigger: 4 }
         });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading employee attendance.');
+    }
+});
+
+// POST /attendance/settings
+router.post('/attendance/settings', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const { school_start_time, school_end_time, late_threshold_minutes, late_days_deduction_trigger, redirectDate } = req.body;
+        
+        await db.execute(
+            `UPDATE tenants 
+             SET school_start_time = ?, school_end_time = ?, late_threshold_minutes = ?, late_days_deduction_trigger = ? 
+             WHERE id = ?`,
+            [
+                school_start_time || '08:00:00', 
+                school_end_time || '14:00:00', 
+                parseInt(late_threshold_minutes || 0, 10), 
+                parseInt(late_days_deduction_trigger || 4, 10), 
+                tenantId
+            ]
+        );
+        
+        res.redirect(`/attendance/employees?date=${redirectDate || ''}`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error updating school settings.');
     }
 });
 
@@ -81,10 +120,50 @@ router.post('/attendance/employees', isAuthenticated, async (req, res) => {
                 );
                 
                 if (status) {
+                    let arrivalTime = null;
+                    let isLate = 0;
+
+                    if (status === 'present') {
+                        const hour = req.body[`arrival_hour_emp_${empId}`];
+                        const minute = req.body[`arrival_minute_emp_${empId}`];
+                        const ampm = req.body[`arrival_ampm_emp_${empId}`];
+
+                        if (hour !== undefined && minute !== undefined && ampm !== undefined) {
+                            let hourNum = parseInt(hour, 10);
+                            const minNum = parseInt(minute, 10);
+                            if (ampm === 'PM' && hourNum < 12) {
+                                hourNum += 12;
+                            } else if (ampm === 'AM' && hourNum === 12) {
+                                hourNum = 0;
+                            }
+                            const formattedHour = String(hourNum).padStart(2, '0');
+                            const formattedMin = String(minNum).padStart(2, '0');
+                            arrivalTime = `${formattedHour}:${formattedMin}:00`;
+
+                            // Get school settings
+                            const [[tenantSettings]] = await db.execute(
+                                'SELECT school_start_time, late_threshold_minutes FROM tenants WHERE id = ?',
+                                [tenantId]
+                            );
+                            if (tenantSettings && tenantSettings.school_start_time) {
+                                const [startHour, startMin] = tenantSettings.school_start_time.split(':').map(Number);
+                                const threshold = parseInt(tenantSettings.late_threshold_minutes || 0, 10);
+
+                                const startTotalMin = startHour * 60 + startMin;
+                                const limitTotalMin = startTotalMin + threshold;
+                                const arrivalTotalMin = hourNum * 60 + minNum;
+
+                                if (arrivalTotalMin > limitTotalMin) {
+                                    isLate = 1;
+                                }
+                            }
+                        }
+                    }
+
                     await db.execute(
-                        `INSERT INTO attendance_employees (tenant_id, employee_id, date, status, marked_by)
-                         VALUES (?, ?, ?, ?, ?)`,
-                        [tenantId, empId, dateStr, status, req.session.userId || null]
+                        `INSERT INTO attendance_employees (tenant_id, employee_id, date, status, arrival_time, is_late, marked_by)
+                         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                        [tenantId, empId, dateStr, status, arrivalTime, isLate, req.session.userId || null]
                     );
                 }
             }

@@ -126,6 +126,9 @@
         <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span class="status-cell status-unpaid" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background-color: #fef3c7; color: #d97706;"><i class="bi bi-question-circle-fill"></i> Leaves: <%= leaveCount %></span>
         </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="status-cell status-unpaid" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; background-color: #fee2e2; color: #991b1b;"><i class="bi bi-clock-fill"></i> Late Arrivals: <%= lateCount %></span>
+        </div>
     </div>
 </div>
 
@@ -142,7 +145,8 @@
                 <th>Year</th>
                 <th style="text-align: right;">Basic Salary (PKR)</th>
                 <th style="text-align: right;">Bonus (PKR)</th>
-                <th>Bonus Description</th>
+                <th style="text-align: right;">Deductions (PKR)</th>
+                <th>Details</th>
                 <th style="text-align: right; font-weight: 700;">Total Paid (PKR)</th>
                 <th>Payout Date</th>
             </tr>
@@ -155,16 +159,27 @@
                         <td><%= s.year %></td>
                         <td style="text-align: right; font-weight: 600;"><%= parseFloat(s.basic_salary).toLocaleString() %></td>
                         <td style="text-align: right; color: #16a34a;"><%= s.bonus > 0 ? 'PKR ' + parseFloat(s.bonus).toLocaleString() : '-' %></td>
-                        <td><%= s.bonus_description || '-' %></td>
+                        <td style="text-align: right; color: #dc2626;"><%= s.deduction > 0 ? 'PKR ' + parseFloat(s.deduction).toLocaleString() : '-' %></td>
+                        <td>
+                            <% if (s.bonus_description) { %>
+                                <div style="font-size: 0.8rem; color: #16a34a;"><strong>Bonus:</strong> <%= s.bonus_description %></div>
+                            <% } %>
+                            <% if (s.deduction_description) { %>
+                                <div style="font-size: 0.8rem; color: #dc2626;"><strong>Deduction:</strong> <%= s.deduction_description %></div>
+                            <% } %>
+                            <% if (!s.bonus_description && !s.deduction_description) { %>
+                                -
+                            <% } %>
+                        </td>
                         <td style="text-align: right; font-weight: 700; color: #15803d;">
-                            PKR <%= (parseFloat(s.basic_salary) + parseFloat(s.bonus || 0)).toLocaleString() %>
+                            PKR <%= (parseFloat(s.basic_salary) + parseFloat(s.bonus || 0) - parseFloat(s.deduction || 0)).toLocaleString() %>
                         </td>
                         <td><%= new Date(s.paid_date).toLocaleDateString() %></td>
                     </tr>
                 <% }) %>
             <% } else { %>
                 <tr>
-                    <td colspan="7" style="text-align: center; color: #64748b; padding: 2rem;">No salary payroll payouts recorded yet.</td>
+                    <td colspan="8" style="text-align: center; color: #64748b; padding: 2rem;">No salary payroll payouts recorded yet.</td>
                 </tr>
             <% } %>
         </tbody>
