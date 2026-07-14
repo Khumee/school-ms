@@ -147,4 +147,13 @@ router.get('/', isAuthenticated, async (req, res) => {
     }
 });
 
+router.get('/debug-db', async (req, res) => {
+    try {
+        const [payments] = await db.execute('SELECT id, student_id, month, year, amount_paid, payment_date FROM fee_payments WHERE tenant_id = ?', [req.tenant.id]);
+        res.json({ success: true, count: payments.length, payments });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 module.exports = router;
