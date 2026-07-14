@@ -51,9 +51,15 @@ router.get('/', isAuthenticated, async (req, res) => {
         let totalExpenseAllTime = 0;
 
         for (let m = 1; m <= 12; m++) {
-            // Fee Collection
-            const [[{ fees_collected }]] = await db.execute(
-                'SELECT COALESCE(SUM(amount_paid), 0) as fees_collected FROM fee_payments WHERE tenant_id = ? AND month = ? AND year = 2026',
+            // Fee Collection (Cash Basis - actually received in month m)
+            const [[{ fees_collected_cash }]] = await db.execute(
+                'SELECT COALESCE(SUM(amount_paid), 0) as fees_collected_cash FROM fee_payments WHERE tenant_id = ? AND MONTH(payment_date) = ? AND YEAR(payment_date) = 2026',
+                [tenantId, m]
+            );
+            
+            // Fee Collection (Accrual Basis - fees for month m)
+            const [[{ fees_collected_accrual }]] = await db.execute(
+                'SELECT COALESCE(SUM(amount_paid), 0) as fees_collected_accrual FROM fee_payments WHERE tenant_id = ? AND month = ? AND year = 2026',
                 [tenantId, m]
             );
             
@@ -93,16 +99,17 @@ router.get('/', isAuthenticated, async (req, res) => {
                 [tenantId, m]
             );
 
-            const monthlyIncome = parseFloat(fees_collected) + parseFloat(donations_collected);
+            const monthlyIncome = parseFloat(fees_collected_cash) + parseFloat(donations_collected);
             const monthlyExpense = parseFloat(rent_expense) + parseFloat(salaries_expense) + parseFloat(utility_expense) + parseFloat(office_expense) + parseFloat(other_expense);
             const netBalance = monthlyIncome - monthlyExpense;
 
             monthsData.push({
                 num: m,
                 name: monthNames[m - 1],
-                fees: parseFloat(fees_collected),
+                fees: parseFloat(fees_collected_cash), // fees received in this month (cash basis)
+                fees_accrual: parseFloat(fees_collected_accrual), // fees target for this month (accrual basis)
                 donations: parseFloat(donations_collected),
-                income: monthlyIncome,
+                income: monthlyIncome, // cash basis income
                 rent: parseFloat(rent_expense),
                 salaries: parseFloat(salaries_expense),
                 utilities: parseFloat(utility_expense),

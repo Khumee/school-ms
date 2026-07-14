@@ -71,7 +71,7 @@
         <span class="kpi-icon green"><i class="bi bi-graph-up-arrow"></i></span>
         <span class="kpi-label">Income (<%= currentMonthName %>)</span>
         <span class="kpi-value">PKR <%= currentMonthData.income.toLocaleString() %></span>
-        <span class="kpi-subtitle">Fees <% if (req.tenant && req.tenant.enable_donations_module) { %>+ Donations<% } %></span>
+        <span class="kpi-subtitle">Fees + Donations (Received)</span>
     </div>
 
     <!-- Monthly Expense -->
@@ -92,12 +92,20 @@
     </div>
     <% } %>
 
-    <!-- Monthly Fees -->
+    <!-- Monthly Fees Received (Cash Basis) -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/fees/ledger'">
         <span class="kpi-icon amber"><i class="bi bi-cash-coin"></i></span>
-        <span class="kpi-label">Fees Collected (<%= currentMonthName %>)</span>
+        <span class="kpi-label">Fees Received (<%= currentMonthName %>)</span>
         <span class="kpi-value">PKR <%= currentMonthData.fees.toLocaleString() %></span>
-        <span class="kpi-subtitle">Tuition fee collection</span>
+        <span class="kpi-subtitle">Cash received this month</span>
+    </div>
+
+    <!-- Monthly Fees Allocated (Accrual Basis) -->
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/fees/ledger'">
+        <span class="kpi-icon blue" style="background-color: #dbeafe; color: #2563eb;"><i class="bi bi-calendar-check"></i></span>
+        <span class="kpi-label">Fees for <%= currentMonthName %></span>
+        <span class="kpi-value">PKR <%= currentMonthData.fees_accrual.toLocaleString() %></span>
+        <span class="kpi-subtitle">Total paid for this month's fee</span>
     </div>
 </div>
 
