@@ -91,67 +91,41 @@
     <h1 class="section-title"><i class="bi bi-cash-coin"></i> Monthly Fee Ledger</h1>
 </div>
 
-<!-- Filters Collapsible Panel -->
-<details class="filter-panel" <%= (classId || search || locals.activeMonthNum || locals.activeYear) ? 'open' : '' %>>
-    <summary>
-        <span><i class="bi bi-funnel-fill"></i> Filter & Search Fees</span>
-        <i class="bi bi-chevron-down toggle-icon"></i>
-    </summary>
-    <form action="/fees/ledger" method="GET" class="filter-content">
-        <input type="hidden" name="view" id="filter-view-input" value="recent">
-        <div class="form-group">
-            <label for="classId">Class</label>
-            <select name="classId" id="classId" class="form-control" onchange="this.form.submit()">
-                <option value="">-- All Classes --</option>
-                <% classes.forEach(c => { %>
-                    <option value="<%= c.id %>" <%= classId == c.id ? 'selected' : '' %>><%= c.name %></option>
-                <% }) %>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="month">Month</label>
-            <select name="month" id="month" class="form-control" onchange="this.form.submit()">
-                <% monthsList.forEach((mName, idx) => { %>
-                    <option value="<%= idx + 1 %>" <%= activeMonthNum == (idx + 1) ? 'selected' : '' %>><%= mName %></option>
-                <% }) %>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="year">Year</label>
-            <select name="year" id="year" class="form-control" onchange="this.form.submit()">
-                <% [2024, 2025, 2026, 2027, 2028].forEach(y => { %>
-                    <option value="<%= y %>" <%= activeYear == y ? 'selected' : '' %>><%= y %></option>
-                <% }) %>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="search">Search</label>
-            <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or Reg No...">
-        </div>
-        
-        <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
-            <button type="submit" class="btn-secondary" style="height: 38px;">Search</button>
-            <a href="/fees/ledger" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
-        </div>
-    </form>
-</details>
+<!-- Quick Statistics Grid (Always visible) -->
+<div class="kpi-grid" style="margin-bottom: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+    <div class="card kpi-card" style="padding: 1rem;">
+        <span class="kpi-label">Month Collection Progress</span>
+        <span class="kpi-value" style="font-size: 1.4rem;">PKR <%= totalCollected.toLocaleString() %> / <%= totalExpected.toLocaleString() %></span>
+        <span class="kpi-subtitle">Progress Rate: <%= totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100) : 0 %>%</span>
+    </div>
+    <div class="card kpi-card" style="padding: 1rem;">
+        <span class="kpi-label">Paid Students</span>
+        <span class="kpi-value" style="font-size: 1.4rem; color: #16a34a;"><%= paidCount %> / <%= students.length %></span>
+        <span class="kpi-subtitle">Received this month</span>
+    </div>
+    <div class="card kpi-card" style="padding: 1rem;">
+        <span class="kpi-label">Defaulters</span>
+        <span class="kpi-value" style="font-size: 1.4rem; color: #dc2626;"><%= defaulterCount %></span>
+        <span class="kpi-subtitle">Awaiting payment</span>
+    </div>
+</div>
 
 <!-- View Toggles (Tabs) -->
 <div class="nav-tabs" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem;">
     <button class="nav-tab active" id="tab-recent-btn" onclick="switchTab('recent')"><i class="bi bi-clock-history"></i> Recent Activity</button>
-    <button class="nav-tab" id="tab-class-btn" onclick="switchTab('class')"><i class="bi bi-diagram-3-fill"></i> Class Summary</button>
-    <button class="nav-tab" id="tab-simple-btn" onclick="switchTab('simple')"><i class="bi bi-list-task"></i> Monthly View (<%= activeMonthName %>)</button>
+    <button class="nav-tab" id="tab-class-btn" onclick="switchTab('class')"><i class="bi bi-diagram-3-fill"></i> Monthly Class Summary (<%= activeMonthName %>)</button>
     <button class="nav-tab" id="tab-matrix-btn" onclick="switchTab('matrix')"><i class="bi bi-grid-3x3-gap-fill"></i> Full Year Matrix</button>
 </div>
 
 <!-- Tab: Recent Activity Pane -->
 <div id="pane-recent">
-    <div style="margin-bottom: 1rem; color: var(--muted); font-weight: 500;">
-        Showing the last 10 fee payments collected.
-    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
+        <!-- Left: Recent Collections -->
+        <div>
+            <h3 style="margin-bottom: 1rem; color: var(--ink);"><i class="bi bi-clock-history"></i> Recent Fee Collections</h3>
+            <div style="margin-bottom: 1rem; color: var(--muted); font-weight: 500;">
+                Showing the last 10 fee payments collected.
+            </div>
     <div class="table-container">
         <table class="simple-ledger-table">
             <thead>
@@ -189,9 +163,88 @@
         </table>
     </div>
 </div>
+        
+        <!-- Right: Top Defaulters -->
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="color: var(--ink); margin: 0;"><i class="bi bi-exclamation-triangle-fill" style="color: #dc2626;"></i> Top Defaulters</h3>
+                <select id="defaulter-class-select" class="form-control" style="width: auto; padding: 0.3rem 0.5rem;" onchange="renderDefaulters()">
+                    <% classes.forEach(c => { %>
+                        <option value="<%= c.id %>" <%= (nurseryClassId && c.id == nurseryClassId) ? 'selected' : '' %>><%= c.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div style="margin-bottom: 1rem; color: var(--muted); font-weight: 500;">
+                Students awaiting payment for <%= activeMonthName %>.
+            </div>
+            <div class="table-container">
+                <table class="simple-ledger-table" id="defaulters-table">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left;">Reg No</th>
+                            <th style="text-align: left;">Student Name</th>
+                            <th style="text-align: right;">Due</th>
+                            <th style="text-align: center;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated dynamically via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Tab: Class Summary Pane -->
 <div id="pane-class" style="display: none;">
+    <!-- Filters Collapsible Panel -->
+    <details class="filter-panel" <%= (classId || search || locals.activeMonthNum || locals.activeYear) ? 'open' : '' %>>
+        <summary>
+            <span><i class="bi bi-funnel-fill"></i> Filter & Search Fees</span>
+            <i class="bi bi-chevron-down toggle-icon"></i>
+        </summary>
+        <form action="/fees/ledger" method="GET" class="filter-content">
+            <input type="hidden" name="view" id="filter-view-input" value="recent">
+            <div class="form-group">
+                <label for="classId">Class</label>
+                <select name="classId" id="classId" class="form-control" onchange="this.form.submit()">
+                    <option value="">-- All Classes --</option>
+                    <% classes.forEach(c => { %>
+                        <option value="<%= c.id %>" <%= classId == c.id ? 'selected' : '' %>><%= c.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="month">Month</label>
+                <select name="month" id="month" class="form-control" onchange="this.form.submit()">
+                    <% monthsList.forEach((mName, idx) => { %>
+                        <option value="<%= idx + 1 %>" <%= activeMonthNum == (idx + 1) ? 'selected' : '' %>><%= mName %></option>
+                    <% }) %>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="year">Year</label>
+                <select name="year" id="year" class="form-control" onchange="this.form.submit()">
+                    <% [2024, 2025, 2026, 2027, 2028].forEach(y => { %>
+                        <option value="<%= y %>" <%= activeYear == y ? 'selected' : '' %>><%= y %></option>
+                    <% }) %>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="search">Search</label>
+                <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or Reg No...">
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+                <button type="submit" class="btn-secondary" style="height: 38px;">Search</button>
+                <a href="/fees/ledger" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
+            </div>
+        </form>
+    </details>
     <div style="margin-bottom: 1rem; color: var(--muted); font-weight: 500;">
         Students grouped by class. Defaulters (unpaid) are shown first.
     </div>
@@ -500,6 +553,46 @@
 <div id="modalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeModal()"></div>
 
 <script>
+    const clientClassGroups = <%- JSON.stringify(classGroups) %>;
+    const clientActiveMonthNum = <%= activeMonthNum %>;
+
+    function renderDefaulters() {
+        const classId = document.getElementById('defaulter-class-select').value;
+        const tbody = document.querySelector('#defaulters-table tbody');
+        if (!tbody) return;
+        
+        tbody.innerHTML = '';
+
+        if (!classId || !clientClassGroups[classId]) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 2rem;">No class selected or data unavailable.</td></tr>';
+            return;
+        }
+
+        const group = clientClassGroups[classId];
+        const defaulters = group.students.filter(s => !s.isPaid);
+
+        if (defaulters.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #16a34a; padding: 2rem;"><i class="bi bi-check-circle-fill"></i> No defaulters in this class!</td></tr>';
+            return;
+        }
+
+        let html = '';
+        defaulters.forEach(s => {
+            const safeName = s.name.replace(/'/g, "\\'");
+            html += `
+                <tr class="student-row status-row-unpaid">
+                    <td style="font-weight: 600; text-align: left;">${s.reg_no}</td>
+                    <td style="text-align: left; font-weight: 500;"><a href="/students/view/${s.id}" style="color: var(--primary-color); text-decoration: underline;">${s.name}</a></td>
+                    <td style="text-align: right; font-weight: 600; color: #dc2626;">PKR ${s.expectedFee.toLocaleString()}</td>
+                    <td style="text-align: center;">
+                        <button type="button" class="btn-primary nav-btn" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="openPaymentModal('${s.id}', '${safeName}', clientActiveMonthNum, '', ${s.expectedFee}, ${s.default_monthly_fee || 0}, ${s.custom_monthly_fee || 0}, 0, '')"><i class="bi bi-credit-card-fill"></i> Collect</button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
     function openPaymentModal(studentId, studentName, month, currentAmount, expectedFee, classFee, concession, additionalFee, additionalFeeDesc) {
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         document.getElementById('modalStudentId').value = studentId;
@@ -612,7 +705,7 @@
 
     // Quick filter check for defaulters
     function toggleDefaultersOnly(showDefaultersOnly) {
-        const rows = document.querySelectorAll('.simple-ledger-table tbody tr.student-row');
+        const rows = document.querySelectorAll('#pane-class .student-row');
         rows.forEach(row => {
             if (showDefaultersOnly) {
                 if (row.classList.contains('status-row-paid')) {
@@ -629,8 +722,11 @@
 
     // Filter table by paid/unpaid status
     function filterByStatus(status) {
+        // Automatically switch to Class Summary tab if KPI is clicked
+        switchTab('class');
+        
         const checkbox = document.getElementById('show-defaulters-checkbox');
-        const rows = document.querySelectorAll('.simple-ledger-table tbody tr.student-row');
+        const rows = document.querySelectorAll('#pane-class .student-row');
         
         if (status === 'all') {
             if (checkbox) checkbox.checked = false;
@@ -664,6 +760,9 @@
         const urlParams = new URLSearchParams(window.location.search);
         const urlView = urlParams.get('view');
         let savedView = urlView || localStorage.getItem('fees_ledger_view') || 'recent';
+        
+        // Render defaulters table initially
+        renderDefaulters();
         
         switchTab(savedView);
 
