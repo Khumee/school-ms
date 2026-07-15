@@ -53,13 +53,13 @@ router.get('/', isAuthenticated, async (req, res) => {
         for (let m = 1; m <= 12; m++) {
             // Fee Collection (Cash Basis - actually received in month m)
             const [[{ fees_collected_cash }]] = await db.execute(
-                'SELECT COALESCE(SUM(amount_paid), 0) as fees_collected_cash FROM fee_payments WHERE tenant_id = ? AND MONTH(payment_date) = ? AND YEAR(payment_date) = 2026',
+                'SELECT (COALESCE(SUM(amount_paid), 0) + COALESCE(SUM(additional_fee), 0)) as fees_collected_cash FROM fee_payments WHERE tenant_id = ? AND MONTH(payment_date) = ? AND YEAR(payment_date) = 2026',
                 [tenantId, m]
             );
             
             // Fee Collection (Accrual Basis - fees for month m)
             const [[{ fees_collected_accrual }]] = await db.execute(
-                'SELECT COALESCE(SUM(amount_paid), 0) as fees_collected_accrual FROM fee_payments WHERE tenant_id = ? AND month = ? AND year = 2026',
+                'SELECT (COALESCE(SUM(amount_paid), 0) + COALESCE(SUM(additional_fee), 0)) as fees_collected_accrual FROM fee_payments WHERE tenant_id = ? AND month = ? AND year = 2026',
                 [tenantId, m]
             );
             

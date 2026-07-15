@@ -30,6 +30,7 @@ const tenantScopedTables = [
     'expenses',
     'attendance_students',
     'attendance_teachers',
+    'attendance_employees',
     'periods',
     'sessions',
     'student_enrollments',

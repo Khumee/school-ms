@@ -175,6 +175,45 @@ router.post('/attendance/employees', isAuthenticated, async (req, res) => {
     }
 });
 
+// POST /attendance/employees/update-one  (JSON — for inline drawer edits)
+router.post('/attendance/employees/update-one', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId   = req.tenant.id;
+        const { employee_id, date, status } = req.body;
+
+        if (!employee_id || !date || !['present', 'absent', 'leave'].includes(status)) {
+            return res.status(400).json({ success: false, error: 'Invalid parameters.' });
+        }
+
+        // Verify employee belongs to this tenant
+        const [empRows] = await db.execute(
+            'SELECT id FROM employees WHERE id = ? AND tenant_id = ?',
+            [employee_id, tenantId]
+        );
+        if (empRows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Employee not found.' });
+        }
+
+        // Delete existing record for that date
+        await db.execute(
+            'DELETE FROM attendance_employees WHERE employee_id = ? AND date = ? AND tenant_id = ?',
+            [employee_id, date, tenantId]
+        );
+
+        // Insert new record (no arrival_time tracking for historical edits)
+        await db.execute(
+            `INSERT INTO attendance_employees (tenant_id, employee_id, date, status, arrival_time, is_late, marked_by)
+             VALUES (?, ?, ?, ?, NULL, 0, ?)`,
+            [tenantId, employee_id, date, status, req.session.userId || null]
+        );
+
+        res.json({ success: true, status });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // POST /attendance/holidays/add
 router.post('/attendance/holidays/add', isAuthenticated, async (req, res) => {
     const { date, name, redirectDate } = req.body;
@@ -208,9 +247,10 @@ router.post('/attendance/holidays/delete/:id', isAuthenticated, async (req, res)
 // GET /attendance/employees/:id/history
 router.get('/attendance/employees/:id/history', isAuthenticated, async (req, res) => {
     try {
-        const tenantId = req.tenant.id;
+        const tenantId   = req.tenant.id;
         const employeeId = req.params.id;
-        
+        const isFull     = req.query.full === '1';
+
         const [[employee]] = await db.execute(
             'SELECT name, designation FROM employees WHERE id = ? AND tenant_id = ?',
             [employeeId, tenantId]
@@ -219,15 +259,16 @@ router.get('/attendance/employees/:id/history', isAuthenticated, async (req, res
             return res.status(404).json({ error: 'Employee not found' });
         }
 
+        const limitClause = isFull ? '' : 'LIMIT 60';
         const [history] = await db.execute(
-            'SELECT date, status FROM attendance_employees WHERE employee_id = ? AND tenant_id = ? ORDER BY date DESC LIMIT 60',
+            `SELECT DATE_FORMAT(date, '%Y-%m-%d') as date, status, arrival_time, is_late
+             FROM attendance_employees
+             WHERE employee_id = ? AND tenant_id = ?
+             ORDER BY date DESC ${limitClause}`,
             [employeeId, tenantId]
         );
 
-        res.json({
-            employee,
-            history
-        });
+        res.json({ employee, history });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Error fetching attendance history.' });

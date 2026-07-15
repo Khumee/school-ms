@@ -109,6 +109,50 @@
     </div>
 </div>
 
+<!-- YTD Summary KPI Cards (MIS Tenant) -->
+<% if (req.tenant && req.tenant.subdomain === 'mis') { %>
+<div style="margin-top: 1.5rem; margin-bottom: 0.5rem;">
+    <h2 style="font-size: 1rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 1rem 0;">
+        <i class="bi bi-bar-chart-steps"></i> Year-to-Date Summary (2026)
+    </h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
+
+        <!-- YTD Income -->
+        <div class="card kpi-card" style="border-left: 4px solid #16a34a; cursor: default;">
+            <span class="kpi-icon green"><i class="bi bi-arrow-down-circle-fill"></i></span>
+            <span class="kpi-label">Total Income (YTD)</span>
+            <span class="kpi-value" style="color: #16a34a;">PKR <%= totalIncomeAllTime.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></span>
+            <span class="kpi-subtitle">Fees + Donations (All Months)</span>
+        </div>
+
+        <!-- YTD Expense -->
+        <div class="card kpi-card" style="border-left: 4px solid #dc2626; cursor: default;">
+            <span class="kpi-icon red"><i class="bi bi-arrow-up-circle-fill"></i></span>
+            <span class="kpi-label">Total Expense (YTD)</span>
+            <span class="kpi-value" style="color: #dc2626;">PKR <%= totalExpenseAllTime.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></span>
+            <span class="kpi-subtitle">Salaries, Rent & Bills (All Months)</span>
+        </div>
+
+        <!-- Carry Forward -->
+        <div class="card kpi-card" style="border-left: 4px solid #7c3aed; cursor: default;">
+            <span class="kpi-icon purple"><i class="bi bi-clock-history"></i></span>
+            <span class="kpi-label">Prev. Year Carry Forward</span>
+            <span class="kpi-value" style="color: #7c3aed;">PKR <%= carryForward.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></span>
+            <span class="kpi-subtitle">Opening balance from 2025</span>
+        </div>
+
+        <!-- Closing Balance -->
+        <div class="card kpi-card" style="border-left: 4px solid #b91c1c; cursor: default;">
+            <span class="kpi-icon" style="background-color: #fee2e2; color: #b91c1c;"><i class="bi bi-wallet2"></i></span>
+            <span class="kpi-label">Closing Balance (YTD)</span>
+            <span class="kpi-value" style="color: #b91c1c; font-size: 1.4rem;">PKR <%= currentBalance.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></span>
+            <span class="kpi-subtitle">Income + Carry Fwd − Expense</span>
+        </div>
+
+    </div>
+</div>
+<% } %>
+
 <!-- Financial Graphs Grids -->
 <div class="dashboard-grid" style="display: grid; grid-template-columns: <%= (req.tenant && req.tenant.enable_donations_module) ? '1fr 1fr' : '1fr' %>; gap: 1.5rem; margin-top: 2rem; margin-bottom: 1.5rem;">
     <!-- Chart 1: Financial Performance Trend -->
@@ -173,6 +217,8 @@
         <i class="bi bi-chevron-down toggle-icon"></i>
     </summary>
     <div class="table-container" style="margin-top: 1rem;">
+
+
         <table>
             <thead>
                 <tr>
