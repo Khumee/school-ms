@@ -69,6 +69,55 @@ router.post('/fees/concessions/update', isAuthenticated, async (req, res) => {
     }
 });
 
+// Helper to calculate YTD Top Defaulters
+async function getTopDefaulters(tenantId, activeYear, limit = 10, offset = 0) {
+    const currentMonthNum = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    const elapsedMonths = activeYear < currentYear ? 12 : (activeYear === currentYear ? currentMonthNum : 0);
+    
+    const [students] = await db.execute(`
+        SELECT s.id, s.reg_no, s.name, s.custom_monthly_fee, c.name as class_name, c.default_monthly_fee, c.is_hifz_class
+        FROM students s
+        LEFT JOIN classes c ON s.class_id = c.id
+        WHERE s.tenant_id = ?
+    `, [tenantId]);
+    
+    const [payments] = await db.execute(`
+        SELECT student_id, SUM(amount_paid) as total_paid
+        FROM fee_payments
+        WHERE tenant_id = ? AND year = ?
+        GROUP BY student_id
+    `, [tenantId, activeYear]);
+    
+    const paymentMap = {};
+    payments.forEach(p => paymentMap[p.student_id] = parseFloat(p.total_paid || 0));
+    
+    let defaulters = [];
+    students.forEach(s => {
+        if (s.is_hifz_class) return;
+        const expectedMonthly = parseFloat(s.default_monthly_fee || 0) - parseFloat(s.custom_monthly_fee || 0);
+        const totalExpected = expectedMonthly * elapsedMonths;
+        const totalPaid = paymentMap[s.id] || 0;
+        const due = totalExpected - totalPaid;
+        
+        if (due > 0) {
+            defaulters.push({
+                id: s.id,
+                reg_no: s.reg_no,
+                name: s.name,
+                class_name: s.class_name || 'Unassigned',
+                expectedFee: expectedMonthly, // To open payment modal with right standard fee
+                default_monthly_fee: s.default_monthly_fee,
+                custom_monthly_fee: s.custom_monthly_fee,
+                due: due
+            });
+        }
+    });
+    
+    defaulters.sort((a, b) => b.due - a.due);
+    return defaulters.slice(offset, offset + limit);
+}
+
 // GET /fees/ledger - monthly payments matrix
 router.get('/fees/ledger', isAuthenticated, async (req, res) => {
     try {
@@ -134,6 +183,9 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
             [tenantId]
         );
 
+        // Fetch initial top defaulters
+        const topDefaulters = await getTopDefaulters(tenantId, activeYear, 10, 0);
+
         res.render('fees_ledger', { 
             students, 
             classes, 
@@ -142,7 +194,8 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
             paymentMap, 
             activeMonthNum: activeMonth, 
             activeYear: activeYear,
-            recentPayments
+            recentPayments,
+            topDefaulters
         });
     } catch (err) {
         console.error(err);
@@ -257,6 +310,39 @@ router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send('Error generating fee receipt.');
+    }
+});
+
+// GET /fees/api/recent - paginated recent collections
+router.get('/fees/api/recent', isAuthenticated, async (req, res) => {
+    try {
+        const offset = parseInt(req.query.offset) || 0;
+        const [recentPayments] = await db.execute(
+            `SELECT fp.*, s.name as student_name, s.reg_no, c.name as class_name
+             FROM fee_payments fp
+             JOIN students s ON fp.student_id = s.id
+             LEFT JOIN classes c ON s.class_id = c.id
+             WHERE fp.tenant_id = ?
+             ORDER BY fp.payment_date DESC, fp.id DESC LIMIT 10 OFFSET ?`,
+            [req.tenant.id, offset.toString()]
+        );
+        res.json({ success: true, data: recentPayments });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, error: 'Failed to load recent payments.' });
+    }
+});
+
+// GET /fees/api/defaulters - paginated YTD defaulters
+router.get('/fees/api/defaulters', isAuthenticated, async (req, res) => {
+    try {
+        const offset = parseInt(req.query.offset) || 0;
+        const activeYear = req.query.year ? parseInt(req.query.year) : new Date().getFullYear();
+        const defaulters = await getTopDefaulters(req.tenant.id, activeYear, 10, offset);
+        res.json({ success: true, data: defaulters });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, error: 'Failed to load defaulters.' });
     }
 });
 

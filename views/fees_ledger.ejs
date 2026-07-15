@@ -161,21 +161,21 @@
                 <% } %>
             </tbody>
         </table>
+        <% if (locals.recentPayments && recentPayments.length === 10) { %>
+            <div style="text-align: center; margin-top: 1rem; margin-bottom: 0.5rem;">
+                <button id="btn-load-more-recent" class="btn-secondary" onclick="loadMoreRecent()" style="width: 100%; max-width: 300px; padding: 0.5rem;"><i class="bi bi-arrow-down-circle"></i> Load 10 More</button>
+            </div>
+        <% } %>
     </div>
 </div>
         
         <!-- Bottom: Top Defaulters -->
         <div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="color: var(--ink); margin: 0;"><i class="bi bi-exclamation-triangle-fill" style="color: #dc2626;"></i> Top Defaulters</h3>
-                <select id="defaulter-class-select" class="form-control" style="width: auto; padding: 0.3rem 0.5rem;" onchange="renderDefaulters()">
-                    <% classes.forEach(c => { %>
-                        <option value="<%= c.id %>" <%= (nurseryClassId && c.id == nurseryClassId) ? 'selected' : '' %>><%= c.name %></option>
-                    <% }) %>
-                </select>
+                <h3 style="color: var(--ink); margin: 0;"><i class="bi bi-exclamation-triangle-fill" style="color: #dc2626;"></i> Year-to-Date Top Defaulters</h3>
             </div>
             <div style="margin-bottom: 1rem; color: var(--muted); font-weight: 500;">
-                Students awaiting payment for <%= activeMonthName %>.
+                Students with the highest accrued unpaid balances for <%= activeYear %> across all classes.
             </div>
             <div class="table-container">
                 <table class="simple-ledger-table" id="defaulters-table">
@@ -183,14 +183,36 @@
                         <tr>
                             <th style="text-align: left;">Reg No</th>
                             <th style="text-align: left;">Student Name</th>
-                            <th style="text-align: right;">Due</th>
+                            <th style="text-align: left;">Class</th>
+                            <th style="text-align: right;">Total Due</th>
                             <th style="text-align: center;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Populated dynamically via JS -->
+                        <% if (locals.topDefaulters && topDefaulters.length > 0) { %>
+                            <% topDefaulters.forEach(s => { %>
+                                <tr class="student-row status-row-unpaid">
+                                    <td style="font-weight: 600; text-align: left;"><%= s.reg_no %></td>
+                                    <td style="text-align: left; font-weight: 500;"><a href="/students/view/<%= s.id %>" style="color: var(--primary-color); text-decoration: underline;"><%= s.name %></a></td>
+                                    <td style="text-align: left;"><%= s.class_name %></td>
+                                    <td style="text-align: right; font-weight: 600; color: #dc2626;">PKR <%= s.due.toLocaleString() %></td>
+                                    <td style="text-align: center;">
+                                        <button type="button" class="btn-primary nav-btn" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="openPaymentModal('<%= s.id %>', '<%= s.name.replace(/'/g, "\\'") %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, 0, '')"><i class="bi bi-credit-card-fill"></i> Collect</button>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #16a34a; padding: 2rem;"><i class="bi bi-check-circle-fill"></i> No defaulters found!</td>
+                            </tr>
+                        <% } %>
                     </tbody>
                 </table>
+                <% if (locals.topDefaulters && topDefaulters.length === 10) { %>
+                    <div style="text-align: center; margin-top: 1rem; margin-bottom: 0.5rem;">
+                        <button id="btn-load-more-defaulters" class="btn-secondary" onclick="loadMoreDefaulters()" style="width: 100%; max-width: 300px; padding: 0.5rem;"><i class="bi bi-arrow-down-circle"></i> Load 10 More</button>
+                    </div>
+                <% } %>
             </div>
         </div>
     </div>
@@ -556,41 +578,95 @@
     const clientClassGroups = <%- JSON.stringify(classGroups) %>;
     const clientActiveMonthNum = <%= activeMonthNum %>;
 
-    function renderDefaulters() {
-        const classId = document.getElementById('defaulter-class-select').value;
-        const tbody = document.querySelector('#defaulters-table tbody');
-        if (!tbody) return;
-        
-        tbody.innerHTML = '';
+    let recentOffset = 10;
+    let defaultersOffset = 10;
 
-        if (!classId || !clientClassGroups[classId]) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b; padding: 2rem;">No class selected or data unavailable.</td></tr>';
-            return;
+    async function loadMoreRecent() {
+        const btn = document.getElementById('btn-load-more-recent');
+        if(!btn) return;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Loading...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`/fees/api/recent?offset=${recentOffset}`);
+            const json = await res.json();
+            if (json.success) {
+                const tbody = document.querySelector('#pane-recent .table-container table tbody');
+                let html = '';
+                json.data.forEach(rp => {
+                    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                    const dateStr = new Date(rp.payment_date).toLocaleDateString('en-GB');
+                    html += `
+                        <tr class="student-row status-row-paid">
+                            <td style="font-weight: 500; text-align: left;">${dateStr}</td>
+                            <td style="font-weight: 600; text-align: left;">${rp.reg_no}</td>
+                            <td style="text-align: left; font-weight: 500;"><a href="/students/view/${rp.student_id}" style="color: var(--primary-color); text-decoration: underline;">${rp.student_name}</a></td>
+                            <td style="text-align: left;">${rp.class_name || 'Unassigned'}</td>
+                            <td style="text-align: left;">${months[rp.month - 1]} ${rp.year}</td>
+                            <td style="text-align: right; font-weight: 600; color: #16a34a;">PKR ${parseFloat(rp.amount_paid).toLocaleString()}</td>
+                            <td style="text-align: center;">
+                                <a href="/fees/receipt/${rp.id}" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.insertAdjacentHTML('beforeend', html);
+                recentOffset += json.data.length;
+
+                if (json.data.length < 10) {
+                    btn.parentElement.style.display = 'none';
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Failed to load more recent payments.');
+        } finally {
+            btn.innerHTML = '<i class="bi bi-arrow-down-circle"></i> Load 10 More';
+            btn.disabled = false;
         }
+    }
 
-        const group = clientClassGroups[classId];
-        const defaulters = group.students.filter(s => !s.isPaid);
+    async function loadMoreDefaulters() {
+        const btn = document.getElementById('btn-load-more-defaulters');
+        if(!btn) return;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Loading...';
+        btn.disabled = true;
 
-        if (defaulters.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #16a34a; padding: 2rem;"><i class="bi bi-check-circle-fill"></i> No defaulters in this class!</td></tr>';
-            return;
+        try {
+            const activeYear = <%= activeYear %>;
+            const res = await fetch(`/fees/api/defaulters?offset=${defaultersOffset}&year=${activeYear}`);
+            const json = await res.json();
+            if (json.success) {
+                const tbody = document.querySelector('#defaulters-table tbody');
+                let html = '';
+                json.data.forEach(s => {
+                    const safeName = s.name.replace(/'/g, "\\'");
+                    html += `
+                        <tr class="student-row status-row-unpaid">
+                            <td style="font-weight: 600; text-align: left;">${s.reg_no}</td>
+                            <td style="text-align: left; font-weight: 500;"><a href="/students/view/${s.id}" style="color: var(--primary-color); text-decoration: underline;">${s.name}</a></td>
+                            <td style="text-align: left;">${s.class_name}</td>
+                            <td style="text-align: right; font-weight: 600; color: #dc2626;">PKR ${s.due.toLocaleString()}</td>
+                            <td style="text-align: center;">
+                                <button type="button" class="btn-primary nav-btn" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="openPaymentModal('${s.id}', '${safeName}', clientActiveMonthNum, '', ${s.expectedFee}, ${s.default_monthly_fee || 0}, ${s.custom_monthly_fee || 0}, 0, '')"><i class="bi bi-credit-card-fill"></i> Collect</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.insertAdjacentHTML('beforeend', html);
+                defaultersOffset += json.data.length;
+
+                if (json.data.length < 10) {
+                    btn.parentElement.style.display = 'none';
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Failed to load more defaulters.');
+        } finally {
+            btn.innerHTML = '<i class="bi bi-arrow-down-circle"></i> Load 10 More';
+            btn.disabled = false;
         }
-
-        let html = '';
-        defaulters.forEach(s => {
-            const safeName = s.name.replace(/'/g, "\\'");
-            html += `
-                <tr class="student-row status-row-unpaid">
-                    <td style="font-weight: 600; text-align: left;">${s.reg_no}</td>
-                    <td style="text-align: left; font-weight: 500;"><a href="/students/view/${s.id}" style="color: var(--primary-color); text-decoration: underline;">${s.name}</a></td>
-                    <td style="text-align: right; font-weight: 600; color: #dc2626;">PKR ${s.expectedFee.toLocaleString()}</td>
-                    <td style="text-align: center;">
-                        <button type="button" class="btn-primary nav-btn" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="openPaymentModal('${s.id}', '${safeName}', clientActiveMonthNum, '', ${s.expectedFee}, ${s.default_monthly_fee || 0}, ${s.custom_monthly_fee || 0}, 0, '')"><i class="bi bi-credit-card-fill"></i> Collect</button>
-                    </td>
-                </tr>
-            `;
-        });
-        tbody.innerHTML = html;
     }
 
     function openPaymentModal(studentId, studentName, month, currentAmount, expectedFee, classFee, concession, additionalFee, additionalFeeDesc) {
@@ -760,9 +836,6 @@
         const urlParams = new URLSearchParams(window.location.search);
         const urlView = urlParams.get('view');
         let savedView = urlView || 'recent';
-        
-        // Render defaulters table initially
-        renderDefaulters();
         
         switchTab(savedView);
 
