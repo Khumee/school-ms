@@ -759,7 +759,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const urlView = urlParams.get('view');
-        let savedView = urlView || localStorage.getItem('fees_ledger_view') || 'recent';
+        let savedView = urlView || 'recent';
         
         // Render defaulters table initially
         renderDefaulters();
