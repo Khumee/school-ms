@@ -123,6 +123,17 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
         
         const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
         
+        // Fetch recent payments for the default view
+        const [recentPayments] = await db.execute(
+            `SELECT fp.*, s.name as student_name, s.reg_no, c.name as class_name
+             FROM fee_payments fp
+             JOIN students s ON fp.student_id = s.id
+             LEFT JOIN classes c ON s.class_id = c.id
+             WHERE fp.tenant_id = ?
+             ORDER BY fp.payment_date DESC, fp.id DESC LIMIT 10`,
+            [tenantId]
+        );
+
         res.render('fees_ledger', { 
             students, 
             classes, 
@@ -130,7 +141,8 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
             search, 
             paymentMap, 
             activeMonthNum: activeMonth, 
-            activeYear: activeYear 
+            activeYear: activeYear,
+            recentPayments
         });
     } catch (err) {
         console.error(err);

@@ -25,6 +25,66 @@
             defaulterCount++;
         }
     });
+
+    // Grouping for Class Summary
+    const classGroups = {};
+    classes.forEach(c => {
+        classGroups[c.id] = {
+            id: c.id,
+            name: c.name,
+            totalStudents: 0,
+            paidCount: 0,
+            totalCollected: 0,
+            students: []
+        };
+    });
+    // Unassigned group
+    classGroups['unassigned'] = {
+        id: 'unassigned',
+        name: 'Unassigned',
+        totalStudents: 0,
+        paidCount: 0,
+        totalCollected: 0,
+        students: []
+    };
+
+    students.forEach(s => {
+        const cId = s.class_id || 'unassigned';
+        if (!classGroups[cId]) {
+            classGroups[cId] = { id: cId, name: s.class_name || 'Unknown', totalStudents: 0, paidCount: 0, totalCollected: 0, students: [] };
+        }
+        
+        const payObj = paymentMap[s.id] && paymentMap[s.id][activeMonthNum];
+        const isPaid = payObj && payObj.amount_paid > 0;
+        
+        classGroups[cId].totalStudents++;
+        if (isPaid) {
+            classGroups[cId].paidCount++;
+            classGroups[cId].totalCollected += parseFloat(payObj.amount_paid);
+        }
+        
+        classGroups[cId].students.push({
+            ...s,
+            isPaid,
+            payObj,
+            expectedFee: s.is_hifz_class ? 0 : (parseFloat(s.default_monthly_fee || 0) - parseFloat(s.custom_monthly_fee || 0))
+        });
+    });
+
+    // Sort students within each group: unpaid first, then paid
+    Object.values(classGroups).forEach(group => {
+        group.students.sort((a, b) => {
+            if (a.isPaid === b.isPaid) return 0;
+            return a.isPaid ? 1 : -1; // Unpaid (-1) comes before Paid (1)
+        });
+    });
+    
+    // Find Nursery class ID if exists
+    let nurseryClassId = null;
+    const nurseryClass = classes.find(c => c.name.toLowerCase().includes('nursery'));
+    if (nurseryClass) {
+        nurseryClassId = nurseryClass.id.toString();
+    }
 %>
 
 <div class="section-header">
@@ -38,7 +98,7 @@
         <i class="bi bi-chevron-down toggle-icon"></i>
     </summary>
     <form action="/fees/ledger" method="GET" class="filter-content">
-        <input type="hidden" name="view" id="filter-view-input" value="simple">
+        <input type="hidden" name="view" id="filter-view-input" value="recent">
         <div class="form-group">
             <label for="classId">Class</label>
             <select name="classId" id="classId" class="form-control" onchange="this.form.submit()">
@@ -81,12 +141,146 @@
 
 <!-- View Toggles (Tabs) -->
 <div class="nav-tabs" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem;">
-    <button class="nav-tab active" id="tab-simple-btn" onclick="switchTab('simple')"><i class="bi bi-list-task"></i> Simple View (<%= activeMonthName %>)</button>
+    <button class="nav-tab active" id="tab-recent-btn" onclick="switchTab('recent')"><i class="bi bi-clock-history"></i> Recent Activity</button>
+    <button class="nav-tab" id="tab-class-btn" onclick="switchTab('class')"><i class="bi bi-diagram-3-fill"></i> Class Summary</button>
+    <button class="nav-tab" id="tab-simple-btn" onclick="switchTab('simple')"><i class="bi bi-list-task"></i> Monthly View (<%= activeMonthName %>)</button>
     <button class="nav-tab" id="tab-matrix-btn" onclick="switchTab('matrix')"><i class="bi bi-grid-3x3-gap-fill"></i> Full Year Matrix</button>
 </div>
 
+<!-- Tab: Recent Activity Pane -->
+<div id="pane-recent">
+    <div style="margin-bottom: 1rem; color: var(--muted); font-weight: 500;">
+        Showing the last 10 fee payments collected.
+    </div>
+    <div class="table-container">
+        <table class="simple-ledger-table">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Date</th>
+                    <th style="text-align: left;">Reg No</th>
+                    <th style="text-align: left;">Student Name</th>
+                    <th style="text-align: left;">Class</th>
+                    <th style="text-align: left;">Month</th>
+                    <th style="text-align: right;">Amount Paid</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (locals.recentPayments && recentPayments.length > 0) { %>
+                    <% recentPayments.forEach(rp => { %>
+                        <tr class="student-row status-row-paid">
+                            <td style="font-weight: 500; text-align: left;"><%= new Date(rp.payment_date).toLocaleDateString('en-GB') %></td>
+                            <td style="font-weight: 600; text-align: left;"><%= rp.reg_no %></td>
+                            <td style="text-align: left; font-weight: 500;"><a href="/students/view/<%= rp.student_id %>" style="color: var(--primary-color); text-decoration: underline;"><%= rp.student_name %></a></td>
+                            <td style="text-align: left;"><%= rp.class_name || 'Unassigned' %></td>
+                            <td style="text-align: left;"><%= monthsList[rp.month - 1] %> <%= rp.year %></td>
+                            <td style="text-align: right; font-weight: 600; color: #16a34a;">PKR <%= parseFloat(rp.amount_paid).toLocaleString() %></td>
+                            <td style="text-align: center;">
+                                <a href="/fees/receipt/<%= rp.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #64748b; padding: 2rem;">No recent payments found.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Tab: Class Summary Pane -->
+<div id="pane-class" style="display: none;">
+    <div style="margin-bottom: 1rem; color: var(--muted); font-weight: 500;">
+        Students grouped by class. Defaulters (unpaid) are shown first.
+    </div>
+
+    <% Object.values(classGroups).forEach((group, index) => { %>
+        <% if (group.totalStudents > 0) { %>
+            <% 
+                // Determine if expanded
+                let isExpanded = false;
+                if (classId && classId == group.id) {
+                    isExpanded = true;
+                } else if (!classId) {
+                    if (nurseryClassId && group.id == nurseryClassId) {
+                        isExpanded = true;
+                    } else if (!nurseryClassId && index === 0) {
+                        isExpanded = true;
+                    }
+                }
+            %>
+            <details class="card" style="margin-bottom: 1rem;" <%= isExpanded ? 'open' : '' %>>
+                <summary style="padding: 1rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background-color: #f8fafc; border-bottom: 1px solid var(--border);">
+                    <div>
+                        <strong style="font-size: 1.1rem;"><%= group.name %></strong>
+                        <span style="margin-left: 1rem; font-size: 0.9rem; color: var(--muted);">
+                            <i class="bi bi-people-fill"></i> <%= group.totalStudents %> Students
+                        </span>
+                    </div>
+                    <div style="display: flex; gap: 1.5rem; align-items: center; font-size: 0.9rem;">
+                        <span style="<%= group.paidCount === group.totalStudents ? 'color: #16a34a;' : (group.paidCount === 0 ? 'color: #dc2626;' : 'color: #eab308;') %> font-weight: 600;">
+                            Paid: <%= group.paidCount %> / <%= group.totalStudents %>
+                        </span>
+                        <span style="font-weight: 600;">
+                            Collected: PKR <%= group.totalCollected.toLocaleString() %>
+                        </span>
+                        <i class="bi bi-chevron-down toggle-icon"></i>
+                    </div>
+                </summary>
+                <div style="padding: 0;">
+                    <table class="simple-ledger-table" style="margin: 0; border: none; box-shadow: none;">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left; padding-left: 1rem;">Reg No</th>
+                                <th style="text-align: left;">Student Name</th>
+                                <th style="text-align: right;">Monthly Fee</th>
+                                <th style="text-align: right;">Amount Paid</th>
+                                <th>Status</th>
+                                <th style="padding-right: 1rem;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% group.students.forEach(s => { %>
+                                <tr class="student-row <%= s.isPaid ? 'status-row-paid' : 'status-row-unpaid' %>">
+                                    <td style="font-weight: 600; text-align: left; padding-left: 1rem;"><%= s.reg_no %></td>
+                                    <td style="text-align: left; font-weight: 500;"><a href="/students/view/<%= s.id %>" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;"><%= s.name %></a></td>
+                                    <td style="text-align: right; font-weight: 600;">PKR <%= s.expectedFee.toLocaleString() %></td>
+                                    <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                                        <%= s.isPaid ? 'PKR ' + s.payObj.amount_paid.toLocaleString() : '-' %>
+                                    </td>
+                                    <td>
+                                        <% if (s.isPaid) { %>
+                                            <span class="status-cell status-paid"><i class="bi bi-check-circle-fill"></i> PAID</span>
+                                        <% } else { %>
+                                            <span class="status-cell status-unpaid"><i class="bi bi-exclamation-triangle-fill"></i> DEFAULTER</span>
+                                        <% } %>
+                                    </td>
+                                    <td style="padding-right: 1rem;">
+                                        <div style="display: flex; gap: 0.4rem; justify-content: center;">
+                                            <% if (s.is_hifz_class) { %>
+                                                <span style="color: #16a34a; font-weight: 600; font-size: 0.85rem;"><i class="bi bi-shield-check"></i> Hifz (No Fee)</span>
+                                            <% } else if (s.isPaid) { %>
+                                                <a href="/fees/receipt/<%= s.payObj.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
+                                                <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, <%= s.payObj.amount_paid %>, <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, <%= s.payObj.additional_fee || 0 %>, '<%= s.payObj.additional_fee_description || '' %>')"><i class="bi bi-pencil-fill"></i> Edit</button>
+                                            <% } else { %>
+                                                <button type="button" class="btn-primary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, 0, '')"><i class="bi bi-credit-card-fill"></i> Collect</button>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+        <% } %>
+    <% }) %>
+</div>
+
 <!-- Tab 1: Simple View Pane -->
-<div id="pane-simple">
+<div id="pane-simple" style="display: none;">
     <!-- Quick Statistics Grid -->
     <div class="kpi-grid" style="margin-bottom: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
         <div class="card kpi-card" style="padding: 1rem; cursor: pointer;" onclick="filterByStatus('all')" title="Click to show all students">
@@ -380,27 +574,40 @@
 
     // Tabs switching logic
     function switchTab(tabType) {
+        const recentBtn = document.getElementById('tab-recent-btn');
+        const classBtn = document.getElementById('tab-class-btn');
         const simpleBtn = document.getElementById('tab-simple-btn');
         const matrixBtn = document.getElementById('tab-matrix-btn');
+        
+        const recentPane = document.getElementById('pane-recent');
+        const classPane = document.getElementById('pane-class');
         const simplePane = document.getElementById('pane-simple');
         const matrixPane = document.getElementById('pane-matrix');
+        
         const filterViewInput = document.getElementById('filter-view-input');
 
-        if (tabType === 'simple') {
-            simpleBtn.classList.add('active');
-            matrixBtn.classList.remove('active');
-            simplePane.style.display = 'block';
-            matrixPane.style.display = 'none';
-            if (filterViewInput) filterViewInput.value = 'simple';
-            localStorage.setItem('fees_ledger_view', 'simple');
-        } else {
+        // Reset all
+        [recentBtn, classBtn, simpleBtn, matrixBtn].forEach(b => { if(b) b.classList.remove('active'); });
+        [recentPane, classPane, simplePane, matrixPane].forEach(p => { if(p) p.style.display = 'none'; });
+
+        if (tabType === 'recent' && recentBtn) {
+            recentBtn.classList.add('active');
+            recentPane.style.display = 'block';
+        } else if (tabType === 'class' && classBtn) {
+            classBtn.classList.add('active');
+            classPane.style.display = 'block';
+        } else if (tabType === 'matrix' && matrixBtn) {
             matrixBtn.classList.add('active');
-            simpleBtn.classList.remove('active');
             matrixPane.style.display = 'block';
-            simplePane.style.display = 'none';
-            if (filterViewInput) filterViewInput.value = 'matrix';
-            localStorage.setItem('fees_ledger_view', 'matrix');
+        } else {
+            // default to simple
+            if(simpleBtn) simpleBtn.classList.add('active');
+            if(simplePane) simplePane.style.display = 'block';
+            tabType = 'simple';
         }
+        
+        if (filterViewInput) filterViewInput.value = tabType;
+        localStorage.setItem('fees_ledger_view', tabType);
     }
 
     // Quick filter check for defaulters
@@ -454,7 +661,10 @@
 
     // Restore tab preference and checkbox state on load
     document.addEventListener('DOMContentLoaded', () => {
-        const savedView = localStorage.getItem('fees_ledger_view') || 'simple';
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlView = urlParams.get('view');
+        let savedView = urlView || localStorage.getItem('fees_ledger_view') || 'recent';
+        
         switchTab(savedView);
 
         const showDefaultersOnly = localStorage.getItem('fees_ledger_show_defaulters') === 'true';
