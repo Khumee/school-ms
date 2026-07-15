@@ -55,19 +55,27 @@
         }
         
         const payObj = paymentMap[s.id] && paymentMap[s.id][activeMonthNum];
-        const isPaid = payObj && payObj.amount_paid > 0;
+        const madePayment = payObj && payObj.amount_paid > 0;
+        const expectedFee = s.is_hifz_class ? 0 : (parseFloat(s.default_monthly_fee || 0) - parseFloat(s.custom_monthly_fee || 0));
+        const isFullWaiver = !s.is_hifz_class && expectedFee <= 0 && parseFloat(s.default_monthly_fee || 0) > 0;
+        
+        const isPaid = madePayment || isFullWaiver || s.is_hifz_class;
         
         classGroups[cId].totalStudents++;
-        if (isPaid) {
+        if (madePayment) {
             classGroups[cId].paidCount++;
             classGroups[cId].totalCollected += parseFloat(payObj.amount_paid);
+        } else if (isFullWaiver || s.is_hifz_class) {
+            classGroups[cId].paidCount++; // Count them as paid so they don't break KPI
         }
         
         classGroups[cId].students.push({
             ...s,
             isPaid,
+            isFullWaiver,
+            madePayment,
             payObj,
-            expectedFee: s.is_hifz_class ? 0 : (parseFloat(s.default_monthly_fee || 0) - parseFloat(s.custom_monthly_fee || 0))
+            expectedFee
         });
     });
 
@@ -323,10 +331,12 @@
                                     <td style="text-align: left; font-weight: 500;"><a href="/students/view/<%= s.id %>" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;"><%= s.name %></a></td>
                                     <td style="text-align: right; font-weight: 600;">PKR <%= s.expectedFee.toLocaleString() %></td>
                                     <td style="text-align: right; font-weight: 600; color: #16a34a;">
-                                        <%= s.isPaid ? 'PKR ' + s.payObj.amount_paid.toLocaleString() : '-' %>
+                                        <%= s.madePayment ? 'PKR ' + s.payObj.amount_paid.toLocaleString() : '-' %>
                                     </td>
                                     <td>
-                                        <% if (s.isPaid) { %>
+                                        <% if (s.isFullWaiver && !s.madePayment) { %>
+                                            <span class="status-cell status-paid" style="background-color: #f3f4f6; color: #4b5563;"><i class="bi bi-gift-fill"></i> FULL WAIVER</span>
+                                        <% } else if (s.isPaid) { %>
                                             <span class="status-cell status-paid"><i class="bi bi-check-circle-fill"></i> PAID</span>
                                         <% } else { %>
                                             <span class="status-cell status-unpaid"><i class="bi bi-exclamation-triangle-fill"></i> DEFAULTER</span>
@@ -336,9 +346,11 @@
                                         <div style="display: flex; gap: 0.4rem; justify-content: center;">
                                             <% if (s.is_hifz_class) { %>
                                                 <span style="color: #16a34a; font-weight: 600; font-size: 0.85rem;"><i class="bi bi-shield-check"></i> Hifz (No Fee)</span>
-                                            <% } else if (s.isPaid) { %>
+                                            <% } else if (s.madePayment) { %>
                                                 <a href="/fees/receipt/<%= s.payObj.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
                                                 <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, <%= s.payObj.amount_paid %>, <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, <%= s.payObj.additional_fee || 0 %>, '<%= s.payObj.additional_fee_description || '' %>')"><i class="bi bi-pencil-fill"></i> Edit</button>
+                                            <% } else if (s.isFullWaiver) { %>
+                                                <button type="button" class="btn-secondary nav-btn" disabled style="opacity: 0.6; cursor: not-allowed;"><i class="bi bi-gift-fill"></i> Collect</button>
                                             <% } else { %>
                                                 <button type="button" class="btn-primary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, 0, '')"><i class="bi bi-credit-card-fill"></i> Collect</button>
                                             <% } %>
@@ -352,6 +364,13 @@
             </details>
         <% } %>
     <% }) %>
+    <% if (Object.values(classGroups).every(group => group.id === 'unassigned' || group.totalStudents === 0)) { %>
+        <div style="text-align: center; color: #64748b; padding: 3rem; background: #fff; border-radius: 8px; border: 1px solid var(--border);">
+            <i class="bi bi-inbox" style="font-size: 2.5rem; color: var(--border); margin-bottom: 1rem; display: block;"></i>
+            <h4>No Records Found</h4>
+            <p>No students match your current filter and search criteria.</p>
+        </div>
+    <% } %>
 </div>
 
 <!-- Tab 1: Simple View Pane -->
