@@ -138,7 +138,7 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
         }
         
         let queryStr = `
-            SELECT s.id, s.reg_no, s.name, s.custom_monthly_fee, s.has_concession, 
+            SELECT s.id, s.class_id, s.reg_no, s.name, s.custom_monthly_fee, s.has_concession, 
                    c.name as class_name, c.default_monthly_fee, c.is_hifz_class
             FROM students s
             LEFT JOIN classes c ON s.class_id = c.id
