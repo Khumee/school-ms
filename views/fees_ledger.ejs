@@ -350,7 +350,7 @@
                                                 <a href="/fees/receipt/<%= s.payObj.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
                                                 <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, <%= s.payObj.amount_paid %>, <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, <%= s.payObj.additional_fee || 0 %>, '<%= s.payObj.additional_fee_description || '' %>')"><i class="bi bi-pencil-fill"></i> Edit</button>
                                             <% } else if (s.isFullWaiver) { %>
-                                                <button type="button" class="btn-secondary nav-btn" disabled style="opacity: 0.6; cursor: not-allowed;"><i class="bi bi-gift-fill"></i> Collect</button>
+                                                <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, 0, '')"><i class="bi bi-plus-circle"></i> Add Fee</button>
                                             <% } else { %>
                                                 <button type="button" class="btn-primary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, 0, '')"><i class="bi bi-credit-card-fill"></i> Collect</button>
                                             <% } %>
