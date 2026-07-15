@@ -272,7 +272,7 @@
     </div>
 
     <% Object.values(classGroups).forEach((group, index) => { %>
-        <% if (group.totalStudents > 0) { %>
+        <% if (group.id !== 'unassigned' && group.totalStudents > 0) { %>
             <% 
                 // Determine if expanded
                 let isExpanded = false;

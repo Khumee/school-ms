@@ -122,10 +122,20 @@ async function getTopDefaulters(tenantId, activeYear, limit = 10, offset = 0) {
 router.get('/fees/ledger', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        const { classId, search, month, year } = req.query;
+        let { classId, search, month, year } = req.query;
         
         const activeYear = year ? parseInt(year) : new Date().getFullYear();
         const activeMonth = month ? parseInt(month) : (new Date().getMonth() + 1);
+        
+        // Fetch classes for dropdown and defaults
+        const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
+
+        if (classId === undefined) {
+            const nursery = classes.find(c => c.name.toLowerCase().includes('nursery'));
+            if (nursery) {
+                classId = nursery.id.toString();
+            }
+        }
         
         let queryStr = `
             SELECT s.id, s.reg_no, s.name, s.custom_monthly_fee, s.has_concession, 
@@ -170,7 +180,7 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
             };
         });
         
-        const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
+        
         
         // Fetch recent payments for the default view
         const [recentPayments] = await db.execute(
