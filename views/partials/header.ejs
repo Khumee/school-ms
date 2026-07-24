@@ -24,7 +24,10 @@
                     <% } %>
                     <span class="brand-name"><%= tenant ? tenant.school_name : 'School Portal' %></span>
                 </a>
-                <ul class="nav-links">
+                <button class="mobile-menu-btn" onclick="document.getElementById('main-nav-links').classList.toggle('active')">
+                    <i class="bi bi-list"></i>
+                </button>
+                <ul class="nav-links" id="main-nav-links">
                     <li><a href="/"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
                     <li class="dropdown">
                         <a href="#" class="dropbtn"><i class="bi bi-mortarboard-fill"></i> Students</a>
