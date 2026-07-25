@@ -46,7 +46,7 @@ router.get('/', isAuthenticated, async (req, res) => {
         const monthsData = [];
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         
-        let carryForward = 213069.00; // Historic carry-forward from Excel
+        let carryForward = req.tenant.subdomain === 'mis' ? 213069.00 : 0.00; // Historic carry-forward from Excel for legacy school only
         let totalIncomeAllTime = 0;
         let totalExpenseAllTime = 0;
 
