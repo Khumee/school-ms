@@ -150,12 +150,27 @@ router.post('/admin/tenants/:id', isSuperAdmin, (req, res) => {
 
 // POST Delete Tenant
 router.post('/admin/tenants/:id/delete', isSuperAdmin, async (req, res) => {
+    const tenantId = req.params.id;
+    const connection = await db.pool.getConnection();
     try {
-        await db.pool.execute('DELETE FROM tenants WHERE id = ?', [req.params.id]);
+        await connection.beginTransaction();
+        
+        // Manually delete dependent records that have ON DELETE RESTRICT to classes/sessions
+        await connection.execute('DELETE FROM hifz_enrollment WHERE tenant_id = ?', [tenantId]);
+        await connection.execute('DELETE FROM student_enrollments WHERE tenant_id = ?', [tenantId]);
+        await connection.execute('DELETE FROM periods WHERE tenant_id = ?', [tenantId]);
+        
+        // Now safely delete the tenant and cascade the rest
+        await connection.execute('DELETE FROM tenants WHERE id = ?', [tenantId]);
+        
+        await connection.commit();
         res.redirect('/admin?success=Tenant deleted successfully');
     } catch (err) {
+        await connection.rollback();
         console.error('Error deleting tenant:', err);
         res.redirect('/admin?success=Error deleting tenant');
+    } finally {
+        connection.release();
     }
 });
 
