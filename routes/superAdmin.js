@@ -61,6 +61,56 @@ router.get('/admin', isSuperAdmin, async (req, res) => {
     res.render('super_admin/dashboard', { tenants, username: req.session.masterAdminUsername, success: req.query.success || null });
 });
 
+// GET Add Tenant Form
+router.get('/admin/tenants/new', isSuperAdmin, (req, res) => {
+    res.render('super_admin/tenant_add', { error: null });
+});
+
+// POST Create Tenant (info + optional logo upload)
+router.post('/admin/tenants/new', isSuperAdmin, (req, res) => {
+    upload.single('logo')(req, res, async (err) => {
+        if (err) {
+            return res.render('super_admin/tenant_add', { error: 'Logo upload failed: ' + err.message });
+        }
+
+        const { name, school_name, subdomain, custom_domain, status, primary_color, secondary_color, admin_username, admin_password } = req.body;
+        const enable_donations_module = req.body.enable_donations_module === 'on' ? 1 : 0;
+        const enable_hifz_module      = req.body.enable_hifz_module === 'on' ? 1 : 0;
+        const logo_url = req.file ? `/images/logos/${req.file.filename}` : '/images/default_logo.png';
+
+        try {
+            const connection = await db.pool.getConnection();
+            try {
+                await connection.beginTransaction();
+
+                const [result] = await connection.execute(
+                    `INSERT INTO tenants (name, school_name, subdomain, custom_domain, status, primary_color, secondary_color, enable_donations_module, enable_hifz_module, logo_url) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [name, school_name, subdomain, custom_domain || null, status, primary_color, secondary_color, enable_donations_module, enable_hifz_module, logo_url]
+                );
+                const tenantId = result.insertId;
+
+                const hashedPwd = await bcrypt.hash(admin_password, 10);
+                await connection.execute(
+                    `INSERT INTO users (tenant_id, username, password, role) VALUES (?, ?, ?, 'admin')`,
+                    [tenantId, admin_username, hashedPwd]
+                );
+
+                await connection.commit();
+                res.redirect('/admin?success=Tenant created successfully');
+            } catch (innerErr) {
+                await connection.rollback();
+                throw innerErr;
+            } finally {
+                connection.release();
+            }
+        } catch (dbErr) {
+            console.error('Error creating tenant:', dbErr);
+            res.render('super_admin/tenant_add', { error: 'Database error: ' + dbErr.message });
+        }
+    });
+});
+
 // GET Edit Tenant Form
 router.get('/admin/tenants/:id/edit', isSuperAdmin, async (req, res) => {
     const [rows] = await db.pool.execute('SELECT * FROM tenants WHERE id = ?', [req.params.id]);
@@ -98,5 +148,15 @@ router.post('/admin/tenants/:id', isSuperAdmin, (req, res) => {
     });
 });
 
+// POST Delete Tenant
+router.post('/admin/tenants/:id/delete', isSuperAdmin, async (req, res) => {
+    try {
+        await db.pool.execute('DELETE FROM tenants WHERE id = ?', [req.params.id]);
+        res.redirect('/admin?success=Tenant deleted successfully');
+    } catch (err) {
+        console.error('Error deleting tenant:', err);
+        res.redirect('/admin?success=Error deleting tenant');
+    }
+});
 
 module.exports = router;

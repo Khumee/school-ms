@@ -219,7 +219,19 @@
                     cellTitle = `Para ${p.para}: Test Pending`;
                 }
             %>
-                <div class="heatmap-cell <%= p.status %> <%= isMilestone ? 'milestone-cell' : '' %>" title="<%= cellTitle %>">
+                <div class="heatmap-cell <%= p.status %> <%= isMilestone ? 'milestone-cell' : '' %>" title="<%= cellTitle %>"
+                    <% if (p.test) { %>
+                    onclick='showParaModal(<%- JSON.stringify({
+                        para_no: p.test.para_no, 
+                        completed_date: p.test.completed_date, 
+                        test_date: p.test.test_date, 
+                        test_result: p.test.test_result, 
+                        test_evaluator_name: p.test.test_evaluator_name, 
+                        test_notes: p.test.test_notes, 
+                        evaluated_by_self: p.test.evaluated_by_self
+                    }).replace(/'/g, "\\'") %>)' style="cursor: pointer;"
+                    <% } %>
+                >
                     <span style="font-size: 0.65rem; opacity: 0.8; font-weight: 700;"><%= isMilestone ? '★ Para' : 'P.' %></span>
                     <span style="font-size: 1.1rem;"><%= p.para %></span>
                     <% if (p.status === 'completed' && p.test && p.test.completed_date) { %>
@@ -364,5 +376,65 @@
         <% } %>
     </div>
 </div>
+
+<!-- Para Test Details Modal -->
+<div id="paraTestModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+    <div class="modal-content" style="background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;">
+            <h3 id="modalParaTitle" style="margin: 0; color: #0f172a;"><i class="bi bi-award"></i> Para Test Details</h3>
+            <span class="close" onclick="closeParaModal()" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        </div>
+        <div id="modalParaContent" style="line-height: 1.6; color: #334155;">
+            <!-- Content will be injected here -->
+        </div>
+        <div style="margin-top: 20px; text-align: right;">
+            <button onclick="closeParaModal()" class="btn-secondary">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showParaModal(testData) {
+        document.getElementById('modalParaTitle').innerText = 'Para ' + testData.para_no + ' Test Details';
+        
+        const completedDate = testData.completed_date ? new Date(testData.completed_date).toLocaleDateString() : 'N/A';
+        const testDate = testData.test_date ? new Date(testData.test_date).toLocaleDateString() : 'Pending';
+        const result = (testData.test_result || '').toUpperCase();
+        
+        let resultBadge = '';
+        if (result === 'PASS' || result === 'PASSED') {
+            resultBadge = '<span class="status-cell status-paid"><i class="bi bi-check-circle-fill"></i> PASSED</span>';
+        } else if (result === 'FAIL' || result === 'FAILED') {
+            resultBadge = '<span class="status-cell status-unpaid"><i class="bi bi-x-circle-fill"></i> FAILED</span>';
+        } else {
+            resultBadge = '<span class="status-cell" style="background-color: #fef3c7; color: #d97706;"><i class="bi bi-clock"></i> PENDING</span>';
+        }
+
+        const html = `
+            <table style="width: 100%; font-size: 0.95rem;">
+                <tr style="height: 2.5rem; border-bottom: 1px solid #f1f5f9;"><td style="font-weight: 600; width: 40%;">Result:</td><td>${resultBadge}</td></tr>
+                <tr style="height: 2.5rem; border-bottom: 1px solid #f1f5f9;"><td style="font-weight: 600;">Completed Date:</td><td>${completedDate}</td></tr>
+                <tr style="height: 2.5rem; border-bottom: 1px solid #f1f5f9;"><td style="font-weight: 600;">Test Date:</td><td>${testDate}</td></tr>
+                <tr style="height: 2.5rem; border-bottom: 1px solid #f1f5f9;"><td style="font-weight: 600;">Evaluator:</td><td>${testData.test_evaluator_name || '-'}</td></tr>
+                <tr style="height: 2.5rem; border-bottom: 1px solid #f1f5f9;"><td style="font-weight: 600;">Evaluated By:</td><td>${testData.evaluated_by_self ? 'Self (Class Teacher)' : 'External Qari/Nazim'}</td></tr>
+                <tr><td style="font-weight: 600; padding-top: 0.5rem; vertical-align: top;">Notes:</td><td style="padding-top: 0.5rem;">${testData.test_notes || '-'}</td></tr>
+            </table>
+        `;
+        document.getElementById('modalParaContent').innerHTML = html;
+        document.getElementById('paraTestModal').style.display = 'block';
+    }
+
+    function closeParaModal() {
+        document.getElementById('paraTestModal').style.display = 'none';
+    }
+
+    // Close if clicked outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('paraTestModal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+</script>
 
 <%- include('partials/footer') %>

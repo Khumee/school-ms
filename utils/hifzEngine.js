@@ -187,7 +187,7 @@ function computeStreak(recentEntries) {
     let streak = 0;
     for (const e of recentEntries) {
         if (e.is_absent) break;
-        if (e.sabaq_status === 'recited' && ['good', 'excellent'].includes(e.sabaq_quality)) {
+        if (e.sabaq_status === 'recited') {
             streak++;
         } else {
             break;

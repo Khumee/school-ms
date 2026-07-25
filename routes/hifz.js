@@ -89,19 +89,24 @@ async function updateStudentKhatamPrediction(tenantId, studentId) {
 
     // Get total lines memorized so far
     const [enrollments] = await db.execute(
-        `SELECT total_lines_memorized FROM hifz_enrollment WHERE tenant_id = ? AND student_id = ?`,
+        `SELECT total_lines_memorized, current_para FROM hifz_enrollment WHERE tenant_id = ? AND student_id = ?`,
         [tenantId, studentId]
     );
     if (enrollments.length === 0) return;
-    const totalMemorized = enrollments[0].total_lines_memorized || 0;
+    let totalMemorized = enrollments[0].total_lines_memorized || 0;
+    
+    // Approximate if 0
+    if (totalMemorized === 0 && enrollments[0].current_para > 1) {
+        totalMemorized = (enrollments[0].current_para - 1) * 300;
+    }
 
     const predicted = computeKhatamPrediction(totalMemorized, avgLines30d);
 
     await db.execute(
         `UPDATE hifz_enrollment 
-         SET avg_lines_30d = ?, predicted_khatam_date = ?, updated_at = NOW() 
+         SET avg_lines_30d = ?, predicted_khatam_date = ?, total_lines_memorized = ?, updated_at = NOW() 
          WHERE tenant_id = ? AND student_id = ?`,
-        [avgLines30d, predicted, tenantId, studentId]
+        [avgLines30d, predicted, totalMemorized, tenantId, studentId]
     );
 }
 
@@ -459,6 +464,12 @@ router.get('/hifz/student/:studentId', isAuthenticated, async (req, res) => {
         const studentId = parseInt(req.params.studentId);
         const data = await getStudentHifzData(tenantId, studentId);
         if (!data) return res.status(404).send('Student not enrolled in Hifz.');
+        
+        if (!data.enrollment.predicted_khatam_date) {
+            await updateStudentKhatamPrediction(tenantId, studentId);
+            const updatedData = await getStudentHifzData(tenantId, studentId);
+            Object.assign(data, updatedData);
+        }
 
         // For JSON API (mobile app)
         if (req.headers.accept?.includes('application/json') || req.query.format === 'json') {

@@ -33,6 +33,7 @@
     <main class="main-content">
         <div class="section-header">
             <h1 class="section-title"><i class="bi bi-buildings"></i> Tenants</h1>
+            <a href="/admin/tenants/new" class="btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;"><i class="bi bi-plus-circle"></i> Add Tenant</a>
         </div>
 
         <% if (success) { %>
@@ -66,7 +67,12 @@
                                 </span>
                             </td>
                             <td><%= new Date(t.created_at).toLocaleDateString() %></td>
-                            <td><a href="/admin/tenants/<%= t.id %>/edit" class="btn-secondary nav-btn"><i class="bi bi-pencil-square"></i> Edit</a></td>
+                            <td style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                <a href="/admin/tenants/<%= t.id %>/edit" class="btn-secondary nav-btn"><i class="bi bi-pencil-square"></i> Edit</a>
+                                <form action="/admin/tenants/<%= t.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to completely DELETE this tenant? This will permanently wipe all users, students, and financial data for this school. This action CANNOT be undone.');">
+                                    <button type="submit" class="btn-danger nav-btn"><i class="bi bi-trash"></i> Delete</button>
+                                </form>
+                            </td>
                         </tr>
                     <% }) %>
                 </tbody>

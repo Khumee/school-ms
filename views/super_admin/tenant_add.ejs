@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Tenant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #4338ca;
+        }
+    </style>
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-container">
+            <a href="/admin" class="brand-link">
+                <span class="login-icon" style="width: 36px; height: 36px; font-size: 1.1rem; margin: 0; border-radius: 9px; background: rgb(255 255 255 / 0.18); box-shadow: none;"><i class="bi bi-buildings-fill"></i></span>
+                <span class="brand-name">Super Admin Console</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="/admin"><i class="bi bi-arrow-left"></i> Back to Tenants</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="section-header">
+            <h1 class="section-title"><i class="bi bi-plus-circle-fill"></i> Add New Tenant</h1>
+        </div>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> <%= error %></div>
+        <% } %>
+
+        <div class="card" style="padding: 1.5rem; max-width: 640px;">
+            <form action="/admin/tenants/new" method="POST" enctype="multipart/form-data">
+                
+                <h3 style="font-size: 1rem; font-weight: 600; color: var(--primary-color); margin-bottom: 1rem;">
+                    <i class="bi bi-building"></i> School Information
+                </h3>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="name">Internal Name (e.g. MySchool)</label>
+                        <input type="text" id="name" name="name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="school_name">Display School Name</label>
+                        <input type="text" id="school_name" name="school_name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="subdomain">Subdomain (e.g. myschool)</label>
+                        <input type="text" id="subdomain" name="subdomain" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="custom_domain">Custom Domain (optional)</label>
+                        <input type="text" id="custom_domain" name="custom_domain" class="form-control" placeholder="e.g. www.myschool.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status" name="status" class="form-control">
+                            <option value="active" selected>Active</option>
+                            <option value="suspended">Suspended</option>
+                            <option value="maintenance">Maintenance</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="primary_color">Primary Color</label>
+                        <input type="color" id="primary_color" name="primary_color" class="form-control" value="#3b82f6" style="height: 42px;">
+                    </div>
+                    <div class="form-group">
+                        <label for="secondary_color">Secondary Color</label>
+                        <input type="color" id="secondary_color" name="secondary_color" class="form-control" value="#1d4ed8" style="height: 42px;">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="logo">School Logo (PNG/JPG/SVG/WEBP, max 2MB)</label>
+                        <input type="file" id="logo" name="logo" class="form-control" accept=".png,.jpg,.jpeg,.svg,.webp">
+                    </div>
+                </div>
+
+                <!-- Default Admin User -->
+                <div style="margin-top: 2rem; border-top: 1px solid #e6e9f0; padding-top: 1.5rem;">
+                    <h3 style="font-size: 1rem; font-weight: 600; color: var(--primary-color); margin-bottom: 1rem;">
+                        <i class="bi bi-person-badge-fill"></i> Initial Admin User
+                    </h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="admin_username">Admin Username</label>
+                            <input type="text" id="admin_username" name="admin_username" class="form-control" placeholder="admin" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="admin_password">Admin Password</label>
+                            <input type="password" id="admin_password" name="admin_password" class="form-control" placeholder="secret123" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Optional Modules -->
+                <div style="margin-top: 2rem; border-top: 1px solid #e6e9f0; padding-top: 1.5rem;">
+                    <h3 style="font-size: 1rem; font-weight: 600; color: var(--primary-color); margin-bottom: 1rem;">
+                        <i class="bi bi-puzzle-fill"></i> Optional Modules
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+
+                        <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; border: 1px solid #e6e9f0; border-radius: 10px; cursor: pointer; background: #f8fafc;">
+                            <input type="checkbox" name="enable_donations_module" id="enable_donations_module"
+                                   style="width: 18px; height: 18px; margin-top: 2px; accent-color: var(--primary-color);">
+                            <div>
+                                <div style="font-weight: 600; color: #1e293b;"><i class="bi bi-heart-fill" style="color: #e11d48;"></i> Donations Module</div>
+                                <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Track donors, monthly commitments, fund categories and donation receipts.</div>
+                            </div>
+                        </label>
+
+                        <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; border: 1px solid #e6e9f0; border-radius: 10px; cursor: pointer; background: #f8fafc;">
+                            <input type="checkbox" name="enable_hifz_module" id="enable_hifz_module"
+                                   style="width: 18px; height: 18px; margin-top: 2px; accent-color: var(--primary-color);">
+                            <div>
+                                <div style="font-weight: 600; color: #1e293b;"><i class="bi bi-book-half" style="color: #059669;"></i> Hifz Diary Module</div>
+                                <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">Daily Sabaq / Sabqi / Manzil tracking, para tests, alarm system, and student progress reports.</div>
+                            </div>
+                        </label>
+
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" style="margin-top: 1.5rem;"><i class="bi bi-plus-circle-fill"></i> Create Tenant</button>
+            </form>
+        </div>
+    </main>
+</body>
+</html>
