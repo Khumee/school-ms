@@ -69,9 +69,7 @@
                             <td><%= new Date(t.created_at).toLocaleDateString() %></td>
                             <td style="display: flex; gap: 0.5rem; justify-content: flex-end;">
                                 <a href="/admin/tenants/<%= t.id %>/edit" class="btn-secondary nav-btn"><i class="bi bi-pencil-square"></i> Edit</a>
-                                <form action="/admin/tenants/<%= t.id %>/delete" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to completely DELETE this tenant? This will permanently wipe all users, students, and financial data for this school. This action CANNOT be undone.');">
-                                    <button type="submit" class="btn-danger nav-btn"><i class="bi bi-trash"></i> Delete</button>
-                                </form>
+                                <button type="button" class="btn-danger nav-btn" onclick="openDeleteModal('<%= t.id %>', '<%= t.subdomain %>')"><i class="bi bi-trash"></i> Delete</button>
                             </td>
                         </tr>
                     <% }) %>
@@ -79,5 +77,55 @@
             </table>
         </div>
     </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6);">
+        <div class="modal-content" style="background-color: #fff; margin: 10% auto; padding: 2rem; border-radius: 8px; max-width: 500px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h3 style="color: #dc2626; margin-top: 0; font-size: 1.25rem;"><i class="bi bi-exclamation-triangle-fill"></i> Danger Zone</h3>
+            <p style="color: #475569; line-height: 1.5; margin-bottom: 1.5rem; font-size: 0.95rem;">
+                You are about to permanently delete this tenant. This will wipe all users, students, and financial data. This action <strong>CANNOT</strong> be undone.
+            </p>
+            <p style="color: #0f172a; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                Please type <strong id="deleteConfirmTarget" style="user-select: none; color: #dc2626; padding: 0.1rem 0.4rem; background: #fee2e2; border-radius: 4px;"></strong> to confirm.
+            </p>
+            <form id="deleteForm" method="POST" action="">
+                <input type="text" id="deleteConfirmInput" class="form-control" autocomplete="off" oninput="validateDelete()" style="margin-bottom: 1.5rem;" required>
+                
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                    <button type="submit" id="deleteSubmitBtn" class="btn-danger" disabled>Delete this tenant</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentDeleteSubdomain = '';
+
+        function openDeleteModal(tenantId, subdomain) {
+            currentDeleteSubdomain = subdomain;
+            document.getElementById('deleteConfirmTarget').innerText = subdomain;
+            document.getElementById('deleteForm').action = '/admin/tenants/' + tenantId + '/delete';
+            document.getElementById('deleteConfirmInput').value = '';
+            document.getElementById('deleteSubmitBtn').disabled = true;
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        function validateDelete() {
+            const input = document.getElementById('deleteConfirmInput').value;
+            document.getElementById('deleteSubmitBtn').disabled = (input !== currentDeleteSubdomain);
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('deleteModal');
+            if (event.target == modal) {
+                closeDeleteModal();
+            }
+        }
+    </script>
 </body>
 </html>
