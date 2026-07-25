@@ -58,7 +58,12 @@ router.get('/admin/logout', (req, res) => {
 // GET Tenant Dashboard (list)
 router.get('/admin', isSuperAdmin, async (req, res) => {
     const [tenants] = await db.pool.execute('SELECT * FROM tenants ORDER BY created_at DESC');
-    res.render('super_admin/dashboard', { tenants, username: req.session.masterAdminUsername, success: req.query.success || null });
+    res.render('super_admin/dashboard', { 
+        tenants, 
+        username: req.session.masterAdminUsername, 
+        success: req.query.success || null,
+        error: req.query.error || null
+    });
 });
 
 // GET Add Tenant Form
@@ -168,7 +173,7 @@ router.post('/admin/tenants/:id/delete', isSuperAdmin, async (req, res) => {
     } catch (err) {
         await connection.rollback();
         console.error('Error deleting tenant:', err);
-        res.redirect('/admin?success=Error deleting tenant');
+        res.redirect('/admin?error=' + encodeURIComponent('Deletion failed: ' + err.message));
     } finally {
         connection.release();
     }
