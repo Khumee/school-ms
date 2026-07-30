@@ -38,6 +38,9 @@ router.get('/donations', isAuthenticated, async (req, res) => {
         donorsQuery += ' ORDER BY d.name ASC';
         const [donors] = await db.execute(donorsQuery, donorsParams);
 
+        // Fetch donor_references for this tenant
+        const [donorReferences] = await db.execute('SELECT * FROM donor_references WHERE tenant_id = ? ORDER BY name ASC', [tenantId]);
+
         // Fetch top 5 highest paying donors
         const [topDonors] = await db.execute(
             `SELECT d.id, d.name, COALESCE(SUM(dn.amount), 0) as total_amount 
@@ -116,6 +119,7 @@ router.get('/donations', isAuthenticated, async (req, res) => {
             totalDonationsCount,
             fundLabels: FUND_LABELS,
             topDonors,
+            donorReferences,
             searchDonor: searchDonor || ''
         });
     } catch (err) {
@@ -342,6 +346,41 @@ router.get('/donations/receipt/:id', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send('Error generating donation receipt.');
+    }
+});
+
+// POST /donations/references/add - add a reference name
+router.post('/donations/references/add', isAuthenticated, async (req, res) => {
+    try {
+        const { name } = req.body;
+        await db.execute('INSERT IGNORE INTO donor_references (tenant_id, name) VALUES (?, ?)', [req.tenant.id, name]);
+        res.redirect('/donations');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error adding reference.');
+    }
+});
+
+// POST /donations/references/edit/:id - edit a reference name
+router.post('/donations/references/edit/:id', isAuthenticated, async (req, res) => {
+    try {
+        const { name } = req.body;
+        await db.execute('UPDATE donor_references SET name = ? WHERE id = ? AND tenant_id = ?', [name, req.params.id, req.tenant.id]);
+        res.redirect('/donations');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error updating reference.');
+    }
+});
+
+// POST /donations/references/delete/:id - delete a reference name
+router.post('/donations/references/delete/:id', isAuthenticated, async (req, res) => {
+    try {
+        await db.execute('DELETE FROM donor_references WHERE id = ? AND tenant_id = ?', [req.params.id, req.tenant.id]);
+        res.redirect('/donations');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error deleting reference.');
     }
 });
 

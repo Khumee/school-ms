@@ -56,6 +56,33 @@ router.post('/expenses/add', isAuthenticated, async (req, res) => {
     }
 });
 
+// POST /expenses/edit/:id - update expense
+router.post('/expenses/edit/:id', isAuthenticated, async (req, res) => {
+    const { date, item, amount, category, description } = req.body;
+    try {
+        await db.execute(
+            `UPDATE expenses SET date = ?, item = ?, amount = ?, category = ?, description = ?
+             WHERE id = ? AND tenant_id = ?`,
+            [date, item, parseFloat(amount), category || 'other', description || null, req.params.id, req.tenant.id]
+        );
+        res.redirect('/expenses');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error updating expense.');
+    }
+});
+
+// POST /expenses/delete/:id - delete expense
+router.post('/expenses/delete/:id', isAuthenticated, async (req, res) => {
+    try {
+        await db.execute('DELETE FROM expenses WHERE id = ? AND tenant_id = ?', [req.params.id, req.tenant.id]);
+        res.redirect('/expenses');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error deleting expense.');
+    }
+});
+
 // GET /salaries - list payroll
 router.get('/salaries', isAuthenticated, async (req, res) => {
     try {

@@ -69,11 +69,11 @@
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                     <select id="referredBy" name="referred_by" class="form-control">
                         <option value="">-- None (Direct) --</option>
-                        <option value="Faheem Zafar">Faheem Zafar</option>
-                        <option value="Kamal Muhammad">Kamal Muhammad</option>
-                        <option value="Khurram Shahzad">Khurram Shahzad</option>
+                        <% donorReferences.forEach(ref => { %>
+                            <option value="<%= ref.name %>"><%= ref.name %></option>
+                        <% }) %>
                     </select>
-                    <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewReferredOption('referredBy')"><i class="bi bi-plus-lg"></i></button>
+                    <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="openManageReferencesModal()"><i class="bi bi-gear-fill"></i></button>
                 </div>
             </div>
             <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
@@ -97,11 +97,11 @@
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                     <select id="preferred_member" name="preferred_member" class="form-control">
                         <option value="">-- Select Member --</option>
-                        <option value="Faheem Zafar">Faheem Zafar</option>
-                        <option value="Kamal Muhammad">Kamal Muhammad</option>
-                        <option value="Khurram Shahzad">Khurram Shahzad</option>
+                        <% donorReferences.forEach(ref => { %>
+                            <option value="<%= ref.name %>"><%= ref.name %></option>
+                        <% }) %>
                     </select>
-                    <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewDirectOption('preferred_member')"><i class="bi bi-plus-lg"></i></button>
+                    <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="openManageReferencesModal()"><i class="bi bi-gear-fill"></i></button>
                 </div>
             </div>
             <div class="form-checkbox" style="margin-bottom: 1rem; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 0.5rem;">
@@ -186,11 +186,11 @@
                     <label for="direct_ref">Member Account Option *</label>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <select id="direct_ref" name="direct_ref" class="form-control">
-                            <option value="Faheem Zafar">Faheem Zafar</option>
-                            <option value="Kamal Muhammad">Kamal Muhammad</option>
-                            <option value="Khurram Shahzad">Khurram Shahzad</option>
+                            <% donorReferences.forEach(ref => { %>
+                                <option value="<%= ref.name %>"><%= ref.name %></option>
+                            <% }) %>
                         </select>
-                        <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewDirectOption('direct_ref')"><i class="bi bi-plus-lg"></i></button>
+                        <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="openManageReferencesModal()"><i class="bi bi-gear-fill"></i></button>
                     </div>
                 </div>
             </div>
@@ -391,11 +391,11 @@
             <label>Member Account Option *</label>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <select id="edit_direct_ref" name="direct_ref" class="form-control">
-                    <option value="Faheem Zafar">Faheem Zafar</option>
-                    <option value="Kamal Muhammad">Kamal Muhammad</option>
-                    <option value="Khurram Shahzad">Khurram Shahzad</option>
+                    <% donorReferences.forEach(ref => { %>
+                        <option value="<%= ref.name %>"><%= ref.name %></option>
+                    <% }) %>
                 </select>
-                <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewDirectOption('edit_direct_ref')"><i class="bi bi-plus-lg"></i></button>
+                <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="openManageReferencesModal()"><i class="bi bi-gear-fill"></i></button>
             </div>
         </div>
         <div class="form-group" style="margin-bottom: 1rem;">
@@ -441,11 +441,11 @@
             <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <select id="editDonorReferred" name="referred_by" class="form-control">
                     <option value="">-- None (Direct) --</option>
-                    <option value="Faheem Zafar">Faheem Zafar</option>
-                    <option value="Kamal Muhammad">Kamal Muhammad</option>
-                    <option value="Khurram Shahzad">Khurram Shahzad</option>
+                    <% donorReferences.forEach(ref => { %>
+                        <option value="<%= ref.name %>"><%= ref.name %></option>
+                    <% }) %>
                 </select>
-                <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewReferredOption('editDonorReferred')"><i class="bi bi-plus-lg"></i></button>
+                <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="openManageReferencesModal()"><i class="bi bi-gear-fill"></i></button>
             </div>
         </div>
         <div class="form-group" style="margin-bottom: 1rem;">
@@ -467,11 +467,11 @@
             <div style="display: flex; gap: 0.5rem; align-items: center;">
                 <select id="editDonorPreferredMember" name="preferred_member" class="form-control">
                     <option value="">-- Select Member --</option>
-                    <option value="Faheem Zafar">Faheem Zafar</option>
-                    <option value="Kamal Muhammad">Kamal Muhammad</option>
-                    <option value="Khurram Shahzad">Khurram Shahzad</option>
+                    <% donorReferences.forEach(ref => { %>
+                        <option value="<%= ref.name %>"><%= ref.name %></option>
+                    <% }) %>
                 </select>
-                <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="addNewDirectOption('editDonorPreferredMember')"><i class="bi bi-plus-lg"></i></button>
+                <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="openManageReferencesModal()"><i class="bi bi-gear-fill"></i></button>
             </div>
         </div>
         <div class="form-checkbox" style="margin-bottom: 1rem; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 0.5rem;">
@@ -489,6 +489,40 @@
     </form>
 </div>
 <div id="editDonorModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeEditDonorModal()"></div>
+
+<!-- Manage References Modal -->
+<div id="manageReferencesModal" class="card" style="display: none; max-width: 500px; margin: 1rem auto; position: fixed; top: 15%; left: 50%; transform: translate(-50%, 0); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="margin: 0;"><i class="bi bi-list-ul"></i> Manage References</h3>
+        <button type="button" class="btn-secondary" style="padding: 0.2rem 0.5rem;" onclick="closeManageReferencesModal()"><i class="bi bi-x-lg"></i></button>
+    </div>
+    
+    <form action="/donations/references/add" method="POST" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+        <input type="text" name="name" class="form-control" placeholder="New reference name..." required style="flex: 1;">
+        <button type="submit" class="btn-primary">Add</button>
+    </form>
+
+    <div style="max-height: 300px; overflow-y: auto;">
+        <% if (donorReferences && donorReferences.length > 0) { %>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                <% donorReferences.forEach(ref => { %>
+                    <li style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid #e2e8f0;">
+                        <span style="font-weight: 500;"><%= ref.name %></span>
+                        <div style="display: flex; gap: 0.4rem;">
+                            <button type="button" class="btn-secondary nav-btn" onclick="editReference(<%= ref.id %>, '<%= ref.name.replace(/'/g, "\\'") %>')"><i class="bi bi-pencil-square"></i></button>
+                            <form action="/donations/references/delete/<%= ref.id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this reference?')" style="margin:0;">
+                                <button type="submit" class="btn-danger nav-btn"><i class="bi bi-trash3-fill"></i></button>
+                            </form>
+                        </div>
+                    </li>
+                <% }) %>
+            </ul>
+        <% } else { %>
+            <p style="text-align: center; color: #64748b; padding: 1rem 0;">No references found.</p>
+        <% } %>
+    </div>
+</div>
+<div id="manageReferencesModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeManageReferencesModal()"></div>
 
 <script>
     function openEditModal(d) {
@@ -638,28 +672,31 @@
     }
 
     // Add new option to the direct select box dynamically
-    function addNewDirectOption(selectId) {
-        const name = prompt("Enter name of new direct option:");
-        if (name && name.trim() !== "") {
-            const selectEl = document.getElementById(selectId);
-            const opt = document.createElement("option");
-            opt.value = name.trim();
-            opt.textContent = name.trim();
-            selectEl.appendChild(opt);
-            selectEl.value = name.trim();
-        }
+    function openManageReferencesModal() {
+        document.getElementById('manageReferencesModal').style.display = 'block';
+        document.getElementById('manageReferencesModalOverlay').style.display = 'block';
+    }
+    
+    function closeManageReferencesModal() {
+        document.getElementById('manageReferencesModal').style.display = 'none';
+        document.getElementById('manageReferencesModalOverlay').style.display = 'none';
     }
 
-    // Add new option to the referred select box dynamically
-    function addNewReferredOption(selectId) {
-        const name = prompt("Enter name of new referrer:");
-        if (name && name.trim() !== "") {
-            const selectEl = document.getElementById(selectId);
-            const opt = document.createElement("option");
-            opt.value = name.trim();
-            opt.textContent = name.trim();
-            selectEl.appendChild(opt);
-            selectEl.value = name.trim();
+    function editReference(id, currentName) {
+        const newName = prompt('Enter new reference name:', currentName);
+        if (newName && newName.trim() !== '' && newName !== currentName) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/donations/references/edit/' + id;
+            
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'name';
+            input.value = newName.trim();
+            form.appendChild(input);
+            
+            document.body.appendChild(form);
+            form.submit();
         }
     }
 
