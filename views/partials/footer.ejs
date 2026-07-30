@@ -4,5 +4,43 @@
             <p>&copy; <%= new Date().getFullYear() %> <%= tenant ? tenant.name : 'School Management System' %>. All rights reserved.</p>
         </div>
     </footer>
+
+    <!-- Global Custom Confirm Dialog -->
+    <div id="globalConfirmModal" class="card" style="display: none; max-width: 400px; margin: 1rem auto; position: fixed; top: 20%; left: 50%; transform: translate(-50%, 0); z-index: 9999; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <h3 id="globalConfirmTitle" style="margin-bottom: 1rem; color: #b91c1c;"><i class="bi bi-exclamation-triangle-fill"></i> Confirm Action</h3>
+        <p id="globalConfirmMessage" style="margin-bottom: 1.5rem; color: #475569;">Are you sure?</p>
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button type="button" class="btn-secondary" onclick="closeGlobalConfirm()">Cancel</button>
+            <button type="button" class="btn-danger" id="globalConfirmBtn">Confirm</button>
+        </div>
+    </div>
+    <div id="globalConfirmOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 9998;" onclick="closeGlobalConfirm()"></div>
+
+    <script>
+        let globalConfirmCallback = null;
+        function customConfirm(message, callback) {
+            document.getElementById('globalConfirmMessage').innerText = message;
+            globalConfirmCallback = callback;
+            document.getElementById('globalConfirmModal').style.display = 'block';
+            document.getElementById('globalConfirmOverlay').style.display = 'block';
+        }
+        function closeGlobalConfirm() {
+            document.getElementById('globalConfirmModal').style.display = 'none';
+            document.getElementById('globalConfirmOverlay').style.display = 'none';
+            globalConfirmCallback = null;
+        }
+        document.getElementById('globalConfirmBtn').addEventListener('click', () => {
+            if (globalConfirmCallback) globalConfirmCallback();
+            closeGlobalConfirm();
+        });
+
+        function confirmSubmit(event, message) {
+            event.preventDefault();
+            const form = event.target;
+            customConfirm(message, () => {
+                form.submit();
+            });
+        }
+    </script>
 </body>
 </html>

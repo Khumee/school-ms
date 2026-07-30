@@ -98,7 +98,7 @@
                                 <td>
                                     <div style="display: flex; gap: 0.4rem;">
                                         <button type="button" class="btn-secondary nav-btn" onclick='openExpenseEditModal(<%- JSON.stringify({ id: e.id, date: new Date(e.date).toISOString().slice(0,10), item: e.item, amount: e.amount, category: e.category, description: e.description || "" }) %>)'><i class="bi bi-pencil-square"></i></button>
-                                        <form action="/expenses/delete/<%= e.id %>" method="POST" onsubmit="return confirm('Delete this expense record?')">
+                                        <form action="/expenses/delete/<%= e.id %>" method="POST" onsubmit="confirmSubmit(event, 'Delete this expense record?')">
                                             <button type="submit" class="btn-danger nav-btn"><i class="bi bi-trash3-fill"></i></button>
                                         </form>
                                     </div>
