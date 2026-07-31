@@ -258,7 +258,12 @@
             <div class="form-group">
                 <label for="year">Year</label>
                 <select name="year" id="year" class="form-control" onchange="this.form.submit()">
-                    <% [2024, 2025, 2026, 2027, 2028].forEach(y => { %>
+                    <% 
+                        const currentY = new Date().getFullYear();
+                        const yearsList = [];
+                        for(let y = 2024; y <= currentY; y++) yearsList.push(y);
+                        yearsList.forEach(y => { 
+                    %>
                         <option value="<%= y %>" <%= activeYear == y ? 'selected' : '' %>><%= y %></option>
                     <% }) %>
                 </select>
@@ -561,9 +566,12 @@
             <div class="form-group">
                 <label for="modalYear">For Year</label>
                 <select id="modalYear" name="year" class="form-control" onchange="updateModalFine()">
-                    <% [2024, 2025, 2026, 2027, 2028].forEach(y => { %>
+                    <% 
+                        const currY = new Date().getFullYear();
+                        for(let y = 2024; y <= currY; y++) { 
+                    %>
                         <option value="<%= y %>"><%= y %></option>
-                    <% }) %>
+                    <% } %>
                 </select>
             </div>
         </div>
