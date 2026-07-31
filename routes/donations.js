@@ -21,7 +21,7 @@ function monthKey(date) {
 router.get('/donations', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        const { searchDonor } = req.query;
+        const { searchDonor, memberFilter } = req.query;
 
         // Fetch all donors (filtered if searchDonor is provided)
         let donorsQuery = `
@@ -34,6 +34,11 @@ router.get('/donations', isAuthenticated, async (req, res) => {
         if (searchDonor) {
             donorsQuery += ' AND (d.name LIKE ? OR d.referred_by LIKE ?)';
             donorsParams.push(`%${searchDonor}%`, `%${searchDonor}%`);
+        }
+        if (memberFilter === '1') {
+            donorsQuery += ' AND d.monthly_commitment = 1';
+        } else if (memberFilter === '0') {
+            donorsQuery += ' AND d.monthly_commitment = 0';
         }
         donorsQuery += ' ORDER BY d.name ASC';
         const [donors] = await db.execute(donorsQuery, donorsParams);
@@ -120,7 +125,8 @@ router.get('/donations', isAuthenticated, async (req, res) => {
             fundLabels: FUND_LABELS,
             topDonors,
             donorReferences,
-            searchDonor: searchDonor || ''
+            searchDonor: searchDonor || '',
+            memberFilter: memberFilter || ''
         });
     } catch (err) {
         console.error(err);
@@ -132,7 +138,16 @@ router.get('/donations', isAuthenticated, async (req, res) => {
 router.get('/donations/matrix', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        const { search } = req.query;
+        let { search, months, referred_by, min_amount } = req.query;
+        
+        // Ensure months is an array
+        if (months && !Array.isArray(months)) {
+            months = [months];
+        }
+        if (!months) months = [];
+        
+        // Fetch donorReferences for the dropdown
+        const [donorReferences] = await db.execute('SELECT * FROM donor_references WHERE tenant_id = ? ORDER BY name ASC', [tenantId]);
 
         let donorQuery = 'SELECT * FROM donors WHERE tenant_id = ?';
         const params = [tenantId];
@@ -141,26 +156,57 @@ router.get('/donations/matrix', isAuthenticated, async (req, res) => {
             donorQuery += ' AND (name LIKE ? OR referred_by LIKE ?)';
             params.push(`%${search}%`, `%${search}%`);
         }
+        if (referred_by) {
+            donorQuery += ' AND referred_by = ?';
+            params.push(referred_by);
+        }
         donorQuery += ' ORDER BY name ASC';
 
-        const [donors] = await db.execute(donorQuery, params);
+        let [donors] = await db.execute(donorQuery, params);
 
-        // Fetch monthly donations for 2026
-        const [donations] = await db.execute(
-            'SELECT donor_id, MONTH(date) as month, SUM(amount) as total_amount FROM donations WHERE tenant_id = ? AND YEAR(date) = 2026 GROUP BY donor_id, MONTH(date)',
-            [tenantId]
-        );
+        // Fetch monthly donations for 2026 (or parameterize year later)
+        let donationsQuery = 'SELECT donor_id, MONTH(date) as month, SUM(amount) as total_amount FROM donations WHERE tenant_id = ? AND YEAR(date) = 2026';
+        let donParams = [tenantId];
+        
+        if (months.length > 0) {
+            const placeholders = months.map(() => '?').join(',');
+            donationsQuery += ` AND MONTH(date) IN (${placeholders})`;
+            donParams.push(...months);
+        }
+        
+        donationsQuery += ' GROUP BY donor_id, MONTH(date)';
+        
+        const [donations] = await db.execute(donationsQuery, donParams);
 
         // Map donations: donor_id -> { month: amount }
         const donationMap = {};
+        const donorTotals = {};
         donations.forEach(d => {
             if (!donationMap[d.donor_id]) {
                 donationMap[d.donor_id] = {};
+                donorTotals[d.donor_id] = 0;
             }
             donationMap[d.donor_id][d.month] = d.total_amount;
+            donorTotals[d.donor_id] += parseFloat(d.total_amount);
         });
+        
+        // Filter by min_amount if provided
+        if (min_amount) {
+            const minAmt = parseFloat(min_amount);
+            if (!isNaN(minAmt)) {
+                donors = donors.filter(d => (donorTotals[d.id] || 0) > minAmt);
+            }
+        }
 
-        res.render('donations_matrix', { donors, search, donationMap });
+        res.render('donations_matrix', { 
+            donors, 
+            search: search || '', 
+            donationMap,
+            donorReferences,
+            selectedMonths: months,
+            selectedReferredBy: referred_by || '',
+            minAmount: min_amount || ''
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading donations matrix.');

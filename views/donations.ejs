@@ -1,7 +1,11 @@
 <%- include('partials/header') %>
 
-<div class="section-header">
+<div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <h1 class="section-title"><i class="bi bi-heart-fill"></i> Donations Overview</h1>
+    <div style="display: flex; gap: 0.5rem;">
+        <button type="button" class="btn-primary" onclick="openNewDonationModal()"><i class="bi bi-plus-lg"></i> Record Donation</button>
+        <button type="button" class="btn-secondary" onclick="openNewDonorModal()"><i class="bi bi-person-plus-fill"></i> New Donor</button>
+    </div>
 </div>
 
 <div class="filter-bar" style="margin-bottom: 1.5rem;">
@@ -51,152 +55,10 @@
     </div>
 </div>
 
-<!-- Quick Add Forms -->
-<div class="form-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 2rem;">
-    <div class="card">
-        <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-person-plus-fill"></i> Register New Donor</h3>
-        <form action="/donations/donor/add" method="POST">
-            <div class="form-group" style="margin-bottom: 1rem;">
-                <label for="donorName">Donor Name *</label>
-                <input type="text" id="donorName" name="name" class="form-control" required placeholder="e.g. Ali Irfan">
-            </div>
-            <div class="form-group" style="margin-bottom: 1rem;">
-                <label for="contactNo">Contact Number</label>
-                <input type="text" id="contactNo" name="contact_no" class="form-control" placeholder="e.g. 0300-XXXXXXX">
-            </div>
-            <div class="form-group" style="margin-bottom: 1rem;">
-                <label for="referredBy">Referred By</label>
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <select id="referredBy" name="referred_by" class="form-control">
-                        <option value="">-- None (Direct) --</option>
-                        <% donorReferences.forEach(ref => { %>
-                            <option value="<%= ref.name %>"><%= ref.name %></option>
-                        <% }) %>
-                    </select>
-                    <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="openManageReferencesModal()"><i class="bi bi-gear-fill"></i></button>
-                </div>
-            </div>
-            <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                <div class="form-group">
-                    <label for="preferred_fund_category">Preferred Account to Transfer Fund</label>
-                    <select name="preferred_fund_category" id="preferred_fund_category" class="form-control" onchange="toggleDirectOption(this.value, 'new_preferred_member_group')">
-                        <option value="general">Member Account</option>
-                        <option value="trust" selected>Trust Account</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="preferred_payment_method">Preferred Method</label>
-                    <select name="preferred_payment_method" id="preferred_payment_method" class="form-control">
-                        <option value="Online">Online</option>
-                        <option value="Cash">Cash</option>
-                    </select>
-                </div>
-            </div>
-            <div id="new_preferred_member_group" class="form-group" style="display: none; margin-bottom: 1rem;">
-                <label for="preferred_member">Preferred Member Account Option</label>
-                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <select id="preferred_member" name="preferred_member" class="form-control">
-                        <option value="">-- Select Member --</option>
-                        <% donorReferences.forEach(ref => { %>
-                            <option value="<%= ref.name %>"><%= ref.name %></option>
-                        <% }) %>
-                    </select>
-                    <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="openManageReferencesModal()"><i class="bi bi-gear-fill"></i></button>
-                </div>
-            </div>
-            <div class="form-checkbox" style="margin-bottom: 1rem; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 0.5rem;">
-                <input type="checkbox" id="monthlyCommitment" name="monthly_commitment" value="1" style="width: 18px; height: 18px; cursor: pointer; margin: 0;" onchange="toggleCommitmentAmount(this.checked, 'new_commitment_amount_group')">
-                <label for="monthlyCommitment" style="margin-bottom: 0; cursor: pointer; font-weight: 500;">Monthly Commitment Donor</label>
-            </div>
-            <div id="new_commitment_amount_group" class="form-group" style="display: none; margin-bottom: 1.5rem;">
-                <label for="new_commitment_amount">Monthly Commitment Amount (PKR) *</label>
-                <input type="number" step="0.01" id="new_commitment_amount" name="monthly_commitment_amount" class="form-control" placeholder="0.00">
-            </div>
-            <button type="submit" class="btn-primary"><i class="bi bi-check-circle-fill"></i> Register Donor</button>
-        </form>
-    </div>
-
-    <div class="card">
-        <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-cash-coin"></i> Record Donation Received</h3>
-        <form action="/donations/add" method="POST">
-            <div class="form-group" style="margin-bottom: 1rem; position: relative;">
-                <label for="donor_search">Select Donor *</label>
-                <input type="text" id="donor_search" class="form-control" placeholder="Type to search donor..." autocomplete="off" required>
-                <!-- Hidden select to submit the donor_id -->
-                <select name="donor_id" id="donor_id" style="display: none;" required>
-                    <option value="">-- Select Donor --</option>
-                    <% donors.forEach(d => { %>
-                        <option value="<%= d.id %>"><%= d.name %> (Ref: <%= d.referred_by || 'Direct' %>)</option>
-                    <% }) %>
-                </select>
-                
-                <div id="donor_dropdown_list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); margin-top: 4px;">
-                    <% donors.forEach(d => { %>
-                        <div class="dropdown-donor-item" data-value="<%= d.id %>" data-name="<%= d.name %>" data-last-amount="<%= d.last_donation_amount || '' %>" data-commitment-amount="<%= d.monthly_commitment_amount || '' %>" data-preferred-fund="<%= d.preferred_fund_category || 'general' %>" data-preferred-payment="<%= d.preferred_payment_method || 'Online' %>" data-preferred-member="<%= d.preferred_member || '' %>" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
-                            <div style="font-weight: 600; color: #1e293b; display: flex; justify-content: space-between; align-items: center;">
-                                <span><%= d.name %></span>
-                                <% if (d.monthly_commitment) { %>
-                                    <span style="font-size: 0.7rem; background-color: #e0f2fe; color: #0369a1; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 700;">Monthly</span>
-                                <% } %>
-                            </div>
-                            <div style="font-size: 0.75rem; color: #64748b;">Referred by: <%= d.referred_by || 'Direct' %></div>
-                        </div>
-                    <% }) %>
-                    <div id="no_results" style="display: none; padding: 1rem; text-align: center; color: #94a3b8; font-size: 0.9rem;">
-                        No donors found
-                    </div>
-                </div>
-            </div>
-            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                <div class="form-group">
-                    <label for="amount">Amount (PKR) *</label>
-                    <input type="number" step="0.01" id="amount" name="amount" class="form-control" required placeholder="0.00">
-                </div>
-                <div class="form-group">
-                    <label for="date">Date Received</label>
-                    <input type="date" id="date" name="date" class="form-control" value="<%= new Date().toISOString().slice(0, 10) %>">
-                </div>
-            </div>
-            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                <div class="form-group">
-                    <label for="fund_category">Account to Transfer Fund</label>
-                    <select name="fund_category" id="fund_category" class="form-control" onchange="toggleDirectOption(this.value, 'direct_option_group')">
-                        <option value="general">Member Account</option>
-                        <option value="trust" selected>Trust Account</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="payment_method">Payment Method</label>
-                    <select id="payment_method" name="payment_method" class="form-control">
-                        <option value="Online" selected>Online</option>
-                        <option value="Cash">Cash</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                <div class="form-group">
-                    <label for="donation_type">Donation Type</label>
-                    <select name="donation_type" id="donation_type" class="form-control">
-                        <option value="Sadqa" selected>Sadqa</option>
-                        <option value="Zakat">Zakat</option>
-                    </select>
-                </div>
-                <div id="direct_option_group" class="form-group" style="display: none; margin-bottom: 0;">
-                    <label for="direct_ref">Member Account Option *</label>
-                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                        <select id="direct_ref" name="direct_ref" class="form-control">
-                            <% donorReferences.forEach(ref => { %>
-                                <option value="<%= ref.name %>"><%= ref.name %></option>
-                            <% }) %>
-                        </select>
-                        <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="openManageReferencesModal()"><i class="bi bi-gear-fill"></i></button>
-                    </div>
-                </div>
-            </div>
-            <button type="submit" class="btn-primary" style="margin-top: 0.5rem;"><i class="bi bi-check-circle-fill"></i> Log Donation</button>
-        </form>
-    </div>
+<!-- Quick Add Action Buttons -->
+<div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+    <button type="button" class="btn-primary" onclick="openNewDonationModal()"><i class="bi bi-plus-lg"></i> Record Donation Received</button>
+    <button type="button" class="btn-secondary" onclick="openNewDonorModal()"><i class="bi bi-person-plus-fill"></i> Register New Donor</button>
 </div>
 
 <!-- Donors to Reconnect With -->
@@ -298,9 +160,9 @@
 <% } %>
 
 <!-- Donors Directory & Search Collapsible Panel -->
-<details id="donors-directory-panel" class="ledger-details" <%= searchDonor ? 'open' : '' %> style="margin-top: 2rem;">
+<details id="donors-directory-panel" class="ledger-details" <%= (searchDonor || (typeof memberFilter !== 'undefined' && memberFilter !== '')) ? 'open' : '' %> style="margin-top: 2rem;">
     <summary class="ledger-summary">
-        <span><i class="bi bi-people-fill"></i> View & Search Donors Directory <%= searchDonor ? '(Active Search)' : '' %></span>
+        <span><i class="bi bi-people-fill"></i> View & Search Donors Directory <%= (searchDonor || (typeof memberFilter !== 'undefined' && memberFilter !== '')) ? '(Active Search/Filter)' : '' %></span>
         <i class="bi bi-chevron-down toggle-icon"></i>
     </summary>
     <div style="padding: 1.5rem;">
@@ -309,6 +171,14 @@
             <div class="form-group" style="max-width: 400px; flex: 1;">
                 <label for="searchDonor" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Search Donors</label>
                 <input type="text" name="searchDonor" id="searchDonor" class="form-control" value="<%= searchDonor || '' %>" placeholder="Search by donor name or referred by...">
+            </div>
+            <div class="form-group" style="width: 200px;">
+                <label for="memberFilter" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Membership</label>
+                <select name="memberFilter" id="memberFilter" class="form-control">
+                    <option value="">All Donors</option>
+                    <option value="1" <%= (typeof memberFilter !== 'undefined' && memberFilter === '1') ? 'selected' : '' %>>Regular Members Only</option>
+                    <option value="0" <%= (typeof memberFilter !== 'undefined' && memberFilter === '0') ? 'selected' : '' %>>One-time Donors</option>
+                </select>
             </div>
             <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
                 <button type="submit" class="btn-secondary" style="height: 38px;">Search</button>
@@ -523,6 +393,159 @@
     </div>
 </div>
 <div id="manageReferencesModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeManageReferencesModal()"></div>
+
+<!-- New Donor Modal -->
+<div id="newDonorModal" class="modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ffffff; padding: 2rem; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); z-index: 1000; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
+    <h3 style="margin-bottom: 1.5rem; color: var(--primary-color);"><i class="bi bi-person-plus-fill"></i> Register New Donor</h3>
+    <form action="/donations/donor/add" method="POST">
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="donorName">Donor Name *</label>
+            <input type="text" id="donorName" name="name" class="form-control" required placeholder="e.g. Ali Irfan">
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="contactNo">Contact Number</label>
+            <input type="text" id="contactNo" name="contact_no" class="form-control" placeholder="e.g. 0300-XXXXXXX">
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="referredBy">Referred By</label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <select id="referredBy" name="referred_by" class="form-control">
+                    <option value="">-- None (Direct) --</option>
+                    <% donorReferences.forEach(ref => { %>
+                        <option value="<%= ref.name %>"><%= ref.name %></option>
+                    <% }) %>
+                </select>
+                <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="openManageReferencesModal()"><i class="bi bi-gear-fill"></i></button>
+            </div>
+        </div>
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="preferred_fund_category">Preferred Account to Transfer Fund</label>
+                <select name="preferred_fund_category" id="preferred_fund_category" class="form-control" onchange="toggleDirectOption(this.value, 'new_preferred_member_group')">
+                    <option value="general">Member Account</option>
+                    <option value="trust" selected>Trust Account</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="preferred_payment_method">Preferred Method</label>
+                <select name="preferred_payment_method" id="preferred_payment_method" class="form-control">
+                    <option value="Online">Online</option>
+                    <option value="Cash">Cash</option>
+                </select>
+            </div>
+        </div>
+        <div id="new_preferred_member_group" class="form-group" style="display: none; margin-bottom: 1rem;">
+            <label for="preferred_member">Preferred Member Account Option</label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <select id="preferred_member" name="preferred_member" class="form-control">
+                    <option value="">-- Select Member --</option>
+                    <% donorReferences.forEach(ref => { %>
+                        <option value="<%= ref.name %>"><%= ref.name %></option>
+                    <% }) %>
+                </select>
+                <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="openManageReferencesModal()"><i class="bi bi-gear-fill"></i></button>
+            </div>
+        </div>
+        <div class="form-checkbox" style="margin-bottom: 1rem; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 0.5rem;">
+            <input type="checkbox" id="monthlyCommitment" name="monthly_commitment" value="1" style="width: 18px; height: 18px; cursor: pointer; margin: 0;" onchange="toggleCommitmentAmount(this.checked, 'new_commitment_amount_group')">
+            <label for="monthlyCommitment" style="margin-bottom: 0; cursor: pointer; font-weight: 500;">Monthly Commitment Donor</label>
+        </div>
+        <div id="new_commitment_amount_group" class="form-group" style="display: none; margin-bottom: 1.5rem;">
+            <label for="new_commitment_amount">Monthly Commitment Amount (PKR) *</label>
+            <input type="number" step="0.01" id="new_commitment_amount" name="monthly_commitment_amount" class="form-control" placeholder="0.00">
+        </div>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button type="button" class="btn-secondary" onclick="closeNewDonorModal()">Cancel</button>
+            <button type="submit" class="btn-primary"><i class="bi bi-check-circle-fill"></i> Register Donor</button>
+        </div>
+    </form>
+</div>
+
+<!-- New Donation Modal -->
+<div id="newDonationModal" class="modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ffffff; padding: 2rem; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); z-index: 1000; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
+    <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-cash-coin"></i> Record Donation Received</h3>
+    <form action="/donations/add" method="POST">
+        <div class="form-group" style="margin-bottom: 1rem; position: relative;">
+            <label for="donor_search">Select Donor *</label>
+            <input type="text" id="donor_search" class="form-control" placeholder="Type to search donor..." autocomplete="off" required>
+            <!-- Hidden select to submit the donor_id -->
+            <select name="donor_id" id="donor_id" style="display: none;" required>
+                <option value="">-- Select Donor --</option>
+                <% donors.forEach(d => { %>
+                    <option value="<%= d.id %>"><%= d.name %> (Ref: <%= d.referred_by || 'Direct' %>)</option>
+                <% }) %>
+            </select>
+            
+            <div id="donor_dropdown_list" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); margin-top: 4px;">
+                <% donors.forEach(d => { %>
+                    <div class="dropdown-donor-item" data-value="<%= d.id %>" data-name="<%= d.name %>" data-last-amount="<%= d.last_donation_amount || '' %>" data-commitment-amount="<%= d.monthly_commitment_amount || '' %>" data-preferred-fund="<%= d.preferred_fund_category || 'general' %>" data-preferred-payment="<%= d.preferred_payment_method || 'Online' %>" data-preferred-member="<%= d.preferred_member || '' %>" style="padding: 0.75rem 1rem; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
+                        <div style="font-weight: 600; color: #1e293b; display: flex; justify-content: space-between; align-items: center;">
+                            <span><%= d.name %></span>
+                            <% if (d.monthly_commitment) { %>
+                                <span style="font-size: 0.7rem; background-color: #e0f2fe; color: #0369a1; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 700;">Monthly</span>
+                            <% } %>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #64748b;">Referred by: <%= d.referred_by || 'Direct' %></div>
+                    </div>
+                <% }) %>
+                <div id="no_results" style="display: none; padding: 1rem; text-align: center; color: #94a3b8; font-size: 0.9rem;">
+                    No donors found
+                </div>
+            </div>
+        </div>
+        <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="amount">Amount (PKR) *</label>
+                <input type="number" step="0.01" id="amount" name="amount" class="form-control" required placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label for="date">Date Received</label>
+                <input type="date" id="date" name="date" class="form-control" value="<%= new Date().toISOString().slice(0, 10) %>">
+            </div>
+        </div>
+        <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="fund_category">Account to Transfer Fund</label>
+                <select name="fund_category" id="fund_category" class="form-control" onchange="toggleDirectOption(this.value, 'direct_option_group')">
+                    <option value="general">Member Account</option>
+                    <option value="trust" selected>Trust Account</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="payment_method">Payment Method</label>
+                <select id="payment_method" name="payment_method" class="form-control">
+                    <option value="Online" selected>Online</option>
+                    <option value="Cash">Cash</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="donation_type">Donation Type</label>
+                <select name="donation_type" id="donation_type" class="form-control">
+                    <option value="Sadqa" selected>Sadqa</option>
+                    <option value="Zakat">Zakat</option>
+                </select>
+            </div>
+            <div id="direct_option_group" class="form-group" style="display: none; margin-bottom: 0;">
+                <label for="direct_ref">Member Account Option *</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <select id="direct_ref" name="direct_ref" class="form-control">
+                        <% donorReferences.forEach(ref => { %>
+                            <option value="<%= ref.name %>"><%= ref.name %></option>
+                        <% }) %>
+                    </select>
+                    <button type="button" class="btn-secondary" style="padding: 0.5rem; height: 38px; display: inline-flex; align-items: center; justify-content: center;" onclick="openManageReferencesModal()"><i class="bi bi-gear-fill"></i></button>
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem;">
+            <button type="button" class="btn-secondary" onclick="closeNewDonationModal()">Cancel</button>
+            <button type="submit" class="btn-primary"><i class="bi bi-check-circle-fill"></i> Log Donation</button>
+        </div>
+    </form>
+</div>
 
 <script>
     function openEditModal(d) {

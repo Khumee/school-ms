@@ -122,6 +122,27 @@ router.get('/hifz', isAuthenticated, async (req, res) => {
         let classQuery = `SELECT * FROM classes WHERE tenant_id = ? AND is_hifz_class = 1 ORDER BY name`;
         const [hifzClasses] = await db.execute(classQuery, [tenantId]);
 
+        // Auto-enroll students who are in a Hifz class but not in hifz_enrollment
+        await db.execute(
+            `INSERT INTO hifz_enrollment (tenant_id, student_id, class_id, enrolled_date)
+             SELECT s.tenant_id, s.id, s.class_id, CURDATE()
+             FROM students s
+             JOIN classes c ON s.class_id = c.id
+             WHERE s.tenant_id = ? AND s.status = 'active' AND c.is_hifz_class = 1
+             AND s.id NOT IN (SELECT student_id FROM hifz_enrollment WHERE tenant_id = ?)`,
+            [tenantId, tenantId]
+        );
+
+        // Re-activate any inactive enrollments if the student is currently assigned to a Hifz class
+        await db.execute(
+            `UPDATE hifz_enrollment e
+             JOIN students s ON e.student_id = s.id
+             JOIN classes c ON s.class_id = c.id
+             SET e.status = 'active', e.class_id = s.class_id
+             WHERE s.tenant_id = ? AND s.status = 'active' AND c.is_hifz_class = 1 AND e.status != 'active'`,
+            [tenantId]
+        );
+
         // Get all enrolled students with today's entry status
         const today = new Date().toISOString().split('T')[0];
         const [students] = await db.execute(
@@ -543,19 +564,24 @@ router.get('/hifz/enroll', isAuthenticated, async (req, res) => {
         const [regularClasses] = await db.execute(
             `SELECT * FROM classes WHERE tenant_id = ? AND (is_hifz_class = 0 OR is_hifz_class IS NULL) ORDER BY name`, [tenantId]
         );
-        const [enrolledIds] = await db.execute(
-            `SELECT student_id FROM hifz_enrollment WHERE tenant_id = ? AND status = 'active'`, [tenantId]
-        );
-        const enrolledSet = new Set(enrolledIds.map(r => r.student_id));
-        const [allStudents] = await db.execute(
+        const [enrolledStudentsRaw] = await db.execute(
             `SELECT s.id, s.name, s.reg_no, s.class_id, c.name as class_name FROM students s
              LEFT JOIN classes c ON s.class_id = c.id
-             WHERE s.tenant_id = ? AND s.status = 'active' ORDER BY s.name`,
-            [tenantId]
+             WHERE s.tenant_id = ? AND s.status = 'active' AND s.id IN (SELECT student_id FROM hifz_enrollment WHERE tenant_id = ? AND status = 'active')
+             ORDER BY s.name`,
+            [tenantId, tenantId]
         );
-        const unenrolled = allStudents.filter(s => !enrolledSet.has(s.id));
-        const enrolledStudents = allStudents.filter(s => enrolledSet.has(s.id));
-        res.render('hifz_enroll', { unenrolled, enrolledStudents, hifzClasses, regularClasses });
+        const [unenrolledStudentsRaw] = await db.execute(
+            `SELECT s.id, s.name, s.reg_no, s.class_id, c.name as class_name FROM students s
+             LEFT JOIN classes c ON s.class_id = c.id
+             WHERE s.tenant_id = ? AND s.status = 'active' 
+             AND (c.is_hifz_class = 0 OR c.is_hifz_class IS NULL)
+             AND s.id NOT IN (SELECT student_id FROM hifz_enrollment WHERE tenant_id = ? AND status = 'active')
+             ORDER BY s.name`,
+            [tenantId, tenantId]
+        );
+        
+        res.render('hifz_enroll', { unenrolled: unenrolledStudentsRaw, enrolledStudents: enrolledStudentsRaw, hifzClasses, regularClasses });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading enrollment form.');
