@@ -55,11 +55,7 @@
     </div>
 </div>
 
-<!-- Quick Add Action Buttons -->
-<div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
-    <button type="button" class="btn-primary" onclick="openNewDonationModal()"><i class="bi bi-plus-lg"></i> Record Donation Received</button>
-    <button type="button" class="btn-secondary" onclick="openNewDonorModal()"><i class="bi bi-person-plus-fill"></i> Register New Donor</button>
-</div>
+
 
 <!-- Donors to Reconnect With -->
 <% if (lapsedDonors.length > 0) { %>
@@ -394,6 +390,9 @@
 </div>
 <div id="manageReferencesModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeManageReferencesModal()"></div>
 
+<!-- Overlay for New Donor & New Donation Modals -->
+<div id="newDonationOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeNewDonorModal(); closeNewDonationModal();"></div>
+
 <!-- New Donor Modal -->
 <div id="newDonorModal" class="modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ffffff; padding: 2rem; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); z-index: 1000; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
     <h3 style="margin-bottom: 1.5rem; color: var(--primary-color);"><i class="bi bi-person-plus-fill"></i> Register New Donor</h3>
@@ -723,8 +722,26 @@
         }
     }
 
+    // Modals scripts
+    function openNewDonorModal() {
+        document.getElementById('newDonorModal').style.display = 'block';
+        document.getElementById('newDonationOverlay').style.display = 'block';
+    }
+    function closeNewDonorModal() {
+        document.getElementById('newDonorModal').style.display = 'none';
+        document.getElementById('newDonationOverlay').style.display = 'none';
+    }
+    function openNewDonationModal() {
+        document.getElementById('newDonationModal').style.display = 'block';
+        document.getElementById('newDonationOverlay').style.display = 'block';
+    }
+    function closeNewDonationModal() {
+        document.getElementById('newDonationModal').style.display = 'none';
+        document.getElementById('newDonationOverlay').style.display = 'none';
+    }
+
     // Custom Searchable Dropdown
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', () => {
         const donorSearch = document.getElementById('donor_search');
         const donorDropdown = document.getElementById('donor_dropdown_list');
         const donorSelect = document.getElementById('donor_id');
