@@ -14,12 +14,12 @@
 <form action="/donations/matrix" method="GET" class="filter-bar" style="flex-wrap: wrap; gap: 1rem;">
     <div class="form-group" style="min-width: 200px; flex: 1;">
         <label for="search">Search Donor</label>
-        <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or referrer...">
+        <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or referrer..." onchange="this.form.submit()">
     </div>
     
     <div class="form-group" style="min-width: 150px;">
         <label for="referred_by">Referred By</label>
-        <select name="referred_by" id="referred_by" class="form-control">
+        <select name="referred_by" id="referred_by" class="form-control" onchange="this.form.submit()">
             <option value="">-- Any --</option>
             <% if (typeof donorReferences !== 'undefined' && donorReferences) { %>
                 <% donorReferences.forEach(ref => { %>
@@ -31,7 +31,7 @@
     
     <div class="form-group" style="min-width: 150px;">
         <label for="min_amount">Min Total Amount</label>
-        <input type="number" name="min_amount" id="min_amount" class="form-control" value="<%= minAmount || '' %>" placeholder="e.g. 2000">
+        <input type="number" name="min_amount" id="min_amount" class="form-control" value="<%= minAmount || '' %>" placeholder="e.g. 2000" onchange="this.form.submit()">
     </div>
     
     <div class="form-group" style="width: 100%;">
@@ -40,7 +40,7 @@
             <% const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']; %>
             <% for (let m = 1; m <= 12; m++) { %>
                 <label style="display: flex; align-items: center; gap: 0.25rem; font-size: 0.85rem;">
-                    <input type="checkbox" name="months[]" value="<%= m %>" <%= (selectedMonths && selectedMonths.includes(m.toString())) ? 'checked' : '' %>>
+                    <input type="checkbox" name="months" value="<%= m %>" <%= (selectedMonths && selectedMonths.includes(m.toString())) ? 'checked' : '' %> onchange="this.form.submit()">
                     <%= monthNames[m-1] %>
                 </label>
             <% } %>
@@ -48,8 +48,7 @@
     </div>
 
     <div style="width: 100%; display: flex; gap: 0.5rem; justify-content: flex-end;">
-        <button type="submit" class="btn-secondary">Apply Filters</button>
-        <a href="/donations/matrix" class="btn-secondary" style="display: inline-flex; align-items: center;">Reset</a>
+        <a href="/donations/matrix" class="btn-secondary" style="display: inline-flex; align-items: center;">Reset Filters</a>
     </div>
 </form>
 

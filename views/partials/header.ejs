@@ -46,10 +46,7 @@
                     </li>
                     <%# Donations — optional module %>
                     <% if (tenant && tenant.enable_donations_module) { %>
-                    <li style="display: flex; align-items: center; gap: 0.5rem;">
-                        <a href="/donations"><i class="bi bi-heart-fill"></i> Donations</a>
-                        <a href="/donations?action=add_donation" style="background-color: #10b981; color: white; padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; gap: 0.25rem; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"><i class="bi bi-plus-lg"></i> Add</a>
-                    </li>
+                    <li><a href="/donations"><i class="bi bi-heart-fill"></i> Donations</a></li>
                     <% } %>
                     <li><a href="/attendance/employees"><i class="bi bi-calendar2-check-fill"></i> Attendance</a></li>
                     <li class="dropdown">
