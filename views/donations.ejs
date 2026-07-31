@@ -855,6 +855,13 @@
                 }
             }
         });
+
+        // Check for quick action from global header
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('action') === 'add_donation') {
+            openNewDonationModal();
+            window.history.replaceState({}, document.title, '/donations');
+        }
     });
 
     function toggleCommitmentAmount(checked, elementId) {
