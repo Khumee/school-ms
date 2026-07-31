@@ -539,9 +539,35 @@
     <h3 style="margin-bottom: 1rem;" id="modalTitle">Record Payment</h3>
     <form action="/fees/pay" method="POST">
         <input type="hidden" id="modalStudentId" name="student_id">
-        <input type="hidden" id="modalMonth" name="month">
-        <input type="hidden" id="modalYear" name="year">
         
+        <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+            <div class="form-group">
+                <label for="modalMonth">For Month</label>
+                <select id="modalMonth" name="month" class="form-control" onchange="updateModalFine()">
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="modalYear">For Year</label>
+                <select id="modalYear" name="year" class="form-control" onchange="updateModalFine()">
+                    <% [2024, 2025, 2026, 2027, 2028].forEach(y => { %>
+                        <option value="<%= y %>"><%= y %></option>
+                    <% }) %>
+                </select>
+            </div>
+        </div>
+
         <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1.25rem; font-size: 0.85rem; line-height: 1.5;">
             <div style="display: flex; justify-content: space-between;">
                 <span>Total Class Fee:</span>
@@ -693,7 +719,7 @@
         document.getElementById('modalStudentId').value = studentId;
         document.getElementById('modalMonth').value = month;
         document.getElementById('modalAmount').value = currentAmount || expectedFee;
-        document.getElementById('modalTitle').innerText = 'Pay Fee: ' + studentName + ' (' + months[month - 1] + ')';
+        document.getElementById('modalTitle').innerText = 'Pay Fee: ' + studentName;
         
         document.getElementById('modalClassFeeDisplay').innerText = 'PKR ' + parseFloat(classFee || 0).toLocaleString();
         document.getElementById('modalConcessionDisplay').innerText = 'PKR ' + parseFloat(concession || 0).toLocaleString();
@@ -702,15 +728,29 @@
         document.getElementById('modalAdditionalFee').value = additionalFee || 0;
         document.getElementById('modalAdditionalFeeDesc').value = additionalFeeDesc || '';
         
-        // Calculate late fee automatically based on year context
+        const currentYear = new Date().getFullYear();
+        const selectedYear = document.getElementById('year') ? parseInt(document.getElementById('year').value) : currentYear;
+        document.getElementById('modalYear').value = selectedYear;
+
+        document.getElementById('modalFineWaived').checked = false;
+        document.getElementById('modalFine').readOnly = false;
+        
+        updateModalFine();
+        
+        document.getElementById('paymentModal').style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
+    }
+    
+    function updateModalFine() {
+        if (document.getElementById('modalFineWaived').checked) return;
+        
+        const month = parseInt(document.getElementById('modalMonth').value);
+        const selectedYear = parseInt(document.getElementById('modalYear').value);
         const today = new Date();
         const currentDay = today.getDate();
         let calculatedFine = 0;
-        const currentMonth = today.getMonth() + 1; // 1-indexed
+        const currentMonth = today.getMonth() + 1;
         const currentYear = today.getFullYear();
-        const selectedYear = document.getElementById('year') ? parseInt(document.getElementById('year').value) : currentYear;
-
-        document.getElementById('modalYear').value = selectedYear;
 
         if (selectedYear < currentYear || (selectedYear === currentYear && month < currentMonth)) {
             const dueDate = new Date(selectedYear, month - 1, 10);
@@ -722,12 +762,8 @@
         }
 
         document.getElementById('modalFine').value = calculatedFine;
-        document.getElementById('modalFine').readOnly = false;
-        document.getElementById('modalFineWaived').checked = false;
-        
-        document.getElementById('paymentModal').style.display = 'block';
-        document.getElementById('modalOverlay').style.display = 'block';
     }
+
     
     function toggleWaive(checked) {
         const fineInput = document.getElementById('modalFine');
@@ -736,23 +772,7 @@
             fineInput.readOnly = true;
         } else {
             fineInput.readOnly = false;
-            const month = document.getElementById('modalMonth').value;
-            const today = new Date();
-            const currentDay = today.getDate();
-            let calculatedFine = 0;
-            const currentMonth = today.getMonth() + 1;
-            const currentYear = today.getFullYear();
-            const selectedYear = document.getElementById('year') ? parseInt(document.getElementById('year').value) : currentYear;
-
-            if (selectedYear < currentYear || (selectedYear === currentYear && month < currentMonth)) {
-                const dueDate = new Date(selectedYear, month - 1, 10);
-                const diffTime = Math.max(0, today - dueDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                calculatedFine = diffDays * 20;
-            } else if (selectedYear === currentYear && month == currentMonth && currentDay > 10) {
-                calculatedFine = (currentDay - 10) * 20;
-            }
-            fineInput.value = calculatedFine;
+            updateModalFine();
         }
     }
     function closeModal() {
