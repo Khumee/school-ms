@@ -548,7 +548,7 @@ router.get('/hifz/enroll', isAuthenticated, async (req, res) => {
         );
         const enrolledSet = new Set(enrolledIds.map(r => r.student_id));
         const [allStudents] = await db.execute(
-            `SELECT s.id, s.name, s.reg_no, c.name as class_name FROM students s
+            `SELECT s.id, s.name, s.reg_no, s.class_id, c.name as class_name FROM students s
              LEFT JOIN classes c ON s.class_id = c.id
              WHERE s.tenant_id = ? AND s.status = 'active' ORDER BY s.name`,
             [tenantId]
