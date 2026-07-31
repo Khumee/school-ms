@@ -46,7 +46,13 @@
                     </li>
                     <%# Donations — optional module %>
                     <% if (tenant && tenant.enable_donations_module) { %>
-                    <li><a href="/donations"><i class="bi bi-heart-fill"></i> Donations</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropbtn"><i class="bi bi-heart-fill"></i> Donations</a>
+                        <div class="dropdown-content">
+                            <a href="/donations"><i class="bi bi-table"></i> Overview</a>
+                            <a href="/donations?action=add_donation"><i class="bi bi-plus-lg"></i> Add Donation</a>
+                        </div>
+                    </li>
                     <% } %>
                     <li><a href="/attendance/employees"><i class="bi bi-calendar2-check-fill"></i> Attendance</a></li>
                     <li class="dropdown">
