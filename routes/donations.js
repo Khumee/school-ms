@@ -186,8 +186,8 @@ router.get('/donations/matrix', isAuthenticated, async (req, res) => {
                 donationMap[d.donor_id] = {};
                 donorTotals[d.donor_id] = 0;
             }
-            donationMap[d.donor_id][d.month] = d.total_amount;
-            donorTotals[d.donor_id] += parseFloat(d.total_amount);
+            donationMap[d.donor_id][d.month] = parseFloat(d.total_amount) || 0;
+            donorTotals[d.donor_id] += parseFloat(d.total_amount) || 0;
         });
         
         // Filter by min_amount if provided

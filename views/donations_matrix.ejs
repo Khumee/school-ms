@@ -85,13 +85,13 @@
                             <% if (amt !== undefined && amt > 0) { %>
                                 <% donorTotal += amt; %>
                                 <td class="cell-amount" style="color: #15803d; font-weight: 600;">
-                                    <%= amt.toLocaleString() %>
+                                    Rs. <%= amt.toLocaleString() %>
                                 </td>
                             <% } else { %>
                                 <td style="color: #cbd5e1;">-</td>
                             <% } %>
                         <% }) %>
-                        <td style="text-align: right; font-weight: 700; background-color: #f8fafc;"><%= donorTotal > 0 ? donorTotal.toLocaleString() : '-' %></td>
+                        <td style="text-align: right; font-weight: 700; background-color: #f8fafc;"><%= donorTotal > 0 ? 'Rs. ' + donorTotal.toLocaleString() : '-' %></td>
                     </tr>
                 <% }) %>
             <% } else { %>
