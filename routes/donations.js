@@ -196,6 +196,9 @@ router.get('/donations/matrix', isAuthenticated, async (req, res) => {
             if (!isNaN(minAmt)) {
                 donors = donors.filter(d => (donorTotals[d.id] || 0) > minAmt);
             }
+        } else if (months.length > 0) {
+            // If months are selected but no min_amount, still filter out donors who have 0 donations in these months
+            donors = donors.filter(d => (donorTotals[d.id] || 0) > 0);
         }
 
         res.render('donations_matrix', { 
