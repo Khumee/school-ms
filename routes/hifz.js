@@ -540,6 +540,9 @@ router.get('/hifz/enroll', isAuthenticated, async (req, res) => {
         const [hifzClasses] = await db.execute(
             `SELECT * FROM classes WHERE tenant_id = ? AND is_hifz_class = 1 ORDER BY name`, [tenantId]
         );
+        const [regularClasses] = await db.execute(
+            `SELECT * FROM classes WHERE tenant_id = ? AND (is_hifz_class = 0 OR is_hifz_class IS NULL) ORDER BY name`, [tenantId]
+        );
         const [enrolledIds] = await db.execute(
             `SELECT student_id FROM hifz_enrollment WHERE tenant_id = ? AND status = 'active'`, [tenantId]
         );
@@ -551,7 +554,8 @@ router.get('/hifz/enroll', isAuthenticated, async (req, res) => {
             [tenantId]
         );
         const unenrolled = allStudents.filter(s => !enrolledSet.has(s.id));
-        res.render('hifz_enroll', { unenrolled, hifzClasses });
+        const enrolledStudents = allStudents.filter(s => enrolledSet.has(s.id));
+        res.render('hifz_enroll', { unenrolled, enrolledStudents, hifzClasses, regularClasses });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading enrollment form.');
@@ -569,10 +573,39 @@ router.post('/hifz/enroll', isAuthenticated, async (req, res) => {
              ON DUPLICATE KEY UPDATE status='active', class_id=VALUES(class_id), notes=VALUES(notes)`,
             [tenantId, student_id, class_id, enrolled_date || new Date().toISOString().split('T')[0], notes || null]
         );
+        // Also update the students table class_id
+        await db.execute(
+            `UPDATE students SET class_id = ? WHERE id = ? AND tenant_id = ?`,
+            [class_id, student_id, tenantId]
+        );
         res.redirect('/hifz');
     } catch (err) {
         console.error(err);
         res.status(500).send('Error enrolling student.');
+    }
+});
+
+// POST /hifz/deroll
+router.post('/hifz/deroll', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const { student_id, class_id, notes } = req.body;
+        
+        await db.execute(
+            `UPDATE hifz_enrollment SET status = 'inactive', notes = CONCAT(IFNULL(notes, ''), '\nDerolled: ', ?) WHERE student_id = ? AND tenant_id = ?`,
+            [notes || 'Moved to regular class', student_id, tenantId]
+        );
+        
+        // Also update the students table class_id to the regular class
+        await db.execute(
+            `UPDATE students SET class_id = ? WHERE id = ? AND tenant_id = ?`,
+            [class_id, student_id, tenantId]
+        );
+        
+        res.redirect('/hifz');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error derolling student.');
     }
 });
 
