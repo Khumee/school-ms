@@ -1,0 +1,109 @@
+<%- include('partials/header') %>
+
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1 class="page-title"><i class="bi bi-intersect"></i> Merge Duplicates</h1>
+        <p style="color: #64748b; margin-top: 0.25rem;">Consolidate duplicate records and reassign their data.</p>
+    </div>
+</div>
+
+<div class="filter-bar" style="margin-bottom: 1.5rem;">
+    <a href="/settings/general" class="nav-tab">General</a>
+    <a href="/settings/merge" class="nav-tab active">Merge Duplicates</a>
+</div>
+
+<% if (req.query.success) { %>
+<div style="background-color: #dcfce7; color: #166534; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+    <i class="bi bi-check-circle-fill"></i> Records successfully merged!
+</div>
+<% } %>
+
+<div class="card" style="max-width: 900px; margin: 0 auto; margin-bottom: 2rem;">
+    
+    <div style="background-color: #fffbeb; color: #b45309; padding: 1rem; border-left: 4px solid #f59e0b; border-radius: 4px; margin-bottom: 1.5rem;">
+        <strong><i class="bi bi-exclamation-triangle-fill"></i> Warning: Destructive Action</strong>
+        <p style="margin-top: 0.25rem; font-size: 0.9rem;">
+            Merging is irreversible. All related records (donations, fee payments, attendance, etc.) will be moved from the <strong>Source</strong> to the <strong>Target</strong>. After the transfer, the <strong>Source</strong> record will be completely deleted.
+        </p>
+    </div>
+
+    <!-- Search Form -->
+    <form action="/settings/merge" method="GET" style="display: flex; gap: 1rem; margin-bottom: 2rem; align-items: flex-end; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border);">
+        <div class="form-group" style="flex: 1;">
+            <label for="type" style="font-weight: 600;">Record Type</label>
+            <select name="type" id="type" class="form-control" onchange="this.form.submit()">
+                <option value="donors" <%= type === 'donors' ? 'selected' : '' %>>Donors</option>
+                <option value="students" <%= type === 'students' ? 'selected' : '' %>>Students</option>
+            </select>
+        </div>
+        <div class="form-group" style="flex: 2;">
+            <label for="q" style="font-weight: 600;">Search Name <%= type === 'students' ? 'or Reg No' : '' %></label>
+            <input type="text" name="q" id="q" class="form-control" value="<%= q %>" placeholder="Type to search..." required>
+        </div>
+        <div class="form-group">
+            <button type="submit" class="btn-secondary" style="height: 38px;">Search</button>
+        </div>
+    </form>
+
+    <!-- Merge Execution Form -->
+    <form action="/settings/merge" method="POST" onsubmit="return confirm('Are you ABSOLUTELY sure? This will delete the Source record forever and move its data to the Target record.');">
+        <input type="hidden" name="type" value="<%= type %>">
+        
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            
+            <!-- SOURCE RECORD -->
+            <div style="background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <h3 style="color: #ef4444; margin-top: 0; margin-bottom: 1rem;"><i class="bi bi-trash-fill"></i> 1. Select Source (To Delete)</h3>
+                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">This record will be deleted.</p>
+                
+                <div class="form-group">
+                    <select name="source_id" class="form-control" size="10" required style="height: 250px;">
+                        <% searchResults.forEach(r => { %>
+                            <option value="<%= r.id %>">
+                                <%= type === 'students' ? `[${r.registration_number}] ` : '' %><%= r.name %> 
+                                <%= r.contact_no ? `(${r.contact_no})` : '' %>
+                                <%= r.father_name ? `- Son of ${r.father_name}` : '' %>
+                            </option>
+                        <% }) %>
+                        <% if(searchResults.length === 0 && q) { %>
+                            <option disabled>No results found for "<%= q %>"</option>
+                        <% } %>
+                    </select>
+                </div>
+            </div>
+
+            <!-- TARGET RECORD -->
+            <div style="background: #f0fdf4; padding: 1.5rem; border-radius: 8px; border: 1px solid #bbf7d0;">
+                <h3 style="color: #16a34a; margin-top: 0; margin-bottom: 1rem;"><i class="bi bi-check-circle-fill"></i> 2. Select Target (To Keep)</h3>
+                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1rem;">All data will be moved into this record.</p>
+                
+                <div class="form-group">
+                    <select name="target_id" class="form-control" size="10" required style="height: 250px;">
+                        <% searchResults.forEach(r => { %>
+                            <option value="<%= r.id %>">
+                                <%= type === 'students' ? `[${r.registration_number}] ` : '' %><%= r.name %> 
+                                <%= r.contact_no ? `(${r.contact_no})` : '' %>
+                                <%= r.father_name ? `- Son of ${r.father_name}` : '' %>
+                            </option>
+                        <% }) %>
+                        <% if(searchResults.length === 0 && q) { %>
+                            <option disabled>No results found for "<%= q %>"</option>
+                        <% } %>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+
+        <div style="margin-top: 2rem; text-align: center;">
+            <button type="submit" class="btn-primary" style="background-color: #ef4444; border-color: #ef4444; font-size: 1.1rem; padding: 0.75rem 2.5rem;" <%= searchResults.length < 2 ? 'disabled' : '' %>>
+                <i class="bi bi-exclamation-triangle-fill"></i> Merge Records Now
+            </button>
+            <% if(searchResults.length < 2 && q) { %>
+                <p style="color: #64748b; font-size: 0.85rem; margin-top: 0.5rem;">Find at least 2 records to perform a merge.</p>
+            <% } %>
+        </div>
+    </form>
+</div>
+
+<%- include('partials/footer') %>

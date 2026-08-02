@@ -48,6 +48,7 @@ const expenseRoutes = require('./routes/expenses');
 const superAdminRoutes = require('./routes/superAdmin');
 const hifzRoutes = require('./routes/hifz');
 const classesRoutes = require('./routes/classes');
+const settingsRoutes = require('./routes/settings');
 
 // Register Routers
 app.use(superAdminRoutes);
@@ -61,6 +62,7 @@ app.use(attendanceRoutes);
 app.use(expenseRoutes);
 app.use(hifzRoutes);
 app.use(classesRoutes);
+app.use(settingsRoutes);
 
 const migrate = require('./migrate');
 
