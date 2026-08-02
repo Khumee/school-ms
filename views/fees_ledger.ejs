@@ -604,8 +604,8 @@
                 <label for="modalYear">For Year</label>
                 <select id="modalYear" name="year" class="form-control" onchange="updateModalFine()">
                     <% 
-                        const currY = new Date().getFullYear();
-                        for(let y = 2024; y <= currY; y++) { 
+                        const modalCurrY = new Date().getFullYear();
+                        for(let y = 2024; y <= modalCurrY; y++) { 
                     %>
                         <option value="<%= y %>"><%= y %></option>
                     <% } %>
