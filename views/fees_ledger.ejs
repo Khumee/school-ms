@@ -823,6 +823,9 @@
     function updateModalFine() {
         if (document.getElementById('modalFineWaived').checked) return;
         
+        const fineStartDays = parseInt('<%= tenant.fine_start_days || 10 %>');
+        const fineAmountPerDay = parseFloat('<%= tenant.fine_amount_per_day || 20 %>');
+
         const month = parseInt(document.getElementById('modalMonth').value);
         const selectedYear = parseInt(document.getElementById('modalYear').value);
         const today = new Date();
@@ -832,12 +835,12 @@
         const currentYear = today.getFullYear();
 
         if (selectedYear < currentYear || (selectedYear === currentYear && month < currentMonth)) {
-            const dueDate = new Date(selectedYear, month - 1, 10);
+            const dueDate = new Date(selectedYear, month - 1, fineStartDays);
             const diffTime = Math.max(0, today - dueDate);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            calculatedFine = diffDays * 20;
-        } else if (selectedYear === currentYear && month == currentMonth && currentDay > 10) {
-            calculatedFine = (currentDay - 10) * 20;
+            calculatedFine = diffDays * fineAmountPerDay;
+        } else if (selectedYear === currentYear && month == currentMonth && currentDay > fineStartDays) {
+            calculatedFine = (currentDay - fineStartDays) * fineAmountPerDay;
         }
 
         document.getElementById('modalFine').value = calculatedFine;
