@@ -577,7 +577,7 @@
 </div>
 
 <!-- Payment Modal -->
-<div id="paymentModal" class="card" style="display: none; max-width: 400px; margin: 1rem auto; position: fixed; top: 20%; left: 50%; transform: translate(-50%, 0); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); box-sizing: border-box; width: 90%;">
+<div id="paymentModal" class="card" style="display: none; max-width: 400px; margin: 0; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); box-sizing: border-box; width: 90%; max-height: 90vh; overflow-y: auto;">
     <h3 style="margin-bottom: 1rem;" id="modalTitle">Record Payment</h3>
     <form action="/fees/pay" method="POST">
         <input type="hidden" id="modalStudentId" name="student_id">
@@ -782,24 +782,33 @@
         const monthSelect = document.getElementById('modalMonth');
         const studentPayments = clientPaymentMap[studentId] || {};
         
-        Array.from(monthSelect.options).forEach(opt => {
-            const m = parseInt(opt.value);
+        const allMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        
+        monthSelect.innerHTML = ''; // Clear existing
+        let addedCurrent = false;
+
+        allMonths.forEach((name, i) => {
+            const m = i + 1;
+            const isPaid = studentPayments[m] && studentPayments[m].amount_paid > 0;
+            const isBeingEdited = (isPaid && currentAmount !== '' && m == month);
+            
             // Hide if this month is already paid, UNLESS we are editing that specific month's payment
-            if (studentPayments[m] && studentPayments[m].amount_paid > 0 && currentAmount == '') {
-                opt.style.display = 'none';
-                opt.disabled = true;
+            if (isPaid && !isBeingEdited) {
+                // skip adding
             } else {
-                opt.style.display = '';
-                opt.disabled = false;
+                const opt = document.createElement('option');
+                opt.value = m;
+                opt.textContent = name;
+                monthSelect.appendChild(opt);
+                if (m == month) addedCurrent = true;
             }
         });
 
-        // Ensure the selected month is valid if the default was disabled
-        if (monthSelect.options[monthSelect.selectedIndex].disabled) {
-            const firstAvailable = Array.from(monthSelect.options).find(o => !o.disabled);
-            if (firstAvailable) {
-                monthSelect.value = firstAvailable.value;
-            }
+        // Ensure the selected month is valid
+        if (addedCurrent) {
+            monthSelect.value = month;
+        } else if (monthSelect.options.length > 0) {
+            monthSelect.value = monthSelect.options[0].value;
         }
 
         document.getElementById('modalFineWaived').checked = false;
