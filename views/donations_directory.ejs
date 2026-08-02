@@ -9,152 +9,87 @@
 </div>
 
 <div class="filter-bar" style="margin-bottom: 1.5rem;">
-    <a href="/donations" class="nav-tab active">Overview</a>
+    <a href="/donations" class="nav-tab">Overview</a>
+    <a href="/donations/directory" class="nav-tab active">Donor Directory</a>
     <a href="/donations/matrix" class="nav-tab">Matrix View</a>
 </div>
 
-<!-- KPI Cards -->
-<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-    <div class="card kpi-card">
-        <span class="kpi-icon green"><i class="bi bi-cash-coin"></i></span>
-        <span class="kpi-label">This Month's Donations</span>
-        <span class="kpi-value" style="font-size: 1.6rem;">Rs. <%= thisMonthTotal.toLocaleString() %></span>
-        <span class="kpi-subtitle"><%= thisMonthDonorCount %> donor(s) contributed</span>
+<div class="card" style="margin-top: 1rem;">
+    <div class="section-header" style="margin-bottom: 1rem;">
+        <h2 class="section-title"><i class="bi bi-people-fill"></i> Donors Directory <%= (searchDonor || (typeof memberFilter !== 'undefined' && memberFilter !== '')) ? '(Active Search/Filter)' : '' %></h2>
     </div>
-    <div class="card kpi-card">
-        <span class="kpi-icon amber"><i class="bi bi-person-exclamation"></i></span>
-        <span class="kpi-label">Donors to Reconnect With</span>
-        <span class="kpi-value" style="font-size: 1.6rem;"><%= lapsedDonors.length %></span>
-        <span class="kpi-subtitle">Gave 6 months straight, missed this month</span>
-    </div>
-    <div class="card kpi-card">
-        <span class="kpi-icon purple"><i class="bi bi-piggy-bank-fill"></i></span>
-        <span class="kpi-label">All-Time Total</span>
-        <span class="kpi-value" style="font-size: 1.6rem; font-weight: 700;">Rs. <%= totalAllTime.toLocaleString() %></span>
-        <span class="kpi-subtitle">From <%= totalDonationsCount %> total donations</span>
-    </div>
-    <div class="card kpi-card" style="cursor: pointer;" onclick="const panel = document.getElementById('donors-directory-panel'); if (panel) { panel.open = true; panel.scrollIntoView({ behavior: 'smooth' }); }">
-        <span class="kpi-icon blue"><i class="bi bi-people-fill"></i></span>
-        <span class="kpi-label">Total Donors Registered</span>
-        <span class="kpi-value" style="font-size: 2.2rem; font-weight: 800; color: var(--primary-color); line-height: 1.1; margin-top: 0.2rem; margin-bottom: 0.2rem;"><%= totalDonorCount %></span>
-        <span class="kpi-subtitle"><%= monthlyDonorsCount %> monthly commitment donor(s)</span>
-    </div>
-    <div class="card kpi-card" style="grid-row: span 1; min-height: 160px;">
-        <span class="kpi-icon teal"><i class="bi bi-trophy-fill"></i></span>
-        <span class="kpi-label">Top 5 Donors (All-Time)</span>
-        <ul style="list-style: none; font-size: 0.82rem; padding: 0; margin-top: 0.5rem; margin-bottom: 0;">
-            <% topDonors.forEach((td, i) => { %>
-                <li style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; gap: 0.5rem;">
-                    <span style="display: inline-flex; min-width: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                        <%= i+1 %>. <a href="/donations/donor/<%= td.id %>" style="color: var(--primary-color, #4f46e5); text-decoration: none; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline;"><%= td.name %></a>
-                    </span>
-                    <span style="font-weight: 700; color: #15803d; flex-shrink: 0;">Rs. <%= parseFloat(td.total_amount).toLocaleString() %></span>
-                </li>
-            <% }) %>
-        </ul>
-    </div>
-</div>
+    <div style="padding: 1.5rem;">
+        <!-- Search bar inside collapsible -->
+        <form action="/donations/directory" method="GET" class="filter-content" style="padding: 0 0 1.25rem 0; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border);">
+            <div class="form-group" style="max-width: 400px; flex: 1;">
+                <label for="searchDonor" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Search Donors</label>
+                <input type="text" name="searchDonor" id="searchDonor" class="form-control" value="<%= searchDonor || '' %>" placeholder="Search by donor name or referred by...">
+            </div>
+            <div class="form-group" style="width: 200px;">
+                <label for="memberFilter" style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Membership</label>
+                <select name="memberFilter" id="memberFilter" class="form-control">
+                    <option value="">All Donors</option>
+                    <option value="1" <%= (typeof memberFilter !== 'undefined' && memberFilter === '1') ? 'selected' : '' %>>Regular Members Only</option>
+                    <option value="0" <%= (typeof memberFilter !== 'undefined' && memberFilter === '0') ? 'selected' : '' %>>One-time Donors</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+                <button type="submit" class="btn-secondary" style="height: 38px;">Search</button>
+                <a href="/donations/directory" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
+            </div>
+        </form>
 
-
-
-<!-- Donors to Reconnect With -->
-<% if (lapsedDonors.length > 0) { %>
-<div class="section-header">
-    <h2 class="section-title"><i class="bi bi-person-exclamation"></i> Donors to Reconnect With</h2>
-</div>
-<div class="card" style="border-left: 4px solid #d97706; margin-bottom: 2rem;">
-    <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">
-        These donors gave consistently for the last 6 months but haven't donated this month yet &mdash; a good list to call or message.
-    </p>
-    <div class="table-container" style="border: none; box-shadow: none; margin-bottom: 0;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Donor Name</th>
-                    <th>Contact No.</th>
-                    <th>Referred By</th>
-                    <th>Last Donation</th>
-                    <th style="text-align: right;">Last Amount (Rs.)</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                <% lapsedDonors.forEach(ld => { %>
+        <div class="table-container" style="margin-bottom: 0; box-shadow: none; border: 1px solid var(--border);">
+            <table>
+                <thead>
                     <tr>
-                        <td style="font-weight: 600;"><%= ld.donor.name %></td>
-                        <td><%= ld.donor.contact_no || '-' %></td>
-                        <td><%= ld.donor.referred_by || '-' %></td>
-                        <td><%= ld.lastDonationDate ? new Date(ld.lastDonationDate).toLocaleDateString() : '-' %></td>
-                        <td style="text-align: right;"><%= ld.lastDonationAmount ? parseFloat(ld.lastDonationAmount).toLocaleString() : '-' %></td>
-                        <td><a href="/donations/donor/<%= ld.donor.id %>" class="btn-secondary nav-btn"><i class="bi bi-person-vcard-fill"></i> View</a></td>
+                        <th>Donor Name</th>
+                        <th>Contact No.</th>
+                        <th>Referred By</th>
+                        <th>Monthly Commitment</th>
+                        <th>Actions</th>
                     </tr>
-                <% }) %>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <% if (donors.length > 0) { %>
+                        <% donors.forEach((d, idx) => { %>
+                            <tr class="donor-directory-row <%= idx >= 10 ? 'donor-directory-hidden' : '' %>" style="<%= idx >= 10 ? 'display: none;' : '' %>">
+                                <td style="font-weight: 600;"><a href="/donations/donor/<%= d.id %>" style="color: var(--primary-color, #4f46e5); text-decoration: none;"><%= d.name %></a></td>
+                                <td><%= d.contact_no || '-' %></td>
+                                <td><%= d.referred_by || '-' %></td>
+                                <td style="font-weight: 500; color: <%= d.monthly_commitment ? '#0369a1' : '#64748b' %>;">
+                                    <%= d.monthly_commitment ? 'Yes' : 'No' %>
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <a href="/donations/donor/<%= d.id %>" class="btn-secondary nav-btn"><i class="bi bi-person-vcard-fill"></i> View Profile</a>
+                                        <button type="button" class="btn-secondary nav-btn" onclick='openEditDonorModal(<%- JSON.stringify({ id: d.id, name: d.name, contact_no: d.contact_no || "", referred_by: d.referred_by || "", monthly_commitment: d.monthly_commitment || 0, monthly_commitment_amount: d.monthly_commitment_amount || "", preferred_fund_category: d.preferred_fund_category || "general", preferred_payment_method: d.preferred_payment_method || "Online", preferred_member: d.preferred_member || "" }) %>)'><i class="bi bi-pencil-square"></i> Edit</button>
+                                        <form action="/donations/donor/delete/<%= d.id %>" method="POST" onsubmit="confirmSubmit(event, 'Are you sure you want to delete this donor and all their donation records?')">
+                                            <button type="submit" class="btn-danger nav-btn"><i class="bi bi-trash3-fill"></i> Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #64748b; padding: 1.5rem;">No donors found.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+        
+        <% if (donors.length > 10) { %>
+            <div style="text-align: center; margin-top: 1rem;">
+                <button type="button" id="btn-show-more-donors" class="btn-secondary" style="font-size: 0.9rem; padding: 0.5rem 1.5rem;" onclick="showAllDonors()">
+                    <i class="bi bi-chevron-down"></i> Show All Donors (<%= donors.length - 10 %> more)
+                </button>
+            </div>
+        <% } %>
+    </div>
     </div>
 </div>
-<% } %>
-
-<!-- Recent Donations This Month -->
-<div class="section-header" style="margin-bottom: 1rem;">
-    <h2 class="section-title"><i class="bi bi-clock-history"></i> Recent Donations This Month</h2>
-    <div style="flex-shrink: 0; min-width: 250px;">
-        <input type="text" id="searchRecentDonations" class="form-control" placeholder="Search by donor name..." style="height: 38px; font-size: 0.9rem;">
-    </div>
-</div>
-
-<div class="table-container">
-    <table>
-        <thead>
-            <tr>
-                <th>Donor</th>
-                <th>Date</th>
-                <th style="text-align: right;">Amount (Rs.)</th>
-                <th>Fund</th>
-                <th>Type</th>
-                <th>Method</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            <% if (recentThisMonth.length > 0) { %>
-                <% recentThisMonth.forEach((d, idx) => { %>
-                    <tr class="recent-donation-row <%= idx >= 10 ? 'recent-donation-hidden' : '' %>" style="<%= idx >= 10 ? 'display: none;' : '' %>">
-                        <td class="recent-donor-name" style="font-weight: 600;"><a href="/donations/donor/<%= d.donor_id %>" style="color: var(--primary-color); text-decoration: none;"><%= d.donor_name %></a></td>
-                        <td><%= new Date(d.date).toLocaleDateString() %></td>
-                        <td style="text-align: right; font-weight: 600; color: #15803d;"><%= parseFloat(d.amount).toLocaleString() %></td>
-                        <td><%= fundLabels[d.fund_category] || d.fund_category %></td>
-                        <td><%= d.donation_type || 'Sadqa' %></td>
-                        <td><%= d.payment_method || '-' %></td>
-                        <td>
-                            <div style="display: flex; gap: 0.4rem;">
-                                <a href="/donations/receipt/<%= d.id %>" class="btn-secondary nav-btn" target="_blank"><i class="bi bi-file-earmark-pdf-fill"></i></a>
-                                <button type="button" class="btn-secondary nav-btn" onclick='openEditModal(<%- JSON.stringify({ id: d.id, amount: d.amount, date: new Date(d.date).toISOString().slice(0,10), fund_category: d.fund_category, payment_method: d.payment_method, notes: d.notes || "", donor_name: d.donor_name, donation_type: d.donation_type }) %>)'><i class="bi bi-pencil-square"></i></button>
-                                <form action="/donations/delete/<%= d.id %>" method="POST" onsubmit="confirmSubmit(event, 'Delete this donation record?')">
-                                    <input type="hidden" name="redirect_to" value="/donations">
-                                    <button type="submit" class="btn-danger nav-btn"><i class="bi bi-trash3-fill"></i></button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                <% }) %>
-            <% } else { %>
-                <tr>
-                    <td colspan="7" style="text-align: center; color: #64748b;">No donations logged this month yet.</td>
-                </tr>
-            <% } %>
-        </tbody>
-    </table>
-</div>
-
-<% if (recentThisMonth.length > 10) { %>
-    <div style="text-align: center; margin-top: 1rem;">
-        <button type="button" id="btn-show-more-recent" class="btn-secondary" style="font-size: 0.9rem; padding: 0.5rem 1.5rem;" onclick="showAllRecentDonations()">
-            <i class="bi bi-chevron-down"></i> Show All Recent Donations (<%= recentThisMonth.length - 10 %> more)
-        </button>
-    </div>
-<% } %>
-
 <!-- Edit Donation Modal -->
 <div id="editModal" class="card" style="display: none; max-width: 420px; margin: 1rem auto; position: fixed; top: 15%; left: 50%; transform: translate(-50%, 0); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
     <h3 style="margin-bottom: 1rem;" id="editModalTitle">Edit Donation</h3>

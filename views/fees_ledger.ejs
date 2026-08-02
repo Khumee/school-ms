@@ -99,6 +99,43 @@
     <h1 class="section-title"><i class="bi bi-cash-coin"></i> Monthly Fee Ledger</h1>
 </div>
 
+<form action="/fees/ledger" method="GET" class="filter-bar">
+    <div class="form-group">
+        <label for="classId">Filter by Class</label>
+        <select name="classId" id="classId" class="form-control" onchange="this.form.submit()">
+            <option value="">All Classes</option>
+            <% classes.forEach(c => { %>
+                <option value="<%= c.id %>" <%= (locals.classId && locals.classId == c.id) ? 'selected' : '' %>><%= c.name %></option>
+            <% }) %>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="month">Month</label>
+        <select name="month" id="month" class="form-control" onchange="this.form.submit()">
+            <% monthsList.forEach((mName, idx) => { %>
+                <option value="<%= idx + 1 %>" <%= activeMonthNum === (idx + 1) ? 'selected' : '' %>><%= mName %></option>
+            <% }) %>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="year">Year</label>
+        <select name="year" id="year" class="form-control" onchange="this.form.submit()">
+            <% const currY = new Date().getFullYear(); for(let y = 2024; y <= currY; y++) { %>
+                <option value="<%= y %>" <%= activeYear == y ? 'selected' : '' %>><%= y %></option>
+            <% } %>
+        </select>
+    </div>
+    <div class="form-group" style="flex: 2;">
+        <label for="search">Search</label>
+        <div style="display: flex; gap: 0.5rem;">
+            <input type="text" name="search" id="search" class="form-control" placeholder="Name/RegNo..." value="<%= locals.search || '' %>">
+            <button type="submit" class="btn-primary" style="white-space: nowrap;"><i class="bi bi-search"></i> Search</button>
+            <a href="/fees/ledger" class="btn-secondary" style="display: inline-flex; align-items: center; white-space: nowrap;">Reset</a>
+        </div>
+    </div>
+    <input type="hidden" name="view" id="filter-view-input" value="recent">
+</form>
+
 <!-- Quick Statistics Grid (Always visible) -->
 <div class="kpi-grid" style="margin-bottom: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
     <div class="card kpi-card" style="padding: 1rem;">
@@ -474,7 +511,7 @@
 <!-- Tab 2: Full Year Matrix Pane -->
 <div id="pane-matrix" style="display: none;">
     <div class="table-container">
-        <table class="matrix-table">
+        <table class="simple-ledger-table matrix-table">
             <thead>
                 <tr>
                     <th style="text-align: left;">Reg No</th>
@@ -722,6 +759,8 @@
         }
     }
 
+    const clientPaymentMap = <%- JSON.stringify(paymentMap || {}) %>;
+
     function openPaymentModal(studentId, studentName, month, currentAmount, expectedFee, classFee, concession, additionalFee, additionalFeeDesc) {
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         document.getElementById('modalStudentId').value = studentId;
@@ -739,6 +778,29 @@
         const currentYear = new Date().getFullYear();
         const selectedYear = document.getElementById('year') ? parseInt(document.getElementById('year').value) : currentYear;
         document.getElementById('modalYear').value = selectedYear;
+
+        const monthSelect = document.getElementById('modalMonth');
+        const studentPayments = clientPaymentMap[studentId] || {};
+        
+        Array.from(monthSelect.options).forEach(opt => {
+            const m = parseInt(opt.value);
+            // Hide if this month is already paid, UNLESS we are editing that specific month's payment
+            if (studentPayments[m] && studentPayments[m].amount_paid > 0 && currentAmount == '') {
+                opt.style.display = 'none';
+                opt.disabled = true;
+            } else {
+                opt.style.display = '';
+                opt.disabled = false;
+            }
+        });
+
+        // Ensure the selected month is valid if the default was disabled
+        if (monthSelect.options[monthSelect.selectedIndex].disabled) {
+            const firstAvailable = Array.from(monthSelect.options).find(o => !o.disabled);
+            if (firstAvailable) {
+                monthSelect.value = firstAvailable.value;
+            }
+        }
 
         document.getElementById('modalFineWaived').checked = false;
         document.getElementById('modalFine').readOnly = false;
@@ -882,7 +944,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const urlView = urlParams.get('view');
-        let savedView = urlView || 'recent';
+        let savedView = urlView || localStorage.getItem('fees_ledger_view') || 'recent';
         
         switchTab(savedView);
 

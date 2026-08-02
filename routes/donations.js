@@ -134,6 +134,47 @@ router.get('/donations', isAuthenticated, async (req, res) => {
     }
 });
 
+// GET /donations/directory - donor directory
+router.get('/donations/directory', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const { searchDonor, memberFilter } = req.query;
+
+        // Fetch all donors (filtered if searchDonor is provided)
+        let donorsQuery = `
+            SELECT d.*, 
+                   (SELECT amount FROM donations WHERE donor_id = d.id AND tenant_id = ? ORDER BY date DESC, id DESC LIMIT 1) as last_donation_amount
+            FROM donors d 
+            WHERE d.tenant_id = ?
+        `;
+        const donorsParams = [tenantId, tenantId];
+        if (searchDonor) {
+            donorsQuery += ' AND (d.name LIKE ? OR d.referred_by LIKE ?)';
+            donorsParams.push(`%${searchDonor}%`, `%${searchDonor}%`);
+        }
+        if (memberFilter === '1') {
+            donorsQuery += ' AND d.monthly_commitment = 1';
+        } else if (memberFilter === '0') {
+            donorsQuery += ' AND d.monthly_commitment = 0';
+        }
+        donorsQuery += ' ORDER BY d.name ASC';
+        const [donors] = await db.execute(donorsQuery, donorsParams);
+
+        // Fetch donor_references for this tenant
+        const [donorReferences] = await db.execute('SELECT * FROM donor_references WHERE tenant_id = ? ORDER BY name ASC', [tenantId]);
+
+        res.render('donations_directory', {
+            donors,
+            donorReferences,
+            searchDonor: searchDonor || '',
+            memberFilter: memberFilter || ''
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading donor directory.');
+    }
+});
+
 // GET /donations/matrix - donor x month grid (full history view)
 router.get('/donations/matrix', isAuthenticated, async (req, res) => {
     try {
