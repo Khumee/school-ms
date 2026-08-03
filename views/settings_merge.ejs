@@ -46,7 +46,7 @@
     </form>
 
     <!-- Merge Execution Form -->
-    <form action="/settings/merge" method="POST" onsubmit="return confirm('Are you ABSOLUTELY sure? This will delete the Source record forever and move its data to the Target record.');">
+    <form action="/settings/merge" method="POST" onsubmit="confirmSubmit(event, 'Are you ABSOLUTELY sure? This will delete the Source record forever and move its data to the Target record.');">
         <input type="hidden" name="type" value="<%= type %>">
         
         <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
@@ -125,12 +125,12 @@
         const targetId = document.querySelector('select[name="target_id"]').value;
 
         if (!sourceId || !targetId) {
-            alert('Please select both a source and a target record.');
+            customConfirm('Please select both a source and a target record.', () => {});
             return;
         }
 
         if (sourceId === targetId) {
-            alert('Source and target records cannot be the same.');
+            customConfirm('Source and target records cannot be the same.', () => {});
             return;
         }
 
@@ -202,7 +202,7 @@
 
         } catch (error) {
             console.error(error);
-            alert('Failed to generate preview. Please try again.');
+            customConfirm('Failed to generate preview. Please try again.', () => {});
         } finally {
             previewBtn.disabled = false;
             previewBtn.innerHTML = '<i class="bi bi-eye"></i> Preview Merge';
