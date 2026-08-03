@@ -100,6 +100,72 @@ router.get('/settings/merge', isAuthenticated, async (req, res) => {
     }
 });
 
+// GET /settings/merge/preview - Get preview stats for merging
+router.get('/settings/merge/preview', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const { type, source_id, target_id } = req.query;
+
+        if (!source_id || !target_id || source_id === target_id) {
+            return res.status(400).json({ error: 'Invalid source or target ID.' });
+        }
+
+        let previewData = {};
+
+        if (type === 'donors') {
+            // Get donation counts and sums
+            const [sourceDonations] = await db.execute('SELECT COUNT(*) as count, SUM(amount) as total FROM donations WHERE donor_id = ? AND tenant_id = ?', [source_id, tenantId]);
+            const [targetDonations] = await db.execute('SELECT COUNT(*) as count, SUM(amount) as total FROM donations WHERE donor_id = ? AND tenant_id = ?', [target_id, tenantId]);
+            
+            previewData = {
+                source: {
+                    donations_count: sourceDonations[0].count || 0,
+                    donations_total: sourceDonations[0].total || 0
+                },
+                target: {
+                    donations_count: targetDonations[0].count || 0,
+                    donations_total: targetDonations[0].total || 0
+                }
+            };
+        } else if (type === 'students') {
+            // Get student related stats
+            const [sourceFees] = await db.execute('SELECT COUNT(*) as count, SUM(amount_paid) as total FROM fee_payments WHERE student_id = ? AND tenant_id = ?', [source_id, tenantId]);
+            const [targetFees] = await db.execute('SELECT COUNT(*) as count, SUM(amount_paid) as total FROM fee_payments WHERE student_id = ? AND tenant_id = ?', [target_id, tenantId]);
+
+            const [sourceAttendance] = await db.execute('SELECT COUNT(*) as count FROM attendance_students WHERE student_id = ? AND tenant_id = ?', [source_id, tenantId]);
+            const [targetAttendance] = await db.execute('SELECT COUNT(*) as count FROM attendance_students WHERE student_id = ? AND tenant_id = ?', [target_id, tenantId]);
+
+            const [sourceEnrollments] = await db.execute('SELECT COUNT(*) as count FROM student_enrollments WHERE student_id = ? AND tenant_id = ?', [source_id, tenantId]);
+            const [targetEnrollments] = await db.execute('SELECT COUNT(*) as count FROM student_enrollments WHERE student_id = ? AND tenant_id = ?', [target_id, tenantId]);
+
+            const [sourceHifz] = await db.execute('SELECT COUNT(*) as count FROM hifz_logs WHERE student_id = ? AND tenant_id = ?', [source_id, tenantId]);
+            const [targetHifz] = await db.execute('SELECT COUNT(*) as count FROM hifz_logs WHERE student_id = ? AND tenant_id = ?', [target_id, tenantId]);
+
+            previewData = {
+                source: {
+                    fees_count: sourceFees[0].count || 0,
+                    fees_total: sourceFees[0].total || 0,
+                    attendance_count: sourceAttendance[0].count || 0,
+                    enrollments_count: sourceEnrollments[0].count || 0,
+                    hifz_count: sourceHifz[0].count || 0
+                },
+                target: {
+                    fees_count: targetFees[0].count || 0,
+                    fees_total: targetFees[0].total || 0,
+                    attendance_count: targetAttendance[0].count || 0,
+                    enrollments_count: targetEnrollments[0].count || 0,
+                    hifz_count: targetHifz[0].count || 0
+                }
+            };
+        }
+
+        res.json(previewData);
+    } catch (err) {
+        console.error('Error in merge preview:', err);
+        res.status(500).json({ error: 'Failed to generate preview' });
+    }
+});
+
 // POST /settings/merge - Process the merge
 router.post('/settings/merge', isAuthenticated, async (req, res) => {
     const conn = await db.getConnection();

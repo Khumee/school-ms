@@ -95,15 +95,119 @@
 
         </div>
 
-        <div style="margin-top: 2rem; text-align: center;">
-            <button type="submit" class="btn-primary" style="background-color: #ef4444; border-color: #ef4444; font-size: 1.1rem; padding: 0.75rem 2.5rem;" <%= searchResults.length < 2 ? 'disabled' : '' %>>
+        </div>
+
+        <div id="preview-container" style="display: none; margin-top: 2rem; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.5rem;">
+            <h3 style="margin-top: 0; margin-bottom: 1rem; color: #334155;"><i class="bi bi-eye-fill"></i> Merge Preview</h3>
+            <div id="preview-content" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                <!-- Content will be injected here via JS -->
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; text-align: center; display: flex; justify-content: center; gap: 1rem;">
+            <button type="button" id="btn-preview" class="btn-secondary" style="font-size: 1.1rem; padding: 0.75rem 2.5rem;" <%= searchResults.length < 2 ? 'disabled' : '' %> onclick="fetchPreview()">
+                <i class="bi bi-eye"></i> Preview Merge
+            </button>
+            <button type="submit" id="btn-merge" class="btn-primary" style="background-color: #ef4444; border-color: #ef4444; font-size: 1.1rem; padding: 0.75rem 2.5rem;" <%= searchResults.length < 2 ? 'disabled' : '' %>>
                 <i class="bi bi-exclamation-triangle-fill"></i> Merge Records Now
             </button>
-            <% if(searchResults.length < 2 && q) { %>
-                <p style="color: #64748b; font-size: 0.85rem; margin-top: 0.5rem;">Find at least 2 records to perform a merge.</p>
-            <% } %>
         </div>
+        <% if(searchResults.length < 2 && q) { %>
+            <p style="text-align: center; color: #64748b; font-size: 0.85rem; margin-top: 0.5rem;">Find at least 2 records to perform a merge.</p>
+        <% } %>
     </form>
 </div>
+
+<script>
+    async function fetchPreview() {
+        const type = document.querySelector('input[name="type"]').value;
+        const sourceId = document.querySelector('select[name="source_id"]').value;
+        const targetId = document.querySelector('select[name="target_id"]').value;
+
+        if (!sourceId || !targetId) {
+            alert('Please select both a source and a target record.');
+            return;
+        }
+
+        if (sourceId === targetId) {
+            alert('Source and target records cannot be the same.');
+            return;
+        }
+
+        const previewBtn = document.getElementById('btn-preview');
+        previewBtn.disabled = true;
+        previewBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Loading...';
+
+        try {
+            const response = await fetch(`/settings/merge/preview?type=${type}&source_id=${sourceId}&target_id=${targetId}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch preview');
+            }
+            const data = await response.json();
+            
+            const container = document.getElementById('preview-container');
+            const content = document.getElementById('preview-content');
+            
+            let html = '';
+            
+            if (type === 'donors') {
+                html = `
+                    <div style="background: #f8fafc; padding: 1rem; border-radius: 6px;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #ef4444;">Source (Will Move)</h4>
+                        <p style="margin: 0; font-size: 0.9rem;">Donations: <strong>${data.source.donations_count}</strong></p>
+                        <p style="margin: 0; font-size: 0.9rem;">Total Amount: <strong>${parseFloat(data.source.donations_total).toFixed(2)}</strong></p>
+                    </div>
+                    <div style="background: #f0fdf4; padding: 1rem; border-radius: 6px;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #16a34a;">Target (Current)</h4>
+                        <p style="margin: 0; font-size: 0.9rem;">Donations: <strong>${data.target.donations_count}</strong></p>
+                        <p style="margin: 0; font-size: 0.9rem;">Total Amount: <strong>${parseFloat(data.target.donations_total).toFixed(2)}</strong></p>
+                    </div>
+                    <div style="background: #eff6ff; padding: 1rem; border-radius: 6px;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #2563eb;">After Merge (Combined)</h4>
+                        <p style="margin: 0; font-size: 0.9rem;">Donations: <strong>${data.source.donations_count + data.target.donations_count}</strong></p>
+                        <p style="margin: 0; font-size: 0.9rem;">Total Amount: <strong>${(parseFloat(data.source.donations_total) + parseFloat(data.target.donations_total)).toFixed(2)}</strong></p>
+                    </div>
+                `;
+            } else if (type === 'students') {
+                html = `
+                    <div style="background: #f8fafc; padding: 1rem; border-radius: 6px;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #ef4444;">Source (Will Move)</h4>
+                        <p style="margin: 0; font-size: 0.9rem;">Fee Payments: <strong>${data.source.fees_count}</strong> (Total: ${parseFloat(data.source.fees_total).toFixed(2)})</p>
+                        <p style="margin: 0; font-size: 0.9rem;">Attendance Records: <strong>${data.source.attendance_count}</strong></p>
+                        <p style="margin: 0; font-size: 0.9rem;">Enrollments: <strong>${data.source.enrollments_count}</strong></p>
+                        <p style="margin: 0; font-size: 0.9rem;">Hifz Logs: <strong>${data.source.hifz_count}</strong></p>
+                    </div>
+                    <div style="background: #f0fdf4; padding: 1rem; border-radius: 6px;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #16a34a;">Target (Current)</h4>
+                        <p style="margin: 0; font-size: 0.9rem;">Fee Payments: <strong>${data.target.fees_count}</strong> (Total: ${parseFloat(data.target.fees_total).toFixed(2)})</p>
+                        <p style="margin: 0; font-size: 0.9rem;">Attendance Records: <strong>${data.target.attendance_count}</strong></p>
+                        <p style="margin: 0; font-size: 0.9rem;">Enrollments: <strong>${data.target.enrollments_count}</strong></p>
+                        <p style="margin: 0; font-size: 0.9rem;">Hifz Logs: <strong>${data.target.hifz_count}</strong></p>
+                    </div>
+                    <div style="background: #eff6ff; padding: 1rem; border-radius: 6px;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #2563eb;">After Merge (Combined)</h4>
+                        <p style="margin: 0; font-size: 0.9rem;">Fee Payments: <strong>${data.source.fees_count + data.target.fees_count}</strong> (Total: ${(parseFloat(data.source.fees_total) + parseFloat(data.target.fees_total)).toFixed(2)})</p>
+                        <p style="margin: 0; font-size: 0.9rem;">Attendance Records: <strong>${data.source.attendance_count + data.target.attendance_count}</strong></p>
+                        <p style="margin: 0; font-size: 0.9rem;">Enrollments: <strong>${data.source.enrollments_count + data.target.enrollments_count}</strong></p>
+                        <p style="margin: 0; font-size: 0.9rem;">Hifz Logs: <strong>${data.source.hifz_count + data.target.hifz_count}</strong></p>
+                    </div>
+                `;
+            }
+
+            content.innerHTML = html;
+            container.style.display = 'block';
+            
+            // Scroll to preview
+            container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        } catch (error) {
+            console.error(error);
+            alert('Failed to generate preview. Please try again.');
+        } finally {
+            previewBtn.disabled = false;
+            previewBtn.innerHTML = '<i class="bi bi-eye"></i> Preview Merge';
+        }
+    }
+</script>
 
 <%- include('partials/footer') %>
