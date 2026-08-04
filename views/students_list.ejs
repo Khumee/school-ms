@@ -13,19 +13,19 @@
 
 <!-- KPI Cards -->
 <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 1.5rem;">
-    <div class="card kpi-card" style="cursor: pointer;" onclick="filterStudents('all')" id="kpi-all">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="filterStudents('all')" id="kpi-all">
         <span class="kpi-icon blue"><i class="bi bi-people-fill"></i></span>
         <span class="kpi-label">Total Students</span>
         <span class="kpi-value" style="font-size: 1.4rem;"><%= totalCount %></span>
         <span class="kpi-subtitle">Click to view all</span>
     </div>
-    <div class="card kpi-card" style="cursor: pointer;" onclick="filterStudents('standard')" id="kpi-standard">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="filterStudents('standard')" id="kpi-standard">
         <span class="kpi-icon green"><i class="bi bi-dash-circle"></i></span>
-        <span class="kpi-label">Standard Rate</span>
+        <span class="kpi-label">Regular Fee</span>
         <span class="kpi-value" style="font-size: 1.4rem;"><%= standardCount %></span>
-        <span class="kpi-subtitle">Click to view standard only</span>
+        <span class="kpi-subtitle">Click to view regular fee only</span>
     </div>
-    <div class="card kpi-card" style="cursor: pointer;" onclick="filterStudents('concession')" id="kpi-concession">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="filterStudents('concession')" id="kpi-concession">
         <span class="kpi-icon red"><i class="bi bi-tags-fill"></i></span>
         <span class="kpi-label">Concessions</span>
         <span class="kpi-value" style="font-size: 1.4rem;"><%= concessionCount %></span>

@@ -8,10 +8,10 @@ router.get('/', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
 
-        // 1. Fetch Student Metrics
         const [[{ total_students }]] = await db.execute('SELECT COUNT(*) as total_students FROM students WHERE tenant_id = ?', [tenantId]);
         const [[{ support_students }]] = await db.execute('SELECT COUNT(*) as support_students FROM students WHERE tenant_id = ? AND has_concession = 1', [tenantId]);
         const [[{ paying_students }]] = await db.execute('SELECT COUNT(*) as paying_students FROM students WHERE tenant_id = ? AND has_concession = 0', [tenantId]);
+        const [[{ full_waiver_students }]] = await db.execute('SELECT COUNT(*) as full_waiver_students FROM students WHERE tenant_id = ? AND has_concession = 1 AND custom_monthly_fee = 0', [tenantId]);
 
         // 2. Fetch New Admissions and Hifz Students Metrics
         const [[{ new_admissions }]] = await db.execute(
@@ -131,6 +131,7 @@ router.get('/', isAuthenticated, async (req, res) => {
             total_students,
             support_students,
             paying_students,
+            full_waiver_students,
             new_admissions,
             hifz_students,
             monthsData,

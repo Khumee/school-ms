@@ -7,7 +7,7 @@ const { isAuthenticated } = require('../middleware/auth');
 router.get('/students', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        const { classId, search } = req.query;
+        const { classId, search, filter } = req.query;
         
         let queryStr = `
             SELECT s.*, c.name as class_name, c.default_monthly_fee, c.is_hifz_class
@@ -24,6 +24,9 @@ router.get('/students', isAuthenticated, async (req, res) => {
         if (search) {
             queryStr += ' AND (s.name LIKE ? OR s.reg_no LIKE ?)';
             params.push(`%${search}%`, `%${search}%`);
+        }
+        if (filter === 'full_waiver') {
+            queryStr += ' AND s.has_concession = 1 AND s.custom_monthly_fee = 0';
         }
         
         queryStr += ' ORDER BY s.reg_no ASC';
