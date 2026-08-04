@@ -25,9 +25,7 @@ router.get('/students', isAuthenticated, async (req, res) => {
             queryStr += ' AND (s.name LIKE ? OR s.reg_no LIKE ?)';
             params.push(`%${search}%`, `%${search}%`);
         }
-        if (filter === 'full_waiver') {
-            queryStr += ' AND s.has_concession = 1 AND s.custom_monthly_fee = 0 AND s.status = "active"';
-        } else if (filter === 'left') {
+        if (filter === 'left') {
             queryStr += ' AND s.status != "active"';
         } else {
             queryStr += ' AND s.status = "active"';

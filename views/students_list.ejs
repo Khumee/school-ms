@@ -8,7 +8,12 @@
         const expectedFee = parseFloat(s.default_monthly_fee || 0) - concessionAmt;
         return concessionAmt > 0 && expectedFee > 0;
     }).length;
-    let standardCount = students.filter(s => !s.has_concession && s.status === 'active').length;
+    let standardCount = students.filter(s => {
+        if (s.status !== 'active') return false;
+        if (!s.has_concession) return true;
+        const concessionAmt = parseFloat(s.custom_monthly_fee || 0);
+        return concessionAmt <= 0;
+    }).length;
     let fullWaiverCount = students.filter(s => {
         const concessionAmt = s.has_concession ? parseFloat(s.custom_monthly_fee || 0) : 0;
         const expectedFee = parseFloat(s.default_monthly_fee || 0) - concessionAmt;
@@ -170,7 +175,9 @@
                 row.style.display = '';
             } else if (type === 'standard') {
                 const status = row.getAttribute('data-status');
-                const isStandard = !hasConcession && status === 'active';
+                const hasConcession = row.getAttribute('data-has-concession') === 'true';
+                const customFee = hasConcession ? parseFloat(row.getAttribute('data-custom-fee') || 0) : 0;
+                const isStandard = (!hasConcession || customFee <= 0) && status === 'active';
                 row.style.display = isStandard ? '' : 'none';
             } else if (type === 'concession') {
                 const hasConcession = row.getAttribute('data-has-concession') === 'true';
@@ -211,6 +218,15 @@
         document.getElementById('kpi-waiver').style.border = type === 'full_waiver' ? '2px solid var(--primary-color)' : '';
         document.getElementById('kpi-hifz').style.border = type === 'hifz' ? '2px solid var(--primary-color)' : '';
     }
+
+    // Auto-apply filter if passed from server query param
+    document.addEventListener("DOMContentLoaded", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeFilter = urlParams.get('filter');
+        if (activeFilter && activeFilter !== 'left') {
+            filterStudents(activeFilter);
+        }
+    });
 </script>
 
 <%- include('partials/footer') %>
