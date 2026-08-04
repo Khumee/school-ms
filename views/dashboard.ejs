@@ -46,7 +46,6 @@
         <span class="kpi-subtitle">Students with partial discount</span>
     </div>
 
-    <% if (req.tenant && req.tenant.enable_hifz_module) { %>
     <!-- Hifz Students -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/hifz'">
         <span class="kpi-icon pink"><i class="bi bi-book-fill"></i></span>
@@ -54,7 +53,6 @@
         <span class="kpi-value"><%= hifz_students %></span>
         <span class="kpi-subtitle">Enrolled in Hifz class</span>
     </div>
-    <% } %>
 
     <!-- Net Monthly Balance -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/fees/ledger'">
