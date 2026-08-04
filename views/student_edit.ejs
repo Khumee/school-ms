@@ -182,7 +182,7 @@
                 // Only auto-fill if the concession fields haven't been intentionally modified (or just auto-fill on change, not load)
                 if (isUserInteraction) {
                     document.getElementById('has_concession').checked = true;
-                    document.getElementById('custom_monthly_fee').value = 0;
+                    document.getElementById('custom_monthly_fee').value = classFees[classId];
                 }
             <% } %>
         } else {
