@@ -129,7 +129,21 @@ router.get('/salaries', isAuthenticated, async (req, res) => {
         );
         const lateDaysTrigger = tenantRow ? tenantRow.late_days_deduction_trigger : 4;
         
-        res.render('salaries', { employees, salaries, lateMarksMap, lateDaysTrigger, activeMonth });
+        // Fetch monthly payroll summaries for the grid
+        const [monthlySummaries] = await db.execute(
+            `SELECT month, 
+                    SUM(basic_salary) as total_basic, 
+                    SUM(bonus) as total_bonus, 
+                    SUM(deduction) as total_deduction,
+                    COUNT(DISTINCT employee_id) as employee_count
+             FROM salaries 
+             WHERE tenant_id = ? AND year = 2026
+             GROUP BY month
+             ORDER BY month ASC`,
+            [tenantId]
+        );
+        
+        res.render('salaries', { employees, salaries, lateMarksMap, lateDaysTrigger, activeMonth, monthlySummaries });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading salaries ledger.');
