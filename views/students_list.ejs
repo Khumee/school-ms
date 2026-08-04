@@ -3,12 +3,24 @@
 <%
     let totalCount = students.length;
     let concessionCount = students.filter(s => s.has_concession).length;
-    let standardCount = totalCount - concessionCount;
+    let standardCount = students.filter(s => !s.has_concession && !s.is_hifz_class && s.status === 'active').length;
+    let fullWaiverCount = students.filter(s => s.has_concession && parseFloat(s.custom_monthly_fee || 0) === 0 && s.status === 'active').length;
+    let hifzCount = students.filter(s => s.is_hifz_class && s.status === 'active').length;
 %>
 
 <div class="section-header">
-    <h1 class="section-title"><i class="bi bi-mortarboard-fill"></i> Student Directory</h1>
-    <a href="/students/add" class="btn-primary"><i class="bi bi-person-plus-fill"></i> Add New Student</a>
+    <h1 class="section-title">
+        <i class="bi bi-mortarboard-fill"></i> 
+        <%= (typeof filter !== 'undefined' && filter === 'left') ? 'Historical Student Directory (Left)' : 'Student Directory' %>
+    </h1>
+    <div style="display: flex; gap: 0.75rem;">
+        <% if (typeof filter !== 'undefined' && filter === 'left') { %>
+            <a href="/students" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Active Students</a>
+        <% } else { %>
+            <a href="/students?filter=left" class="btn-secondary"><i class="bi bi-clock-history"></i> Historical View (Left)</a>
+        <% } %>
+        <a href="/students/add" class="btn-primary"><i class="bi bi-person-plus-fill"></i> Add New Student</a>
+    </div>
 </div>
 
 <!-- KPI Cards -->
@@ -30,6 +42,18 @@
         <span class="kpi-label">Concessions</span>
         <span class="kpi-value" style="font-size: 1.4rem;"><%= concessionCount %></span>
         <span class="kpi-subtitle">Click to view concessions only</span>
+    </div>
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="filterStudents('full_waiver')" id="kpi-waiver">
+        <span class="kpi-icon orange" style="background-color: #fff7ed; color: #f97316;"><i class="bi bi-gift-fill"></i></span>
+        <span class="kpi-label">Full Fee Waiver</span>
+        <span class="kpi-value" style="font-size: 1.4rem;"><%= fullWaiverCount %></span>
+        <span class="kpi-subtitle">Click to view 100% concession only</span>
+    </div>
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="filterStudents('hifz')" id="kpi-hifz">
+        <span class="kpi-icon pink"><i class="bi bi-book-fill"></i></span>
+        <span class="kpi-label">Hifz Students</span>
+        <span class="kpi-value" style="font-size: 1.4rem;"><%= hifzCount %></span>
+        <span class="kpi-subtitle">Click to view Hifz only</span>
     </div>
 </div>
 
@@ -80,7 +104,7 @@
         <tbody>
             <% if (students.length > 0) { %>
                 <% students.forEach(s => { %>
-                    <tr class="student-row" data-has-concession="<%= s.has_concession ? 'true' : 'false' %>">
+                    <tr class="student-row" data-has-concession="<%= s.has_concession ? 'true' : 'false' %>" data-is-hifz="<%= s.is_hifz_class ? 'true' : 'false' %>" data-status="<%= s.status %>" data-custom-fee="<%= s.custom_monthly_fee || 0 %>">
                         <td style="font-weight: 600;"><%= s.reg_no %></td>
                         <td><a href="/students/view/<%= s.id %>" style="color: var(--primary-color); text-decoration: underline; font-weight: 600;"><%= s.name %></a></td>
                         <td><%= s.class_name || 'Unassigned' %></td>
@@ -137,9 +161,20 @@
             if (type === 'all') {
                 row.style.display = '';
             } else if (type === 'standard') {
-                row.style.display = hasConcession ? 'none' : '';
+                const isHifz = row.getAttribute('data-is-hifz') === 'true';
+                const status = row.getAttribute('data-status');
+                const isStandard = !hasConcession && !isHifz && status === 'active';
+                row.style.display = isStandard ? '' : 'none';
             } else if (type === 'concession') {
                 row.style.display = hasConcession ? '' : 'none';
+            } else if (type === 'full_waiver') {
+                const customFee = parseFloat(row.getAttribute('data-custom-fee') || 0);
+                const status = row.getAttribute('data-status');
+                row.style.display = (hasConcession && customFee === 0 && status === 'active') ? '' : 'none';
+            } else if (type === 'hifz') {
+                const isHifz = row.getAttribute('data-is-hifz') === 'true';
+                const status = row.getAttribute('data-status');
+                row.style.display = (isHifz && status === 'active') ? '' : 'none';
             }
         });
         
@@ -147,6 +182,8 @@
         document.getElementById('kpi-all').style.border = type === 'all' ? '2px solid var(--primary-color)' : '';
         document.getElementById('kpi-standard').style.border = type === 'standard' ? '2px solid var(--primary-color)' : '';
         document.getElementById('kpi-concession').style.border = type === 'concession' ? '2px solid var(--primary-color)' : '';
+        document.getElementById('kpi-waiver').style.border = type === 'full_waiver' ? '2px solid var(--primary-color)' : '';
+        document.getElementById('kpi-hifz').style.border = type === 'hifz' ? '2px solid var(--primary-color)' : '';
     }
 </script>
 

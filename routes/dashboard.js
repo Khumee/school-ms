@@ -8,14 +8,14 @@ router.get('/', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
 
-        const [[{ total_students }]] = await db.execute('SELECT COUNT(*) as total_students FROM students WHERE tenant_id = ?', [tenantId]);
-        const [[{ support_students }]] = await db.execute('SELECT COUNT(*) as support_students FROM students WHERE tenant_id = ? AND has_concession = 1', [tenantId]);
-        const [[{ paying_students }]] = await db.execute('SELECT COUNT(*) as paying_students FROM students WHERE tenant_id = ? AND has_concession = 0', [tenantId]);
-        const [[{ full_waiver_students }]] = await db.execute('SELECT COUNT(*) as full_waiver_students FROM students WHERE tenant_id = ? AND has_concession = 1 AND custom_monthly_fee = 0', [tenantId]);
+        const [[{ total_students }]] = await db.execute('SELECT COUNT(*) as total_students FROM students WHERE tenant_id = ? AND status = "active"', [tenantId]);
+        const [[{ support_students }]] = await db.execute('SELECT COUNT(*) as support_students FROM students WHERE tenant_id = ? AND has_concession = 1 AND status = "active"', [tenantId]);
+        const [[{ paying_students }]] = await db.execute('SELECT COUNT(*) as paying_students FROM students WHERE tenant_id = ? AND has_concession = 0 AND status = "active"', [tenantId]);
+        const [[{ full_waiver_students }]] = await db.execute('SELECT COUNT(*) as full_waiver_students FROM students WHERE tenant_id = ? AND has_concession = 1 AND custom_monthly_fee = 0 AND status = "active"', [tenantId]);
 
         // 2. Fetch New Admissions and Hifz Students Metrics
         const [[{ new_admissions }]] = await db.execute(
-            'SELECT COUNT(*) as new_admissions FROM students WHERE tenant_id = ? AND (YEAR(date_of_admission) = 2026 OR date_of_admission IS NULL)',
+            'SELECT COUNT(*) as new_admissions FROM students WHERE tenant_id = ? AND status = "active" AND (YEAR(date_of_admission) = 2026 OR date_of_admission IS NULL)',
             [tenantId]
         );
         // 2b. Fetch Employee and Donor metrics

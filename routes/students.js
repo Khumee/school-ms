@@ -26,7 +26,11 @@ router.get('/students', isAuthenticated, async (req, res) => {
             params.push(`%${search}%`, `%${search}%`);
         }
         if (filter === 'full_waiver') {
-            queryStr += ' AND s.has_concession = 1 AND s.custom_monthly_fee = 0';
+            queryStr += ' AND s.has_concession = 1 AND s.custom_monthly_fee = 0 AND s.status = "active"';
+        } else if (filter === 'left') {
+            queryStr += ' AND s.status = "inactive"';
+        } else {
+            queryStr += ' AND s.status = "active"';
         }
         
         queryStr += ' ORDER BY s.reg_no ASC';
@@ -34,7 +38,7 @@ router.get('/students', isAuthenticated, async (req, res) => {
         const [students] = await db.execute(queryStr, params);
         const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
         
-        res.render('students_list', { students, classes, classId, search });
+        res.render('students_list', { students, classes, classId, search, filter });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading students.');
