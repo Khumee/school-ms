@@ -26,7 +26,7 @@ router.get('/', isAuthenticated, async (req, res) => {
 
         let hifz_students = 0;
         const [[{ count: hifzCount }]] = await db.execute(
-            'SELECT COUNT(*) as count FROM hifz_enrollment WHERE tenant_id = ? AND status = "active"',
+            'SELECT COUNT(s.id) as count FROM students s JOIN classes c ON s.class_id = c.id WHERE s.tenant_id = ? AND s.status = "active" AND c.is_hifz_class = 1',
             [tenantId]
         );
         hifz_students = hifzCount;
