@@ -246,7 +246,15 @@
                                 <td style="text-align: right; font-weight: 700; background-color: #f8fafc;">
                                     <%= (parseFloat(s.basic_salary) + parseFloat(s.bonus) - parseFloat(s.deduction || 0)).toLocaleString() %>
                                 </td>
-                                <td><a href="/salaries/slip/<%= s.id %>" class="btn-secondary nav-btn" target="_blank"><i class="bi bi-file-earmark-pdf-fill"></i> Slip</a></td>
+                                <td>
+                                    <div style="display: flex; gap: 0.25rem;">
+                                        <a href="/salaries/slip/<%= s.id %>" class="btn-secondary nav-btn" target="_blank" title="Slip"><i class="bi bi-file-earmark-pdf-fill"></i></a>
+                                        <button type="button" class="btn-secondary nav-btn" style="color: #3b82f6;" title="Edit" onclick="openEditSalaryModal(<%= JSON.stringify(s) %>)"><i class="bi bi-pencil-fill"></i></button>
+                                        <form action="/salaries/delete/<%= s.id %>" method="POST" onsubmit="return confirm('Delete this payroll record?');" style="margin: 0;">
+                                            <button type="submit" class="btn-secondary nav-btn" style="color: #ef4444;" title="Delete"><i class="bi bi-trash-fill"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
                         <% }) %>
                     <% } else { %>
@@ -408,6 +416,103 @@
     document.getElementById('year').addEventListener('change', updateLateDeductions);
     document.getElementById('waived_late_count').addEventListener('input', updateLateDeductions);
     document.getElementById('waived_late_count').addEventListener('change', updateLateDeductions);
+
+    // Edit Modal Logic
+    function openEditSalaryModal(s) {
+        document.getElementById('edit_salary_modal').style.display = 'block';
+        document.getElementById('edit_salary_form').action = '/salaries/update/' + s.id;
+        
+        document.getElementById('edit_employee_name').value = s.employee_name;
+        document.getElementById('edit_month').value = s.month;
+        document.getElementById('edit_year').value = s.year;
+        document.getElementById('edit_basic_salary').value = s.basic_salary;
+        
+        if (s.paid_date) {
+            const dateStr = new Date(s.paid_date).toISOString().split('T')[0];
+            document.getElementById('edit_paid_date').value = dateStr;
+        } else {
+            document.getElementById('edit_paid_date').value = '';
+        }
+        
+        document.getElementById('edit_bonus').value = s.bonus;
+        document.getElementById('edit_bonus_description').value = s.bonus_description || '';
+        document.getElementById('edit_deduction').value = s.deduction || 0;
+        document.getElementById('edit_deduction_description').value = s.deduction_description || '';
+        document.getElementById('edit_waived_late_count').value = s.waived_late_count || 0;
+    }
+
+    function closeEditSalaryModal() {
+        document.getElementById('edit_salary_modal').style.display = 'none';
+    }
 </script>
+
+<!-- Edit Salary Modal -->
+<div id="edit_salary_modal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <span class="close" onclick="closeEditSalaryModal()">&times;</span>
+        <h2 style="margin-bottom: 1.5rem;"><i class="bi bi-pencil-square"></i> Edit Payroll Record</h2>
+        <form id="edit_salary_form" method="POST">
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label>Employee Name</label>
+                <input type="text" id="edit_employee_name" class="form-control" readonly style="background-color: #f1f5f9;">
+            </div>
+            
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label>Month</label>
+                    <select name="month" id="edit_month" class="form-control" required>
+                        <% monthsList.forEach((m, idx) => { %>
+                            <option value="<%= idx + 1 %>"><%= m %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Year</label>
+                    <input type="number" id="edit_year" name="year" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label>Basic Salary (PKR) *</label>
+                    <input type="number" step="0.01" id="edit_basic_salary" name="basic_salary" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Paid Date</label>
+                    <input type="date" id="edit_paid_date" name="paid_date" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label>Bonus / Addition (PKR)</label>
+                    <input type="number" step="0.01" id="edit_bonus" name="bonus" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Bonus Description</label>
+                    <input type="text" id="edit_bonus_description" name="bonus_description" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label>Total Deduction (PKR)</label>
+                    <input type="number" step="0.01" id="edit_deduction" name="deduction" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Deduction Description</label>
+                    <input type="text" id="edit_deduction_description" name="deduction_description" class="form-control">
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label>Waived Late Count</label>
+                <input type="number" id="edit_waived_late_count" name="waived_late_count" class="form-control">
+            </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%;">Save Changes</button>
+        </form>
+    </div>
+</div>
 
 <%- include('partials/footer') %>

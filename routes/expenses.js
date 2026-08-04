@@ -204,6 +204,46 @@ router.post('/salaries/pay', isAuthenticated, async (req, res) => {
     }
 });
 
+// POST /salaries/update/:id - update an existing salary record
+router.post('/salaries/update/:id', isAuthenticated, async (req, res) => {
+    const { basic_salary, bonus, bonus_description, deduction, deduction_description, waived_late_count, month, year, paid_date } = req.body;
+    try {
+        await db.execute(
+            `UPDATE salaries 
+             SET basic_salary = ?, bonus = ?, bonus_description = ?, paid_date = ?, deduction = ?, deduction_description = ?, waived_late_count = ?, month = ?, year = ?
+             WHERE id = ? AND tenant_id = ?`,
+            [
+                parseFloat(basic_salary), 
+                parseFloat(bonus || 0), 
+                bonus_description || null, 
+                paid_date || new Date(), 
+                parseFloat(deduction || 0), 
+                deduction_description || null, 
+                parseInt(waived_late_count || 0, 10),
+                parseInt(month, 10),
+                parseInt(year, 10),
+                req.params.id, 
+                req.tenant.id
+            ]
+        );
+        res.redirect('/salaries?month=' + month);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error updating salary record.');
+    }
+});
+
+// POST /salaries/delete/:id - delete salary
+router.post('/salaries/delete/:id', isAuthenticated, async (req, res) => {
+    try {
+        await db.execute('DELETE FROM salaries WHERE id = ? AND tenant_id = ?', [req.params.id, req.tenant.id]);
+        res.redirect('back');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error deleting salary record.');
+    }
+});
+
 // GET /salaries/slip/:id - generate PDF salary slip
 router.get('/salaries/slip/:id', isAuthenticated, async (req, res) => {
     try {
