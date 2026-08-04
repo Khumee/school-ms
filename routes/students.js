@@ -28,7 +28,7 @@ router.get('/students', isAuthenticated, async (req, res) => {
         if (filter === 'full_waiver') {
             queryStr += ' AND s.has_concession = 1 AND s.custom_monthly_fee = 0 AND s.status = "active"';
         } else if (filter === 'left') {
-            queryStr += ' AND s.status = "inactive"';
+            queryStr += ' AND s.status != "active"';
         } else {
             queryStr += ' AND s.status = "active"';
         }
