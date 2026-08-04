@@ -48,12 +48,12 @@
     </div>
     <% } %>
 
-    <!-- Total Employees -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/employees'">
-        <span class="kpi-icon orange" style="background-color: #ffedd5; color: #ea580c;"><i class="bi bi-person-badge-fill"></i></span>
-        <span class="kpi-label">Total Employees</span>
-        <span class="kpi-value"><%= total_employees %></span>
-        <span class="kpi-subtitle">Active staff on payroll</span>
+    <!-- Partial Concessions -->
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students'">
+        <span class="kpi-icon red"><i class="bi bi-tags-fill"></i></span>
+        <span class="kpi-label">Partial Concessions</span>
+        <span class="kpi-value"><%= support_students %></span>
+        <span class="kpi-subtitle">Students with partial discount</span>
     </div>
 
     <% if (req.tenant && req.tenant.enable_donations_module) { %>
