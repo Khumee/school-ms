@@ -177,7 +177,11 @@
         }
 
         if (classId && classHifzStatus[classId] === true) {
-            concessionSection.style.display = 'none';
+            concessionSection.style.display = 'block';
+            <% if (default_hifz_fee_waiver) { %>
+                document.getElementById('has_concession').checked = true;
+                document.getElementById('custom_monthly_fee').value = 0;
+            <% } %>
         } else {
             concessionSection.style.display = 'block';
         }

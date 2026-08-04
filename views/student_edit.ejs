@@ -168,7 +168,7 @@
     const classFeeDisplay = document.getElementById('class_fee_display');
     const concessionSection = document.getElementById('concession_settings_section');
 
-    function updateClassFee() {
+    function updateClassFee(isUserInteraction = false) {
         const classId = classSelect.value;
         if (classId && classFees[classId] !== undefined) {
             classFeeDisplay.value = 'PKR ' + parseFloat(classFees[classId]).toLocaleString();
@@ -177,7 +177,14 @@
         }
 
         if (classId && classHifzStatus[classId] === true) {
-            concessionSection.style.display = 'none';
+            concessionSection.style.display = 'block';
+            <% if (default_hifz_fee_waiver) { %>
+                // Only auto-fill if the concession fields haven't been intentionally modified (or just auto-fill on change, not load)
+                if (isUserInteraction) {
+                    document.getElementById('has_concession').checked = true;
+                    document.getElementById('custom_monthly_fee').value = 0;
+                }
+            <% } %>
         } else {
             concessionSection.style.display = 'block';
         }
@@ -196,8 +203,8 @@
         }
     }
 
-    classSelect.addEventListener('change', updateClassFee);
-    updateClassFee(); // Run on initial load
+    classSelect.addEventListener('change', () => updateClassFee(true));
+    updateClassFee(false); // Run on initial load
     toggleAdmissionPaymentDate(document.getElementById('admission_fee_status').value);
 </script>
 

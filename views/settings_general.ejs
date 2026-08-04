@@ -64,6 +64,18 @@
         </div>
 
         <div class="section-header" style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+            <h3 style="margin: 0;">Student Module Settings</h3>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 2rem;">
+            <label style="display: flex; align-items: center; gap: 0.75rem; font-weight: 600; cursor: pointer;">
+                <input type="checkbox" name="default_hifz_fee_waiver" value="1" <%= currentTenant.default_hifz_fee_waiver ? 'checked' : '' %> style="width: 18px; height: 18px;">
+                Default Hifz Students to Full Fee Waiver
+            </label>
+            <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem; margin-left: 1.75rem;">If enabled, selecting a Hifz class for a new student will automatically assign them a 100% fee concession.</p>
+        </div>
+
+        <div class="section-header" style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
             <h3 style="margin: 0;">Late Fee Configuration</h3>
         </div>
 

@@ -94,7 +94,6 @@ async function getTopDefaulters(tenantId, activeYear, limit = 10, offset = 0) {
     
     let defaulters = [];
     students.forEach(s => {
-        if (s.is_hifz_class) return;
         const expectedMonthly = parseFloat(s.default_monthly_fee || 0) - parseFloat(s.custom_monthly_fee || 0);
         const totalExpected = expectedMonthly * elapsedMonths;
         const totalPaid = paymentMap[s.id] || 0;
@@ -291,9 +290,9 @@ router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
 
         const tenantForPdf = { ...req.tenant, logo_url: resolvePublicAsset(req.tenant.logo_url) };
 
-        const standardFee = payment.is_hifz_class ? 0 : parseFloat(payment.default_monthly_fee || 0);
-        const customFee = payment.is_hifz_class ? 0 : (payment.custom_monthly_fee !== null ? parseFloat(payment.custom_monthly_fee) : standardFee);
-        const concession = payment.is_hifz_class ? 0 : Math.max(0, standardFee - customFee);
+        const standardFee = parseFloat(payment.default_monthly_fee || 0);
+        const customFee = payment.custom_monthly_fee !== null ? parseFloat(payment.custom_monthly_fee) : standardFee;
+        const concession = Math.max(0, standardFee - customFee);
 
         renderPdf(res, {
             templateName: 'fee_receipt',

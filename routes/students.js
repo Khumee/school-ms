@@ -49,7 +49,11 @@ router.get('/students', isAuthenticated, async (req, res) => {
 router.get('/students/add', isAuthenticated, async (req, res) => {
     try {
         const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [req.tenant.id]);
-        res.render('student_add', { classes, error: null });
+        res.render('student_add', { 
+            classes, 
+            error: null,
+            default_hifz_fee_waiver: req.tenant.default_hifz_fee_waiver 
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading form.');
@@ -135,7 +139,12 @@ router.get('/students/edit/:id', isAuthenticated, async (req, res) => {
         if (students.length === 0) return res.status(404).send('Student not found.');
         
         const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
-        res.render('student_edit', { student: students[0], classes, error: null });
+        res.render('student_edit', { 
+            student: students[0], 
+            classes, 
+            error: null,
+            default_hifz_fee_waiver: req.tenant.default_hifz_fee_waiver 
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading edit form.');
@@ -259,6 +268,30 @@ router.get('/students/view/:id', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading student profile.');
+    }
+});
+
+// GET /students/print/:id - print admission form
+router.get('/students/print/:id', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const [students] = await db.execute(
+            `SELECT s.*, c.name as class_name, c.default_monthly_fee, c.is_hifz_class
+             FROM students s
+             LEFT JOIN classes c ON s.class_id = c.id
+             WHERE s.id = ? AND s.tenant_id = ?`,
+            [req.params.id, tenantId]
+        );
+        if (students.length === 0) return res.status(404).send('Student not found.');
+
+        // Pass tenant info for branding
+        res.render('student_print', { 
+            student: students[0],
+            tenant: req.tenant
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading print view.');
     }
 });
 

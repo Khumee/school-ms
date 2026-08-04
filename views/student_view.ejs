@@ -5,6 +5,7 @@
 <div class="section-header">
     <h1 class="section-title"><i class="bi bi-person-vcard-fill"></i> <%= student.name %></h1>
     <div style="display: flex; gap: 0.5rem;">
+        <a href="/students/print/<%= student.id %>" target="_blank" class="btn-secondary"><i class="bi bi-printer"></i> Print Profile</a>
         <a href="/students/edit/<%= student.id %>" class="btn-secondary"><i class="bi bi-pencil-square"></i> Edit</a>
         <a href="/students" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Directory</a>
     </div>
@@ -25,18 +26,10 @@
         <span class="kpi-icon amber"><i class="bi bi-tags-fill"></i></span>
         <span class="kpi-label">Monthly Fee (Net)</span>
         <span class="kpi-value" style="font-size: 1.4rem;">
-            <% if (student.is_hifz_class) { %>
-                PKR 0 (Hifz)
-            <% } else { %>
-                PKR <%= (parseFloat(student.default_monthly_fee || 0) - parseFloat(student.custom_monthly_fee || 0)).toLocaleString() %>
-            <% } %>
+            PKR <%= (parseFloat(student.default_monthly_fee || 0) - parseFloat(student.custom_monthly_fee || 0)).toLocaleString() %>
         </span>
         <span class="kpi-subtitle">
-            <% if (student.is_hifz_class) { %>
-                Hifz Student
-            <% } else { %>
-                <%= student.has_concession ? 'Concessional Rate' : 'Standard Rate' %>
-            <% } %>
+            <%= student.has_concession ? 'Concessional Rate' : 'Standard Rate' %>
         </span>
     </div>
     <div class="card kpi-card">
@@ -66,19 +59,11 @@
     <div class="card">
         <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-tags-fill"></i> Fee Concession Details</h3>
         <table class="details-table" style="width: 100%; font-size: 0.875rem;">
-            <% if (student.is_hifz_class) { %>
-                <tr><td style="font-weight: 600; padding: 6px 0; width: 45%;">Class Standard Fee</td><td style="padding: 6px 0;">PKR 0 (Hifz Class)</td></tr>
-                <tr><td style="font-weight: 600; padding: 6px 0;">Concession Amount</td><td style="padding: 6px 0;">-</td></tr>
-                <tr><td style="font-weight: 600; padding: 6px 0;">Net Monthly Fee</td><td style="padding: 6px 0;">PKR 0</td></tr>
-                <tr><td style="font-weight: 600; padding: 6px 0;">Has Concession</td><td style="padding: 6px 0;">N/A (Hifz)</td></tr>
-                <tr><td style="font-weight: 600; padding: 6px 0;">Notes</td><td style="padding: 6px 0;">Hifz student exemption</td></tr>
-            <% } else { %>
-                <tr><td style="font-weight: 600; padding: 6px 0; width: 45%;">Class Standard Fee</td><td style="padding: 6px 0;">PKR <%= (student.default_monthly_fee || 0).toLocaleString() %></td></tr>
-                <tr><td style="font-weight: 600; padding: 6px 0;">Concession Amount</td><td style="padding: 6px 0;">PKR <%= parseFloat(student.custom_monthly_fee || 0).toLocaleString() %></td></tr>
-                <tr><td style="font-weight: 600; padding: 6px 0;">Net Monthly Fee</td><td style="padding: 6px 0;">PKR <%= (parseFloat(student.default_monthly_fee || 0) - parseFloat(student.custom_monthly_fee || 0)).toLocaleString() %></td></tr>
-                <tr><td style="font-weight: 600; padding: 6px 0;">Has Concession</td><td style="padding: 6px 0;"><%= student.has_concession ? 'Yes' : 'No' %></td></tr>
-                <tr><td style="font-weight: 600; padding: 6px 0;">Notes</td><td style="padding: 6px 0;"><%= student.concession_notes || '-' %></td></tr>
-            <% } %>
+            <tr><td style="font-weight: 600; padding: 6px 0; width: 45%;">Class Standard Fee</td><td style="padding: 6px 0;">PKR <%= (student.default_monthly_fee || 0).toLocaleString() %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Concession Amount</td><td style="padding: 6px 0;">PKR <%= parseFloat(student.custom_monthly_fee || 0).toLocaleString() %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Net Monthly Fee</td><td style="padding: 6px 0;">PKR <%= (parseFloat(student.default_monthly_fee || 0) - parseFloat(student.custom_monthly_fee || 0)).toLocaleString() %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Has Concession</td><td style="padding: 6px 0;"><%= student.has_concession ? 'Yes' : 'No' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Notes</td><td style="padding: 6px 0;"><%= student.concession_notes || '-' %></td></tr>
         </table>
     </div>
 
