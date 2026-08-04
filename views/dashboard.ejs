@@ -22,6 +22,14 @@
         <span class="kpi-subtitle"><%= paying_students %> Paying / <%= support_students %> Supported</span>
     </div>
 
+    <!-- Regular Fee Students -->
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students'">
+        <span class="kpi-icon green" style="background-color: #dcfce7; color: #16a34a;"><i class="bi bi-cash"></i></span>
+        <span class="kpi-label">Regular Fee</span>
+        <span class="kpi-value"><%= paying_students %></span>
+        <span class="kpi-subtitle">Students paying full fee</span>
+    </div>
+
     <!-- Full Fee Waiver Students -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students?filter=full_waiver'">
         <span class="kpi-icon red" style="background-color: #fef2f2; color: #ef4444;"><i class="bi bi-gift-fill"></i></span>
@@ -29,17 +37,6 @@
         <span class="kpi-value"><%= full_waiver_students %></span>
         <span class="kpi-subtitle">Students with 100% concession</span>
     </div>
-
-
-    <% if (req.tenant && req.tenant.enable_hifz_module) { %>
-    <!-- Hifz Students -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/hifz'">
-        <span class="kpi-icon pink"><i class="bi bi-book-fill"></i></span>
-        <span class="kpi-label">Hifz Students</span>
-        <span class="kpi-value"><%= hifz_students %></span>
-        <span class="kpi-subtitle">Enrolled in Hifz class</span>
-    </div>
-    <% } %>
 
     <!-- Partial Concessions -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students'">
@@ -49,21 +46,13 @@
         <span class="kpi-subtitle">Students with partial discount</span>
     </div>
 
-    <!-- New Admissions this Year -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students'">
-        <span class="kpi-icon teal"><i class="bi bi-person-plus-fill"></i></span>
-        <span class="kpi-label">New Admissions (2026)</span>
-        <span class="kpi-value"><%= new_admissions %></span>
-        <span class="kpi-subtitle">Registered this academic year</span>
-    </div>
-
-    <% if (req.tenant && req.tenant.enable_donations_module) { %>
-    <!-- Registered Donors -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/donations'">
-        <span class="kpi-icon indigo" style="background-color: #e0e7ff; color: #4f46e5;"><i class="bi bi-people-fill"></i></span>
-        <span class="kpi-label">Registered Donors</span>
-        <span class="kpi-value"><%= total_donors %></span>
-        <span class="kpi-subtitle">Supporting donors registered</span>
+    <% if (req.tenant && req.tenant.enable_hifz_module) { %>
+    <!-- Hifz Students -->
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/hifz'">
+        <span class="kpi-icon pink"><i class="bi bi-book-fill"></i></span>
+        <span class="kpi-label">Hifz Students</span>
+        <span class="kpi-value"><%= hifz_students %></span>
+        <span class="kpi-subtitle">Enrolled in Hifz class</span>
     </div>
     <% } %>
 
