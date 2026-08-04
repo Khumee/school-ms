@@ -30,13 +30,6 @@
         <span class="kpi-subtitle">Students with 100% concession</span>
     </div>
 
-    <!-- New Admissions this Year -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students'">
-        <span class="kpi-icon teal"><i class="bi bi-person-plus-fill"></i></span>
-        <span class="kpi-label">New Admissions (2026)</span>
-        <span class="kpi-value"><%= new_admissions %></span>
-        <span class="kpi-subtitle">Registered this academic year</span>
-    </div>
 
     <% if (req.tenant && req.tenant.enable_hifz_module) { %>
     <!-- Hifz Students -->
@@ -54,6 +47,14 @@
         <span class="kpi-label">Partial Concessions</span>
         <span class="kpi-value"><%= support_students %></span>
         <span class="kpi-subtitle">Students with partial discount</span>
+    </div>
+
+    <!-- New Admissions this Year -->
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students'">
+        <span class="kpi-icon teal"><i class="bi bi-person-plus-fill"></i></span>
+        <span class="kpi-label">New Admissions (2026)</span>
+        <span class="kpi-value"><%= new_admissions %></span>
+        <span class="kpi-subtitle">Registered this academic year</span>
     </div>
 
     <% if (req.tenant && req.tenant.enable_donations_module) { %>
