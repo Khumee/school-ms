@@ -66,12 +66,14 @@
     </div>
     <% } %>
 
-    <!-- Closing Balance -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="openKpiModal('Closing Cash Balance', '<h3>Balance Summary</h3><table style=\'width:100%; border-collapse:collapse; margin-top:0.5rem;\'><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>Carry Forward (Excel)</td><td style=\'text-align:right; font-weight:bold;\'>PKR <%= carryForward.toLocaleString() %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>YTD Income</td><td style=\'text-align:right; font-weight:bold; color:#16a34a;\'>+ PKR <%= totalIncomeAllTime.toLocaleString() %></td></tr><tr style=\'border-bottom:1px solid #e2e8f0;\'><td style=\'padding:0.5rem 0;\'>YTD Expense</td><td style=\'text-align:right; font-weight:bold; color:#dc2626;\'>- PKR <%= totalExpenseAllTime.toLocaleString() %></td></tr><tr style=\'font-weight:bold;\'><td style=\'padding:0.5rem 0;\'>Closing Cash Balance</td><td style=\'text-align:right;\'>PKR <%= currentBalance.toLocaleString() %></td></tr></table>')">
-        <span class="kpi-icon purple"><i class="bi bi-wallet2"></i></span>
-        <span class="kpi-label">Closing Cash Balance</span>
-        <span class="kpi-value" style="font-size: 1.4rem; white-space: nowrap;">PKR <%= currentBalance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
-        <span class="kpi-subtitle">Carry Forward: PKR <%= carryForward.toLocaleString() %></span>
+    <!-- Net Monthly Balance -->
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/fees/ledger'">
+        <span class="kpi-icon purple" style="background-color: #f3e8ff; color: #a855f7;"><i class="bi bi-wallet2"></i></span>
+        <span class="kpi-label">Net Balance (<%= currentMonthName %>)</span>
+        <span class="kpi-value" style="color: <%= currentMonthData.balance >= 0 ? '#16a34a' : '#dc2626' %>;">
+            <%= currentMonthData.balance >= 0 ? '+' : '' %>PKR <%= currentMonthData.balance.toLocaleString() %>
+        </span>
+        <span class="kpi-subtitle">Income − Expense this month</span>
     </div>
 
     <!-- Monthly Income -->
