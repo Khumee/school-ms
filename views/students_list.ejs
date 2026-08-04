@@ -2,7 +2,12 @@
 
 <%
     let totalCount = students.length;
-    let concessionCount = students.filter(s => s.has_concession).length;
+    let concessionCount = students.filter(s => {
+        if (!s.has_concession || s.status !== 'active') return false;
+        const concessionAmt = parseFloat(s.custom_monthly_fee || 0);
+        const expectedFee = parseFloat(s.default_monthly_fee || 0) - concessionAmt;
+        return concessionAmt > 0 && expectedFee > 0;
+    }).length;
     let standardCount = students.filter(s => !s.has_concession && s.status === 'active').length;
     let fullWaiverCount = students.filter(s => {
         const concessionAmt = s.has_concession ? parseFloat(s.custom_monthly_fee || 0) : 0;
@@ -44,9 +49,9 @@
     </div>
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="filterStudents('concession')" id="kpi-concession">
         <span class="kpi-icon red"><i class="bi bi-tags-fill"></i></span>
-        <span class="kpi-label">Concessions</span>
+        <span class="kpi-label">Partial Concessions</span>
         <span class="kpi-value" style="font-size: 1.4rem;"><%= concessionCount %></span>
-        <span class="kpi-subtitle">Click to view concessions only</span>
+        <span class="kpi-subtitle">Click to view partial only</span>
     </div>
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="filterStudents('full_waiver')" id="kpi-waiver">
         <span class="kpi-icon orange" style="background-color: #fff7ed; color: #f97316;"><i class="bi bi-gift-fill"></i></span>
@@ -168,7 +173,12 @@
                 const isStandard = !hasConcession && status === 'active';
                 row.style.display = isStandard ? '' : 'none';
             } else if (type === 'concession') {
-                row.style.display = hasConcession ? '' : 'none';
+                const hasConcession = row.getAttribute('data-has-concession') === 'true';
+                const customFee = hasConcession ? parseFloat(row.getAttribute('data-custom-fee') || 0) : 0;
+                const defaultFee = parseFloat(row.getAttribute('data-default-fee') || 0);
+                const status = row.getAttribute('data-status');
+                const expectedFee = defaultFee - customFee;
+                row.style.display = (hasConcession && customFee > 0 && expectedFee > 0 && status === 'active') ? '' : 'none';
             } else if (type === 'full_waiver') {
                 const hasConcession = row.getAttribute('data-has-concession') === 'true';
                 const customFee = hasConcession ? parseFloat(row.getAttribute('data-custom-fee') || 0) : 0;
@@ -182,6 +192,17 @@
                 row.style.display = (isHifz && status === 'active') ? '' : 'none';
             }
         });
+        
+        if (type === 'concession') {
+            const tbody = document.querySelector('.table-container tbody');
+            const rowArray = Array.from(rows);
+            rowArray.sort((a, b) => {
+                const aFee = a.getAttribute('data-has-concession') === 'true' ? parseFloat(a.getAttribute('data-custom-fee') || 0) : 0;
+                const bFee = b.getAttribute('data-has-concession') === 'true' ? parseFloat(b.getAttribute('data-custom-fee') || 0) : 0;
+                return bFee - aFee;
+            });
+            rowArray.forEach(row => tbody.appendChild(row));
+        }
         
         // Add visual active state to cards
         document.getElementById('kpi-all').style.border = type === 'all' ? '2px solid var(--primary-color)' : '';
