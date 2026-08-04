@@ -71,7 +71,10 @@
 
 <% const monthsList = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']; %>
 
-<div class="month-kpi-grid">
+<div style="display: grid; grid-template-columns: 150px 1fr; gap: 1.5rem; align-items: start;">
+    
+    <!-- LEFT SIDE: Vertical Month KPIs -->
+    <div class="month-kpi-grid" style="grid-template-columns: 1fr; margin-bottom: 0;">
     <% monthsList.forEach((m, idx) => { 
         const mNum = idx + 1;
         const summary = monthlySummaries.find(s => s.month === mNum);
@@ -92,7 +95,11 @@
 </div>
 
 
-<div class="form-grid" style="grid-template-columns: 1fr 2fr; gap: 1.5rem; margin-bottom: 2rem;">
+    </div>
+
+    <!-- RIGHT SIDE: Payout Form & Log -->
+    <div>
+        <div class="form-grid" style="grid-template-columns: 1fr 2fr; gap: 1.5rem; margin-bottom: 2rem;">
     <!-- Form to execute Payout -->
     <div class="card">
         <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Issue Salary Payout</h3>
@@ -205,7 +212,7 @@
             </form>
         </div>
         
-        <div class="table-container" style="border: none; max-height: 420px; overflow-y: auto;">
+        <div class="table-container" style="border: none; max-height: 520px; overflow-y: auto;">
             <table>
                 <thead>
                     <tr>
@@ -265,6 +272,7 @@
                 </tbody>
             </table>
         </div>
+    </div>
     </div>
 </div>
 
