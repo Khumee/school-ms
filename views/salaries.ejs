@@ -123,11 +123,11 @@
             empCount = summary.employee_count;
         }
     %>
-        <a href="/salaries?month=<%= mNum %>" class="month-card <%= isActive ? 'active' : '' %>">
+        <div onclick="openMonthSummaryModal(<%= mNum %>, '<%= m %>')" class="month-card <%= isActive ? 'active' : '' %>">
             <div class="month-name"><%= m %></div>
             <div class="month-total"><%= totalPaid > 0 ? 'PKR ' + totalPaid.toLocaleString(undefined, {maximumFractionDigits: 0}) : '-' %></div>
             <div class="month-sub"><%= empCount %> paid</div>
-        </a>
+        </div>
     <% }) %>
 </div>
 
@@ -483,6 +483,55 @@
     function closeEditSalaryModal() {
         document.getElementById('edit_salary_modal').style.display = 'none';
     }
+
+    // Month Summary Modal Logic
+    async function openMonthSummaryModal(monthNum, monthName) {
+        document.getElementById('month_summary_modal').style.display = 'block';
+        document.getElementById('summary_month_name').textContent = monthName + ' 2026';
+        const tbody = document.getElementById('summary_table_body');
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
+        
+        try {
+            const res = await fetch(`/salaries/api/month/${monthNum}`);
+            const data = await res.json();
+            
+            if (data.success && data.salaries.length > 0) {
+                let html = '';
+                let totalPaid = 0;
+                data.salaries.forEach(s => {
+                    const basic = parseFloat(s.basic_salary) || 0;
+                    const bonus = parseFloat(s.bonus) || 0;
+                    const deduction = parseFloat(s.deduction) || 0;
+                    const net = basic + bonus - deduction;
+                    totalPaid += net;
+                    
+                    html += `<tr>
+                        <td style="font-weight: 600;">${s.employee_name}<br><span style="font-size: 0.75rem; color: #64748b; font-weight: 400;">${s.designation}</span></td>
+                        <td style="text-align: right;">${basic.toLocaleString()}</td>
+                        <td style="text-align: right; color: ${bonus > 0 ? '#16a34a' : (deduction > 0 ? '#dc2626' : '#64748b')}">
+                            ${bonus > 0 ? '+'+bonus.toLocaleString() : (deduction > 0 ? '-'+deduction.toLocaleString() : '-')}
+                        </td>
+                        <td style="text-align: right; font-weight: 700;">${net.toLocaleString()}</td>
+                    </tr>`;
+                });
+                
+                html += `<tr style="background-color: #f8fafc;">
+                    <td colspan="3" style="text-align: right; font-weight: 700;">Total Paid for ${monthName}:</td>
+                    <td style="text-align: right; font-weight: 700; color: #16a34a;">PKR ${totalPaid.toLocaleString()}</td>
+                </tr>`;
+                
+                tbody.innerHTML = html;
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #64748b;">No payroll payments logged for this month.</td></tr>';
+            }
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color: #dc2626;">Error loading data.</td></tr>';
+        }
+    }
+
+    function closeMonthSummaryModal() {
+        document.getElementById('month_summary_modal').style.display = 'none';
+    }
 </script>
 
 <!-- Edit Salary Modal -->
@@ -551,6 +600,34 @@
 
             <button type="submit" class="btn-primary" style="width: 100%;">Save Changes</button>
         </form>
+    </div>
+</div>
+
+<!-- Month Summary Modal -->
+<div id="month_summary_modal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <span class="close" onclick="closeMonthSummaryModal()">&times;</span>
+        <h2 style="margin-bottom: 1.5rem;"><i class="bi bi-calendar-check-fill" style="color: var(--primary-color);"></i> Payroll Summary: <span id="summary_month_name"></span></h2>
+        
+        <div class="table-container" style="border: none; max-height: 400px; overflow-y: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th style="text-align: right;">Basic (PKR)</th>
+                        <th style="text-align: right;">Bonus/Ded (PKR)</th>
+                        <th style="text-align: right; background-color: #f1f5f9;">Net Paid (PKR)</th>
+                    </tr>
+                </thead>
+                <tbody id="summary_table_body">
+                    <!-- Loaded via JS -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="margin-top: 1.5rem; text-align: right;">
+            <button type="button" class="btn-secondary" onclick="closeMonthSummaryModal()">Close</button>
+        </div>
     </div>
 </div>
 

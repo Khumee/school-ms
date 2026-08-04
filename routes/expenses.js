@@ -280,4 +280,24 @@ router.get('/salaries/slip/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+// GET /salaries/api/month/:month - fetch salaries for a specific month
+router.get('/salaries/api/month/:month', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const month = parseInt(req.params.month, 10);
+        const [salaries] = await db.execute(
+            `SELECT s.*, e.name as employee_name, e.designation 
+             FROM salaries s 
+             JOIN employees e ON s.employee_id = e.id 
+             WHERE s.tenant_id = ? AND s.year = 2026 AND s.month = ?
+             ORDER BY e.name ASC`,
+            [tenantId, month]
+        );
+        res.json({ success: true, salaries });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 module.exports = router;
