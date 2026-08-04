@@ -4,7 +4,10 @@
     let totalCount = students.length;
     let concessionCount = students.filter(s => s.has_concession).length;
     let standardCount = students.filter(s => !s.has_concession && s.status === 'active').length;
-    let fullWaiverCount = students.filter(s => s.has_concession && parseFloat(s.custom_monthly_fee || 0) === 0 && s.status === 'active').length;
+    let fullWaiverCount = students.filter(s => {
+        const expectedFee = parseFloat(s.default_monthly_fee || 0) - parseFloat(s.custom_monthly_fee || 0);
+        return expectedFee <= 0 && parseFloat(s.default_monthly_fee || 0) > 0 && s.status === 'active';
+    }).length;
     let hifzCount = students.filter(s => s.is_hifz_class && s.status === 'active').length;
 %>
 
@@ -106,7 +109,7 @@
         <tbody>
             <% if (students.length > 0) { %>
                 <% students.forEach(s => { %>
-                    <tr class="student-row" data-has-concession="<%= s.has_concession ? 'true' : 'false' %>" data-is-hifz="<%= s.is_hifz_class ? 'true' : 'false' %>" data-status="<%= s.status %>" data-custom-fee="<%= s.custom_monthly_fee || 0 %>">
+                    <tr class="student-row" data-has-concession="<%= s.has_concession ? 'true' : 'false' %>" data-is-hifz="<%= s.is_hifz_class ? 'true' : 'false' %>" data-status="<%= s.status %>" data-custom-fee="<%= s.custom_monthly_fee || 0 %>" data-default-fee="<%= s.default_monthly_fee || 0 %>">
                         <td style="font-weight: 600;"><%= s.reg_no %></td>
                         <td><a href="/students/view/<%= s.id %>" style="color: var(--primary-color); text-decoration: underline; font-weight: 600;"><%= s.name %></a></td>
                         <td><%= s.class_name || 'Unassigned' %></td>
@@ -167,8 +170,10 @@
                 row.style.display = hasConcession ? '' : 'none';
             } else if (type === 'full_waiver') {
                 const customFee = parseFloat(row.getAttribute('data-custom-fee') || 0);
+                const defaultFee = parseFloat(row.getAttribute('data-default-fee') || 0);
                 const status = row.getAttribute('data-status');
-                row.style.display = (hasConcession && customFee === 0 && status === 'active') ? '' : 'none';
+                const expectedFee = defaultFee - customFee;
+                row.style.display = (expectedFee <= 0 && defaultFee > 0 && status === 'active') ? '' : 'none';
             } else if (type === 'hifz') {
                 const isHifz = row.getAttribute('data-is-hifz') === 'true';
                 const status = row.getAttribute('data-status');

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Admission Form - <%= student.name %></title>
+    <title>Student Admission Form</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -129,7 +129,8 @@
             font-size: 12px;
         }
         @media print {
-            body { background: none; }
+            @page { margin: 0; } /* This removes browser headers/footers */
+            body { padding: 1cm; background: none; }
             .page { padding: 0; box-shadow: none; margin: 0; }
             .title { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .photo-box { top: 0; right: 0; }
