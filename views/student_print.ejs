@@ -231,14 +231,6 @@
                     <div class="label">Residential Address</div>
                     <div class="value"><%= student.address || '-' %></div>
                 </div>
-                <div class="field">
-                    <div class="label">Total Family Members</div>
-                    <div class="value"><%= student.family_members || '-' %></div>
-                </div>
-                <div class="field">
-                    <div class="label">Siblings (Total / School-going)</div>
-                    <div class="value"><%= student.siblings !== null ? student.siblings : '-' %> / <%= student.school_going_siblings !== null ? student.school_going_siblings : '-' %></div>
-                </div>
             </div>
         </div>
 
@@ -251,19 +243,27 @@
             </div>
         </div>
 
-        <!-- Section 5: Financials -->
+        <!-- Section 5: Financials & Support -->
         <div class="section">
-            <div class="section-title">5. Financial & Concession Details</div>
+            <div class="section-title">5. Family Support & Financial Details (For Donor Reference)</div>
             <div class="grid">
+                <div class="field">
+                    <div class="label">Total Family Members</div>
+                    <div class="value"><%= student.family_members || '-' %></div>
+                </div>
+                <div class="field">
+                    <div class="label">Siblings (Total / School-going)</div>
+                    <div class="value"><%= student.siblings !== null ? student.siblings : '-' %> / <%= student.school_going_siblings !== null ? student.school_going_siblings : '-' %></div>
+                </div>
+                <div class="field">
+                    <div class="label">Monthly Household Income</div>
+                    <div class="value"><%= student.monthly_income || '-' %></div>
+                </div>
                 <div class="field">
                     <div class="label">Admission Fee Status</div>
                     <div class="value" style="text-transform: capitalize;">
                         <%= student.admission_fee_status %> - PKR <%= parseFloat(student.admission_fee || 0).toLocaleString() %>
                     </div>
-                </div>
-                <div class="field">
-                    <div class="label">Monthly Income</div>
-                    <div class="value"><%= student.monthly_income || '-' %></div>
                 </div>
                 <div class="field">
                     <div class="label">Monthly Tuition Fee Due</div>

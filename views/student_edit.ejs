@@ -155,9 +155,8 @@
                 <div class="form-group">
                     <label for="concession_reason">Concession Reason</label>
                     <select name="concession_reason" id="concession_reason" class="form-control">
-                        <option value="">-- None --</option>
+                        <option value="Low Income" <%= student.concession_reason === 'Low Income' || !student.concession_reason ? 'selected' : '' %>>Low Income</option>
                         <option value="No Income" <%= student.concession_reason === 'No Income' ? 'selected' : '' %>>No Income</option>
-                        <option value="Low Income" <%= student.concession_reason === 'Low Income' ? 'selected' : '' %>>Low Income</option>
                         <option value="Irregular income" <%= student.concession_reason === 'Irregular income' ? 'selected' : '' %>>Irregular income</option>
                         <option value="Orphan" <%= student.concession_reason === 'Orphan' ? 'selected' : '' %>>Orphan</option>
                     </select>
