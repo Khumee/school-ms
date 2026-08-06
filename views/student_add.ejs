@@ -90,6 +90,26 @@
                 <label for="previous_school_info">Previous School Details</label>
                 <input type="text" id="previous_school_info" name="previous_school_info" class="form-control">
             </div>
+
+            <div class="form-group">
+                <label for="family_members">Total Family Members</label>
+                <input type="number" id="family_members" name="family_members" class="form-control" min="1">
+            </div>
+
+            <div class="form-group">
+                <label for="siblings">Total Siblings</label>
+                <input type="number" id="siblings" name="siblings" class="form-control" min="0">
+            </div>
+
+            <div class="form-group">
+                <label for="school_going_siblings">School Going Siblings</label>
+                <input type="number" id="school_going_siblings" name="school_going_siblings" class="form-control" min="0">
+            </div>
+
+            <div class="form-group">
+                <label for="monthly_income">Monthly Income</label>
+                <input type="text" id="monthly_income" name="monthly_income" class="form-control" placeholder="e.g. 50000 or Irregular">
+            </div>
         </div>
         
         <div class="form-group" style="margin-bottom: 1.5rem;">
@@ -132,9 +152,15 @@
                     <input type="number" step="0.01" id="custom_monthly_fee" name="custom_monthly_fee" class="form-control" placeholder="0.00" value="0">
                 </div>
                 
-                <div class="form-group form-checkbox" style="margin-top: 1.8rem;">
-                    <input type="checkbox" id="has_concession" name="has_concession" value="1">
-                    <label for="has_concession">Apply Fee Concession Support</label>
+                <div class="form-group">
+                    <label for="concession_reason">Concession Reason</label>
+                    <select name="concession_reason" id="concession_reason" class="form-control">
+                        <option value="">-- None --</option>
+                        <option value="No Income">No Income</option>
+                        <option value="Low Income">Low Income</option>
+                        <option value="Irregular income">Irregular income</option>
+                        <option value="Orphan">Orphan</option>
+                    </select>
                 </div>
                 
                 <div class="form-group" style="grid-column: span 2;">
@@ -179,7 +205,6 @@
         if (classId && classHifzStatus[classId] === true) {
             concessionSection.style.display = 'block';
             <% if (default_hifz_fee_waiver) { %>
-                document.getElementById('has_concession').checked = true;
                 document.getElementById('custom_monthly_fee').value = classFees[classId];
             <% } %>
         } else {

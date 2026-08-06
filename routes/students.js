@@ -36,7 +36,13 @@ router.get('/students', isAuthenticated, async (req, res) => {
         const [students] = await db.execute(queryStr, params);
         const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
         
-        res.render('students_list', { students, classes, classId, search, filter });
+        const queryParams = new URLSearchParams();
+        if (classId) queryParams.append('classId', classId);
+        if (search) queryParams.append('search', search);
+        if (filter) queryParams.append('filter', filter);
+        const qString = queryParams.toString() ? '?' + queryParams.toString() : '';
+        
+        res.render('students_list', { students, classes, classId, search, filter, qString });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading students.');
@@ -61,7 +67,7 @@ router.get('/students/add', isAuthenticated, async (req, res) => {
 // POST /students/add - save
 router.post('/students/add', isAuthenticated, async (req, res) => {
     const {
-        reg_no, name, class_id, custom_monthly_fee, has_concession, concession_notes,
+        reg_no, name, class_id, custom_monthly_fee, concession_notes, concession_reason, family_members, siblings, school_going_siblings, monthly_income,
         father_name, father_phone, emergency_contact, date_of_birth, address, gender,
         date_of_admission, status, previous_school_info, blood_group,
         admission_fee, admission_fee_status, admission_fee_payment_date
@@ -86,16 +92,20 @@ router.post('/students/add', isAuthenticated, async (req, res) => {
 
         const [result] = await db.execute(
             `INSERT INTO students (
-                reg_no, name, class_id, custom_monthly_fee, has_concession, concession_notes,
+                reg_no, name, class_id, custom_monthly_fee, has_concession, concession_notes, concession_reason, family_members, siblings, school_going_siblings, monthly_income,
                 father_name, father_phone, emergency_contact, date_of_birth, address, gender,
                 date_of_admission, status, previous_school_info, blood_group, tenant_id,
                 admission_fee, admission_fee_status, admission_fee_payment_date
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 reg_no, name, class_id || null, 
                 (custom_monthly_fee !== undefined && custom_monthly_fee !== null && custom_monthly_fee !== '') ? parseFloat(custom_monthly_fee) : null,
-                has_concession === 'on' || has_concession === '1' ? 1 : 0,
-                concession_notes || null,
+                ((custom_monthly_fee !== undefined && custom_monthly_fee !== null && custom_monthly_fee !== '') && parseFloat(custom_monthly_fee) > 0) ? 1 : 0,
+                concession_notes || null, concession_reason || null, 
+                family_members ? parseInt(family_members, 10) : null,
+                siblings ? parseInt(siblings, 10) : null,
+                school_going_siblings ? parseInt(school_going_siblings, 10) : null,
+                monthly_income || null,
                 father_name || null, father_phone || null, emergency_contact || null,
                 date_of_birth || null, address || null, gender || 'male',
                 date_of_admission || null, status || 'active',
@@ -137,11 +147,13 @@ router.get('/students/edit/:id', isAuthenticated, async (req, res) => {
         if (students.length === 0) return res.status(404).send('Student not found.');
         
         const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
+        const queryString = Object.keys(req.query).length > 0 ? '?' + new URLSearchParams(req.query).toString() : '';
         res.render('student_edit', { 
             student: students[0], 
             classes, 
             error: null,
-            default_hifz_fee_waiver: req.tenant.default_hifz_fee_waiver 
+            default_hifz_fee_waiver: req.tenant.default_hifz_fee_waiver,
+            queryString
         });
     } catch (err) {
         console.error(err);
@@ -152,7 +164,7 @@ router.get('/students/edit/:id', isAuthenticated, async (req, res) => {
 // POST /students/edit/:id - update
 router.post('/students/edit/:id', isAuthenticated, async (req, res) => {
     const {
-        reg_no, name, class_id, custom_monthly_fee, has_concession, concession_notes,
+        reg_no, name, class_id, custom_monthly_fee, concession_notes, concession_reason, family_members, siblings, school_going_siblings, monthly_income,
         father_name, father_phone, emergency_contact, date_of_birth, address, gender,
         date_of_admission, status, previous_school_info, blood_group,
         admission_fee, admission_fee_status, admission_fee_payment_date
@@ -170,7 +182,14 @@ router.post('/students/edit/:id', isAuthenticated, async (req, res) => {
         if (existing.length > 0) {
             const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
             const [students] = await db.execute('SELECT * FROM students WHERE id = ? AND tenant_id = ?', [studentId, tenantId]);
-            return res.render('student_edit', { student: students[0], classes, error: 'Registration number already exists.' });
+            const queryString = Object.keys(req.query).length > 0 ? '?' + new URLSearchParams(req.query).toString() : '';
+            return res.render('student_edit', { 
+                student: students[0], 
+                classes, 
+                error: 'Registration number already exists.',
+                default_hifz_fee_waiver: req.tenant.default_hifz_fee_waiver,
+                queryString
+            });
         }
         
         const admFee = admission_fee ? parseFloat(admission_fee) : 0.00;
@@ -180,7 +199,7 @@ router.post('/students/edit/:id', isAuthenticated, async (req, res) => {
         await db.execute(
             `UPDATE students SET 
                 reg_no = ?, name = ?, class_id = ?, custom_monthly_fee = ?, 
-                has_concession = ?, concession_notes = ?, father_name = ?, 
+                has_concession = ?, concession_notes = ?, concession_reason = ?, family_members = ?, siblings = ?, school_going_siblings = ?, monthly_income = ?, father_name = ?, 
                 father_phone = ?, emergency_contact = ?, date_of_birth = ?, 
                 address = ?, gender = ?, date_of_admission = ?, status = ?, 
                 previous_school_info = ?, blood_group = ?,
@@ -189,8 +208,12 @@ router.post('/students/edit/:id', isAuthenticated, async (req, res) => {
             [
                 reg_no, name, class_id || null,
                 (custom_monthly_fee !== undefined && custom_monthly_fee !== null && custom_monthly_fee !== '') ? parseFloat(custom_monthly_fee) : null,
-                has_concession === 'on' || has_concession === '1' ? 1 : 0,
-                concession_notes || null,
+                ((custom_monthly_fee !== undefined && custom_monthly_fee !== null && custom_monthly_fee !== '') && parseFloat(custom_monthly_fee) > 0) ? 1 : 0,
+                concession_notes || null, concession_reason || null, 
+                family_members ? parseInt(family_members, 10) : null,
+                siblings ? parseInt(siblings, 10) : null,
+                school_going_siblings ? parseInt(school_going_siblings, 10) : null,
+                monthly_income || null,
                 father_name || null, father_phone || null, emergency_contact || null,
                 date_of_birth || null, address || null, gender || 'male',
                 date_of_admission || null, status || 'active',
@@ -218,7 +241,8 @@ router.post('/students/edit/:id', isAuthenticated, async (req, res) => {
             );
         }
         
-        res.redirect('/students');
+        const queryString = Object.keys(req.query).length > 0 ? '?' + new URLSearchParams(req.query).toString() : '';
+        res.redirect(`/students${queryString}`);
     } catch (err) {
         console.error(err);
         res.status(500).send('Error updating student.');

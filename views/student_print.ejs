@@ -231,6 +231,14 @@
                     <div class="label">Residential Address</div>
                     <div class="value"><%= student.address || '-' %></div>
                 </div>
+                <div class="field">
+                    <div class="label">Total Family Members</div>
+                    <div class="value"><%= student.family_members || '-' %></div>
+                </div>
+                <div class="field">
+                    <div class="label">Siblings (Total / School-going)</div>
+                    <div class="value"><%= student.siblings !== null ? student.siblings : '-' %> / <%= student.school_going_siblings !== null ? student.school_going_siblings : '-' %></div>
+                </div>
             </div>
         </div>
 
@@ -254,6 +262,10 @@
                     </div>
                 </div>
                 <div class="field">
+                    <div class="label">Monthly Income</div>
+                    <div class="value"><%= student.monthly_income || '-' %></div>
+                </div>
+                <div class="field">
                     <div class="label">Monthly Tuition Fee Due</div>
                     <div class="value">
                         <% if (student.has_concession) { %>
@@ -264,6 +276,12 @@
                         <% } %>
                     </div>
                 </div>
+                <% if (student.has_concession) { %>
+                    <div class="field">
+                        <div class="label">Concession Reason</div>
+                        <div class="value"><%= student.concession_reason || '-' %></div>
+                    </div>
+                <% } %>
                 <% if (student.has_concession && student.concession_notes) { %>
                     <div class="field full-width">
                         <div class="label">Concession Notes</div>

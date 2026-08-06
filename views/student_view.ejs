@@ -53,6 +53,10 @@
             <tr><td style="font-weight: 600; padding: 6px 0;">Address</td><td style="padding: 6px 0;"><%= student.address || '-' %></td></tr>
             <tr><td style="font-weight: 600; padding: 6px 0;">Blood Group</td><td style="padding: 6px 0;"><%= student.blood_group || '-' %></td></tr>
             <tr><td style="font-weight: 600; padding: 6px 0;">Previous School</td><td style="padding: 6px 0;"><%= student.previous_school_info || '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Family Members</td><td style="padding: 6px 0;"><%= student.family_members || '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Siblings (Total)</td><td style="padding: 6px 0;"><%= student.siblings !== null ? student.siblings : '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Siblings (School Going)</td><td style="padding: 6px 0;"><%= student.school_going_siblings !== null ? student.school_going_siblings : '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Monthly Income</td><td style="padding: 6px 0;"><%= student.monthly_income || '-' %></td></tr>
         </table>
     </div>
 
@@ -63,6 +67,7 @@
             <tr><td style="font-weight: 600; padding: 6px 0;">Concession Amount</td><td style="padding: 6px 0;">PKR <%= student.has_concession ? parseFloat(student.custom_monthly_fee || 0).toLocaleString() : '0' %></td></tr>
             <tr><td style="font-weight: 600; padding: 6px 0;">Net Monthly Fee</td><td style="padding: 6px 0;">PKR <%= (parseFloat(student.default_monthly_fee || 0) - (student.has_concession ? parseFloat(student.custom_monthly_fee || 0) : 0)).toLocaleString() %></td></tr>
             <tr><td style="font-weight: 600; padding: 6px 0;">Has Concession</td><td style="padding: 6px 0;"><%= student.has_concession ? 'Yes' : 'No' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Reason</td><td style="padding: 6px 0;"><%= student.concession_reason || '-' %></td></tr>
             <tr><td style="font-weight: 600; padding: 6px 0;">Notes</td><td style="padding: 6px 0;"><%= student.concession_notes || '-' %></td></tr>
         </table>
     </div>
