@@ -90,6 +90,11 @@
             padding-bottom: 5px;
             margin-bottom: 15px;
         }
+        .main-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
         .grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -165,7 +170,9 @@
 
         <div class="title">Student Admission Form</div>
 
-        <!-- Section 1: Academic Details -->
+        <div class="main-columns">
+            <div class="column-left">
+                <!-- Section 1: Academic Details -->
         <div class="section">
             <div class="section-title">1. Academic & Enrollment Details</div>
             <div class="grid">
@@ -241,9 +248,10 @@
                 <div class="label">Previous School Details (If any)</div>
                 <div class="value"><%= student.previous_school_info || '-' %></div>
             </div>
-        </div>
-
-        <!-- Section 5: Financials & Support -->
+            </div>
+            
+            <div class="column-right">
+                <!-- Section 5: Financials & Support -->
         <div class="section">
             <div class="section-title">5. Family Support & Financial Details (For Donor Reference)</div>
             <div class="grid">
@@ -289,6 +297,7 @@
                     </div>
                 <% } %>
             </div>
+        </div>
         </div>
 
         <!-- Signatures -->
