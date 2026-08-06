@@ -301,7 +301,7 @@ router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
                 student: { name: payment.student_name, reg_no: payment.reg_no, has_concession: payment.has_concession },
                 className: payment.class_name,
                 month: payment.month,
-                monthName: MONTH_NAMES[payment.month - 1],
+                monthName: payment.month === 0 ? 'Admission Fee' : MONTH_NAMES[payment.month - 1],
                 year: payment.year,
                 amount: payment.amount_paid,
                 fineAmount: payment.fine_amount || 0,
@@ -314,7 +314,7 @@ router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
                 MONTH_NAMES
             },
             fileBaseName: `fee_receipt_${payment.id}`,
-            downloadName: `fee-receipt-${payment.reg_no}-${MONTH_NAMES[payment.month - 1]}-${payment.year}.pdf`
+            downloadName: `fee-receipt-${payment.reg_no}-${payment.month === 0 ? 'AdmissionFee' : MONTH_NAMES[payment.month - 1]}-${payment.year}.pdf`
         });
     } catch (err) {
         console.error(err);

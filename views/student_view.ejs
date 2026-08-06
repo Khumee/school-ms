@@ -166,9 +166,7 @@
                         <td><%= new Date(p.payment_date).toLocaleDateString() %></td>
                         <td>
                             <div style="display: flex; gap: 0.4rem; justify-content: flex-end;">
-                                <% if (p.month > 0) { %>
-                                    <a href="/fees/receipt/<%= p.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
-                                <% } %>
+                                <a href="/fees/receipt/<%= p.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
                                 <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= student.id %>', '<%= student.name %>', <%= p.month %>, <%= p.year %>, <%= p.amount_paid %>, <%= p.fine_amount || 0 %>, <%= p.fine_waived || 0 %>, <%= p.additional_fee || 0 %>, '<%= p.additional_fee_description || '' %>', '<%= new Date(p.payment_date).toISOString().substring(0, 10) %>')"><i class="bi bi-pencil-fill"></i> Edit</button>
                             </div>
                         </td>
