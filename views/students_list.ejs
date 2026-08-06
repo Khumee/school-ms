@@ -168,6 +168,7 @@
 
 <script>
     function filterStudents(type) {
+        sessionStorage.setItem('activeStudentFilter', type);
         const rows = document.querySelectorAll('.student-row');
         rows.forEach(row => {
             const hasConcession = row.getAttribute('data-has-concession') === 'true';
@@ -219,12 +220,17 @@
         document.getElementById('kpi-hifz').style.border = type === 'hifz' ? '2px solid var(--primary-color)' : '';
     }
 
-    // Auto-apply filter if passed from server query param
+    // Auto-apply filter if passed from server query param or sessionStorage
     document.addEventListener("DOMContentLoaded", () => {
         const urlParams = new URLSearchParams(window.location.search);
         const activeFilter = urlParams.get('filter');
         if (activeFilter && activeFilter !== 'left') {
             filterStudents(activeFilter);
+        } else if (!activeFilter) {
+            const savedFilter = sessionStorage.getItem('activeStudentFilter');
+            if (savedFilter && savedFilter !== 'all') {
+                filterStudents(savedFilter);
+            }
         }
     });
 </script>

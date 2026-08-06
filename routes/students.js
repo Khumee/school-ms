@@ -31,7 +31,7 @@ router.get('/students', isAuthenticated, async (req, res) => {
             queryStr += ' AND s.status = "active"';
         }
         
-        queryStr += ' ORDER BY s.date_of_admission DESC, s.reg_no ASC';
+        queryStr += ' ORDER BY s.updated_at DESC, s.date_of_admission DESC, s.reg_no ASC';
         
         const [students] = await db.execute(queryStr, params);
         const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
