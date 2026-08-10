@@ -261,11 +261,24 @@
         <!-- Milestone intermediate tests checklist -->
         <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e2e8f0;">
             <h4 style="margin-top: 0; margin-bottom: 0.75rem; color: #0f172a;"><i class="bi bi-star-fill" style="color: #d97706;"></i> Milestone Intermediate Tests</h4>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
-                <% [5, 15, 25].forEach(milestone => { 
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
+                <% [5, 10, 15, 20, 25].forEach(milestone => { 
                     const record = paraMap.find(p => p.para === milestone && p.status === 'completed');
                 %>
-                    <div style="padding: 0.75rem; border-radius: 8px; border: 1px solid <%= record ? '#bbf7d0' : '#e2e8f0' %>; background-color: <%= record ? '#f0fdf4' : '#f8fafc' %>; text-align: center;">
+                    <div 
+                        style="padding: 0.75rem; border-radius: 8px; border: 1px solid <%= record ? '#bbf7d0' : '#e2e8f0' %>; background-color: <%= record ? '#f0fdf4' : '#f8fafc' %>; text-align: center; <%= record ? 'cursor: pointer;' : '' %>"
+                        <% if (record && record.test) { %>
+                        onclick='showParaModal(<%- JSON.stringify({
+                            para_no: record.test.para_no, 
+                            completed_date: record.test.completed_date, 
+                            test_date: record.test.test_date, 
+                            test_result: record.test.test_result, 
+                            test_evaluator_name: record.test.test_evaluator_name, 
+                            test_notes: record.test.test_notes, 
+                            evaluated_by_self: record.test.evaluated_by_self
+                        }).replace(/'/g, "\\'") %>)'
+                        <% } %>
+                    >
                         <div style="font-weight: 700; color: <%= record ? '#16a34a' : '#64748b' %>;"><%= milestone %> Paras Test</div>
                         <div style="font-size: 0.8rem; margin-top: 0.25rem; color: #475569;">
                             <% if (record && record.test && record.test.completed_date) { %>
