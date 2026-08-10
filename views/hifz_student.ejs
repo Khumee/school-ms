@@ -115,7 +115,7 @@
                 <% } %>
             </div>
             <p class="khatam-prediction">
-                Based on memorization pace of last 30 active days (~<%= (enrollment.avg_lines_30d || 4.5).toFixed(1) %> lines/day).
+                Based on memorization pace of last 30 active days (~<%= (Number(enrollment.avg_lines_30d) || 4.5).toFixed(1) %> lines/day).
             </p>
         </div>
 
