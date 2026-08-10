@@ -517,8 +517,14 @@ router.get('/hifz/student/:studentId', isAuthenticated, async (req, res) => {
         const weekAgoStr = weekAgo.toISOString().split('T')[0];
 
         const weeklyEntries = data.entries.filter(e => {
-            const entryDateStr = new Date(e.entry_date).toISOString().split('T')[0];
-            return entryDateStr >= weekAgoStr;
+            try {
+                const d = new Date(e.entry_date);
+                if (isNaN(d)) return false;
+                const entryDateStr = d.toISOString().split('T')[0];
+                return entryDateStr >= weekAgoStr;
+            } catch (err) {
+                return false;
+            }
         });
 
         const weeklyDaysLogged = weeklyEntries.length;
