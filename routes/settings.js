@@ -46,15 +46,14 @@ router.get('/settings/general', isAuthenticated, async (req, res) => {
 router.post('/settings/general', isAuthenticated, upload.single('logo'), async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        const { primary_color, secondary_color, fine_start_days, fine_amount_per_day, default_hifz_fee_waiver } = req.body;
+        const { primary_color, secondary_color, fine_start_days, fine_amount_per_day } = req.body;
         
-        let updateQuery = 'UPDATE tenants SET primary_color = ?, secondary_color = ?, fine_start_days = ?, fine_amount_per_day = ?, default_hifz_fee_waiver = ?';
+        let updateQuery = 'UPDATE tenants SET primary_color = ?, secondary_color = ?, fine_start_days = ?, fine_amount_per_day = ?';
         const queryParams = [
             primary_color, 
             secondary_color,
             fine_start_days ? parseInt(fine_start_days) : 10,
-            fine_amount_per_day ? parseFloat(fine_amount_per_day) : 20.00,
-            default_hifz_fee_waiver ? 1 : 0
+            fine_amount_per_day ? parseFloat(fine_amount_per_day) : 20.00
         ];
 
         // If a new logo was uploaded
