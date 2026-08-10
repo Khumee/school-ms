@@ -28,7 +28,7 @@
         <div class="form-group" style="margin-bottom: 2rem;">
             <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Current Logo</label>
             <% if (currentTenant.logo_url) { %>
-                <img src="<%= currentTenant.logo_url %>" alt="Current Logo" style="max-height: 100px; border-radius: 8px; border: 1px solid #e2e8f0; padding: 0.5rem; background: #fff;">
+                <img src="<%= currentTenant.logo_url %>" alt="Current Logo" style="max-height: 100px; max-width: 200px; width: auto; object-fit: contain; border-radius: 8px; border: 1px solid #e2e8f0; padding: 0.5rem; background: #fff;">
             <% } else { %>
                 <div style="width: 100px; height: 100px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
                     <i class="bi bi-image" style="font-size: 2rem;"></i>
