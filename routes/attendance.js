@@ -70,31 +70,6 @@ router.get('/attendance/employees', isAuthenticated, async (req, res) => {
     }
 });
 
-// POST /attendance/settings
-router.post('/attendance/settings', isAuthenticated, async (req, res) => {
-    try {
-        const tenantId = req.tenant.id;
-        const { school_start_time, school_end_time, late_threshold_minutes, late_days_deduction_trigger, redirectDate } = req.body;
-        
-        await db.execute(
-            `UPDATE tenants 
-             SET school_start_time = ?, school_end_time = ?, late_threshold_minutes = ?, late_days_deduction_trigger = ? 
-             WHERE id = ?`,
-            [
-                school_start_time || '08:00:00', 
-                school_end_time || '14:00:00', 
-                parseInt(late_threshold_minutes || 0, 10), 
-                parseInt(late_days_deduction_trigger || 4, 10), 
-                tenantId
-            ]
-        );
-        
-        res.redirect(`/attendance/employees?date=${redirectDate || ''}`);
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Error updating school settings.');
-    }
-});
 
 // POST /attendance/employees
 router.post('/attendance/employees', isAuthenticated, async (req, res) => {

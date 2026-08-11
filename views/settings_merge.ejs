@@ -32,7 +32,9 @@
         <div class="form-group" style="flex: 1;">
             <label for="type" style="font-weight: 600;">Record Type</label>
             <select name="type" id="type" class="form-control" onchange="this.form.submit()">
+                <% if (tenant.enable_donations_module) { %>
                 <option value="donors" <%= type === 'donors' ? 'selected' : '' %>>Donors</option>
+                <% } %>
                 <option value="students" <%= type === 'students' ? 'selected' : '' %>>Students</option>
             </select>
         </div>
@@ -92,8 +94,6 @@
                     </select>
                 </div>
             </div>
-
-        </div>
 
         </div>
 

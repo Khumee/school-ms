@@ -46,14 +46,18 @@ router.get('/settings/general', isAuthenticated, async (req, res) => {
 router.post('/settings/general', isAuthenticated, upload.single('logo'), async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        const { primary_color, secondary_color, fine_start_days, fine_amount_per_day } = req.body;
+        const { primary_color, secondary_color, fine_start_days, fine_amount_per_day, school_start_time, school_end_time, late_threshold_minutes, late_days_deduction_trigger } = req.body;
         
-        let updateQuery = 'UPDATE tenants SET primary_color = ?, secondary_color = ?, fine_start_days = ?, fine_amount_per_day = ?';
+        let updateQuery = 'UPDATE tenants SET primary_color = ?, secondary_color = ?, fine_start_days = ?, fine_amount_per_day = ?, school_start_time = ?, school_end_time = ?, late_threshold_minutes = ?, late_days_deduction_trigger = ?';
         const queryParams = [
             primary_color, 
             secondary_color,
             fine_start_days ? parseInt(fine_start_days) : 10,
-            fine_amount_per_day ? parseFloat(fine_amount_per_day) : 20.00
+            fine_amount_per_day ? parseFloat(fine_amount_per_day) : 20.00,
+            school_start_time || '08:00:00',
+            school_end_time || '14:00:00',
+            late_threshold_minutes ? parseInt(late_threshold_minutes) : 15,
+            late_days_deduction_trigger ? parseInt(late_days_deduction_trigger) : 4
         ];
 
         // If a new logo was uploaded
@@ -93,7 +97,8 @@ router.get('/settings/merge', isAuthenticated, async (req, res) => {
             }
         }
         
-        res.render('settings_merge', { type: type || 'donors', q: q || '', searchResults });
+        const defaultType = req.tenant.enable_donations_module ? 'donors' : 'students';
+        res.render('settings_merge', { type: type || defaultType, q: q || '', searchResults });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading merge view.');

@@ -92,6 +92,34 @@
             </div>
         </div>
 
+        <div class="section-header" style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+            <h3 style="margin: 0;">School Work Hours Settings</h3>
+        </div>
+
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+            <div class="form-group">
+                <label for="school_start_time" style="font-weight: 600;">School Start Time</label>
+                <input type="time" id="school_start_time" name="school_start_time" class="form-control" value="<%= currentTenant.school_start_time || '08:00' %>" required>
+            </div>
+            <div class="form-group">
+                <label for="school_end_time" style="font-weight: 600;">School End Time</label>
+                <input type="time" id="school_end_time" name="school_end_time" class="form-control" value="<%= currentTenant.school_end_time || '14:00' %>" required>
+            </div>
+        </div>
+
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="form-group">
+                <label for="late_threshold_minutes" style="font-weight: 600;">Late Threshold Margin (Minutes)</label>
+                <input type="number" id="late_threshold_minutes" name="late_threshold_minutes" class="form-control" value="<%= currentTenant.late_threshold_minutes || 15 %>" min="0" required>
+                <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Minutes after start time before marked late.</p>
+            </div>
+            <div class="form-group">
+                <label for="late_days_deduction_trigger" style="font-weight: 600;">Late Marks triggering 1 Day Salary Deduction</label>
+                <input type="number" id="late_days_deduction_trigger" name="late_days_deduction_trigger" class="form-control" value="<%= currentTenant.late_days_deduction_trigger || 4 %>" min="1" required>
+                <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Number of late days that trigger 1 day's salary deduction.</p>
+            </div>
+        </div>
+
         <div style="display: flex; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 1.5rem;">
             <button type="submit" class="btn-primary" style="font-size: 1.1rem; padding: 0.75rem 2rem;">
                 <i class="bi bi-save"></i> Save Settings
