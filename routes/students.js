@@ -93,12 +93,13 @@ router.get('/students/add', isAuthenticated, async (req, res) => {
 });
 
 // POST /students/add - save
-router.post('/students/add', isAuthenticated, upload.single('photo'), async (req, res) => {
+router.post('/students/add', isAuthenticated, upload.fields([{ name: 'photo', maxCount: 1 }, { name: 'document_file', maxCount: 1 }]), async (req, res) => {
     const {
         reg_no, name, class_id, custom_monthly_fee, concession_notes, concession_reason, family_members, siblings, school_going_siblings, monthly_income,
         father_name, father_phone, emergency_contact, date_of_birth, address, gender,
         date_of_admission, status, previous_school_info, blood_group,
-        admission_fee, admission_fee_status, admission_fee_payment_date
+        admission_fee, admission_fee_status, admission_fee_payment_date,
+        document_type, document_description
     } = req.body;
     
     try {
@@ -157,15 +158,31 @@ router.post('/students/add', isAuthenticated, upload.single('photo'), async (req
             );
         }
 
-        if (req.file) {
-            const destDir = path.join(__dirname, '..', 'public', 'uploads', String(tenantId), String(studentId));
+        const destDir = path.join(__dirname, '..', 'public', 'uploads', String(tenantId), String(studentId));
+
+        if (req.files && req.files.photo) {
             if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
             
-            const destPath = path.join(destDir, req.file.filename);
-            fs.renameSync(req.file.path, destPath);
+            const photoFile = req.files.photo[0];
+            const destPath = path.join(destDir, photoFile.filename);
+            fs.renameSync(photoFile.path, destPath);
             
-            const fileUrl = `/uploads/${tenantId}/${studentId}/${req.file.filename}`;
+            const fileUrl = `/uploads/${tenantId}/${studentId}/${photoFile.filename}`;
             await db.execute('UPDATE students SET photo_url = ? WHERE id = ? AND tenant_id = ?', [fileUrl, studentId, tenantId]);
+        }
+
+        if (req.files && req.files.document_file && document_type) {
+            if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+            
+            const docFile = req.files.document_file[0];
+            const destPath = path.join(destDir, docFile.filename);
+            fs.renameSync(docFile.path, destPath);
+            
+            const fileUrl = `/uploads/${tenantId}/${studentId}/${docFile.filename}`;
+            await db.execute(
+                `INSERT INTO student_documents (tenant_id, student_id, document_type, description, file_url) VALUES (?, ?, ?, ?, ?)`,
+                [tenantId, studentId, document_type, document_description || null, fileUrl]
+            );
         }
         
         res.redirect('/students');

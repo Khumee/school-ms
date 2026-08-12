@@ -715,3 +715,10 @@ tbody tr:last-child td {
     width: 95%;
     max-width: 500px;
 }
+
+@media (min-width: 769px) {
+    .mobile-only {
+        display: none !important;
+    }
+}
+
