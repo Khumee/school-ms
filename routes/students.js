@@ -520,12 +520,13 @@ router.get('/students/admission-form/empty', isAuthenticated, async (req, res) =
     }
 });
 
-// POST /students/admission-form/scan
-const scanUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
-router.post('/students/admission-form/scan', isAuthenticated, scanUpload.single('scan_image'), async (req, res) => {
+// POST /students/admission-form/scan  (accepts raw base64 JSON from client - no multer, no compression)
+router.post('/students/admission-form/scan', isAuthenticated, async (req, res) => {
     try {
-        if (!req.file) {
-            return res.status(400).json({ error: 'No image uploaded.' });
+        const { image_b64, mime_type, file_size } = req.body;
+
+        if (!image_b64) {
+            return res.status(400).json({ error: 'No image data received.' });
         }
 
         const apiKey = process.env.GEMINI_API_KEY;
@@ -533,22 +534,20 @@ router.post('/students/admission-form/scan', isAuthenticated, scanUpload.single(
             return res.status(500).json({ error: 'Gemini API key not configured.' });
         }
 
-        console.log("----- FILE RECEIVED FOR OCR -----");
-        console.log("MimeType:", req.file.mimetype);
-        console.log("Size (bytes):", req.file.size);
-        console.log("---------------------------------");
+        console.log("----- IMAGE RECEIVED FOR OCR (JSON/base64) -----");
+        console.log("MimeType:", mime_type);
+        console.log("Client file size (bytes):", file_size);
+        console.log("Base64 length (chars):", image_b64.length);
+        console.log("Approx decoded size (bytes):", Math.round(image_b64.length * 0.75));
+        console.log("-------------------------------------------------");
 
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-        // Use buffer directly from memory - no disk read needed
-        const imageB64 = req.file.buffer.toString('base64');
-        const mimeType = req.file.mimetype || 'image/jpeg';
-
         const imagePart = {
             inlineData: {
-                data: imageB64,
-                mimeType: mimeType
+                data: image_b64,
+                mimeType: mime_type || 'image/jpeg'
             }
         };
 
@@ -581,7 +580,7 @@ However, you MUST try to fill as many fields as possible.`;
         let jsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         const extractedData = JSON.parse(jsonStr);
 
-        res.json({ success: true, data: extractedData, raw: responseText, image_b64: imageB64 });
+        res.json({ success: true, data: extractedData, raw: responseText });
     } catch (err) {
         console.error('OCR Error:', err);
         res.status(500).json({ error: 'Error processing image: ' + err.message });

@@ -424,43 +424,49 @@
         status.style.display = 'inline-block';
         if(headerBtn) headerBtn.style.display = 'none';
         if(headerStatus) headerStatus.style.display = 'flex';
-        
-        const formData = new FormData();
-        formData.append('scan_image', file);
 
-        fetch('/students/admission-form/scan', {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-            btn.disabled = false;
-            status.style.display = 'none';
-            if(headerBtn) headerBtn.style.display = 'inline-block';
-            if(headerStatus) headerStatus.style.display = 'none';
+        // Use FileReader to get raw base64 - NO browser compression, sends 100% of image data
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const dataUrl = e.target.result; // e.g. "data:image/jpeg;base64,/9j/4AAQ..."
+            const base64 = dataUrl.split(',')[1];
+            const mimeType = file.type || 'image/jpeg';
 
-            if (data.error) {
-                alert('Error: ' + data.error);
-                return;
-            }
+            fetch('/students/admission-form/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image_b64: base64, mime_type: mimeType, file_size: file.size })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.disabled = false;
+                status.style.display = 'none';
+                if(headerBtn) headerBtn.style.display = 'inline-block';
+                if(headerStatus) headerStatus.style.display = 'none';
 
-            const json = data.data;
-            if(json && Object.keys(json).length > 0) {
-                openScanModal(); // ensure previous modal is closed if it was open on mobile
-                closeScanModal(); // cleanly close it
-                openReviewModal(json, data.image_b64);
-            } else {
-                alert('Could not extract any data from the image.');
-            }
-        })
-        .catch(err => {
-            btn.disabled = false;
-            status.style.display = 'none';
-            if(headerBtn) headerBtn.style.display = 'inline-block';
-            if(headerStatus) headerStatus.style.display = 'none';
-            alert('An error occurred during scanning.');
-            console.error(err);
-        });
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                const json = data.data;
+                if(json && Object.keys(json).length > 0) {
+                    closeScanModal();
+                    openReviewModal(json, base64);
+                } else {
+                    alert('Could not extract any data from the image.');
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                status.style.display = 'none';
+                if(headerBtn) headerBtn.style.display = 'inline-block';
+                if(headerStatus) headerStatus.style.display = 'none';
+                alert('An error occurred during scanning.');
+                console.error(err);
+            });
+        };
+        reader.readAsDataURL(file);
     }
 </script>
 <%- include('partials/footer') %>
