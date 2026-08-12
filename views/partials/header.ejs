@@ -56,7 +56,13 @@
                         </div>
                     </li>
                     <% } %>
-                    <li><a href="/attendance/employees"><i class="bi bi-calendar2-check-fill"></i> Attendance</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropbtn"><i class="bi bi-calendar2-check-fill"></i> Attendance</a>
+                        <div class="dropdown-content">
+                            <a href="/attendance/students"><i class="bi bi-people"></i> Student Attendance</a>
+                            <a href="/attendance/employees"><i class="bi bi-person-badge"></i> Employee Attendance</a>
+                        </div>
+                    </li>
                     <li class="dropdown">
                         <a href="#" class="dropbtn"><i class="bi bi-journal-richtext"></i> Ledgers</a>
                         <div class="dropdown-content">

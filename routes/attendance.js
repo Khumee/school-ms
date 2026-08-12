@@ -303,4 +303,136 @@ router.get('/attendance/employees/summary', isAuthenticated, async (req, res) =>
     }
 });
 
+// GET /attendance/students
+router.get('/attendance/students', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const dateStr = req.query.date || DateTime.now().toISODate();
+        const classId = req.query.class_id || '';
+        const section = req.query.section || '';
+
+        // Fetch all classes for the dropdown
+        const [classes] = await db.execute(
+            'SELECT * FROM classes WHERE tenant_id = ? ORDER BY class_name ASC',
+            [tenantId]
+        );
+
+        let students = [];
+        let attendanceMap = {};
+
+        if (classId) {
+            let studentQuery = `
+                SELECT s.* 
+                FROM students s
+                JOIN student_enrollments e ON s.id = e.student_id
+                WHERE s.tenant_id = ? 
+                AND e.tenant_id = ? 
+                AND e.class_id = ?
+                AND s.status = 'active'
+            `;
+            let studentParams = [tenantId, tenantId, classId];
+
+            if (section) {
+                studentQuery += ' AND e.section = ?';
+                studentParams.push(section);
+            }
+            
+            studentQuery += ' ORDER BY s.name ASC';
+            
+            const [fetchedStudents] = await db.execute(studentQuery, studentParams);
+            students = fetchedStudents;
+
+            if (students.length > 0) {
+                const studentIds = students.map(s => s.id);
+                const [attendance] = await db.execute(
+                    `SELECT student_id, status FROM attendance_students 
+                     WHERE tenant_id = ? AND date = ? AND student_id IN (${studentIds.map(() => '?').join(',')})`,
+                    [tenantId, dateStr, ...studentIds]
+                );
+
+                attendance.forEach(a => {
+                    attendanceMap[a.student_id] = a.status;
+                });
+            }
+        }
+
+        res.render('attendance_students', {
+            classes,
+            selectedClassId: classId,
+            selectedSection: section,
+            students,
+            dateStr,
+            attendanceMap
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading student attendance.');
+    }
+});
+
+// POST /attendance/students
+router.post('/attendance/students', isAuthenticated, async (req, res) => {
+    const { date, class_id, section, attendance } = req.body;
+    try {
+        const tenantId = req.tenant.id;
+        const dateStr = date || DateTime.now().toISODate();
+
+        if (attendance) {
+            for (const [key, status] of Object.entries(attendance)) {
+                const studentId = key.replace('student_', '');
+                
+                await db.execute(
+                    'DELETE FROM attendance_students WHERE student_id = ? AND date = ? AND tenant_id = ?',
+                    [studentId, dateStr, tenantId]
+                );
+
+                if (status) {
+                    await db.execute(
+                        `INSERT INTO attendance_students (tenant_id, student_id, date, status, marked_by)
+                         VALUES (?, ?, ?, ?, ?)`,
+                        [tenantId, studentId, dateStr, status, req.session.userId || null]
+                    );
+                }
+            }
+        }
+
+        let redirectUrl = `/attendance/students?date=${dateStr}&class_id=${class_id}`;
+        if (section) {
+            redirectUrl += `&section=${encodeURIComponent(section)}`;
+        }
+        res.redirect(redirectUrl);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error saving student attendance: ' + err.message);
+    }
+});
+
+// POST /attendance/students/update-one
+router.post('/attendance/students/update-one', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const { student_id, date, status } = req.body;
+
+        if (!student_id || !date || !['present', 'absent', 'leave', 'online'].includes(status)) {
+            return res.status(400).json({ success: false, error: 'Invalid parameters.' });
+        }
+
+        await db.execute(
+            'DELETE FROM attendance_students WHERE student_id = ? AND date = ? AND tenant_id = ?',
+            [student_id, date, tenantId]
+        );
+
+        await db.execute(
+            `INSERT INTO attendance_students (tenant_id, student_id, date, status, marked_by)
+             VALUES (?, ?, ?, ?, ?)`,
+            [tenantId, student_id, date, status, req.session.userId || null]
+        );
+
+        res.json({ success: true, status });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 module.exports = router;

@@ -1,0 +1,144 @@
+<%- include('partials/header') %>
+
+<div class="section-header">
+    <h1 class="section-title"><i class="bi bi-calendar2-check-fill"></i> Student Attendance</h1>
+</div>
+
+<!-- Filters -->
+<form action="/attendance/students" method="GET" class="filter-bar" style="align-items: center; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem;">
+    <div class="form-group" style="flex: 0 0 200px;">
+        <label for="date">Select Date</label>
+        <input type="date" name="date" id="date" class="form-control" value="<%= dateStr %>" onchange="this.form.submit()">
+    </div>
+    
+    <div class="form-group" style="flex: 0 0 250px;">
+        <label for="class_id">Select Class</label>
+        <select name="class_id" id="class_id" class="form-control" onchange="this.form.submit()">
+            <option value="">-- Select Class --</option>
+            <% classes.forEach(c => { %>
+                <option value="<%= c.id %>" <%= selectedClassId == c.id ? 'selected' : '' %>><%= c.class_name %></option>
+            <% }) %>
+        </select>
+    </div>
+
+    <div class="form-group" style="flex: 0 0 200px;">
+        <label for="section">Section (Optional)</label>
+        <input type="text" name="section" id="section" class="form-control" placeholder="e.g. A" value="<%= selectedSection %>" onchange="this.form.submit()">
+    </div>
+</form>
+
+<% if (selectedClassId) { %>
+    <div style="font-weight: 500; color: #64748b; margin-bottom: 1.5rem;">
+        Marking attendance for: <%= new Date(dateStr).toLocaleDateString(undefined, {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'}) %>
+    </div>
+
+    <!-- KPI Cards -->
+    <% 
+        const totalStudents = students.length;
+        let presentCount = 0;
+        let absentCount = 0;
+        let leaveCount = 0;
+        let onlineCount = 0;
+        students.forEach(s => {
+            const status = attendanceMap[s.id] || 'present';
+            if (status === 'present') presentCount++;
+            else if (status === 'absent') absentCount++;
+            else if (status === 'leave') leaveCount++;
+            else if (status === 'online') onlineCount++;
+        });
+    %>
+    <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div class="card shadow-sm" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 1.5rem; border-radius: 12px; border: none; margin-bottom: 0;">
+            <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8;">Total Students</div>
+            <div style="font-size: 2rem; font-weight: 700; margin-top: 0.5rem;"><%= totalStudents %></div>
+        </div>
+        <div class="card shadow-sm" style="background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: white; padding: 1.5rem; border-radius: 12px; border: none; margin-bottom: 0;">
+            <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8;">Presents</div>
+            <div style="font-size: 2rem; font-weight: 700; margin-top: 0.5rem;"><%= presentCount %></div>
+        </div>
+        <div class="card shadow-sm" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: white; padding: 1.5rem; border-radius: 12px; border: none; margin-bottom: 0;">
+            <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8;">Absents</div>
+            <div style="font-size: 2rem; font-weight: 700; margin-top: 0.5rem;"><%= absentCount %></div>
+        </div>
+        <div class="card shadow-sm" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 1.5rem; border-radius: 12px; border: none; margin-bottom: 0;">
+            <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8;">On Leave</div>
+            <div style="font-size: 2rem; font-weight: 700; margin-top: 0.5rem;"><%= leaveCount %></div>
+        </div>
+    </div>
+
+    <!-- Table Form -->
+    <div class="card">
+        <form action="/attendance/students" method="POST">
+            <input type="hidden" name="date" value="<%= dateStr %>">
+            <input type="hidden" name="class_id" value="<%= selectedClassId %>">
+            <input type="hidden" name="section" value="<%= selectedSection %>">
+            
+            <div class="table-container" style="border: none; margin-bottom: 1.5rem;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Roll Number</th>
+                            <th style="text-align: center;">Present</th>
+                            <th style="text-align: center;">Absent</th>
+                            <th style="text-align: center;">Leave</th>
+                            <th style="text-align: center;">Online</th>
+                            <th style="text-align: center;">Reset</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (students.length > 0) { %>
+                            <% students.forEach(s => { %>
+                                <% 
+                                    const currentStatus = attendanceMap[s.id] || 'present'; 
+                                %>
+                                <tr id="row_student_<%= s.id %>">
+                                    <td style="font-weight: 600;">
+                                        <a href="/students/view/<%= s.id %>" style="color: #2563eb; text-decoration: none;" title="View Profile"><%= s.name %></a>
+                                    </td>
+                                    <td><%= s.roll_number || 'N/A' %></td>
+                                    <td style="text-align: center;">
+                                        <input type="radio" name="attendance[student_<%= s.id %>]" value="present" <%= currentStatus === 'present' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #10b981;">
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <input type="radio" name="attendance[student_<%= s.id %>]" value="absent" <%= currentStatus === 'absent' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #ef4444;">
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <input type="radio" name="attendance[student_<%= s.id %>]" value="leave" <%= currentStatus === 'leave' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #f59e0b;">
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <input type="radio" name="attendance[student_<%= s.id %>]" value="online" <%= currentStatus === 'online' ? 'checked' : '' %> style="width: 20px; height: 20px; accent-color: #3b82f6;">
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <button type="button" onclick="resetRow('<%= s.id %>')" class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; height: auto;" title="Reset selection">
+                                            <i class="bi bi-arrow-counterclockwise"></i> Reset
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: #64748b;">No active students found for this class/section.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+            
+            <button type="submit" class="btn-primary">Save Attendance</button>
+        </form>
+    </div>
+<% } else { %>
+    <div style="padding: 2rem; text-align: center; color: #64748b; background-color: #f8fafc; border-radius: 8px;">
+        Please select a class to mark attendance.
+    </div>
+<% } %>
+
+<script>
+    function resetRow(studentId) {
+        const radios = document.querySelectorAll(`input[name="attendance[student_${studentId}]"]`);
+        radios.forEach(r => r.checked = false);
+    }
+</script>
+
+<%- include('partials/footer') %>
