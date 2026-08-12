@@ -567,13 +567,17 @@ router.post('/students/admission-form/scan', isAuthenticated, upload.single('sca
         const result = await model.generateContent([prompt, imagePart]);
         const responseText = result.response.text();
         
+        console.log("----- GEMINI RAW RESPONSE -----");
+        console.log(responseText);
+        console.log("-------------------------------");
+        
         let jsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         const extractedData = JSON.parse(jsonStr);
 
         // Clean up temp file
         fs.unlinkSync(imagePath);
 
-        res.json({ success: true, data: extractedData });
+        res.json({ success: true, data: extractedData, raw: responseText });
     } catch (err) {
         console.error('OCR Error:', err);
         res.status(500).json({ error: 'Error processing image: ' + err.message });
