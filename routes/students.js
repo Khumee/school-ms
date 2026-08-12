@@ -541,6 +541,11 @@ router.post('/students/admission-form/scan', isAuthenticated, async (req, res) =
         console.log("Approx decoded size (bytes):", Math.round(image_b64.length * 0.75));
         console.log("-------------------------------------------------");
 
+        // Save image to disk so we can test locally on the server
+        const debugImagePath = path.join(__dirname, 'public', 'debug_scan.jpg');
+        fs.writeFileSync(debugImagePath, Buffer.from(image_b64, 'base64'));
+        console.log("DEBUG: Image saved to", debugImagePath);
+
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
