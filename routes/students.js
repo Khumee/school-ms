@@ -587,7 +587,7 @@ However, you MUST try to fill as many fields as possible.
         // Clean up temp file
         fs.unlinkSync(imagePath);
 
-        res.json({ success: true, data: extractedData, raw: responseText });
+        res.json({ success: true, data: extractedData, raw: responseText, image_b64: imagePart.inlineData.data });
     } catch (err) {
         console.error('OCR Error:', err);
         res.status(500).json({ error: 'Error processing image: ' + err.message });
