@@ -321,16 +321,14 @@ router.get('/attendance/students', isAuthenticated, async (req, res) => {
 
         if (classId) {
             let studentQuery = `
-                SELECT s.* 
-                FROM students s
-                JOIN student_enrollments e ON s.id = e.student_id
-                WHERE s.tenant_id = ? 
-                AND e.tenant_id = ? 
-                AND e.class_id = ?
-                AND s.status = 'active'
-                ORDER BY s.name ASC
+                SELECT * 
+                FROM students 
+                WHERE tenant_id = ? 
+                AND class_id = ?
+                AND status = 'active'
+                ORDER BY name ASC
             `;
-            let studentParams = [tenantId, tenantId, classId];
+            let studentParams = [tenantId, classId];
             
             const [fetchedStudents] = await db.execute(studentQuery, studentParams);
             students = fetchedStudents;
