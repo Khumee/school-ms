@@ -418,7 +418,8 @@
     toggleAdmissionPaymentDate(document.getElementById('admission_fee_status').value);
     function scanForm() {
         const fileInput = document.getElementById('scan_image_input');
-        const file = fileInput.files[0] || document.getElementById('scan_camera_input').files[0];
+        const camInput = document.getElementById('scan_camera_input');
+        const file = (fileInput && fileInput.files[0]) || (camInput && camInput.files[0]);
         if (!file) {
             alert('Please select or capture a photo first.');
             return;
@@ -434,10 +435,10 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             const base64 = e.target.result.split(',')[1];
-            fetch('/students/scan', {
+            fetch('/students/admission-form/scan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image: base64 })
+                body: JSON.stringify({ image_b64: base64, mime_type: file.type, file_size: file.size })
             })
             .then(res => res.json())
             .then(data => {
@@ -459,7 +460,7 @@
                 status.style.display = 'none';
                 if (headerBtn) headerBtn.style.display = 'inline-block';
                 if (headerStatus) headerStatus.style.display = 'none';
-                alert('An error occurred during scanning.');
+                alert('An error occurred during scanning: ' + err.message);
                 console.error(err);
             });
         };
