@@ -284,9 +284,13 @@
         };
         
         for (const [key, value] of Object.entries(data)) {
-            if (labels[key] && value) {
-                html += `<tr><td style="padding: 0.5rem; border-bottom: 1px solid #e2e8f0; font-weight: 600; width: 40%;">${labels[key]}</td><td style="padding: 0.5rem; border-bottom: 1px solid #e2e8f0;">${value}</td></tr>`;
-            }
+            let label = labels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            let displayValue = value ? value : '<span style="color:#94a3b8; font-style:italic;">Not found</span>';
+            html += `<tr><td style="padding: 0.5rem; border-bottom: 1px solid #e2e8f0; font-weight: 600; width: 40%;">${label}</td><td style="padding: 0.5rem; border-bottom: 1px solid #e2e8f0;">${displayValue}</td></tr>`;
+        }
+        
+        if (Object.keys(data).length === 0) {
+            html += `<tr><td colspan="2" style="padding: 1rem; text-align: center; color: #ef4444;">No data could be extracted. The image might be too blurry or not a valid form.</td></tr>`;
         }
         html += '</table>';
         
