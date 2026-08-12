@@ -44,6 +44,7 @@
     <button class="tab-btn active" onclick="switchTab('overview')" id="tab-overview" style="padding: 0.5rem 1rem; border: none; background: transparent; cursor: pointer; border-bottom: 2px solid var(--primary-color); font-weight: 600; color: var(--primary-color);">Overview</button>
     <button class="tab-btn" onclick="switchTab('fees')" id="tab-fees" style="padding: 0.5rem 1rem; border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; color: #64748b;">Fee History</button>
     <button class="tab-btn" onclick="switchTab('documents')" id="tab-documents" style="padding: 0.5rem 1rem; border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; color: #64748b;">Documents & Photo</button>
+    <button class="tab-btn" onclick="switchTab('attendance')" id="tab-attendance" style="padding: 0.5rem 1rem; border: none; background: transparent; cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; color: #64748b;">Attendance History</button>
 </div>
 
 <div id="content-overview" class="tab-content">
@@ -275,6 +276,46 @@
     </div>
 </div>
 
+<div id="content-attendance" class="tab-content" style="display: none;">
+    <div class="card" style="margin-bottom: 2rem;">
+        <h2 class="section-title" style="margin-bottom: 1rem;"><i class="bi bi-calendar-check"></i> Attendance History</h2>
+        
+        <div style="background-color: #f8fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
+            <div style="flex: 1; min-width: 200px;">
+                <label style="font-size: 0.8rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.25rem;">Start Date</label>
+                <input type="date" id="att-start-date" class="form-control">
+            </div>
+            <div style="flex: 1; min-width: 200px;">
+                <label style="font-size: 0.8rem; color: #64748b; font-weight: 600; display: block; margin-bottom: 0.25rem;">End Date</label>
+                <input type="date" id="att-end-date" class="form-control">
+            </div>
+            <div>
+                <button class="btn-primary" onclick="fetchAttendance()" style="padding: 0.5rem 1rem;"><i class="bi bi-search"></i> Filter</button>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+            <button class="btn-secondary nav-btn" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;" onclick="setAttendanceFilter('last_week')">Last Week</button>
+            <button class="btn-secondary nav-btn" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;" onclick="setAttendanceFilter('last_month')">Last Month</button>
+            <button class="btn-secondary nav-btn" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;" onclick="setAttendanceFilter('last_3_months')">Last 3 Months</button>
+            <button class="btn-secondary nav-btn" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;" onclick="setAttendanceFilter('since_admission')">Since Admission</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Marked By</th>
+                </tr>
+            </thead>
+            <tbody id="attendance-tbody">
+                <tr><td colspan="3" style="text-align: center; color: #64748b;">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <!-- Document Upload Modal -->
 <div id="documentModal" class="card" style="display: none; max-width: 500px; margin: 1rem auto; position: fixed; top: 15%; left: 50%; transform: translate(-50%, 0); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); box-sizing: border-box; width: 90%;">
     <h3 style="margin-bottom: 1rem;">Upload Document</h3>
@@ -408,5 +449,86 @@
         document.getElementById('modalOverlay').style.display = 'none';
     }
 </script>
+<script>
+    const studentId = <%= student.id %>;
+    const admissionDate = "<%= student.date_of_admission ? new Date(student.date_of_admission).toISOString().split('T')[0] : '' %>";
+    
+    function setAttendanceFilter(type) {
+        const end = new Date();
+        const start = new Date();
+        
+        if (type === 'last_week') {
+            start.setDate(end.getDate() - 7);
+        } else if (type === 'last_month') {
+            start.setMonth(end.getMonth() - 1);
+        } else if (type === 'last_3_months') {
+            start.setMonth(end.getMonth() - 3);
+        } else if (type === 'since_admission') {
+            if (admissionDate) {
+                document.getElementById('att-start-date').value = admissionDate;
+                document.getElementById('att-end-date').value = end.toISOString().split('T')[0];
+                fetchAttendance();
+                return;
+            } else {
+                start.setFullYear(end.getFullYear() - 1); // fallback 1 year
+            }
+        }
+        
+        document.getElementById('att-start-date').value = start.toISOString().split('T')[0];
+        document.getElementById('att-end-date').value = end.toISOString().split('T')[0];
+        fetchAttendance();
+    }
 
+    async function fetchAttendance() {
+        const start = document.getElementById('att-start-date').value;
+        const end = document.getElementById('att-end-date').value;
+        const tbody = document.getElementById('attendance-tbody');
+        
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #64748b;">Loading...</td></tr>';
+        
+        try {
+            const res = await fetch(`/students/api/attendance/${studentId}?startDate=${start}&endDate=${end}`);
+            const json = await res.json();
+            
+            if (json.success) {
+                if (json.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #64748b;">No attendance records found for this period.</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                json.data.forEach(record => {
+                    let statusHtml = '';
+                    if (record.status === 'present') {
+                        statusHtml = '<span style="color: #16a34a; font-weight: 600;"><i class="bi bi-check-circle-fill"></i> Present</span>';
+                    } else if (record.status === 'absent') {
+                        statusHtml = '<span style="color: #dc2626; font-weight: 600;"><i class="bi bi-x-circle-fill"></i> Absent</span>';
+                    } else if (record.status === 'leave') {
+                        statusHtml = '<span style="color: #ca8a04; font-weight: 600;"><i class="bi bi-dash-circle-fill"></i> Leave</span>';
+                    } else {
+                        statusHtml = `<span style="color: #2563eb; font-weight: 600;"><i class="bi bi-info-circle-fill"></i> ${record.status}</span>`;
+                    }
+                    
+                    const dateStr = new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                    
+                    html += `<tr>
+                        <td style="font-weight: 500;">${dateStr}</td>
+                        <td>${statusHtml}</td>
+                        <td style="color: #64748b; font-size: 0.9rem;">${record.marked_by_name || 'System'}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            } else {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #dc2626;">Error: ${json.error}</td></tr>`;
+            }
+        } catch (err) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #dc2626;">Network error while loading attendance.</td></tr>';
+        }
+    }
+
+    // Initialize with Last Month
+    window.addEventListener('DOMContentLoaded', () => {
+        setAttendanceFilter('last_month');
+    });
+</script>
 <%- include('partials/footer') %>

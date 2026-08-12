@@ -598,4 +598,34 @@ However, you MUST try to fill as many fields as possible.
     }
 });
 
+// GET /students/api/attendance/:id - Fetch attendance history with date filters
+router.get('/students/api/attendance/:id', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const studentId = req.params.id;
+        const { startDate, endDate } = req.query;
+
+        let query = `
+            SELECT a.date, a.status, u.username as marked_by_name
+            FROM attendance_students a
+            LEFT JOIN users u ON a.marked_by = u.id
+            WHERE a.student_id = ? AND a.tenant_id = ?
+        `;
+        const params = [studentId, tenantId];
+
+        if (startDate && endDate) {
+            query += ' AND a.date >= ? AND a.date <= ?';
+            params.push(startDate, endDate);
+        }
+
+        query += ' ORDER BY a.date DESC';
+
+        const [records] = await db.execute(query, params);
+        res.json({ success: true, data: records });
+    } catch (err) {
+        console.error('Error fetching attendance:', err);
+        res.status(500).json({ success: false, error: 'Error fetching attendance.' });
+    }
+});
+
 module.exports = router;
