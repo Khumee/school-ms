@@ -22,7 +22,10 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'school_secret_key_789',
     resave: false,
     saveUninitialized: true,
-    cookie: { maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+    cookie: { 
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: 'lax'
+    } // 24 hours
 }));
 
 // Set layout locals

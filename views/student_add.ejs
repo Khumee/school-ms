@@ -438,6 +438,7 @@
             fetch('/students/admission-form/scan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
                 body: JSON.stringify({ image_b64: base64, mime_type: file.type, file_size: file.size })
             })
             .then(res => {
