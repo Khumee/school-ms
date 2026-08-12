@@ -521,7 +521,8 @@ router.get('/students/admission-form/empty', isAuthenticated, async (req, res) =
 });
 
 // POST /students/admission-form/scan
-router.post('/students/admission-form/scan', isAuthenticated, upload.single('scan_image'), async (req, res) => {
+const scanUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+router.post('/students/admission-form/scan', isAuthenticated, scanUpload.single('scan_image'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No image uploaded.' });
@@ -532,31 +533,28 @@ router.post('/students/admission-form/scan', isAuthenticated, upload.single('sca
             return res.status(500).json({ error: 'Gemini API key not configured.' });
         }
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-        const imagePath = req.file.path;
-        const mimeType = req.file.mimetype;
-
         console.log("----- FILE RECEIVED FOR OCR -----");
-        console.log("MimeType:", mimeType);
+        console.log("MimeType:", req.file.mimetype);
         console.log("Size (bytes):", req.file.size);
         console.log("---------------------------------");
 
-        function fileToGenerativePart(path, mimeType) {
-            return {
-                inlineData: {
-                    data: Buffer.from(fs.readFileSync(path)).toString("base64"),
-                    mimeType
-                },
-            };
-        }
-        const imagePart = fileToGenerativePart(imagePath, mimeType);
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-        const prompt = `
-You are a strict data extraction AI. You MUST extract the requested fields from the provided image.
+        // Use buffer directly from memory - no disk read needed
+        const imageB64 = req.file.buffer.toString('base64');
+        const mimeType = req.file.mimetype || 'image/jpeg';
+
+        const imagePart = {
+            inlineData: {
+                data: imageB64,
+                mimeType: mimeType
+            }
+        };
+
+        const prompt = `You are a strict data extraction AI. You MUST extract the requested fields from the provided image.
 Even if the image is blurry, cropped, or handwriting is messy, do your absolute best to transcribe it.
-Return ONLY a valid JSON object with EXACTLY these keys. 
+Return ONLY a valid JSON object with EXACTLY these keys.
 Do NOT include markdown formatting (no \`\`\`json).
 
 Required keys:
@@ -571,8 +569,7 @@ Required keys:
 "previous_school_info": (Name of previous school if any)
 
 If a field is absolutely not present on the page, leave it as an empty string "".
-However, you MUST try to fill as many fields as possible.
-`;
+However, you MUST try to fill as many fields as possible.`;
 
         const result = await model.generateContent([prompt, imagePart]);
         const responseText = result.response.text();
@@ -584,14 +581,7 @@ However, you MUST try to fill as many fields as possible.
         let jsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         const extractedData = JSON.parse(jsonStr);
 
-        // Save a copy to public so the user can inspect it
-        const debugPath = path.join(__dirname, '..', 'public', 'debug.jpg');
-        fs.copyFileSync(imagePath, debugPath);
-
-        // Clean up temp file
-        fs.unlinkSync(imagePath);
-
-        res.json({ success: true, data: extractedData, raw: responseText, image_b64: imagePart.inlineData.data });
+        res.json({ success: true, data: extractedData, raw: responseText, image_b64: imageB64 });
     } catch (err) {
         console.error('OCR Error:', err);
         res.status(500).json({ error: 'Error processing image: ' + err.message });
