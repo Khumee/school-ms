@@ -89,40 +89,28 @@
             margin-bottom: 5px;
         }
         @media print {
+            @page {
+                margin: 0; /* Hides default browser header and footer */
+            }
             body {
-                padding: 0;
+                padding: 20px; /* Restores padding inside the printable area */
             }
-            .print-btn {
-                display: none;
-            }
-        }
-        .print-btn {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 4px;
-            display: block;
-            margin: 0 auto 30px auto;
         }
     </style>
 </head>
-<body>
+<body onload="window.print()">
 
-    <button class="print-btn" onclick="window.print()">🖨️ Print Admission Form</button>
-
-    <div class="header">
-        <% if (tenant.logo_url) { %>
-            <img src="<%= tenant.logo_url %>" alt="School Logo">
-        <% } %>
-        <h1><%= tenant.school_name %></h1>
-        <h2>Admission Application Form</h2>
-    </div>
-
-    <div class="photo-box">
-        Attach<br>Recent Photo<br>(Passport Size)
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 15px;">
+        <div class="header" style="text-align: left; margin: 0; padding: 0; border: none;">
+            <% if (tenant.logo_url) { %>
+                <img src="<%= tenant.logo_url %>" alt="School Logo" style="max-height: 80px;">
+            <% } %>
+            <h1 style="margin: 10px 0 5px 0; font-size: 24px; text-transform: uppercase;"><%= tenant.school_name %></h1>
+            <h2 style="margin: 0; font-size: 18px; color: #555;">Admission Application Form</h2>
+        </div>
+        <div class="photo-box" style="float: none; margin-top: 0;">
+            Attach<br>Recent Photo<br>(Passport Size)
+        </div>
     </div>
 
     <div class="section-title">Student Details</div>
