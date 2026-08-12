@@ -253,7 +253,80 @@
 </div>
 <div id="scanModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeScanModal()"></div>
 
+<!-- Review Extracted Data Modal -->
+<div id="reviewModal" class="card" style="display: none; max-width: 600px; margin: 1rem auto; position: fixed; top: 10%; left: 50%; transform: translate(-50%, 0); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); box-sizing: border-box; width: 90%; max-height: 80vh; overflow-y: auto;">
+    <h3 style="margin-bottom: 1rem; color: #334155; font-size: 1.1rem;"><i class="bi bi-check2-circle"></i> Review Extracted Information</h3>
+    <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem;">The AI has extracted the following details. Please review and confirm to populate the admission form.</p>
+    
+    <div id="review_content" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; font-size: 0.9rem; color: #334155;">
+        <!-- Dynamic content goes here -->
+    </div>
+    
+    <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+        <button type="button" class="btn-secondary" onclick="closeReviewModal()">Cancel</button>
+        <button type="button" class="btn-primary" onclick="applyExtractedData()"><i class="bi bi-check-lg"></i> Confirm & Populate</button>
+    </div>
+</div>
+<div id="reviewModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeReviewModal()"></div>
+
 <script>
+    let pendingExtractedData = null;
+
+    function openReviewModal(data) {
+        pendingExtractedData = data;
+        
+        let html = '<table style="width: 100%; border-collapse: collapse;">';
+        const labels = {
+            name: "Student Name", father_name: "Father's Name", father_phone: "Father's Phone",
+            emergency_contact: "Emergency Contact", date_of_birth: "Date of Birth",
+            address: "Address", gender: "Gender", blood_group: "Blood Group",
+            previous_school_info: "Previous School"
+        };
+        
+        for (const [key, value] of Object.entries(data)) {
+            if (labels[key] && value) {
+                html += `<tr><td style="padding: 0.5rem; border-bottom: 1px solid #e2e8f0; font-weight: 600; width: 40%;">${labels[key]}</td><td style="padding: 0.5rem; border-bottom: 1px solid #e2e8f0;">${value}</td></tr>`;
+            }
+        }
+        html += '</table>';
+        
+        document.getElementById('review_content').innerHTML = html;
+        document.getElementById('reviewModal').style.display = 'block';
+        document.getElementById('reviewModalOverlay').style.display = 'block';
+    }
+
+    function closeReviewModal() {
+        document.getElementById('reviewModal').style.display = 'none';
+        document.getElementById('reviewModalOverlay').style.display = 'none';
+        pendingExtractedData = null;
+    }
+
+    function applyExtractedData() {
+        const json = pendingExtractedData;
+        if (!json) return;
+        
+        if (json.name) document.getElementById('name').value = json.name;
+        if (json.father_name) document.getElementById('father_name').value = json.father_name;
+        if (json.father_phone) document.getElementById('father_phone').value = json.father_phone;
+        if (json.emergency_contact) document.getElementById('emergency_contact').value = json.emergency_contact;
+        if (json.date_of_birth) document.getElementById('date_of_birth').value = json.date_of_birth;
+        if (json.address) document.getElementById('address').value = json.address;
+        if (json.previous_school_info) document.getElementById('previous_school_info').value = json.previous_school_info;
+        if (json.blood_group) document.getElementById('blood_group').value = json.blood_group;
+        if (json.gender) {
+            const g = json.gender.toLowerCase();
+            const select = document.getElementById('gender');
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === g) {
+                    select.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        
+        closeReviewModal();
+    }
+
     function openScanModal() {
         document.getElementById('scanModal').style.display = 'block';
         document.getElementById('scanModalOverlay').style.display = 'block';
@@ -388,26 +461,13 @@
                         }
 
                         const json = data.data;
-                        if (json.name) document.getElementById('name').value = json.name;
-                        if (json.father_name) document.getElementById('father_name').value = json.father_name;
-                        if (json.father_phone) document.getElementById('father_phone').value = json.father_phone;
-                        if (json.emergency_contact) document.getElementById('emergency_contact').value = json.emergency_contact;
-                        if (json.date_of_birth) document.getElementById('date_of_birth').value = json.date_of_birth;
-                        if (json.address) document.getElementById('address').value = json.address;
-                        if (json.previous_school_info) document.getElementById('previous_school_info').value = json.previous_school_info;
-                        if (json.blood_group) document.getElementById('blood_group').value = json.blood_group;
-                        if (json.gender) {
-                            const g = json.gender.toLowerCase();
-                            const select = document.getElementById('gender');
-                            for (let i = 0; i < select.options.length; i++) {
-                                if (select.options[i].value === g) {
-                                    select.selectedIndex = i;
-                                    break;
-                                }
-                            }
+                        if(json && Object.keys(json).length > 0) {
+                            openScanModal(); // ensure previous modal is closed if it was open on mobile
+                            closeScanModal(); // cleanly close it
+                            openReviewModal(json);
+                        } else {
+                            alert('Could not extract any data from the image.');
                         }
-                        
-                        alert('Form data extracted and filled successfully! Please review the details.');
                     })
                     .catch(err => {
                         btn.disabled = false;
