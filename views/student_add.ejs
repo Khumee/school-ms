@@ -416,76 +416,42 @@
         if(headerBtn) headerBtn.style.display = 'none';
         if(headerStatus) headerStatus.style.display = 'flex';
         
-        // Downscale image on client side to save bandwidth and API limits
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 1200;
-                const MAX_HEIGHT = 1600;
-                let width = img.width;
-                let height = img.height;
+        const formData = new FormData();
+        formData.append('scan_image', file);
 
-                if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-                } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
-                }
-                
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                
-                canvas.toBlob((blob) => {
-                    const formData = new FormData();
-                    formData.append('scan_image', blob, 'scan.jpg');
+        fetch('/students/admission-form/scan', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            status.style.display = 'none';
+            if(headerBtn) headerBtn.style.display = 'inline-block';
+            if(headerStatus) headerStatus.style.display = 'none';
 
-                    fetch('/students/admission-form/scan', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        btn.disabled = false;
-                        status.style.display = 'none';
-                        if(headerBtn) headerBtn.style.display = 'inline-block';
-                        if(headerStatus) headerStatus.style.display = 'none';
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
 
-                        if (data.error) {
-                            alert('Error: ' + data.error);
-                            return;
-                        }
-
-                        const json = data.data;
-                        if(json && Object.keys(json).length > 0) {
-                            openScanModal(); // ensure previous modal is closed if it was open on mobile
-                            closeScanModal(); // cleanly close it
-                            openReviewModal(json);
-                        } else {
-                            alert('Could not extract any data from the image.');
-                        }
-                    })
-                    .catch(err => {
-                        btn.disabled = false;
-                        status.style.display = 'none';
-                        if(headerBtn) headerBtn.style.display = 'inline-block';
-                        if(headerStatus) headerStatus.style.display = 'none';
-                        alert('An error occurred during scanning.');
-                        console.error(err);
-                    });
-                }, 'image/jpeg', 0.7); // 70% quality JPEG
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+            const json = data.data;
+            if(json && Object.keys(json).length > 0) {
+                openScanModal(); // ensure previous modal is closed if it was open on mobile
+                closeScanModal(); // cleanly close it
+                openReviewModal(json);
+            } else {
+                alert('Could not extract any data from the image.');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            status.style.display = 'none';
+            if(headerBtn) headerBtn.style.display = 'inline-block';
+            if(headerStatus) headerStatus.style.display = 'none';
+            alert('An error occurred during scanning.');
+            console.error(err);
+        });
     }
 </script>
 <%- include('partials/footer') %>
