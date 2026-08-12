@@ -584,6 +584,10 @@ However, you MUST try to fill as many fields as possible.
         let jsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         const extractedData = JSON.parse(jsonStr);
 
+        // Save a copy to public so the user can inspect it
+        const debugPath = path.join(__dirname, '..', 'public', 'debug.jpg');
+        fs.copyFileSync(imagePath, debugPath);
+
         // Clean up temp file
         fs.unlinkSync(imagePath);
 
