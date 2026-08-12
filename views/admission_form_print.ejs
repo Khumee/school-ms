@@ -104,6 +104,11 @@
         <div class="header" style="text-align: left; margin: 0; padding: 0; border: none;">
             <% if (tenant.logo_url) { %>
                 <img src="<%= tenant.logo_url %>" alt="School Logo" style="max-height: 80px;">
+            <% } else { %>
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="max-height: 80px;">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                    <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                </svg>
             <% } %>
             <h1 style="margin: 10px 0 5px 0; font-size: 24px; text-transform: uppercase;"><%= tenant.school_name %></h1>
             <h2 style="margin: 0; font-size: 18px; color: #555;">Admission Application Form</h2>
