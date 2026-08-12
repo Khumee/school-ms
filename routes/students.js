@@ -93,7 +93,7 @@ router.get('/students/add', isAuthenticated, async (req, res) => {
 });
 
 // POST /students/add - save
-router.post('/students/add', isAuthenticated, async (req, res) => {
+router.post('/students/add', isAuthenticated, upload.single('photo'), async (req, res) => {
     const {
         reg_no, name, class_id, custom_monthly_fee, concession_notes, concession_reason, family_members, siblings, school_going_siblings, monthly_income,
         father_name, father_phone, emergency_contact, date_of_birth, address, gender,
@@ -155,6 +155,17 @@ router.post('/students/add', isAuthenticated, async (req, res) => {
                  VALUES (?, ?, ?, ?, ?, ?, ?)`,
                 [tenantId, studentId, 0, payYear, admFee, payDate, req.session.userId]
             );
+        }
+
+        if (req.file) {
+            const destDir = path.join(__dirname, '..', 'public', 'uploads', String(tenantId), String(studentId));
+            if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+            
+            const destPath = path.join(destDir, req.file.filename);
+            fs.renameSync(req.file.path, destPath);
+            
+            const fileUrl = `/uploads/${tenantId}/${studentId}/${req.file.filename}`;
+            await db.execute('UPDATE students SET photo_url = ? WHERE id = ? AND tenant_id = ?', [fileUrl, studentId, tenantId]);
         }
         
         res.redirect('/students');

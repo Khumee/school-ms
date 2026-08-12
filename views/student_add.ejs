@@ -15,8 +15,25 @@
 
 
 <div class="card">
-    <form action="/students/add" method="POST">
+    <form action="/students/add" method="POST" enctype="multipart/form-data">
         <h3 style="margin-bottom: 1rem; color: var(--primary-color);">1. Academic & Admission Information</h3>
+        
+        <!-- Photo Upload -->
+        <div style="margin-bottom: 1.5rem; background-color: #f8fafc; padding: 1rem; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 80px; height: 80px; background-color: #cbd5e1; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+                <i class="bi bi-person-fill" style="font-size: 2.5rem;"></i>
+            </div>
+            <div style="flex: 1;">
+                <label style="font-weight: 600; margin-bottom: 0.5rem; display: block;">Student Profile Photo</label>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <button type="button" class="btn-secondary" onclick="document.getElementById('photo_input').removeAttribute('capture'); document.getElementById('photo_input').click();" style="font-size: 0.85rem;"><i class="bi bi-folder2-open"></i> Upload File</button>
+                    <button type="button" class="btn-secondary mobile-only" onclick="document.getElementById('photo_input').setAttribute('capture', 'user'); document.getElementById('photo_input').click();" style="font-size: 0.85rem;"><i class="bi bi-camera"></i> Take Photo</button>
+                </div>
+                <input type="file" name="photo" id="photo_input" accept="image/*" style="display: none;" onchange="document.getElementById('photo_selected_text').innerText = this.files[0] ? this.files[0].name : 'No photo selected'">
+                <div id="photo_selected_text" style="font-size: 0.85rem; color: #64748b;">No photo selected</div>
+            </div>
+        </div>
+
         <div class="form-grid">
             <div class="form-group">
                 <label for="reg_no">Registration / Roll Number *</label>
