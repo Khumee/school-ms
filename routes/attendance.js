@@ -308,13 +308,14 @@ router.get('/attendance/students', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
         const dateStr = req.query.date || DateTime.now().toISODate();
-        const classId = req.query.class_id || '';
 
         // Fetch all classes for the dropdown
         const [classes] = await db.execute(
             'SELECT * FROM classes WHERE tenant_id = ? ORDER BY name ASC',
             [tenantId]
         );
+
+        const classId = req.query.class_id || (classes.length > 0 ? classes[0].id : '');
 
         let students = [];
         let attendanceMap = {};
