@@ -554,20 +554,25 @@ router.post('/students/admission-form/scan', isAuthenticated, upload.single('sca
         const imagePart = fileToGenerativePart(imagePath, mimeType);
 
         const prompt = `
-            Analyze this admission form and extract the student details into a JSON object. 
-            Only output valid JSON with no markdown formatting or extra text.
-            Required fields:
-            - name
-            - father_name
-            - father_phone
-            - emergency_contact
-            - date_of_birth (YYYY-MM-DD if possible)
-            - address
-            - gender (male/female/other)
-            - blood_group
-            - previous_school_info
-            If a field is not readable or empty, leave it as an empty string.
-        `;
+You are a strict data extraction AI. You MUST extract the requested fields from the provided image.
+Even if the image is blurry, cropped, or handwriting is messy, do your absolute best to transcribe it.
+Return ONLY a valid JSON object with EXACTLY these keys. 
+Do NOT include markdown formatting (no \`\`\`json).
+
+Required keys:
+"name": (Student's full name)
+"father_name": (Father's name)
+"father_phone": (Father's phone number)
+"emergency_contact": (Emergency contact number)
+"date_of_birth": (Format as YYYY-MM-DD if possible)
+"address": (Full residential address)
+"gender": (Male/Female/Other)
+"blood_group": (e.g. O+, AB-)
+"previous_school_info": (Name of previous school if any)
+
+If a field is absolutely not present on the page, leave it as an empty string "".
+However, you MUST try to fill as many fields as possible.
+`;
 
         const result = await model.generateContent([prompt, imagePart]);
         const responseText = result.response.text();
