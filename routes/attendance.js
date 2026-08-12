@@ -309,7 +309,6 @@ router.get('/attendance/students', isAuthenticated, async (req, res) => {
         const tenantId = req.tenant.id;
         const dateStr = req.query.date || DateTime.now().toISODate();
         const classId = req.query.class_id || '';
-        const section = req.query.section || '';
 
         // Fetch all classes for the dropdown
         const [classes] = await db.execute(
@@ -329,15 +328,9 @@ router.get('/attendance/students', isAuthenticated, async (req, res) => {
                 AND e.tenant_id = ? 
                 AND e.class_id = ?
                 AND s.status = 'active'
+                ORDER BY s.name ASC
             `;
             let studentParams = [tenantId, tenantId, classId];
-
-            if (section) {
-                studentQuery += ' AND e.section = ?';
-                studentParams.push(section);
-            }
-            
-            studentQuery += ' ORDER BY s.name ASC';
             
             const [fetchedStudents] = await db.execute(studentQuery, studentParams);
             students = fetchedStudents;
@@ -359,7 +352,6 @@ router.get('/attendance/students', isAuthenticated, async (req, res) => {
         res.render('attendance_students', {
             classes,
             selectedClassId: classId,
-            selectedSection: section,
             students,
             dateStr,
             attendanceMap
@@ -397,9 +389,6 @@ router.post('/attendance/students', isAuthenticated, async (req, res) => {
         }
 
         let redirectUrl = `/attendance/students?date=${dateStr}&class_id=${class_id}`;
-        if (section) {
-            redirectUrl += `&section=${encodeURIComponent(section)}`;
-        }
         res.redirect(redirectUrl);
     } catch (err) {
         console.error(err);

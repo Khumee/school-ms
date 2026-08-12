@@ -9,6 +9,27 @@
     <div class="alert alert-danger"><%= error %></div>
 <% } %>
 
+<div class="card" style="margin-bottom: 2rem; background-color: #f8fafc; border: 1px dashed #cbd5e1;">
+    <h3 style="margin-bottom: 1rem; color: #334155; font-size: 1.1rem;"><i class="bi bi-magic"></i> Auto-fill via Form Scan</h3>
+    <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem;">Upload or take a photo of the handwritten admission form to automatically extract and fill the details below.</p>
+    
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+        <div style="flex: 1; min-width: 200px;">
+            <label style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem; display: block;">Option 1: Upload File</label>
+            <input type="file" id="scan_image_input" accept="image/*" class="form-control" onchange="document.getElementById('scan_camera_input').value=''">
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+            <label style="font-size: 0.85rem; font-weight: bold; margin-bottom: 0.25rem; display: block;">Option 2: Take Photo</label>
+            <input type="file" id="scan_camera_input" accept="image/*" capture="environment" class="form-control" onchange="document.getElementById('scan_image_input').value=''">
+        </div>
+    </div>
+    
+    <div style="display: flex; gap: 1rem; align-items: center;">
+        <button type="button" id="scan_btn" class="btn-primary" onclick="scanForm()"><i class="bi bi-upc-scan"></i> Scan Form</button>
+        <span id="scan_status" style="font-size: 0.9rem; color: #64748b; display: none;"><i class="bi bi-hourglass-split"></i> Processing with AI... This may take a few seconds.</span>
+    </div>
+</div>
+
 <div class="card">
     <form action="/students/add" method="POST">
         <h3 style="margin-bottom: 1rem; color: var(--primary-color);">1. Academic & Admission Information</h3>
@@ -227,6 +248,106 @@
     classSelect.addEventListener('change', updateClassFee);
     updateClassFee(); // Run on initial load
     toggleAdmissionPaymentDate(document.getElementById('admission_fee_status').value);
-</script>
+    function scanForm() {
+        const fileInput = document.getElementById('scan_image_input');
+        const cameraInput = document.getElementById('scan_camera_input');
+        
+        let file = null;
+        if (fileInput.files && fileInput.files.length > 0) {
+            file = fileInput.files[0];
+        } else if (cameraInput.files && cameraInput.files.length > 0) {
+            file = cameraInput.files[0];
+        }
 
+        if (!file) {
+            alert('Please upload or take a photo first.');
+            return;
+        }
+
+        const btn = document.getElementById('scan_btn');
+        const status = document.getElementById('scan_status');
+        btn.disabled = true;
+        status.style.display = 'inline-block';
+        
+        // Downscale image on client side to save bandwidth and API limits
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 1200;
+                const MAX_HEIGHT = 1600;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob((blob) => {
+                    const formData = new FormData();
+                    formData.append('scan_image', blob, 'scan.jpg');
+
+                    fetch('/students/admission-form/scan', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        btn.disabled = false;
+                        status.style.display = 'none';
+
+                        if (data.error) {
+                            alert('Error: ' + data.error);
+                            return;
+                        }
+
+                        const json = data.data;
+                        if (json.name) document.getElementById('name').value = json.name;
+                        if (json.father_name) document.getElementById('father_name').value = json.father_name;
+                        if (json.father_phone) document.getElementById('father_phone').value = json.father_phone;
+                        if (json.emergency_contact) document.getElementById('emergency_contact').value = json.emergency_contact;
+                        if (json.date_of_birth) document.getElementById('date_of_birth').value = json.date_of_birth;
+                        if (json.address) document.getElementById('address').value = json.address;
+                        if (json.previous_school_info) document.getElementById('previous_school_info').value = json.previous_school_info;
+                        if (json.blood_group) document.getElementById('blood_group').value = json.blood_group;
+                        if (json.gender) {
+                            const g = json.gender.toLowerCase();
+                            const select = document.getElementById('gender');
+                            for (let i = 0; i < select.options.length; i++) {
+                                if (select.options[i].value === g) {
+                                    select.selectedIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        alert('Form data extracted and filled successfully! Please review the details.');
+                    })
+                    .catch(err => {
+                        btn.disabled = false;
+                        status.style.display = 'none';
+                        alert('An error occurred during scanning.');
+                        console.error(err);
+                    });
+                }, 'image/jpeg', 0.7); // 70% quality JPEG
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+</script>
 <%- include('partials/footer') %>

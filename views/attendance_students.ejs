@@ -21,10 +21,6 @@
         </select>
     </div>
 
-    <div class="form-group" style="flex: 0 0 200px;">
-        <label for="section">Section (Optional)</label>
-        <input type="text" name="section" id="section" class="form-control" placeholder="e.g. A" value="<%= selectedSection %>" onchange="this.form.submit()">
-    </div>
 </form>
 
 <% if (selectedClassId) { %>
@@ -71,7 +67,6 @@
         <form action="/attendance/students" method="POST">
             <input type="hidden" name="date" value="<%= dateStr %>">
             <input type="hidden" name="class_id" value="<%= selectedClassId %>">
-            <input type="hidden" name="section" value="<%= selectedSection %>">
             
             <div class="table-container" style="border: none; margin-bottom: 1.5rem;">
                 <table>

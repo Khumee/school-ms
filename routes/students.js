@@ -2,6 +2,34 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { isAuthenticated } = require('../middleware/auth');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const tenantId = req.tenant ? req.tenant.id : 'default';
+        let subDir = 'temp';
+        
+        if (req.body.student_id) {
+            subDir = `${req.body.student_id}`;
+        } else if (file.fieldname === 'scan_image') {
+            subDir = 'scans';
+        }
+        
+        const dir = path.join(__dirname, '..', 'public', 'uploads', String(tenantId), subDir);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        cb(null, dir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
 
 // GET /students - list
 router.get('/students', isAuthenticated, async (req, res) => {
@@ -281,11 +309,18 @@ router.get('/students/view/:id', isAuthenticated, async (req, res) => {
             }
         }
 
+        // Fetch student documents
+        const [documents] = await db.execute(
+            'SELECT * FROM student_documents WHERE student_id = ? AND tenant_id = ? ORDER BY uploaded_at DESC',
+            [req.params.id, tenantId]
+        );
+
         res.render('student_view', { 
             student: students[0], 
             payments, 
             totalPaid,
-            hifzEnrollment
+            hifzEnrollment,
+            documents
         });
     } catch (err) {
         console.error(err);
@@ -367,6 +402,153 @@ router.post('/students/update-admission-fee/:id', isAuthenticated, async (req, r
     } catch (err) {
         console.error(err);
         res.status(500).send('Error updating admission fee.');
+    }
+});
+
+// --- Document Management Routes ---
+
+// POST /students/upload-document
+router.post('/students/upload-document', isAuthenticated, upload.single('document_file'), async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const { student_id, document_type, description } = req.body;
+        
+        if (!req.file) {
+            return res.status(400).send('No file uploaded.');
+        }
+
+        const filePath = `/uploads/${tenantId}/${student_id}/${req.file.filename}`;
+        
+        await db.execute(
+            `INSERT INTO student_documents (student_id, tenant_id, document_type, description, file_path) 
+             VALUES (?, ?, ?, ?, ?)`,
+            [student_id, tenantId, document_type, description || null, filePath]
+        );
+
+        res.redirect(`/students/view/${student_id}?tab=documents`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error uploading document.');
+    }
+});
+
+// POST /students/delete-document
+router.post('/students/delete-document', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const { document_id, student_id } = req.body;
+
+        const [docs] = await db.execute(
+            'SELECT file_path FROM student_documents WHERE id = ? AND tenant_id = ? AND student_id = ?',
+            [document_id, tenantId, student_id]
+        );
+
+        if (docs.length > 0) {
+            const filePath = path.join(__dirname, '..', 'public', docs[0].file_path);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+            await db.execute('DELETE FROM student_documents WHERE id = ?', [document_id]);
+        }
+
+        res.redirect(`/students/view/${student_id}?tab=documents`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error deleting document.');
+    }
+});
+
+// POST /students/update-photo
+router.post('/students/update-photo', isAuthenticated, upload.single('photo'), async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const { student_id } = req.body;
+        
+        if (!req.file) {
+            return res.status(400).send('No photo uploaded.');
+        }
+
+        const photoUrl = `/uploads/${tenantId}/${student_id}/${req.file.filename}`;
+        
+        await db.execute(
+            'UPDATE students SET photo_url = ? WHERE id = ? AND tenant_id = ?',
+            [photoUrl, student_id, tenantId]
+        );
+
+        res.redirect(`/students/view/${student_id}`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error updating photo.');
+    }
+});
+
+// GET /students/admission-form/empty
+router.get('/students/admission-form/empty', isAuthenticated, async (req, res) => {
+    try {
+        res.render('admission_form_print', { tenant: req.tenant });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error rendering empty form.');
+    }
+});
+
+// POST /students/admission-form/scan
+router.post('/students/admission-form/scan', isAuthenticated, upload.single('scan_image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No image uploaded.' });
+        }
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            return res.status(500).json({ error: 'Gemini API key not configured.' });
+        }
+
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+        const imagePath = req.file.path;
+        const mimeType = req.file.mimetype;
+        
+        function fileToGenerativePart(path, mimeType) {
+            return {
+                inlineData: {
+                    data: Buffer.from(fs.readFileSync(path)).toString("base64"),
+                    mimeType
+                },
+            };
+        }
+        const imagePart = fileToGenerativePart(imagePath, mimeType);
+
+        const prompt = `
+            Analyze this admission form and extract the student details into a JSON object. 
+            Only output valid JSON with no markdown formatting or extra text.
+            Required fields:
+            - name
+            - father_name
+            - father_phone
+            - emergency_contact
+            - date_of_birth (YYYY-MM-DD if possible)
+            - address
+            - gender (male/female/other)
+            - blood_group
+            - previous_school_info
+            If a field is not readable or empty, leave it as an empty string.
+        `;
+
+        const result = await model.generateContent([prompt, imagePart]);
+        const responseText = result.response.text();
+        
+        let jsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const extractedData = JSON.parse(jsonStr);
+
+        // Clean up temp file
+        fs.unlinkSync(imagePath);
+
+        res.json({ success: true, data: extractedData });
+    } catch (err) {
+        console.error('OCR Error:', err);
+        res.status(500).json({ error: 'Error processing image: ' + err.message });
     }
 });
 

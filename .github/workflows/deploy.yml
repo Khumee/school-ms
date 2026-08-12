@@ -49,6 +49,7 @@ jobs:
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           DB_NAME=${{ secrets.DB_NAME }}
           SESSION_SECRET=${{ secrets.SESSION_SECRET }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
           NODE_ENV=production
           EOF
 
