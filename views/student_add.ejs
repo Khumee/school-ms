@@ -252,10 +252,10 @@
             <span class="btn-secondary" style="display:block; text-align:center; font-size: 0.85rem;"><i class="bi bi-folder2-open"></i> Upload File</span>
             <input type="file" id="scan_image_input" accept="image/*" style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer;" onchange="document.getElementById('scan_camera_input').value=''; document.getElementById('scanSelectedText').innerText = this.files[0] ? this.files[0].name : 'No file selected'; if(this.files[0]) { scanForm(this); }">
         </label>
-        <!-- Take Photo: accept image/* triggers mobile camera chooser without strict HTTP restriction -->
+        <!-- Take Photo: capture="camera" launches mobile camera directly -->
         <label style="flex:1; position:relative; display:inline-block; cursor:pointer;">
             <span class="btn-secondary" style="display:block; text-align:center; font-size: 0.85rem;"><i class="bi bi-camera"></i> Take Photo</span>
-            <input type="file" id="scan_camera_input" accept="image/*" style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer;" onchange="document.getElementById('scan_image_input').value=''; document.getElementById('scanSelectedText').innerText = 'Photo captured'; if(this.files[0]) { scanForm(this); }">
+            <input type="file" id="scan_camera_input" accept="image/*" capture="camera" style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer;" onchange="document.getElementById('scan_image_input').value=''; document.getElementById('scanSelectedText').innerText = 'Photo captured'; if(this.files[0]) { scanForm(this); }">
         </label>
     </div>
     
