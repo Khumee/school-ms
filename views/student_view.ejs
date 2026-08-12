@@ -479,6 +479,32 @@
         fetchAttendance();
     }
 
+    function switchTab(tabId) {
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.borderBottomColor = 'transparent';
+            btn.style.fontWeight = '500';
+            btn.style.color = '#64748b';
+        });
+        const activeBtn = document.getElementById('tab-' + tabId);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+            activeBtn.style.borderBottomColor = 'var(--primary-color)';
+            activeBtn.style.fontWeight = '600';
+            activeBtn.style.color = 'var(--primary-color)';
+        }
+
+        // Update tab contents
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.style.display = 'none';
+        });
+        const activeContent = document.getElementById('content-' + tabId);
+        if (activeContent) {
+            activeContent.style.display = 'block';
+        }
+    }
+
     async function fetchAttendance() {
         const start = document.getElementById('att-start-date').value;
         const end = document.getElementById('att-end-date').value;
