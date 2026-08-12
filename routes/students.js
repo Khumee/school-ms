@@ -619,4 +619,20 @@ router.get('/students/api/attendance/:id', isAuthenticated, async (req, res) => 
     }
 });
 
+// Scan route for auto‑fill (base64 JSON)
+router.post('/students/scan', isAuthenticated, async (req, res) => {
+  try {
+    const { image } = req.body;
+    if (!image) {
+      return res.status(400).json({ error: 'No image supplied.' });
+    }
+    // TODO: integrate Gemini OCR here. For now, return empty data placeholder.
+    const extracted = {};
+    res.json({ data: extracted });
+  } catch (err) {
+    console.error('Scanning error:', err);
+    res.status(500).json({ error: 'Error processing the image.' });
+  }
+});
+
 module.exports = router;

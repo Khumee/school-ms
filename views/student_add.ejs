@@ -8,6 +8,9 @@
         <a href="/students" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Directory</a>
     </div>
 </div>
+    <!-- Hidden inputs for auto‑fill scan -->
+    <input type="file" id="scan_image_input" accept="image/*" style="display:none;">
+    <input type="file" id="scan_camera_input" accept="image/*" capture="environment" style="display:none;">
 
 <% if (error) { %>
     <div class="alert alert-danger"><%= error %></div>
@@ -402,56 +405,36 @@
     toggleAdmissionPaymentDate(document.getElementById('admission_fee_status').value);
     function scanForm() {
         const fileInput = document.getElementById('scan_image_input');
-        const cameraInput = document.getElementById('scan_camera_input');
-        
-        let file = null;
-        if (fileInput.files && fileInput.files.length > 0) {
-            file = fileInput.files[0];
-        } else if (cameraInput.files && cameraInput.files.length > 0) {
-            file = cameraInput.files[0];
-        }
-
+        const file = fileInput.files[0] || document.getElementById('scan_camera_input').files[0];
         if (!file) {
-            alert('Please upload or take a photo first.');
+            alert('Please select or capture a photo first.');
             return;
         }
-
         const btn = document.getElementById('scan_btn');
         const status = document.getElementById('scan_status');
         const headerBtn = document.getElementById('header_scan_btn');
         const headerStatus = document.getElementById('header_scan_status');
-        
         btn.disabled = true;
         status.style.display = 'inline-block';
-        if(headerBtn) headerBtn.style.display = 'none';
-        if(headerStatus) headerStatus.style.display = 'flex';
-
-        // Use FileReader to get raw base64 - NO browser compression, sends 100% of image data
+        if (headerBtn) headerBtn.style.display = 'none';
+        if (headerStatus) headerStatus.style.display = 'flex';
         const reader = new FileReader();
         reader.onload = function(e) {
-            const dataUrl = e.target.result; // e.g. "data:image/jpeg;base64,/9j/4AAQ..."
-            const base64 = dataUrl.split(',')[1];
-            const mimeType = file.type || 'image/jpeg';
-
-            fetch('/students/admission-form/scan', {
+            const base64 = e.target.result.split(',')[1];
+            fetch('/students/scan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image_b64: base64, mime_type: mimeType, file_size: file.size })
+                body: JSON.stringify({ image: base64 })
             })
             .then(res => res.json())
             .then(data => {
                 btn.disabled = false;
                 status.style.display = 'none';
-                if(headerBtn) headerBtn.style.display = 'inline-block';
-                if(headerStatus) headerStatus.style.display = 'none';
-
-                if (data.error) {
-                    alert('Error: ' + data.error);
-                    return;
-                }
-
+                if (headerBtn) headerBtn.style.display = 'inline-block';
+                if (headerStatus) headerStatus.style.display = 'none';
+                if (data.error) { alert('Error: ' + data.error); return; }
                 const json = data.data;
-                if(json && Object.keys(json).length > 0) {
+                if (json && Object.keys(json).length > 0) {
                     closeScanModal();
                     openReviewModal(json, base64);
                 } else {
@@ -461,8 +444,8 @@
             .catch(err => {
                 btn.disabled = false;
                 status.style.display = 'none';
-                if(headerBtn) headerBtn.style.display = 'inline-block';
-                if(headerStatus) headerStatus.style.display = 'none';
+                if (headerBtn) headerBtn.style.display = 'inline-block';
+                if (headerStatus) headerStatus.style.display = 'none';
                 alert('An error occurred during scanning.');
                 console.error(err);
             });
