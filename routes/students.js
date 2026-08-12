@@ -538,6 +538,11 @@ router.post('/students/admission-form/scan', isAuthenticated, upload.single('sca
         const imagePath = req.file.path;
         const mimeType = req.file.mimetype;
         
+        console.log("----- FILE RECEIVED FOR OCR -----");
+        console.log("MimeType:", mimeType);
+        console.log("Size (bytes):", req.file.size);
+        console.log("---------------------------------");
+        
         function fileToGenerativePart(path, mimeType) {
             return {
                 inlineData: {
