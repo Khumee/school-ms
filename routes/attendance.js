@@ -312,7 +312,7 @@ router.get('/attendance/students', isAuthenticated, async (req, res) => {
 
         // Fetch all classes for the dropdown
         const [classes] = await db.execute(
-            'SELECT * FROM classes WHERE tenant_id = ? ORDER BY class_name ASC',
+            'SELECT * FROM classes WHERE tenant_id = ? ORDER BY name ASC',
             [tenantId]
         );
 

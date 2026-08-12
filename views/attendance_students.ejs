@@ -16,7 +16,7 @@
         <select name="class_id" id="class_id" class="form-control" onchange="this.form.submit()">
             <option value="">-- Select Class --</option>
             <% classes.forEach(c => { %>
-                <option value="<%= c.id %>" <%= selectedClassId == c.id ? 'selected' : '' %>><%= c.class_name %></option>
+                <option value="<%= c.id %>" <%= selectedClassId == c.id ? 'selected' : '' %>><%= c.name %></option>
             <% }) %>
         </select>
     </div>
