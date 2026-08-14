@@ -348,7 +348,16 @@
             <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
                 <button type="button" class="btn-secondary" onclick="document.getElementById('docFile').removeAttribute('capture'); document.getElementById('docFile').click();" style="flex:1; font-size: 0.85rem;"><i class="bi bi-folder2-open"></i> Upload File</button>
             </div>
-            <input type="file" name="document_file" id="docFile" style="display: none;" required onchange="document.getElementById('docSelectedText').innerText = this.files[0] ? this.files[0].name : 'No file selected'; previewThumbnail(this)">
+            <input type="file" name="document_file" id="docFile" style="display: none;" required onchange="
+                if (!document.getElementById('docType').value) {
+                    alert('Please select a Document Type first.');
+                    this.value = '';
+                    return;
+                }
+                document.getElementById('docSelectedText').innerText = this.files[0] ? this.files[0].name : 'No file selected'; 
+                if(typeof previewThumbnail === 'function') previewThumbnail(this); 
+                if (this.files[0]) { this.form.submit(); }
+            ">
             <div id="docSelectedText" style="font-size: 0.85rem; color: #64748b; text-align: center;">No file selected</div>
         </div>
 
@@ -358,7 +367,6 @@
         
         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
             <button type="button" class="btn-secondary" onclick="document.getElementById('documentModal').style.display='none'; document.getElementById('modalOverlay').style.display='none';">Cancel</button>
-            <button type="submit" class="btn-primary"><i class="bi bi-upload"></i> Upload</button>
         </div>
     </form>
 </div>
