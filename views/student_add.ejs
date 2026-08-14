@@ -32,10 +32,6 @@
                         <span class="btn-secondary" style="font-size: 0.85rem; display:inline-block;"><i class="bi bi-folder2-open"></i> Upload File</span>
                         <input type="file" name="photo" id="photo_input" accept="image/*" style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer;" onchange="document.getElementById('photo_selected_text').innerText = this.files[0] ? this.files[0].name : 'No photo selected'">
                     </label>
-                    <label class="mobile-only" style="position:relative; display:inline-block; cursor:pointer;">
-                        <span class="btn-secondary" style="font-size: 0.85rem; display:inline-block;"><i class="bi bi-camera"></i> Take Photo</span>
-                        <input type="file" name="photo" accept="image/*" capture="user" style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer;" onchange="document.getElementById('photo_selected_text').innerText = this.files[0] ? this.files[0].name : 'No photo selected'">
-                    </label>
                 </div>
                 <div id="photo_selected_text" style="font-size: 0.85rem; color: #64748b;">No photo selected</div>
             </div>
@@ -205,10 +201,9 @@
                     <label for="docType">Document Type</label>
                     <select name="document_type" id="docType" class="form-control">
                         <option value="">-- Select Type --</option>
-                        <option value="B-Form">Student B-Form</option>
-                        <option value="Parent CNIC">Parent CNIC</option>
-                        <option value="Previous Result">Previous Result Card</option>
-                        <option value="Other">Other</option>
+                        <option value="B-Form">B-Form</option>
+                        <option value="Father/Gaurdian ID card Front">Father/Gaurdian ID card Front</option>
+                        <option value="Father/Gaurdian ID card back">Father/Gaurdian ID card back</option>
                     </select>
                 </div>
 
@@ -218,15 +213,11 @@
                 </div>
                 
                 <div class="form-group" style="grid-column: span 2;">
-                    <label>File (Upload or Take Photo)</label>
+                    <label>File (Upload)</label>
                     <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
                         <label style="position:relative; display:inline-block; cursor:pointer;">
                             <span class="btn-secondary" style="font-size: 0.85rem; display:inline-block;"><i class="bi bi-folder2-open"></i> Upload File</span>
                             <input type="file" name="document_file" id="docFile" style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer;" onchange="document.getElementById('docSelectedTextAdd').innerText = this.files[0] ? this.files[0].name : 'No file selected'">
-                        </label>
-                        <label class="mobile-only" style="position:relative; display:inline-block; cursor:pointer;">
-                            <span class="btn-secondary" style="font-size: 0.85rem; display:inline-block;"><i class="bi bi-camera"></i> Take Photo</span>
-                            <input type="file" name="document_file" accept="image/*" capture="environment" style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer;" onchange="document.getElementById('docSelectedTextAdd').innerText = this.files[0] ? this.files[0].name : 'No file selected'">
                         </label>
                     </div>
                     <div id="docSelectedTextAdd" style="font-size: 0.85rem; color: #64748b;">No file selected</div>
@@ -250,12 +241,7 @@
         <!-- Upload File: label wrapping keeps it mobile-safe -->
         <label style="flex:1; position:relative; display:inline-block; cursor:pointer;">
             <span class="btn-secondary" style="display:block; text-align:center; font-size: 0.85rem;"><i class="bi bi-folder2-open"></i> Upload File</span>
-            <input type="file" id="scan_image_input" accept="image/*" style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer;" onchange="document.getElementById('scan_camera_input').value=''; document.getElementById('scanSelectedText').innerText = this.files[0] ? this.files[0].name : 'No file selected'; if(this.files[0]) { scanForm(this); }">
-        </label>
-        <!-- Take Photo: capture="camera" launches mobile camera directly -->
-        <label style="flex:1; position:relative; display:inline-block; cursor:pointer;">
-            <span class="btn-secondary" style="display:block; text-align:center; font-size: 0.85rem;"><i class="bi bi-camera"></i> Take Photo</span>
-            <input type="file" id="scan_camera_input" accept="image/*" capture="camera" style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer;" onchange="document.getElementById('scan_image_input').value=''; document.getElementById('scanSelectedText').innerText = 'Photo captured'; if(this.files[0]) { scanForm(this); }">
+            <input type="file" id="scan_image_input" accept="image/*" style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer;" onchange="document.getElementById('scanSelectedText').innerText = this.files[0] ? this.files[0].name : 'No file selected'; if(this.files[0]) { scanForm(this); }">
         </label>
     </div>
     
@@ -421,9 +407,8 @@
         if (sourceInput && sourceInput.files && sourceInput.files[0]) {
             file = sourceInput.files[0];
         } else {
-            const camInput = document.getElementById('scan_camera_input');
             const fileInput = document.getElementById('scan_image_input');
-            file = (camInput && camInput.files && camInput.files[0]) || (fileInput && fileInput.files && fileInput.files[0]);
+            file = fileInput && fileInput.files && fileInput.files[0];
         }
         if (!file) {
             alert('Please select or capture a photo first.');
