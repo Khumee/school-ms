@@ -508,6 +508,8 @@
         if (activeContent) {
             activeContent.style.display = 'block';
         }
+        
+        sessionStorage.setItem('activeStudentTab', tabId);
     }
 
     async function fetchAttendance() {
@@ -560,6 +562,11 @@
     // Initialize with Last Month
     window.addEventListener('DOMContentLoaded', () => {
         setAttendanceFilter('last_month');
+        
+        const savedTab = sessionStorage.getItem('activeStudentTab');
+        if (savedTab) {
+            switchTab(savedTab);
+        }
     });
 </script>
 <%- include('partials/footer') %>
