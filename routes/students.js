@@ -510,6 +510,35 @@ router.post('/students/update-photo', isAuthenticated, upload.single('photo'), a
     }
 });
 
+// POST /students/delete-photo
+router.post('/students/delete-photo', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const { student_id } = req.body;
+
+        const [students] = await db.execute(
+            'SELECT photo_url FROM students WHERE id = ? AND tenant_id = ?',
+            [student_id, tenantId]
+        );
+
+        if (students.length > 0 && students[0].photo_url) {
+            const filePath = path.join(__dirname, '..', 'public', students[0].photo_url);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+            }
+            await db.execute(
+                'UPDATE students SET photo_url = NULL WHERE id = ? AND tenant_id = ?',
+                [student_id, tenantId]
+            );
+        }
+
+        res.redirect(`/students/view/${student_id}`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error deleting photo.');
+    }
+});
+
 // GET /students/admission-form/empty
 router.get('/students/admission-form/empty', isAuthenticated, async (req, res) => {
     try {
