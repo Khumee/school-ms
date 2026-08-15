@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { isAuthenticated } = require('../middleware/auth');
+const { isAuthenticated, hasPermission } = require('../middleware/auth');
 const { DateTime } = require('luxon');
 
-router.get('/', isAuthenticated, async (req, res) => {
+router.get('/', isAuthenticated, hasPermission('Dashboard'), async (req, res) => {
     try {
         const tenantId = req.tenant.id;
 

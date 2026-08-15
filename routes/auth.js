@@ -34,11 +34,21 @@ router.post('/login', async (req, res) => {
                 req.session.username = user.username;
                 req.session.permissions = perms.map(p => p.function_name);
                 
+                let redirectUrl = '/';
+                if (user.role_name !== 'Admin' && !req.session.permissions.includes('Dashboard')) {
+                    if (req.session.permissions.includes('Students')) redirectUrl = '/students';
+                    else if (req.session.permissions.includes('Attendance')) redirectUrl = '/attendance/students';
+                    else if (req.session.permissions.includes('Fees')) redirectUrl = '/fees/ledger';
+                    else if (req.session.permissions.includes('Ledgers')) redirectUrl = '/expenses';
+                    else if (req.session.permissions.includes('Employees')) redirectUrl = '/employees';
+                    else redirectUrl = '/change-password'; // Fallback
+                }
+
                 return req.session.save((err) => {
                     if (err) {
                         return res.render('login', { error: 'Session save error. Try again.' });
                     }
-                    res.redirect('/');
+                    res.redirect(redirectUrl);
                 });
             }
         }
