@@ -42,11 +42,19 @@ require('dotenv').config();
         
         const demoStudents = enrollments.slice(0, 8);
         
-        // Deactivate the rest of the students
-        const restIds = enrollments.slice(8).map(e => e.id);
+        // Deactivate the rest of the students and move them out of the Hifz class to prevent auto-re-enrollment
+        const restIds = enrollments.slice(8).map(e => e.student_id);
         if (restIds.length > 0) {
-            await db.query('UPDATE hifz_enrollment SET status = "inactive" WHERE id IN (?) AND tenant_id = ?', [restIds, tenantId]);
-            console.log(`Deactivated ${restIds.length} extra students to keep focus on 8 demo students.`);
+            // Find a non-hifz class (e.g. Class Two)
+            const [classes] = await db.execute('SELECT id FROM classes WHERE tenant_id = ? AND is_hifz_class = 0 LIMIT 1', [tenantId]);
+            const nonHifzClassId = classes.length > 0 ? classes[0].id : null;
+
+            if (nonHifzClassId) {
+                await db.query('UPDATE students SET class_id = ? WHERE id IN (?) AND tenant_id = ?', [nonHifzClassId, restIds, tenantId]);
+            }
+            const restEnrollmentIds = enrollments.slice(8).map(e => e.id);
+            await db.query('UPDATE hifz_enrollment SET status = "inactive" WHERE id IN (?) AND tenant_id = ?', [restEnrollmentIds, tenantId]);
+            console.log(`Moved ${restIds.length} extra students to a non-hifz class to keep focus on 8 demo students.`);
         }
 
         const rInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -100,15 +108,23 @@ require('dotenv').config();
                 let sabaqTajweed = ['perfect', 'minor_errors', 'minor_errors', 'needs_work'][rInt(0, 3)];
                 let sabaqQuality = ['excellent', 'good', 'good', 'average'][rInt(0, 3)];
                 
+                const fromPage = Math.floor(currentParaLines / 16) + 1;
+                const toPage = Math.floor((currentParaLines + linesToday - 1) / 16) + 1;
+                const fromLine = (currentParaLines % 16) + 1;
+                const toLine = ((currentParaLines + linesToday - 1) % 16) + 1;
+
                 await db.execute(`
                     INSERT INTO hifz_diary_entries 
-                    (tenant_id, student_id, entry_date, is_absent, sabaq_status, sabaq_para, sabaq_lines, sabaq_tajweed, sabaq_quality, sabqi_status, sabqi_para, manzil_status, manzil_from_para, manzil_to_para) 
-                    VALUES (?, ?, ?, 0, 'recited', ?, ?, ?, ?, 'recited', ?, 'recited', ?, ?)
+                    (tenant_id, student_id, entry_date, is_absent, 
+                     sabaq_status, sabaq_from_para, sabaq_to_para, sabaq_from_page, sabaq_to_page, sabaq_from_line, sabaq_to_line, sabaq_tajweed, sabaq_quality, 
+                     sabqi_status, sabqi_para, sabqi_para_2, 
+                     manzil_status, manzil_para_1, manzil_para_2, manzil_para_3) 
+                    VALUES (?, ?, ?, 0, 'recited', ?, ?, ?, ?, ?, ?, ?, ?, 'recited', ?, ?, 'recited', ?, ?, ?)
                 `, [
                     tenantId, studentId, dateString, 
-                    currentPara, linesToday, sabaqTajweed, sabaqQuality,
-                    Math.max(1, currentPara - 1), 
-                    Math.max(1, currentPara - 3), Math.max(1, currentPara - 1)
+                    currentPara, currentPara, fromPage, toPage, fromLine, toLine, sabaqTajweed, sabaqQuality,
+                    Math.max(1, currentPara - 1), Math.max(1, currentPara - 2), 
+                    Math.max(1, currentPara - 3), Math.max(1, currentPara - 4), Math.max(1, currentPara - 5)
                 ]);
                 
                 currentParaLines += linesToday;
