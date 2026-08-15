@@ -99,12 +99,29 @@
     <button class="print-btn no-print" onclick="window.print()">Print / Save PDF</button>
 
     <div class="container">
-        <div class="header">
-            <h1>Software as a Service (SaaS) Agreement</h1>
-            <p>Generated on <%= new Date().toLocaleDateString() %></p>
+        <div class="header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; text-align: left;">
+            <div>
+                <!-- Muhaimin Technologies Branding -->
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <img src="https://muhaimintech.com/Frame121.png" alt="Muhaimin Technologies" style="height: 50px; border-radius: 8px; background: #1e293b; padding: 5px;" onerror="this.style.display='none'">
+                    <div>
+                        <h1 style="margin: 0; color: #1e293b; font-size: 22px; text-transform: uppercase; letter-spacing: 1px;">Muhaimin Technologies</h1>
+                        <p style="margin: 3px 0 0 0; color: #64748b; font-size: 14px;">Software as a Service Agreement</p>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <% if (tenant.logo_url) { %>
+                    <img src="<%= tenant.logo_url %>" alt="Client Logo" style="height: 50px; object-fit: contain; margin-bottom: 5px;" onerror="this.style.display='none'">
+                <% } %>
+                <p style="margin: 0; font-weight: bold; color: #1e293b;"><%= tenant.school_name || tenant.name %></p>
+                <p style="margin: 0; color: #64748b; font-size: 12px;">Generated: <%= new Date().toLocaleDateString() %></p>
+            </div>
         </div>
 
-        <p>This Software as a Service Agreement (the "Agreement") is entered into by and between <strong>School Management System (Provider)</strong> and <strong><%= tenant.name %> (Client)</strong>.</p>
+        <p style="font-size: 11pt; color: #475569; margin-bottom: 30px; text-align: justify;">
+            This Software as a Service Agreement (the "Agreement") is entered into by and between <strong>Muhaimin Technologies</strong> (hereinafter referred to as the "Provider") and <strong><%= tenant.school_name || tenant.name %></strong> (hereinafter referred to as the "Client").
+        </p>
 
         <h2>1. Commercial Terms</h2>
         <table class="meta-table">

@@ -96,15 +96,20 @@
                     <table>
                         <tr>
                             <td>
-                                <strong>From:</strong><br />
-                                School Management System (SaaS)<br />
-                                Admin Accounts Department<br />
-                                billing@school-ms.com
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                    <img src="https://muhaimintech.com/Frame121.png" alt="Muhaimin Technologies Logo" style="height: 35px; border-radius: 4px; background: #1e293b; padding: 4px;" onerror="this.style.display='none'">
+                                    <strong>Muhaimin Technologies</strong>
+                                </div>
+                                SaaS Provider & IT Solutions<br />
+                                billing@muhaimintech.com<br />
+                                https://muhaimintech.com
                             </td>
-                            <td>
+                            <td style="text-align: right;">
                                 <strong>Billed To:</strong><br />
-                                <%= tenant.name %><br />
-                                <% if(tenant.school_name) { %><%= tenant.school_name %><br /><% } %>
+                                <% if(tenant.logo_url) { %>
+                                    <img src="<%= tenant.logo_url %>" alt="Client Logo" style="height: 40px; object-fit: contain; margin-top: 5px; margin-bottom: 5px;" onerror="this.style.display='none'"><br />
+                                <% } %>
+                                <strong><%= tenant.school_name || tenant.name %></strong><br />
                                 <%= tenant.custom_domain ? tenant.custom_domain : (tenant.subdomain + '.nukrim.com') %>
                             </td>
                         </tr>
