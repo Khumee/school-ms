@@ -154,12 +154,7 @@
 
                             <div class="sabaq-inputs <%= (sabaqStatus === 'not_recited' || isWaqafActive) ? 'sabaq-disabled' : '' %>" style="display: flex; flex-direction: column; gap: 0.5rem;">
                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <span style="font-size: 0.8rem; font-weight: 600; width: 40px;">Para:</span>
-                                    <input type="number" name="entries[<%= s.student_id %>][sabaq_from_para]" placeholder="From" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 60px;" min="1" max="30"
-                                           value="<%= s.sabaq_from_para || (s.prefill ? s.prefill.sabaq_from_para : '') %>">
-                                    <span style="font-size: 0.8rem; color: #64748b;">to</span>
-                                    <input type="number" name="entries[<%= s.student_id %>][sabaq_to_para]" placeholder="To" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 60px;" min="1" max="30"
-                                           value="<%= s.sabaq_to_para || (s.prefill ? s.prefill.sabaq_to_para : '') %>">
+                                    <span style="font-size: 0.8rem; font-weight: 600; color: #1e3a8a; background-color: #dbeafe; padding: 0.2rem 0.5rem; border-radius: 4px;">Para <%= s.current_para %></span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                                     <span style="font-size: 0.8rem; font-weight: 600; width: 40px; color: #1e3a8a;">Start:</span>

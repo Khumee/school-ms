@@ -225,6 +225,13 @@ router.post('/hifz/student/:studentId/diary', isAuthenticated, async (req, res) 
 
         const absentVal = is_absent === 'on' ? 1 : 0;
 
+        // Fetch student's current para to use for Sabaq
+        const [[enrollment]] = await db.execute(
+            `SELECT current_para FROM hifz_enrollment WHERE tenant_id = ? AND student_id = ?`,
+            [tenantId, studentId]
+        );
+        const currentPara = enrollment ? enrollment.current_para : 1;
+
         await db.execute(
             `INSERT INTO hifz_diary_entries
              (tenant_id, student_id, entry_date, is_absent,
@@ -245,8 +252,8 @@ router.post('/hifz/student/:studentId/diary', isAuthenticated, async (req, res) 
             [
                 tenantId, studentId, entry_date, absentVal,
                 absentVal ? 'recited' : (sabaq_status || 'not_recited'),
-                absentVal ? null : (sabaq_from_para || null),
-                absentVal ? null : (sabaq_to_para || null),
+                absentVal ? null : currentPara,
+                absentVal ? null : currentPara,
                 absentVal ? null : (sabaq_from_page || null),
                 absentVal ? null : (sabaq_to_page || null),
                 absentVal ? null : (sabaq_from_line || null),
@@ -267,33 +274,6 @@ router.post('/hifz/student/:studentId/diary', isAuthenticated, async (req, res) 
             ]
         );
 
-        // Update enrollment current_para and trigger Waqaf if sabaq was recited
-        if (!absentVal && sabaq_status === 'recited' && sabaq_to_para) {
-            const newPara = parseInt(sabaq_to_para);
-            await db.execute(
-                `UPDATE hifz_enrollment SET current_para = ?, updated_at = NOW() WHERE tenant_id = ? AND student_id = ?`,
-                [newPara, tenantId, studentId]
-            );
-
-            // If reached milestone 5, 15, or 25, start Waqaf revision break
-            if ([5, 15, 25].includes(newPara)) {
-                const [waqafCheck] = await db.execute(
-                    `SELECT id FROM hifz_waqaf_periods WHERE tenant_id = ? AND student_id = ? AND status = 'active' LIMIT 1`,
-                    [tenantId, studentId]
-                );
-                if (waqafCheck.length === 0) {
-                    await db.execute(
-                        `INSERT INTO hifz_waqaf_periods (tenant_id, student_id, waqaf_type, started_date, status)
-                         VALUES (?, ?, ?, CURDATE(), 'active')`,
-                        [tenantId, studentId, `waqaf_${newPara}`]
-                    );
-                    await db.execute(
-                        `UPDATE hifz_enrollment SET current_phase = ? WHERE tenant_id = ? AND student_id = ?`,
-                        [`waqaf_${newPara}`, tenantId, studentId]
-                    );
-                }
-            }
-        }
 
         // Calculate and update Khatam Date dynamically
         await updateStudentKhatamPrediction(tenantId, studentId);
@@ -389,6 +369,18 @@ router.post('/hifz/mark-all', isAuthenticated, async (req, res) => {
 
         const entryDate = date || new Date().toISOString().split('T')[0];
         const studentIds = Object.keys(entries || {});
+        if (studentIds.length === 0) {
+            return res.redirect(`/hifz/mark-all?date=${entryDate}&success=1`);
+        }
+
+        const [enrollments] = await db.query(
+            `SELECT student_id, current_para FROM hifz_enrollment WHERE tenant_id = ? AND student_id IN (?)`,
+            [tenantId, studentIds]
+        );
+        const paraMap = {};
+        for (let row of enrollments) {
+            paraMap[row.student_id] = row.current_para;
+        }
 
         for (const studentId of studentIds) {
             const e = entries[studentId];
@@ -415,8 +407,8 @@ router.post('/hifz/mark-all', isAuthenticated, async (req, res) => {
                 [
                     tenantId, studentId, entryDate, isAbsent,
                     isAbsent ? 'recited' : (e.sabaq_status || 'not_recited'),
-                    isAbsent ? null : (e.sabaq_from_para || null),
-                    isAbsent ? null : (e.sabaq_to_para || null),
+                    isAbsent ? null : (paraMap[studentId] || 1),
+                    isAbsent ? null : (paraMap[studentId] || 1),
                     isAbsent ? null : (e.sabaq_from_page || null),
                     isAbsent ? null : (e.sabaq_to_page || null),
                     isAbsent ? null : (e.sabaq_from_line || null),
@@ -436,34 +428,6 @@ router.post('/hifz/mark-all', isAuthenticated, async (req, res) => {
                     markedBy
                 ]
             );
-
-            // Update enrollment current_para and trigger Waqaf if sabaq recited
-            if (!isAbsent && e.sabaq_status === 'recited' && e.sabaq_to_para) {
-                const newPara = parseInt(e.sabaq_to_para);
-                await db.execute(
-                    `UPDATE hifz_enrollment SET current_para = ?, updated_at = NOW() WHERE tenant_id = ? AND student_id = ?`,
-                    [newPara, tenantId, studentId]
-                );
-
-                if ([5, 15, 25].includes(newPara)) {
-                    // Check if already in active waqaf
-                    const [waqafCheck] = await db.execute(
-                        `SELECT id FROM hifz_waqaf_periods WHERE tenant_id = ? AND student_id = ? AND status = 'active' LIMIT 1`,
-                        [tenantId, studentId]
-                    );
-                    if (waqafCheck.length === 0) {
-                        await db.execute(
-                            `INSERT INTO hifz_waqaf_periods (tenant_id, student_id, waqaf_type, started_date, status)
-                             VALUES (?, ?, ?, CURDATE(), 'active')`,
-                            [tenantId, studentId, `waqaf_${newPara}`]
-                        );
-                        await db.execute(
-                            `UPDATE hifz_enrollment SET current_phase = ? WHERE tenant_id = ? AND student_id = ?`,
-                            [`waqaf_${newPara}`, tenantId, studentId]
-                        );
-                    }
-                }
-            }
 
             // Update Khatam prediction dynamically
             await updateStudentKhatamPrediction(tenantId, studentId);
@@ -720,34 +684,46 @@ router.post('/hifz/test/:studentId', isAuthenticated, async (req, res) => {
              evaluator_name || null, evaluated_by_self === 'on' ? 1 : 0, test_notes || null]
         );
 
-        // If the test result is 'pass', complete active Waqaf revision break
+        // If the test result is 'pass', evaluate progression
         if (dbTestResult === 'pass') {
-            if ([5, 15, 25].includes(paraNum)) {
-                await db.execute(
-                    `UPDATE hifz_waqaf_periods 
-                     SET status = 'completed', completed_date = CURDATE() 
-                     WHERE tenant_id = ? AND student_id = ? AND waqaf_type = ? AND status = 'active'`,
-                    [tenantId, studentId, `waqaf_${paraNum}`]
-                );
-
-                // Re-detect and restore next phase back to standard early/mid/advanced
-                const [enroll] = await db.execute(
-                    `SELECT enrolled_date FROM hifz_enrollment WHERE tenant_id = ? AND student_id = ?`,
-                    [tenantId, studentId]
-                );
-                let nextPhase = 'early';
-                if (enroll.length > 0) {
-                    const detected = detectPhase(enroll[0].enrolled_date);
-                    nextPhase = detected.key;
+            const [enroll] = await db.execute(`SELECT current_para, enrolled_date FROM hifz_enrollment WHERE tenant_id = ? AND student_id = ?`, [tenantId, studentId]);
+            if (enroll.length > 0 && enroll[0].current_para === paraNum) {
+                if ([5, 15, 25].includes(paraNum)) {
+                    // Check if already in active waqaf
+                    const [waqafCheck] = await db.execute(
+                        `SELECT id FROM hifz_waqaf_periods WHERE tenant_id = ? AND student_id = ? AND status = 'active' AND waqaf_type = ? LIMIT 1`,
+                        [tenantId, studentId, `waqaf_${paraNum}`]
+                    );
+                    if (waqafCheck.length === 0) {
+                        // First pass of milestone para: Start Waqaf! Do not increment current_para yet.
+                        await db.execute(
+                            `INSERT INTO hifz_waqaf_periods (tenant_id, student_id, waqaf_type, started_date, status) VALUES (?, ?, ?, CURDATE(), 'active')`,
+                            [tenantId, studentId, `waqaf_${paraNum}`]
+                        );
+                        await db.execute(
+                            `UPDATE hifz_enrollment SET current_phase = ? WHERE tenant_id = ? AND student_id = ?`,
+                            [`waqaf_${paraNum}`, tenantId, studentId]
+                        );
+                    } else {
+                        // Passing the Waqaf test! Mark completed and increment para
+                        await db.execute(
+                            `UPDATE hifz_waqaf_periods SET status = 'completed', completed_date = CURDATE() WHERE id = ?`,
+                            [waqafCheck[0].id]
+                        );
+                        const nextPhase = detectPhase(enroll[0].enrolled_date).key;
+                        await db.execute(
+                            `UPDATE hifz_enrollment SET current_phase = ?, current_para = ?, updated_at = NOW() WHERE tenant_id = ? AND student_id = ?`,
+                            [nextPhase, paraNum + 1, tenantId, studentId]
+                        );
+                    }
+                } else {
+                    // Normal Para: increment current_para
+                    const nextPhase = detectPhase(enroll[0].enrolled_date).key;
+                    await db.execute(
+                        `UPDATE hifz_enrollment SET current_phase = ?, current_para = ?, updated_at = NOW() WHERE tenant_id = ? AND student_id = ?`,
+                        [nextPhase, paraNum + 1, tenantId, studentId]
+                    );
                 }
-
-                // Increment current_para to next one to start new Sabaq memorization
-                await db.execute(
-                    `UPDATE hifz_enrollment 
-                     SET current_phase = ?, current_para = ?, updated_at = NOW() 
-                     WHERE tenant_id = ? AND student_id = ?`,
-                    [nextPhase, paraNum + 1, tenantId, studentId]
-                );
             }
         }
 
