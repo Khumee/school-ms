@@ -384,8 +384,6 @@ router.get('/admin/tenants/:id/invoices/:invoiceId/view', isSuperAdmin, async (r
     }
 });
 
-});
-
 // POST Delete Invoice
 router.post('/admin/tenants/:id/invoices/:invoiceId/delete', isSuperAdmin, async (req, res) => {
     try {
