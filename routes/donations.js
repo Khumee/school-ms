@@ -12,10 +12,7 @@ router.use('/donors', requireModule('donations'));
 const FUND_LABELS = { general: 'Member Account', trust: 'Trust Account', student_support: 'Student Sponsorship' };
 
 
-function monthKey(date) {
-    const d = new Date(date);
-    return `${d.getFullYear()}-${d.getMonth() + 1}`;
-}
+// Removed monthKey function as we now use for_month directly
 
 // GET /donations - modern overview (this month's activity + lapsed recurring donors + search donors)
 router.get('/donations', isAuthenticated, async (req, res) => {
@@ -68,17 +65,23 @@ router.get('/donations', isAuthenticated, async (req, res) => {
         );
 
         const now = new Date();
-        const currentKey = `${now.getFullYear()}-${now.getMonth() + 1}`;
+        const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-        const recentThisMonth = allDonations.filter(d => monthKey(d.date) === currentKey);
+        // Keep using date for financial cash flow this month
+        const recentThisMonth = allDonations.filter(d => {
+            const dn = new Date(d.date);
+            return dn.getFullYear() === now.getFullYear() && dn.getMonth() === now.getMonth();
+        });
         const thisMonthTotal = recentThisMonth.reduce((sum, d) => sum + parseFloat(d.amount), 0);
         const thisMonthDonorCount = new Set(recentThisMonth.map(d => d.donor_id)).size;
 
         // Build donor_id -> Set of month-keys they've donated in (across all history)
         const donorMonthSets = {};
         allDonations.forEach(d => {
-            if (!donorMonthSets[d.donor_id]) donorMonthSets[d.donor_id] = new Set();
-            donorMonthSets[d.donor_id].add(monthKey(d.date));
+            if (d.for_month) {
+                if (!donorMonthSets[d.donor_id]) donorMonthSets[d.donor_id] = new Set();
+                donorMonthSets[d.donor_id].add(d.for_month);
+            }
         });
 
         const donorById = {};
@@ -302,7 +305,7 @@ router.post('/donations/donor/delete/:id', isAuthenticated, async (req, res) => 
 
 // POST /donations/add - record donation payment
 router.post('/donations/add', isAuthenticated, async (req, res) => {
-    const { donor_id, amount, date, fund_category, payment_method, notes, direct_ref, donation_type } = req.body;
+    const { donor_id, amount, date, for_month, fund_category, payment_method, notes, direct_ref, donation_type } = req.body;
     try {
         const tenantId = req.tenant.id;
         let finalNotes = notes || null;
@@ -311,10 +314,10 @@ router.post('/donations/add', isAuthenticated, async (req, res) => {
         }
         
         await db.execute(
-            `INSERT INTO donations (tenant_id, donor_id, amount, date, fund_category, payment_method, notes, donation_type)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO donations (tenant_id, donor_id, amount, date, for_month, fund_category, payment_method, notes, donation_type)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-                tenantId, donor_id, parseFloat(amount), date || new Date(), 
+                tenantId, donor_id, parseFloat(amount), date || new Date(), for_month || null,
                 fund_category || 'general', payment_method || 'Cash', finalNotes, donation_type || 'Sadqa'
             ]
         );
@@ -327,16 +330,16 @@ router.post('/donations/add', isAuthenticated, async (req, res) => {
 
 // POST /donations/edit/:id - update a donation record
 router.post('/donations/edit/:id', isAuthenticated, async (req, res) => {
-    const { amount, date, fund_category, payment_method, notes, direct_ref, donation_type } = req.body;
+    const { amount, date, for_month, fund_category, payment_method, notes, direct_ref, donation_type } = req.body;
     try {
         let finalNotes = notes || null;
         if (fund_category === 'general' && direct_ref) {
             finalNotes = `[Direct: ${direct_ref}]` + (notes ? ' ' + notes : '');
         }
         await db.execute(
-            `UPDATE donations SET amount = ?, date = ?, fund_category = ?, payment_method = ?, notes = ?, donation_type = ?
+            `UPDATE donations SET amount = ?, date = ?, for_month = ?, fund_category = ?, payment_method = ?, notes = ?, donation_type = ?
              WHERE id = ? AND tenant_id = ?`,
-            [parseFloat(amount), date, fund_category || 'general', payment_method || 'Cash', finalNotes, donation_type || 'Sadqa', req.params.id, req.tenant.id]
+            [parseFloat(amount), date, for_month || null, fund_category || 'general', payment_method || 'Cash', finalNotes, donation_type || 'Sadqa', req.params.id, req.tenant.id]
         );
         res.redirect(req.body.redirect_to || '/donations');
     } catch (err) {

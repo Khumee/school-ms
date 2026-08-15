@@ -104,6 +104,10 @@
             <input type="date" id="editDate" name="date" class="form-control" required>
         </div>
         <div class="form-group" style="margin-bottom: 1rem;">
+            <label>For Month</label>
+            <input type="month" id="editForMonth" name="for_month" class="form-control" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
             <label>Account to Transfer Fund</label>
             <select id="editFundCategory" name="fund_category" class="form-control" onchange="toggleDirectOption(this.value, 'edit_direct_option_group')">
                 <option value="general">Member Account</option>
@@ -358,6 +362,10 @@
                 <label for="date">Date Received</label>
                 <input type="date" id="date" name="date" class="form-control" value="<%= new Date().toISOString().slice(0, 10) %>">
             </div>
+            <div class="form-group">
+                <label for="for_month">For Month</label>
+                <input type="month" id="for_month" name="for_month" class="form-control" required value="<%= new Date().toISOString().slice(0, 7) %>">
+            </div>
         </div>
         <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
             <div class="form-group">
@@ -409,6 +417,7 @@
         document.getElementById('editModalTitle').innerText = 'Edit Donation: ' + d.donor_name;
         document.getElementById('editAmount').value = d.amount;
         document.getElementById('editDate').value = d.date;
+        document.getElementById('editForMonth').value = d.for_month || d.date.slice(0,7);
         document.getElementById('editFundCategory').value = d.fund_category;
         document.getElementById('editDonationType').value = d.donation_type || 'Sadqa';
         document.getElementById('editPaymentMethod').value = d.payment_method || '';
