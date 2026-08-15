@@ -97,7 +97,7 @@ async function updateStudentKhatamPrediction(tenantId, studentId) {
     
     // Approximate if 0
     if (totalMemorized === 0 && enrollments[0].current_para > 1) {
-        totalMemorized = (enrollments[0].current_para - 1) * 300;
+        totalMemorized = (enrollments[0].current_para - 1) * 288;
     }
 
     const predicted = computeKhatamPrediction(totalMemorized, avgLines30d);

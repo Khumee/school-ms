@@ -152,7 +152,7 @@ require('dotenv').config();
             if (currentPara > 10) currentPhase = 'mid';
             if (currentPara >= 20) currentPhase = 'advanced';
             
-            const remainingLines = Math.max(0, 6236 - totalLinesMemorized);
+            const remainingLines = Math.max(0, 8640 - totalLinesMemorized);
             let predictedDate = null;
             if (avgLines30d > 0) {
                 const daysNeeded = Math.ceil(remainingLines / avgLines30d);
@@ -161,6 +161,10 @@ require('dotenv').config();
                 predictedDate = pd.toISOString().split('T')[0];
             }
             
+            let enrollDate = new Date(today);
+            enrollDate.setDate(today.getDate() - target.days);
+            const enrollDateStr = enrollDate.toISOString().split('T')[0];
+
             await db.execute(`
                 UPDATE hifz_enrollment 
                 SET current_para = ?, 
@@ -170,11 +174,12 @@ require('dotenv').config();
                     longest_streak_days = ?,
                     avg_lines_30d = ?,
                     current_phase = ?,
-                    predicted_khatam_date = ?
+                    predicted_khatam_date = ?,
+                    enrolled_date = ?
                 WHERE tenant_id = ? AND student_id = ?
             `, [
                 currentPara, currentParaLines, totalLinesMemorized,
-                currentStreak, longestStreak, avgLines30d, currentPhase, predictedDate,
+                currentStreak, longestStreak, avgLines30d, currentPhase, predictedDate, enrollDateStr,
                 tenantId, studentId
             ]);
         }

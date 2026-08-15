@@ -3,7 +3,7 @@
  * Phase detection, alarm computation, khatam date prediction, streak tracking.
  */
 
-const TOTAL_QURAN_LINES = 6236; // approximate total lines in the Quran
+const TOTAL_QURAN_LINES = 8640; // 30 paras * 16 lines * 18 pages
 
 // ============================================================
 // Phase Detection (auto-computed from enrolled_date)
