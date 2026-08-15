@@ -77,7 +77,10 @@
             margin-bottom: 10px;
         }
         @media print {
-            body { padding: 0; }
+            @page {
+                margin: 0;
+            }
+            body { padding: 1.5cm; }
             .no-print { display: none; }
         }
         .print-btn {
