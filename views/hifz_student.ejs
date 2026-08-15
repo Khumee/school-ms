@@ -457,6 +457,55 @@ function closeProgressModal() {
             resultBadge = '<span class="status-cell" style="background-color: #fef3c7; color: #d97706;"><i class="bi bi-clock"></i> PENDING</span>';
         }
 
+        let notesHtml = `<tr><td style="font-weight: 600; padding-top: 0.5rem; vertical-align: top;">Notes:</td><td style="padding-top: 0.5rem; white-space: pre-line;">${testData.test_notes || '-'}</td></tr>`;
+        
+        let cardHtml = '';
+        if (testData.test_notes && testData.test_notes.includes('Zabat:')) {
+            const parts = testData.test_notes.split('\n');
+            let scores = {};
+            parts.forEach(p => {
+                const s = p.split(':');
+                if(s.length === 2) {
+                    scores[s[0].trim()] = s[1].trim();
+                }
+            });
+            
+            cardHtml = `
+            <div style="background: linear-gradient(135deg, #f8fafc, #f1f5f9); border: 1px solid #cbd5e1; border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <div style="text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0; color: #0f172a; font-size: 1.25rem;"><i class="bi bi-person-circle"></i> <%= enrollment.student_name %></h3>
+                    <p style="margin: 0.25rem 0 0 0; color: #475569; font-size: 0.9rem; font-weight: 500;">Para ${testData.para_no} Examination Report</p>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div style="background: white; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
+                        <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Zabat</div>
+                        <div style="font-size: 1.25rem; font-weight: 800; color: #16a34a; margin-top: 0.2rem;">${scores['Zabat'] || '-'}</div>
+                    </div>
+                    <div style="background: white; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
+                        <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Tajweed</div>
+                        <div style="font-size: 1.25rem; font-weight: 800; color: #2563eb; margin-top: 0.2rem;">${scores['Tajweed'] || '-'}</div>
+                    </div>
+                    <div style="background: white; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
+                        <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Lehja</div>
+                        <div style="font-size: 1.25rem; font-weight: 800; color: #8b5cf6; margin-top: 0.2rem;">${scores['Lehja'] || '-'}</div>
+                    </div>
+                    <div style="background: white; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
+                        <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Attendance</div>
+                        <div style="font-size: 1.25rem; font-weight: 800; color: #d97706; margin-top: 0.2rem;">${scores['Attendance'] || '-'}</div>
+                    </div>
+                    <div style="background: white; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center;">
+                        <div style="font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Tarbiyah</div>
+                        <div style="font-size: 1.25rem; font-weight: 800; color: #059669; margin-top: 0.2rem;">${scores['Tarbiyah'] || '-'}</div>
+                    </div>
+                    <div style="background: white; padding: 0.75rem; border-radius: 8px; border: 2px solid #94a3b8; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                        <div style="font-size: 0.75rem; color: #0f172a; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em;">Total Score</div>
+                        <div style="font-size: 1.35rem; font-weight: 900; color: #0f172a; margin-top: 0.2rem;">${scores['Total'] || '-'}</div>
+                    </div>
+                </div>
+            </div>`;
+            notesHtml = '';
+        }
+
         const html = `
             <table style="width: 100%; font-size: 0.95rem;">
                 <tr style="height: 2.5rem; border-bottom: 1px solid #f1f5f9;"><td style="font-weight: 600; width: 40%;">Result:</td><td>${resultBadge}</td></tr>
@@ -464,8 +513,9 @@ function closeProgressModal() {
                 <tr style="height: 2.5rem; border-bottom: 1px solid #f1f5f9;"><td style="font-weight: 600;">Test Date:</td><td>${testDate}</td></tr>
                 <tr style="height: 2.5rem; border-bottom: 1px solid #f1f5f9;"><td style="font-weight: 600;">Evaluator:</td><td>${testData.test_evaluator_name || '-'}</td></tr>
                 <tr style="height: 2.5rem; border-bottom: 1px solid #f1f5f9;"><td style="font-weight: 600;">Evaluated By:</td><td>${testData.evaluated_by_self ? 'Self (Class Teacher)' : 'External Qari/Nazim'}</td></tr>
-                <tr><td style="font-weight: 600; padding-top: 0.5rem; vertical-align: top;">Notes:</td><td style="padding-top: 0.5rem;">${testData.test_notes || '-'}</td></tr>
+                ${notesHtml}
             </table>
+            ${cardHtml}
         `;
         document.getElementById('modalParaContent').innerHTML = html;
         document.getElementById('paraTestModal').style.display = 'block';
