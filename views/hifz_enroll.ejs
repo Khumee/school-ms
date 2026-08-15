@@ -41,9 +41,19 @@
                 </select>
             </div>
             
-            <div class='form-group'>
-                <label for='enrolled_date'>Enrollment Date</label>
-                <input type='date' id='enrolled_date' name='enrolled_date' class='form-control' required value='<%= new Date().toISOString().split("T")[0] %>'>
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class='form-group'>
+                    <label for='enrolled_date'>Enrollment Date</label>
+                    <input type='date' id='enrolled_date' name='enrolled_date' class='form-control' required value='<%= new Date().toISOString().split("T")[0] %>'>
+                </div>
+                <div class='form-group'>
+                    <label for='start_para'>Starting Para</label>
+                    <select id='start_para' name='start_para' class='form-control' required>
+                        <% for(let p=1; p<=30; p++) { %>
+                            <option value="<%= p %>">Para <%= p %></option>
+                        <% } %>
+                    </select>
+                </div>
             </div>
             
             <div class='form-group'>

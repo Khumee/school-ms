@@ -598,12 +598,19 @@ router.get('/hifz/enroll', isAuthenticated, async (req, res) => {
 router.post('/hifz/enroll', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        const { student_id, class_id, enrolled_date, notes } = req.body;
+        const { student_id, class_id, enrolled_date, notes, start_para } = req.body;
+        const currentPara = parseInt(start_para) || 1;
+        const totalLines = Math.max(0, currentPara - 1) * 288;
+        
+        let currentPhase = 'early';
+        if (currentPara > 10) currentPhase = 'mid';
+        if (currentPara >= 20) currentPhase = 'advanced';
+
         await db.execute(
-            `INSERT INTO hifz_enrollment (tenant_id, student_id, class_id, enrolled_date, notes)
-             VALUES (?, ?, ?, ?, ?)
-             ON DUPLICATE KEY UPDATE status='active', class_id=VALUES(class_id), notes=VALUES(notes)`,
-            [tenantId, student_id, class_id, enrolled_date || new Date().toISOString().split('T')[0], notes || null]
+            `INSERT INTO hifz_enrollment (tenant_id, student_id, class_id, enrolled_date, notes, current_para, total_lines_memorized, current_phase)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE status='active', class_id=VALUES(class_id), notes=VALUES(notes), current_para=VALUES(current_para), total_lines_memorized=VALUES(total_lines_memorized), current_phase=VALUES(current_phase)`,
+            [tenantId, student_id, class_id, enrolled_date || new Date().toISOString().split('T')[0], notes || null, currentPara, totalLines, currentPhase]
         );
         // Also update the students table class_id
         await db.execute(
@@ -614,6 +621,34 @@ router.post('/hifz/enroll', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send('Error enrolling student.');
+    }
+});
+
+// POST /hifz/update-progress/:student_id
+router.post('/hifz/update-progress/:student_id', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const studentId = req.params.student_id;
+        const currentPara = parseInt(req.body.current_para) || 1;
+        const linesDone = parseInt(req.body.lines_done) || 0;
+        
+        const totalLines = (Math.max(0, currentPara - 1) * 288) + linesDone;
+        
+        let currentPhase = 'early';
+        if (currentPara > 10) currentPhase = 'mid';
+        if (currentPara >= 20) currentPhase = 'advanced';
+
+        await db.execute(
+            `UPDATE hifz_enrollment 
+             SET current_para = ?, current_para_lines_done = ?, total_lines_memorized = ?, current_phase = ?, updated_at = NOW()
+             WHERE tenant_id = ? AND student_id = ?`,
+            [currentPara, linesDone, totalLines, currentPhase, tenantId, studentId]
+        );
+        
+        res.redirect('/hifz/student/' + studentId);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error updating progress.');
     }
 });
 

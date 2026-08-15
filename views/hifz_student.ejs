@@ -97,6 +97,7 @@
     <h1 class="section-title"><i class="bi bi-person-badge"></i> <%= enrollment.student_name %>'s Profile</h1>
     <div style="display: flex; gap: 0.75rem;">
         <a href="/hifz" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Roster</a>
+        <button type="button" class="btn-secondary" onclick="openProgressModal()"><i class="bi bi-pencil-square"></i> Set Starting Point</button>
         <a href="/hifz/test/<%= studentId %>" class="btn-primary"><i class="bi bi-award"></i> Log Para Test</a>
     </div>
 </div>
@@ -406,7 +407,40 @@
     </div>
 </div>
 
+<!-- Update Progress Modal -->
+<div id="progressModalOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999;" onclick="closeProgressModal()"></div>
+<div id="progressModal" class="modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ffffff; padding: 2rem; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); z-index: 1000; width: 90%; max-width: 400px;">
+    <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-pencil-square"></i> Set Current Progress</h3>
+    <form action="/hifz/update-progress/<%= studentId %>" method="POST">
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="current_para" style="font-weight: 600;">Currently Memorizing Para</label>
+            <select name="current_para" id="current_para" class="form-control" required>
+                <% for(let p=1; p<=30; p++) { %>
+                    <option value="<%= p %>" <%= enrollment.current_para == p ? 'selected' : '' %>>Para <%= p %></option>
+                <% } %>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="lines_done" style="font-weight: 600;">Lines Done in Current Para</label>
+            <input type="number" name="lines_done" id="lines_done" class="form-control" value="<%= enrollment.current_para_lines_done || 0 %>" min="0" required>
+            <small style="color: var(--muted);">Assuming 288 lines per completely memorized Para.</small>
+        </div>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button type="button" class="btn-secondary" onclick="closeProgressModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Update</button>
+        </div>
+    </form>
+</div>
+
 <script>
+function openProgressModal() {
+    document.getElementById('progressModal').style.display = 'block';
+    document.getElementById('progressModalOverlay').style.display = 'block';
+}
+function closeProgressModal() {
+    document.getElementById('progressModal').style.display = 'none';
+    document.getElementById('progressModalOverlay').style.display = 'none';
+}
     function showParaModal(testData) {
         document.getElementById('modalParaTitle').innerText = 'Para ' + testData.para_no + ' Test Details';
         
