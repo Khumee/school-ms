@@ -21,9 +21,9 @@
             <div class="nav-container">
                 <a href="/" class="brand-link" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
                     <% if (tenant && tenant.logo_url) { %>
-                        <img src="<%= tenant.logo_url %>" alt="Logo" class="nav-logo" style="height: 32px; width: 32px; object-fit: contain; border-radius: 4px; background: white; padding: 2px;">
+                        <img src="<%= tenant.logo_url %>" alt="Logo" class="nav-logo" style="height: 42px; width: 42px; object-fit: contain; border-radius: 6px; background: white; padding: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <% } %>
-                    <span class="brand-name" style="font-size: 1.1rem; font-weight: 700;"><%= tenant ? tenant.school_name : 'School Portal' %></span>
+                    <span class="brand-name" style="font-size: 1.15rem; font-weight: 700; white-space: nowrap;"><%= tenant ? tenant.school_name : 'School Portal' %></span>
                 </a>
                 <button class="mobile-menu-btn" onclick="document.getElementById('main-nav-links').classList.toggle('active')">
                     <i class="bi bi-list"></i>
@@ -116,10 +116,9 @@
                         </div>
                     </li>
                 </ul>
-                <div class="desktop-omni-logo" style="display: flex; align-items: center; padding-left: 1rem; margin-left: auto;">
-                    <span style="font-size: 0.65rem; color: rgba(255,255,255,0.7); margin-right: 0.5rem; font-weight: 500; text-transform: uppercase;">Powered By</span>
-                    <img src="/images/omnischool_logo.png" alt="OmniSchool" style="height: 28px; width: auto; object-fit: contain; background: white; padding: 2px 6px; border-radius: 4px;" title="Powered by OmniSchool">
-                </div>
+                <a href="https://omnischoolapp.com" target="_blank" style="display: flex; align-items: center; padding-left: 1rem; margin-left: auto; text-decoration: none;">
+                    <img src="/images/omnischool_logo.png" alt="OmniSchool" style="height: 38px; width: auto; object-fit: contain; background: white; padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" title="Powered by OmniSchool">
+                </a>
             </div>
         </nav>
     <% } %>
