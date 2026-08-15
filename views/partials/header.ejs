@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= tenant ? tenant.school_name : 'School Management System' %></title>
+    <title><%= tenant ? tenant.school_name : 'OmniSchool' %></title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/css/style.css">
@@ -114,6 +114,10 @@
                             <a href="/change-password"><i class="bi bi-key-fill"></i> Change Password</a>
                             <a href="/logout" style="color: #b91c1c;"><i class="bi bi-box-arrow-right"></i> Logout</a>
                         </div>
+                    </li>
+                    <li style="display: flex; align-items: center; padding-left: 1rem; margin-left: 0.5rem; border-left: 1px solid rgba(255,255,255,0.3);">
+                        <span style="font-size: 0.65rem; color: rgba(255,255,255,0.7); margin-right: 0.5rem; font-weight: 500; text-transform: uppercase;">Powered By</span>
+                        <img src="/images/omnischool_logo.png" alt="OmniSchool" style="height: 28px; width: auto; object-fit: contain; filter: brightness(0) invert(1);" title="Powered by OmniSchool">
                     </li>
                 </ul>
             </div>

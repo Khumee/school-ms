@@ -1,7 +1,7 @@
 {
   "name": "school-ms",
   "version": "1.0.0",
-  "description": "Multi-tenant SaaS School Management System with Donations and Concessions",
+  "description": "OmniSchool: Multi-tenant SaaS School Management System",
   "main": "server.js",
   "scripts": {
     "start": "npm run migrate && node server.js",

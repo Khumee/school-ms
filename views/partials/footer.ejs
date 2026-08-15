@@ -1,7 +1,11 @@
     </main>
     <footer class="main-footer">
-        <div class="footer-container">
-            <p>&copy; <%= new Date().getFullYear() %> <%= tenant ? tenant.name : 'School Management System' %>. All rights reserved.</p>
+        <div class="footer-container" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0;">
+            <p style="margin: 0;">&copy; <%= new Date().getFullYear() %> <%= tenant ? tenant.name : 'OmniSchool' %>. All rights reserved.</p>
+            <div style="display: flex; align-items: center; gap: 0.5rem; opacity: 0.8;">
+                <span style="font-size: 0.75rem; color: #64748b; font-weight: 500;">Powered by</span>
+                <img src="/images/omnischool_logo.png" alt="OmniSchool" style="height: 28px; width: auto; object-fit: contain;">
+            </div>
         </div>
     </footer>
 

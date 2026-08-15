@@ -7,6 +7,14 @@ const bcrypt = require('bcryptjs');
 const db = require('../db');
 const { isSuperAdmin } = require('../middleware/auth');
 
+// Strict Domain Isolation: Prevent tenants from accessing super admin routes
+router.use((req, res, next) => {
+    if (!req.isSuperAdminSite) {
+        return res.status(404).send('Not Found');
+    }
+    next();
+});
+
 const logoDir = path.join(__dirname, '..', 'public', 'images', 'logos');
 fs.mkdirSync(logoDir, { recursive: true });
 
