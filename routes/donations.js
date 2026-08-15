@@ -81,32 +81,24 @@ router.get('/donations', isAuthenticated, async (req, res) => {
             donorMonthSets[d.donor_id].add(monthKey(d.date));
         });
 
-        // The 6 calendar months immediately preceding the current month
-        const priorMonthKeys = [];
-        for (let i = 1; i <= 6; i++) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            priorMonthKeys.push(`${d.getFullYear()}-${d.getMonth() + 1}`);
-        }
-
-        const lapsedDonorIds = Object.keys(donorMonthSets).filter(donorId => {
-            const months = donorMonthSets[donorId];
-            const gaveAllPriorMonths = priorMonthKeys.every(k => months.has(k));
-            const missedThisMonth = !months.has(currentKey);
-            return gaveAllPriorMonths && missedThisMonth;
-        });
-
         const donorById = {};
         const [allDonorsForLookup] = await db.execute('SELECT * FROM donors WHERE tenant_id = ?', [tenantId]);
         allDonorsForLookup.forEach(d => { donorById[d.id] = d; });
 
-        const lapsedDonors = lapsedDonorIds.map(donorId => {
-            const lastDonation = allDonations.find(d => String(d.donor_id) === String(donorId));
-            return {
-                donor: donorById[donorId],
-                lastDonationDate: lastDonation ? lastDonation.date : null,
-                lastDonationAmount: lastDonation ? lastDonation.amount : null
-            };
-        }).filter(x => x.donor);
+        const lapsedDonors = allDonorsForLookup
+            .filter(d => d.monthly_commitment == 1) // Only recurring donors
+            .filter(d => {
+                const months = donorMonthSets[d.id] || new Set();
+                return !months.has(currentKey); // Missed this month
+            })
+            .map(d => {
+                const lastDonation = allDonations.find(dn => String(dn.donor_id) === String(d.id));
+                return {
+                    donor: d,
+                    lastDonationDate: lastDonation ? lastDonation.date : null,
+                    lastDonationAmount: lastDonation ? lastDonation.amount : null
+                };
+            });
 
         const totalAllTime = allDonations.reduce((sum, d) => sum + parseFloat(d.amount), 0);
         const monthlyDonorsCount = allDonorsForLookup.filter(d => d.monthly_commitment).length;

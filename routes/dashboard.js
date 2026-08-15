@@ -4,7 +4,18 @@ const db = require('../db');
 const { isAuthenticated, hasPermission } = require('../middleware/auth');
 const { DateTime } = require('luxon');
 
-router.get('/', isAuthenticated, hasPermission('Dashboard'), async (req, res) => {
+router.get('/', isAuthenticated, async (req, res) => {
+    // If user lacks Dashboard permission, redirect to their first available module
+    if (req.session.roleName !== 'Admin' && (!req.session.permissions || !req.session.permissions.includes('Dashboard'))) {
+        const perms = req.session.permissions || [];
+        if (perms.includes('Students')) return res.redirect('/students');
+        if (perms.includes('Attendance')) return res.redirect('/attendance/students');
+        if (perms.includes('Fees')) return res.redirect('/fees/ledger');
+        if (perms.includes('Ledgers')) return res.redirect('/expenses');
+        if (perms.includes('Employees')) return res.redirect('/employees');
+        return res.redirect('/change-password');
+    }
+
     try {
         const tenantId = req.tenant.id;
 
