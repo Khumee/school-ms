@@ -19,11 +19,11 @@
         <% const hasPerm = (p) => session.roleName === 'Admin' || (session.permissions && session.permissions.includes(p)); %>
         <nav class="main-nav">
             <div class="nav-container">
-                <a href="/" class="brand-link" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+                <a href="/" class="brand-link" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; margin-right: 1rem;">
                     <% if (tenant && tenant.logo_url) { %>
                         <img src="<%= tenant.logo_url %>" alt="Logo" class="nav-logo" style="height: 42px; width: 42px; object-fit: contain; border-radius: 6px; background: white; padding: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <% } %>
-                    <span class="brand-name" style="font-size: 1.15rem; font-weight: 700; white-space: nowrap;"><%= tenant ? tenant.school_name : 'School Portal' %></span>
+                    <span class="brand-name" style="font-size: 1.05rem; font-weight: 700; white-space: normal; max-width: 160px; line-height: 1.15;"><%= tenant ? tenant.school_name : 'School Portal' %></span>
                 </a>
                 <button class="mobile-menu-btn" onclick="document.getElementById('main-nav-links').classList.toggle('active')">
                     <i class="bi bi-list"></i>
