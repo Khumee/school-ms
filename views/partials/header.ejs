@@ -19,11 +19,10 @@
         <% const hasPerm = (p) => session.roleName === 'Admin' || (session.permissions && session.permissions.includes(p)); %>
         <nav class="main-nav">
             <div class="nav-container">
-                <a href="/" class="brand-link" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none; margin-right: 1rem;">
+                <a href="/" class="brand-link" style="display: flex; align-items: center; text-decoration: none; margin-right: 0.5rem;">
                     <% if (tenant && tenant.logo_url) { %>
                         <img src="<%= tenant.logo_url %>" alt="Logo" class="nav-logo" style="height: 42px; width: 42px; object-fit: contain; border-radius: 6px; background: white; padding: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <% } %>
-                    <span class="brand-name" style="font-size: 1.05rem; font-weight: 700; white-space: normal; max-width: 160px; line-height: 1.15;"><%= tenant ? tenant.school_name : 'School Portal' %></span>
                 </a>
                 <button class="mobile-menu-btn" onclick="document.getElementById('main-nav-links').classList.toggle('active')">
                     <i class="bi bi-list"></i>
@@ -119,6 +118,12 @@
                 <a href="https://omnischoolapp.com" target="_blank" style="display: flex; align-items: center; padding-left: 1rem; margin-left: auto; text-decoration: none;">
                     <img src="/images/omnischool_logo.png" alt="OmniSchool" style="height: 38px; width: auto; object-fit: contain; background: white; padding: 4px 8px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" title="Powered by OmniSchool">
                 </a>
+            </div>
+            <div style="background-color: rgba(0,0,0,0.15); padding: 0.35rem 1.5rem; width: 100%; border-top: 1px solid rgba(255,255,255,0.05);">
+                <div style="max-width: 1440px; margin: 0 auto; display: flex; align-items: center;">
+                    <i class="bi bi-building" style="margin-right: 0.5rem; font-size: 0.8rem; color: rgba(255,255,255,0.8);"></i>
+                    <span style="font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,0.95); letter-spacing: 0.5px;"><%= tenant ? tenant.school_name : 'School Portal' %></span>
+                </div>
             </div>
         </nav>
     <% } %>
