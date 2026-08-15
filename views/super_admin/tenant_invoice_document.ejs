@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice - <%= invoice.invoice_number %></title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 40px;
+            background-color: #f3f4f6;
+        }
+        .invoice-box {
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+            font-size: 16px;
+            line-height: 24px;
+            background: #fff;
+        }
+        .invoice-box table { width: 100%; line-height: inherit; text-align: left; border-collapse: collapse; }
+        .invoice-box table td { padding: 5px; vertical-align: top; }
+        .invoice-box table tr td:nth-child(2) { text-align: right; }
+        .invoice-box table tr.top table td { padding-bottom: 20px; }
+        .invoice-box table tr.top table td.title { font-size: 45px; line-height: 45px; color: #333; }
+        .invoice-box table tr.information table td { padding-bottom: 40px; }
+        .invoice-box table tr.heading td { background: #f8fafc; border-bottom: 1px solid #ddd; font-weight: bold; }
+        .invoice-box table tr.details td { padding-bottom: 20px; }
+        .invoice-box table tr.item td { border-bottom: 1px solid #eee; }
+        .invoice-box table tr.item.last td { border-bottom: none; }
+        .invoice-box table tr.total td:nth-child(2) { border-top: 2px solid #eee; font-weight: bold; font-size: 20px; }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-Draft { background: #e2e8f0; color: #475569; }
+        .status-Sent { background: #dbeafe; color: #1e40af; }
+        .status-Paid { background: #dcfce3; color: #166534; }
+        .status-Overdue { background: #fee2e2; color: #991b1b; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .invoice-box { box-shadow: none; border: none; padding: 0; }
+            .no-print { display: none; }
+        }
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .print-btn:hover { background: #1d4ed8; }
+    </style>
+</head>
+<body>
+    <button class="print-btn no-print" onclick="window.print()">Print / Save PDF</button>
+
+    <div class="invoice-box">
+        <table>
+            <tr class="top">
+                <td colspan="2">
+                    <table>
+                        <tr>
+                            <td class="title">
+                                <strong>INVOICE</strong>
+                            </td>
+                            <td>
+                                Invoice #: <strong><%= invoice.invoice_number %></strong><br />
+                                Issue Date: <%= new Date(invoice.issue_date).toLocaleDateString() %><br />
+                                Due Date: <strong><%= new Date(invoice.due_date).toLocaleDateString() %></strong><br />
+                                Status: <span class="status-badge status-<%= invoice.status %>"><%= invoice.status %></span>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <tr class="information">
+                <td colspan="2">
+                    <table>
+                        <tr>
+                            <td>
+                                <strong>From:</strong><br />
+                                School Management System (SaaS)<br />
+                                Admin Accounts Department<br />
+                                billing@school-ms.com
+                            </td>
+                            <td>
+                                <strong>Billed To:</strong><br />
+                                <%= tenant.name %><br />
+                                <% if(tenant.school_name) { %><%= tenant.school_name %><br /><% } %>
+                                <%= tenant.custom_domain ? tenant.custom_domain : (tenant.subdomain + '.nukrim.com') %>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <tr class="heading">
+                <td>Description</td>
+                <td>Amount (PKR)</td>
+            </tr>
+
+            <tr class="item">
+                <td>
+                    <strong>Monthly SaaS Subscription</strong><br>
+                    Billing Period: <%= new Date(invoice.billing_period_start).toLocaleDateString() %> to <%= new Date(invoice.billing_period_end).toLocaleDateString() %><br>
+                    Students Billed: <%= invoice.total_students_billed %> @ Rs <%= contract ? contract.rate_per_student : 0 %> per student
+                </td>
+                <td>Rs <%= parseFloat(invoice.subtotal).toLocaleString() %></td>
+            </tr>
+            
+            <% if (parseFloat(invoice.discount) > 0) { %>
+            <tr class="item">
+                <td>Discount Applied</td>
+                <td>- Rs <%= parseFloat(invoice.discount).toLocaleString() %></td>
+            </tr>
+            <% } %>
+
+            <tr class="total">
+                <td></td>
+                <td>Total Due: Rs <%= parseFloat(invoice.total_amount_pkr).toLocaleString() %></td>
+            </tr>
+        </table>
+        
+        <div style="margin-top: 50px; border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 14px; color: #64748b;">
+            <strong>Payment Instructions:</strong><br>
+            Please pay the total amount by the due date to avoid service interruption.<br>
+            <% if(invoice.notes) { %>
+                <br><strong>Note:</strong> <%= invoice.notes %>
+            <% } %>
+        </div>
+    </div>
+</body>
+</html>

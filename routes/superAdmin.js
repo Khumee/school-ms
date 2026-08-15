@@ -179,4 +179,204 @@ router.post('/admin/tenants/:id/delete', isSuperAdmin, async (req, res) => {
     }
 });
 
+// ============================================================
+// SaaS Contracts & Billing
+// ============================================================
+
+// GET Contract Form
+router.get('/admin/tenants/:id/contract', isSuperAdmin, async (req, res) => {
+    try {
+        const tenantId = req.params.id;
+        const [[tenant]] = await db.pool.execute('SELECT * FROM tenants WHERE id = ?', [tenantId]);
+        if (!tenant) return res.redirect('/admin?error=Tenant not found');
+
+        const [[contract]] = await db.pool.execute('SELECT * FROM tenant_contracts WHERE tenant_id = ?', [tenantId]);
+        
+        res.render('super_admin/tenant_contract_form', { 
+            title: 'Manage Contract - ' + tenant.name, 
+            tenant, 
+            contract: contract || {}, 
+            error: req.query.error, 
+            success: req.query.success 
+        });
+    } catch (err) {
+        console.error('Error loading contract form:', err);
+        res.redirect('/admin?error=Database error');
+    }
+});
+
+// POST Save Contract
+router.post('/admin/tenants/:id/contract', isSuperAdmin, async (req, res) => {
+    try {
+        const tenantId = req.params.id;
+        const {
+            rate_per_student, contract_start_date, free_trial_start, free_trial_end,
+            billing_start_date, max_students_allowed, support_sla, cancellation_notice_days, data_retention_days
+        } = req.body;
+
+        const [[existing]] = await db.pool.execute('SELECT id FROM tenant_contracts WHERE tenant_id = ?', [tenantId]);
+
+        if (existing) {
+            await db.pool.execute(`
+                UPDATE tenant_contracts SET 
+                rate_per_student=?, contract_start_date=?, free_trial_start=?, free_trial_end=?,
+                billing_start_date=?, max_students_allowed=?, support_sla=?, cancellation_notice_days=?, data_retention_days=?
+                WHERE tenant_id=?
+            `, [
+                rate_per_student || 0, contract_start_date, free_trial_start || null, free_trial_end || null,
+                billing_start_date, max_students_allowed || 500, support_sla || 'Standard 24h', cancellation_notice_days || 30, data_retention_days || 30,
+                tenantId
+            ]);
+        } else {
+            await db.pool.execute(`
+                INSERT INTO tenant_contracts 
+                (tenant_id, rate_per_student, contract_start_date, free_trial_start, free_trial_end, billing_start_date, max_students_allowed, support_sla, cancellation_notice_days, data_retention_days)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `, [
+                tenantId, rate_per_student || 0, contract_start_date, free_trial_start || null, free_trial_end || null,
+                billing_start_date, max_students_allowed || 500, support_sla || 'Standard 24h', cancellation_notice_days || 30, data_retention_days || 30
+            ]);
+        }
+        res.redirect(`/admin/tenants/${tenantId}/contract?success=Contract updated successfully`);
+    } catch (err) {
+        console.error('Error saving contract:', err);
+        res.redirect(`/admin/tenants/${req.params.id}/contract?error=Failed to save contract`);
+    }
+});
+
+// GET View Printable Contract
+router.get('/admin/tenants/:id/contract/view', isSuperAdmin, async (req, res) => {
+    try {
+        const tenantId = req.params.id;
+        const [[tenant]] = await db.pool.execute('SELECT * FROM tenants WHERE id = ?', [tenantId]);
+        const [[contract]] = await db.pool.execute('SELECT * FROM tenant_contracts WHERE tenant_id = ?', [tenantId]);
+        
+        if (!tenant || !contract) {
+            return res.redirect(`/admin/tenants/${tenantId}/contract?error=Please generate a contract first`);
+        }
+
+        res.render('super_admin/tenant_contract_document', { 
+            title: 'SaaS Contract - ' + tenant.name, 
+            tenant, 
+            contract 
+        });
+    } catch (err) {
+        console.error('Error viewing contract:', err);
+        res.redirect('/admin?error=Database error');
+    }
+});
+
+// GET Billing Dashboard
+router.get('/admin/tenants/:id/billing', isSuperAdmin, async (req, res) => {
+    try {
+        const tenantId = req.params.id;
+        const [[tenant]] = await db.pool.execute('SELECT * FROM tenants WHERE id = ?', [tenantId]);
+        if (!tenant) return res.redirect('/admin?error=Tenant not found');
+
+        const [invoices] = await db.pool.execute('SELECT * FROM tenant_invoices WHERE tenant_id = ? ORDER BY issue_date DESC', [tenantId]);
+        const [payments] = await db.pool.execute('SELECT p.*, i.invoice_number FROM tenant_payments p JOIN tenant_invoices i ON p.invoice_id = i.id WHERE p.tenant_id = ? ORDER BY p.payment_date DESC', [tenantId]);
+        const [[contract]] = await db.pool.execute('SELECT * FROM tenant_contracts WHERE tenant_id = ?', [tenantId]);
+        
+        // Count active students for dynamic invoice generation
+        const [[studentCount]] = await db.pool.execute("SELECT COUNT(*) as count FROM students WHERE tenant_id = ? AND status = 'active'", [tenantId]);
+        
+        res.render('super_admin/tenant_billing', { 
+            title: 'Billing - ' + tenant.name, 
+            tenant, 
+            invoices,
+            payments,
+            contract,
+            activeStudents: studentCount.count,
+            error: req.query.error, 
+            success: req.query.success 
+        });
+    } catch (err) {
+        console.error('Error loading billing:', err);
+        res.redirect('/admin?error=Database error');
+    }
+});
+
+// POST Generate Invoice
+router.post('/admin/tenants/:id/invoices/generate', isSuperAdmin, async (req, res) => {
+    try {
+        const tenantId = req.params.id;
+        const { billing_period_start, billing_period_end, issue_date, due_date, total_students_billed, discount, notes } = req.body;
+        
+        const [[contract]] = await db.pool.execute('SELECT rate_per_student FROM tenant_contracts WHERE tenant_id = ?', [tenantId]);
+        const rate = contract ? parseFloat(contract.rate_per_student) : 0;
+        
+        const subtotal = rate * parseInt(total_students_billed);
+        const disc = parseFloat(discount || 0);
+        const total = subtotal - disc;
+        
+        const invoiceNumber = 'INV-' + tenantId + '-' + Date.now().toString().slice(-6);
+
+        await db.pool.execute(`
+            INSERT INTO tenant_invoices 
+            (tenant_id, invoice_number, billing_period_start, billing_period_end, issue_date, due_date, total_students_billed, subtotal, discount, total_amount_pkr, status, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Sent', ?)
+        `, [
+            tenantId, invoiceNumber, billing_period_start, billing_period_end, issue_date, due_date, 
+            total_students_billed, subtotal, disc, total, notes || ''
+        ]);
+
+        res.redirect(`/admin/tenants/${tenantId}/billing?success=Invoice generated successfully`);
+    } catch (err) {
+        console.error('Error generating invoice:', err);
+        res.redirect(`/admin/tenants/${req.params.id}/billing?error=Failed to generate invoice`);
+    }
+});
+
+// POST Add Payment
+router.post('/admin/tenants/:id/payments/add', isSuperAdmin, async (req, res) => {
+    try {
+        const tenantId = req.params.id;
+        const { invoice_id, payment_date, amount_paid, payment_method, reference_number, notes } = req.body;
+
+        await db.pool.execute(`
+            INSERT INTO tenant_payments (tenant_id, invoice_id, payment_date, amount_paid, payment_method, reference_number, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `, [tenantId, invoice_id, payment_date, amount_paid, payment_method, reference_number || '', notes || '']);
+
+        // Check if fully paid
+        const [[invoice]] = await db.pool.execute('SELECT total_amount_pkr FROM tenant_invoices WHERE id = ?', [invoice_id]);
+        const [[paid]] = await db.pool.execute('SELECT SUM(amount_paid) as total_paid FROM tenant_payments WHERE invoice_id = ?', [invoice_id]);
+        
+        if (paid.total_paid >= invoice.total_amount_pkr) {
+            await db.pool.execute("UPDATE tenant_invoices SET status = 'Paid' WHERE id = ?", [invoice_id]);
+        }
+
+        res.redirect(`/admin/tenants/${tenantId}/billing?success=Payment recorded successfully`);
+    } catch (err) {
+        console.error('Error adding payment:', err);
+        res.redirect(`/admin/tenants/${req.params.id}/billing?error=Failed to record payment`);
+    }
+});
+
+// GET View Printable Invoice
+router.get('/admin/tenants/:id/invoices/:invoiceId/view', isSuperAdmin, async (req, res) => {
+    try {
+        const tenantId = req.params.id;
+        const invoiceId = req.params.invoiceId;
+        
+        const [[tenant]] = await db.pool.execute('SELECT * FROM tenants WHERE id = ?', [tenantId]);
+        const [[invoice]] = await db.pool.execute('SELECT * FROM tenant_invoices WHERE id = ? AND tenant_id = ?', [invoiceId, tenantId]);
+        const [[contract]] = await db.pool.execute('SELECT * FROM tenant_contracts WHERE tenant_id = ?', [tenantId]);
+        
+        if (!tenant || !invoice) {
+            return res.redirect(`/admin/tenants/${tenantId}/billing?error=Invoice not found`);
+        }
+
+        res.render('super_admin/tenant_invoice_document', { 
+            title: 'Invoice - ' + invoice.invoice_number, 
+            tenant, 
+            invoice,
+            contract
+        });
+    } catch (err) {
+        console.error('Error viewing invoice:', err);
+        res.redirect('/admin?error=Database error');
+    }
+});
+
 module.exports = router;

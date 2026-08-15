@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS Contract - <%= tenant.name %></title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fff;
+            margin: 0;
+            padding: 40px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #1e293b;
+            font-size: 24px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .header p {
+            margin: 5px 0 0 0;
+            color: #64748b;
+        }
+        h2 {
+            font-size: 18px;
+            color: #1e293b;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 8px;
+            margin-top: 30px;
+        }
+        .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        .meta-table th, .meta-table td {
+            border: 1px solid #cbd5e1;
+            padding: 10px 15px;
+            text-align: left;
+        }
+        .meta-table th {
+            background-color: #f8fafc;
+            width: 40%;
+            font-weight: 600;
+        }
+        .clauses {
+            font-size: 11pt;
+            text-align: justify;
+        }
+        .clauses p {
+            margin-bottom: 15px;
+        }
+        .signatures {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .signature-block {
+            width: 45%;
+        }
+        .signature-line {
+            border-bottom: 1px solid #333;
+            height: 40px;
+            margin-bottom: 10px;
+        }
+        @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+        }
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .print-btn:hover { background: #1d4ed8; }
+    </style>
+</head>
+<body>
+    <button class="print-btn no-print" onclick="window.print()">Print / Save PDF</button>
+
+    <div class="container">
+        <div class="header">
+            <h1>Software as a Service (SaaS) Agreement</h1>
+            <p>Generated on <%= new Date().toLocaleDateString() %></p>
+        </div>
+
+        <p>This Software as a Service Agreement (the "Agreement") is entered into by and between <strong>School Management System (Provider)</strong> and <strong><%= tenant.name %> (Client)</strong>.</p>
+
+        <h2>1. Commercial Terms</h2>
+        <table class="meta-table">
+            <tr>
+                <th>Contract Start Date</th>
+                <td><%= new Date(contract.contract_start_date).toLocaleDateString() %></td>
+            </tr>
+            <% if (contract.free_trial_start && contract.free_trial_end) { %>
+            <tr>
+                <th>Free Trial Period</th>
+                <td><%= new Date(contract.free_trial_start).toLocaleDateString() %> to <%= new Date(contract.free_trial_end).toLocaleDateString() %></td>
+            </tr>
+            <% } %>
+            <tr>
+                <th>Billing Start Date</th>
+                <td><%= new Date(contract.billing_start_date).toLocaleDateString() %></td>
+            </tr>
+            <tr>
+                <th>Rate Per Student (PKR)</th>
+                <td>Rs <%= parseFloat(contract.rate_per_student).toFixed(2) %> / month</td>
+            </tr>
+            <tr>
+                <th>Maximum Students Allowed</th>
+                <td><%= contract.max_students_allowed %></td>
+            </tr>
+            <tr>
+                <th>Support SLA Tier</th>
+                <td><%= contract.support_sla %></td>
+            </tr>
+        </table>
+
+        <div class="clauses">
+            <h2>2. Provision of Services</h2>
+            <p>Subject to the terms and conditions of this Agreement, the Provider grants the Client a non-exclusive, non-transferable right to access and use the SaaS platform solely for the Client's internal business operations. The Client is restricted to the Maximum Students Allowed as specified in the Commercial Terms. Exceeding this limit may result in additional charges.</p>
+
+            <h2>3. Billing and Payment</h2>
+            <p>Billing shall commence on the Billing Start Date. Invoices will be generated on a monthly basis reflecting the number of active students recorded in the system, multiplied by the Rate Per Student. Payments are due within seven (7) days of the invoice issue date. Failure to pay within the specified timeframe may result in suspension of services.</p>
+
+            <h2>4. Data Protection and Liability</h2>
+            <p><strong>4.1 Data Loss:</strong> The Provider utilizes industry-standard backup protocols to ensure data integrity. However, as a cloud-based service, data loss may occur due to unforeseen system failures, cyber-attacks, or events outside the Provider's reasonable control. The Provider shall not be held liable for any data loss, corruption, or business interruption that occurs as a result of such events.</p>
+            <p><strong>4.2 "As Is" Service:</strong> The SaaS platform is provided on an "As Is" and "As Available" basis without warranties of any kind, either express or implied, including but not limited to warranties of merchantability or fitness for a particular purpose.</p>
+
+            <h2>5. Term and Cancellation</h2>
+            <p><strong>5.1 Cancellation Notice:</strong> Either party may terminate this Agreement at any time by providing a written notice of <%= contract.cancellation_notice_days %> days. The Client will be billed proportionally up to the final date of service access.</p>
+            <p><strong>5.2 Data Retention:</strong> Upon cancellation or termination of this Agreement, the Client's data will remain in the Provider's systems for a grace period of <%= contract.data_retention_days %> days to allow for data export. Following this period, all Client data will be permanently and irreversibly deleted from the Provider's servers.</p>
+
+            <h2>6. Force Majeure</h2>
+            <p>Neither party shall be liable for any failure or delay in performance under this Agreement (other than for delay in the payment of money due and payable hereunder) for causes beyond that party's reasonable control and occurring without that party's fault or negligence.</p>
+        </div>
+
+        <div class="signatures">
+            <div class="signature-block">
+                <div class="signature-line"></div>
+                <strong>For the Provider</strong><br>
+                Name: ______________________<br>
+                Date: ______________________
+            </div>
+            <div class="signature-block">
+                <div class="signature-line"></div>
+                <strong>For the Client (<%= tenant.name %>)</strong><br>
+                Name: ______________________<br>
+                Date: ______________________
+            </div>
+        </div>
+    </div>
+</body>
+</html>

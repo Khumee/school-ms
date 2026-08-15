@@ -71,6 +71,8 @@
                             </td>
                             <td><%= new Date(t.created_at).toLocaleDateString() %></td>
                             <td style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                                <a href="/admin/tenants/<%= t.id %>/contract" class="btn-primary nav-btn" style="background-color: #2563eb; color: white;"><i class="bi bi-file-earmark-text"></i> Contract</a>
+                                <a href="/admin/tenants/<%= t.id %>/billing" class="btn-primary nav-btn" style="background-color: #10b981; color: white;"><i class="bi bi-wallet2"></i> Billing</a>
                                 <a href="/admin/tenants/<%= t.id %>/edit" class="btn-secondary nav-btn"><i class="bi bi-pencil-square"></i> Edit</a>
                                 <button type="button" class="btn-danger nav-btn" onclick="openDeleteModal('<%= t.id %>', '<%= t.subdomain %>')"><i class="bi bi-trash"></i> Delete</button>
                             </td>
