@@ -460,18 +460,24 @@ function closeProgressModal() {
         let notesHtml = `<tr><td style="font-weight: 600; padding-top: 0.5rem; vertical-align: top;">Notes:</td><td style="padding-top: 0.5rem; white-space: pre-line;">${testData.test_notes || '-'}</td></tr>`;
         
         let cardHtml = '';
+        let extraComments = '';
+        let isScorecard = false;
+
         if (testData.test_notes && testData.test_notes.includes('Zabat:')) {
+            isScorecard = true;
             const parts = testData.test_notes.split('\n');
             let scores = {};
             parts.forEach(p => {
                 const s = p.split(':');
-                if(s.length === 2) {
-                    scores[s[0].trim()] = s[1].trim();
+                if(s.length >= 2 && ['Zabat', 'Tajweed', 'Lehja', 'Attendance', 'Tarbiyah', 'Total'].includes(s[0].trim())) {
+                    scores[s[0].trim()] = s.slice(1).join(':').trim();
+                } else if (p.trim() !== '') {
+                    extraComments += p + '\n';
                 }
             });
             
             cardHtml = `
-            <div style="background: linear-gradient(135deg, #f8fafc, #f1f5f9); border: 1px solid #cbd5e1; border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div style="background: linear-gradient(135deg, #f8fafc, #f1f5f9); border: 1px solid #cbd5e1; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
                 <div style="text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem; margin-bottom: 1.5rem;">
                     <h3 style="margin: 0; color: #0f172a; font-size: 1.25rem;"><i class="bi bi-person-circle"></i> <%= enrollment.student_name %></h3>
                     <p style="margin: 0.25rem 0 0 0; color: #475569; font-size: 0.9rem; font-weight: 500;">Para ${testData.para_no} Examination Report</p>
@@ -504,7 +510,28 @@ function closeProgressModal() {
                 </div>
             </div>`;
             notesHtml = '';
+        } else {
+            extraComments = testData.test_notes || '';
         }
+
+        const tabsHtml = `
+            <div style="margin-top: 1.5rem;">
+                <div style="display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 1rem;">
+                    <button id="tab-btn-scorecard" onclick="switchModalTab('scorecard')" style="padding: 0.5rem 1rem; border: none; background: none; font-weight: 600; color: #2563eb; border-bottom: 2px solid #2563eb; margin-bottom: -2px; cursor: pointer;">Scorecard</button>
+                    <button id="tab-btn-comments" onclick="switchModalTab('comments')" style="padding: 0.5rem 1rem; border: none; background: none; font-weight: 600; color: #64748b; border-bottom: 2px solid transparent; cursor: pointer;">Comments</button>
+                </div>
+                
+                <div id="tab-content-scorecard" style="display: block;">
+                    ${isScorecard ? cardHtml : '<p style="color: #64748b; font-style: italic; text-align: center; padding: 2rem 0;">No detailed scorecard available for this test.</p>'}
+                </div>
+                
+                <div id="tab-content-comments" style="display: none;">
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; min-height: 100px; white-space: pre-line; color: #334155;">
+                        ${extraComments.trim() ? extraComments.trim() : '<span style="color: #94a3b8; font-style: italic;">No extra comments available.</span>'}
+                    </div>
+                </div>
+            </div>
+        `;
 
         const html = `
             <table style="width: 100%; font-size: 0.95rem;">
@@ -513,9 +540,9 @@ function closeProgressModal() {
                 <tr style="height: 2.5rem; border-bottom: 1px solid #f1f5f9;"><td style="font-weight: 600;">Test Date:</td><td>${testDate}</td></tr>
                 <tr style="height: 2.5rem; border-bottom: 1px solid #f1f5f9;"><td style="font-weight: 600;">Evaluator:</td><td>${testData.test_evaluator_name || '-'}</td></tr>
                 <tr style="height: 2.5rem; border-bottom: 1px solid #f1f5f9;"><td style="font-weight: 600;">Evaluated By:</td><td>${testData.evaluated_by_self ? 'Self (Class Teacher)' : 'External Qari/Nazim'}</td></tr>
-                ${notesHtml}
+                ${!isScorecard ? notesHtml : ''}
             </table>
-            ${cardHtml}
+            ${tabsHtml}
         `;
         document.getElementById('modalParaContent').innerHTML = html;
         document.getElementById('paraTestModal').style.display = 'block';
@@ -523,6 +550,24 @@ function closeProgressModal() {
 
     function closeParaModal() {
         document.getElementById('paraTestModal').style.display = 'none';
+    }
+
+    function switchModalTab(tabName) {
+        if (tabName === 'scorecard') {
+            document.getElementById('tab-content-scorecard').style.display = 'block';
+            document.getElementById('tab-content-comments').style.display = 'none';
+            document.getElementById('tab-btn-scorecard').style.color = '#2563eb';
+            document.getElementById('tab-btn-scorecard').style.borderBottom = '2px solid #2563eb';
+            document.getElementById('tab-btn-comments').style.color = '#64748b';
+            document.getElementById('tab-btn-comments').style.borderBottom = '2px solid transparent';
+        } else {
+            document.getElementById('tab-content-scorecard').style.display = 'none';
+            document.getElementById('tab-content-comments').style.display = 'block';
+            document.getElementById('tab-btn-comments').style.color = '#2563eb';
+            document.getElementById('tab-btn-comments').style.borderBottom = '2px solid #2563eb';
+            document.getElementById('tab-btn-scorecard').style.color = '#64748b';
+            document.getElementById('tab-btn-scorecard').style.borderBottom = '2px solid transparent';
+        }
     }
 
     // Close if clicked outside
