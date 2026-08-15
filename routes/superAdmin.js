@@ -214,7 +214,11 @@ router.post('/admin/tenants/:id/contract', isSuperAdmin, async (req, res) => {
             billing_start_date, max_students_allowed, support_sla, cancellation_notice_days, data_retention_days
         } = req.body;
 
-        const [[existing]] = await db.pool.execute('SELECT id FROM tenant_contracts WHERE tenant_id = ?', [tenantId]);
+        const [[existing]] = await db.pool.execute('SELECT id, status FROM tenant_contracts WHERE tenant_id = ?', [tenantId]);
+
+        if (existing && existing.status === 'Finalized') {
+            return res.redirect(`/admin/tenants/${tenantId}/contract?error=Cannot edit a finalized contract`);
+        }
 
         if (existing) {
             await db.pool.execute(`
@@ -376,6 +380,60 @@ router.get('/admin/tenants/:id/invoices/:invoiceId/view', isSuperAdmin, async (r
     } catch (err) {
         console.error('Error viewing invoice:', err);
         res.redirect('/admin?error=Database error');
+    }
+});
+
+});
+
+// POST Delete Invoice
+router.post('/admin/tenants/:id/invoices/:invoiceId/delete', isSuperAdmin, async (req, res) => {
+    try {
+        const tenantId = req.params.id;
+        const invoiceId = req.params.invoiceId;
+        
+        const [[invoice]] = await db.pool.execute('SELECT status FROM tenant_invoices WHERE id = ? AND tenant_id = ?', [invoiceId, tenantId]);
+        
+        if (!invoice) return res.redirect(`/admin/tenants/${tenantId}/billing?error=Invoice not found`);
+        if (invoice.status === 'Paid') {
+            return res.redirect(`/admin/tenants/${tenantId}/billing?error=Cannot delete a paid invoice`);
+        }
+
+        await db.pool.execute('DELETE FROM tenant_invoices WHERE id = ? AND tenant_id = ?', [invoiceId, tenantId]);
+        res.redirect(`/admin/tenants/${tenantId}/billing?success=Invoice deleted successfully`);
+    } catch (err) {
+        console.error('Error deleting invoice:', err);
+        res.redirect(`/admin/tenants/${req.params.id}/billing?error=Failed to delete invoice`);
+    }
+});
+
+// POST Finalize Contract
+router.post('/admin/tenants/:id/contract/finalize', isSuperAdmin, async (req, res) => {
+    try {
+        const tenantId = req.params.id;
+        await db.pool.execute("UPDATE tenant_contracts SET status = 'Finalized' WHERE tenant_id = ?", [tenantId]);
+        res.redirect(`/admin/tenants/${tenantId}/contract?success=Contract finalized successfully`);
+    } catch (err) {
+        console.error('Error finalizing contract:', err);
+        res.redirect(`/admin/tenants/${req.params.id}/contract?error=Failed to finalize contract`);
+    }
+});
+
+// POST Delete Contract
+router.post('/admin/tenants/:id/contract/delete', isSuperAdmin, async (req, res) => {
+    try {
+        const tenantId = req.params.id;
+        const [[contract]] = await db.pool.execute('SELECT status FROM tenant_contracts WHERE tenant_id = ?', [tenantId]);
+        if (!contract) return res.redirect(`/admin/tenants/${tenantId}/contract?error=Contract not found`);
+        
+        if (contract.status === 'Finalized') {
+            return res.redirect(`/admin/tenants/${tenantId}/contract?error=Cannot delete a finalized contract`);
+        }
+
+        await db.pool.execute('DELETE FROM tenant_contracts WHERE tenant_id = ?', [tenantId]);
+        res.redirect(`/admin/tenants/${tenantId}/contract?success=Contract deleted successfully`);
+    } catch (err) {
+        console.error('Error deleting contract:', err);
+        res.redirect(`/admin/tenants/${req.params.id}/contract?error=Failed to delete contract`);
     }
 });
 

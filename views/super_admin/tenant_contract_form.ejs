@@ -34,68 +34,99 @@
 
         <div class="card">
             <div class="card-header py-3">
-                <h5 class="mb-0">Contract Variables</h5>
+                <h5 class="mb-0">Contract Variables
+                    <% if (contract.status === 'Finalized') { %>
+                        <span class="badge bg-success ms-2"><i class="bi bi-lock-fill"></i> Finalized</span>
+                    <% } else if (contract.id) { %>
+                        <span class="badge bg-warning text-dark ms-2">Draft</span>
+                    <% } %>
+                </h5>
             </div>
             <div class="card-body p-4">
                 <form action="/admin/tenants/<%= tenant.id %>/contract" method="POST">
+                    <% const isLocked = contract.status === 'Finalized'; %>
                     <div class="row g-4">
                         <div class="col-md-6">
                             <label class="form-label">Rate Per Student (PKR)</label>
                             <div class="input-group">
                                 <span class="input-group-text">Rs</span>
-                                <input type="number" step="0.01" name="rate_per_student" class="form-control" value="<%= contract.rate_per_student || '' %>" required>
+                                <input type="number" step="0.01" name="rate_per_student" class="form-control" value="<%= contract.rate_per_student || '' %>" required <%= isLocked ? 'disabled' : '' %>>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Max Students Allowed</label>
-                            <input type="number" name="max_students_allowed" class="form-control" value="<%= contract.max_students_allowed || 500 %>" required>
+                            <input type="number" name="max_students_allowed" class="form-control" value="<%= contract.max_students_allowed || 500 %>" required <%= isLocked ? 'disabled' : '' %>>
                         </div>
                         
                         <div class="col-md-6">
                             <label class="form-label">Contract Start Date</label>
                             <input type="date" name="contract_start_date" class="form-control" 
-                                value="<%= contract.contract_start_date ? new Date(contract.contract_start_date).toISOString().split('T')[0] : '' %>" required>
+                                value="<%= contract.contract_start_date ? new Date(contract.contract_start_date).toISOString().split('T')[0] : '' %>" required <%= isLocked ? 'disabled' : '' %>>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Billing Start Date</label>
                             <input type="date" name="billing_start_date" class="form-control" 
-                                value="<%= contract.billing_start_date ? new Date(contract.billing_start_date).toISOString().split('T')[0] : '' %>" required>
+                                value="<%= contract.billing_start_date ? new Date(contract.billing_start_date).toISOString().split('T')[0] : '' %>" required <%= isLocked ? 'disabled' : '' %>>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label">Free Trial Start Date <span class="text-muted">(Optional)</span></label>
                             <input type="date" name="free_trial_start" class="form-control" 
-                                value="<%= contract.free_trial_start ? new Date(contract.free_trial_start).toISOString().split('T')[0] : '' %>">
+                                value="<%= contract.free_trial_start ? new Date(contract.free_trial_start).toISOString().split('T')[0] : '' %>" <%= isLocked ? 'disabled' : '' %>>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Free Trial End Date <span class="text-muted">(Optional)</span></label>
                             <input type="date" name="free_trial_end" class="form-control" 
-                                value="<%= contract.free_trial_end ? new Date(contract.free_trial_end).toISOString().split('T')[0] : '' %>">
+                                value="<%= contract.free_trial_end ? new Date(contract.free_trial_end).toISOString().split('T')[0] : '' %>" <%= isLocked ? 'disabled' : '' %>>
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label">Support SLA Tier</label>
-                            <select name="support_sla" class="form-select">
+                            <select name="support_sla" class="form-select" <%= isLocked ? 'disabled' : '' %>>
                                 <option value="Standard 24h" <%= contract.support_sla === 'Standard 24h' ? 'selected' : '' %>>Standard 24h</option>
                                 <option value="Premium 4h" <%= contract.support_sla === 'Premium 4h' ? 'selected' : '' %>>Premium 4h</option>
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Cancellation Notice (Days)</label>
-                            <input type="number" name="cancellation_notice_days" class="form-control" value="<%= contract.cancellation_notice_days || 30 %>">
+                            <input type="number" name="cancellation_notice_days" class="form-control" value="<%= contract.cancellation_notice_days || 30 %>" <%= isLocked ? 'disabled' : '' %>>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Data Retention After Cancellation (Days)</label>
-                            <input type="number" name="data_retention_days" class="form-control" value="<%= contract.data_retention_days || 30 %>">
+                            <input type="number" name="data_retention_days" class="form-control" value="<%= contract.data_retention_days || 30 %>" <%= isLocked ? 'disabled' : '' %>>
                         </div>
                     </div>
                     
+                    <% if (!isLocked) { %>
                     <div class="mt-4 text-end">
                         <button type="submit" class="btn btn-primary px-4"><i class="bi bi-save"></i> Save Contract Terms</button>
                     </div>
+                    <% } %>
                 </form>
             </div>
         </div>
+
+        <% if (contract.id && contract.status !== 'Finalized') { %>
+        <div class="card mt-4 border-warning">
+            <div class="card-header bg-warning text-dark py-3">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Contract Actions</h5>
+            </div>
+            <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-1">Finalize Contract</h6>
+                    <p class="text-muted small mb-0">Once finalized, you will no longer be able to edit this contract.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <form action="/admin/tenants/<%= tenant.id %>/contract/delete" method="POST" onsubmit="return confirm('Are you sure you want to completely delete this draft contract?');">
+                        <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Delete Draft</button>
+                    </form>
+                    <form action="/admin/tenants/<%= tenant.id %>/contract/finalize" method="POST" onsubmit="return confirm('Are you sure? Once finalized, contract variables cannot be changed.');">
+                        <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> Finalize Contract</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <% } %>
     </div>
 </body>
 </html>
