@@ -9,7 +9,7 @@ const { isSuperAdmin } = require('../middleware/auth');
 
 // Strict Domain Isolation: Prevent tenants from accessing super admin routes
 router.use((req, res, next) => {
-    if (!req.isSuperAdminSite) {
+    if (req.path.startsWith('/admin') && !req.isSuperAdminSite) {
         return res.status(404).send('Not Found');
     }
     next();
