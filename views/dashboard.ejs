@@ -25,6 +25,7 @@
     </div>
     <% } %>
 
+    <% if (hasPerm('Fees') || hasPerm('Ledgers')) { %>
     <!-- Regular Fee Students -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students?filter=standard'">
         <span class="kpi-icon green" style="background-color: #dcfce7; color: #16a34a;"><i class="bi bi-cash"></i></span>
@@ -48,6 +49,7 @@
         <span class="kpi-value"><%= support_students %></span>
         <span class="kpi-subtitle">Students with partial discount</span>
     </div>
+    <% } %>
 
     <!-- Hifz Students -->
     <% if (req.tenant && req.tenant.enable_hifz_module && hasPerm('Hifz')) { %>
@@ -97,6 +99,7 @@
     </div>
     <% } %>
 
+    <% if (hasPerm('Fees') || hasPerm('Ledgers')) { %>
     <!-- Monthly Fees Received (Cash Basis) -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/fees/ledger?month=<%= currentMonthNum %>&view=class'">
         <span class="kpi-icon amber"><i class="bi bi-cash-coin"></i></span>
@@ -104,6 +107,7 @@
         <span class="kpi-value">PKR <%= currentMonthData.fees.toLocaleString() %></span>
         <span class="kpi-subtitle">Cash received this month</span>
     </div>
+    <% } %>
 </div>
 
 <!-- YTD Summary KPI Cards (MIS Tenant) -->
