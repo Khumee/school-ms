@@ -16,6 +16,7 @@
 </head>
 <body>
     <% if (session && session.userId) { %>
+        <% const hasPerm = (p) => session.roleName === 'Admin' || (session.permissions && session.permissions.includes(p)); %>
         <nav class="main-nav">
             <div class="nav-container">
                 <a href="/" class="brand-link">
@@ -28,7 +29,11 @@
                     <i class="bi bi-list"></i>
                 </button>
                 <ul class="nav-links" id="main-nav-links">
+                    <% if (hasPerm('Dashboard')) { %>
                     <li><a href="/"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                    <% } %>
+                    
+                    <% if (hasPerm('Students')) { %>
                     <li class="dropdown">
                         <a href="#" class="dropbtn"><i class="bi bi-mortarboard-fill"></i> Students</a>
                         <div class="dropdown-content">
@@ -37,7 +42,13 @@
                             <a href="/classes"><i class="bi bi-building"></i> Class Management</a>
                         </div>
                     </li>
+                    <% } %>
+                    
+                    <% if (hasPerm('Employees')) { %>
                     <li><a href="/employees"><i class="bi bi-person-badge-fill"></i> Employees</a></li>
+                    <% } %>
+                    
+                    <% if (hasPerm('Fees')) { %>
                     <li class="dropdown">
                         <a href="#" class="dropbtn"><i class="bi bi-cash-coin"></i> Fees</a>
                         <div class="dropdown-content">
@@ -45,8 +56,10 @@
                             <a href="/fees/concessions"><i class="bi bi-tags-fill"></i> Concessions</a>
                         </div>
                     </li>
+                    <% } %>
+                    
                     <%# Donations — optional module %>
-                    <% if (tenant && tenant.enable_donations_module) { %>
+                    <% if (tenant && tenant.enable_donations_module && hasPerm('Donations')) { %>
                     <li class="dropdown">
                         <a href="#" class="dropbtn"><i class="bi bi-heart-fill"></i> Donations</a>
                         <div class="dropdown-content">
@@ -57,6 +70,8 @@
                         </div>
                     </li>
                     <% } %>
+                    
+                    <% if (hasPerm('Attendance')) { %>
                     <li class="dropdown">
                         <a href="#" class="dropbtn"><i class="bi bi-calendar2-check-fill"></i> Attendance</a>
                         <div class="dropdown-content">
@@ -64,6 +79,9 @@
                             <a href="/attendance/employees"><i class="bi bi-person-badge"></i> Employee Attendance</a>
                         </div>
                     </li>
+                    <% } %>
+                    
+                    <% if (hasPerm('Ledgers')) { %>
                     <li class="dropdown">
                         <a href="#" class="dropbtn"><i class="bi bi-journal-richtext"></i> Ledgers</a>
                         <div class="dropdown-content">
@@ -71,17 +89,25 @@
                             <a href="/salaries"><i class="bi bi-wallet2"></i> Salaries/Payroll</a>
                         </div>
                     </li>
+                    <% } %>
+                    
                     <%# Hifz Diary — optional module %>
-                    <% if (tenant && tenant.enable_hifz_module) { %>
+                    <% if (tenant && tenant.enable_hifz_module && hasPerm('Hifz')) { %>
                     <li><a href="/hifz"><i class="bi bi-book-half"></i> Hifz Diary</a></li>
                     <% } %>
+                    
+                    <% if (hasPerm('Settings')) { %>
                     <li class="dropdown">
                         <a href="#" class="dropbtn"><i class="bi bi-gear-fill"></i> Settings</a>
                         <div class="dropdown-content">
                             <a href="/settings/general"><i class="bi bi-palette-fill"></i> General (Theme/Logo)</a>
                             <a href="/settings/merge"><i class="bi bi-intersect"></i> Merge Duplicates</a>
+                            <a href="/settings/roles"><i class="bi bi-shield-lock-fill"></i> Roles & Permissions</a>
+                            <a href="/settings/users"><i class="bi bi-people-fill"></i> User Accounts</a>
                         </div>
                     </li>
+                    <% } %>
+                    
                     <li class="dropdown user-menu dropdown-right">
                         <a href="#" class="dropbtn"><i class="bi bi-person-circle"></i> Hi, <%= session.username %> <i class="bi bi-chevron-down" style="font-size: 0.75rem; margin-left: 0.2rem;"></i></a>
                         <div class="dropdown-content">

@@ -14,7 +14,7 @@ router.post('/login', async (req, res) => {
     const { username, password } = req.body;
     try {
         const [users] = await db.execute(
-            'SELECT * FROM users WHERE username = ? AND tenant_id = ? LIMIT 1',
+            'SELECT u.*, r.name as role_name FROM users u LEFT JOIN roles r ON u.role_id = r.id WHERE u.username = ? AND u.tenant_id = ? LIMIT 1',
             [username ? username.trim() : '', req.tenant.id]
         );
         
@@ -22,9 +22,17 @@ router.post('/login', async (req, res) => {
             const user = users[0];
             const match = await bcrypt.compare(password, user.password);
             if (match) {
+                // Fetch permissions
+                const [perms] = await db.execute(
+                    'SELECT function_name FROM role_permissions WHERE role_id = ? AND tenant_id = ? AND allowed = 1',
+                    [user.role_id, req.tenant.id]
+                );
+                
                 req.session.userId = user.id;
-                req.session.role = user.role;
+                req.session.roleId = user.role_id;
+                req.session.roleName = user.role_name;
                 req.session.username = user.username;
+                req.session.permissions = perms.map(p => p.function_name);
                 
                 return req.session.save((err) => {
                     if (err) {

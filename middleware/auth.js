@@ -13,10 +13,21 @@ module.exports = {
         res.redirect('/login');
     },
     isAdmin: (req, res, next) => {
-        if (req.session && req.session.userId && req.session.role === 'admin') {
+        if (req.session && req.session.userId && req.session.roleName === 'Admin') {
             return next();
         }
         res.status(403).send('Unauthorized. Admin access required.');
+    },
+    hasPermission: (permission) => {
+        return (req, res, next) => {
+            if (req.session && req.session.userId) {
+                const perms = req.session.permissions || [];
+                if (req.session.roleName === 'Admin' || perms.includes(permission)) {
+                    return next();
+                }
+            }
+            res.status(403).send(`Unauthorized. Missing permission: ${permission}`);
+        };
     },
     isSuperAdmin: (req, res, next) => {
         if (req.session && req.session.masterAdminId) {

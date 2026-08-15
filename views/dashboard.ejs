@@ -5,6 +5,7 @@
     const currentMonthNum = new Date().getMonth() + 1;
     const currentMonthData = monthsData[currentMonthNum - 1] || monthsData[5] || monthsData[0];
     const currentMonthName = currentMonthData ? currentMonthData.name : 'This Month';
+    const hasPerm = (p) => session.roleName === 'Admin' || (session.permissions && session.permissions.includes(p));
 %>
 
 <div class="section-header">
@@ -15,12 +16,14 @@
 <!-- KPI Cards Grid -->
 <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
     <!-- Total Students -->
+    <% if (hasPerm('Students')) { %>
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students'">
         <span class="kpi-icon blue"><i class="bi bi-mortarboard-fill"></i></span>
         <span class="kpi-label">Total Students</span>
         <span class="kpi-value"><%= total_students %></span>
         <span class="kpi-subtitle"><%= paying_students %> Paying / <%= support_students %> Supported</span>
     </div>
+    <% } %>
 
     <!-- Regular Fee Students -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students?filter=standard'">
@@ -47,14 +50,17 @@
     </div>
 
     <!-- Hifz Students -->
+    <% if (req.tenant && req.tenant.enable_hifz_module && hasPerm('Hifz')) { %>
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/hifz'">
         <span class="kpi-icon pink"><i class="bi bi-book-fill"></i></span>
         <span class="kpi-label">Hifz Students</span>
         <span class="kpi-value"><%= hifz_students %></span>
         <span class="kpi-subtitle">Enrolled in Hifz class</span>
     </div>
+    <% } %>
 
     <!-- Net Monthly Balance -->
+    <% if (hasPerm('Ledgers') || hasPerm('Fees')) { %>
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/fees/ledger'">
         <span class="kpi-icon purple" style="background-color: #f3e8ff; color: #a855f7;"><i class="bi bi-wallet2"></i></span>
         <span class="kpi-label">Net Balance (<%= currentMonthName %>)</span>
@@ -79,8 +85,9 @@
         <span class="kpi-value">PKR <%= currentMonthData.expense.toLocaleString() %></span>
         <span class="kpi-subtitle">Salaries, Rent & Bills</span>
     </div>
+    <% } %>
 
-    <% if (req.tenant && req.tenant.enable_donations_module) { %>
+    <% if (req.tenant && req.tenant.enable_donations_module && hasPerm('Donations')) { %>
     <!-- Monthly Donations -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/donations'">
         <span class="kpi-icon indigo"><i class="bi bi-heart-fill"></i></span>
@@ -100,7 +107,7 @@
 </div>
 
 <!-- YTD Summary KPI Cards (MIS Tenant) -->
-<% if (req.tenant && req.tenant.subdomain === 'mis') { %>
+<% if (req.tenant && req.tenant.subdomain === 'mis' && (hasPerm('Ledgers') || hasPerm('Fees'))) { %>
 <div style="margin-top: 1.5rem; margin-bottom: 0.5rem;">
     <h2 style="font-size: 1rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 1rem 0;">
         <i class="bi bi-bar-chart-steps"></i> Year-to-Date Summary (2026)
@@ -144,7 +151,8 @@
 <% } %>
 
 <!-- Financial Graphs Grids -->
-<div class="dashboard-grid" style="display: grid; grid-template-columns: <%= (req.tenant && req.tenant.enable_donations_module) ? '1fr 1fr' : '1fr' %>; gap: 1.5rem; margin-top: 2rem; margin-bottom: 1.5rem;">
+<% if (hasPerm('Ledgers') || hasPerm('Fees')) { %>
+<div class="dashboard-grid" style="display: grid; grid-template-columns: <%= (req.tenant && req.tenant.enable_donations_module && hasPerm('Donations')) ? '1fr 1fr' : '1fr' %>; gap: 1.5rem; margin-top: 2rem; margin-bottom: 1.5rem;">
     <!-- Chart 1: Financial Performance Trend -->
     <div class="card chart-card" style="margin-bottom: 0;">
         <h3 class="chart-title"><i class="bi bi-bar-chart-line-fill"></i> Financial Performance Trend (2026)</h3>
@@ -153,7 +161,7 @@
         </div>
     </div>
     
-    <% if (req.tenant && req.tenant.enable_donations_module) { %>
+    <% if (req.tenant && req.tenant.enable_donations_module && hasPerm('Donations')) { %>
     <!-- Chart 2: Fee vs Donation Revenue Mix -->
     <div class="card chart-card" style="margin-bottom: 0;">
         <h3 class="chart-title"><i class="bi bi-graph-up"></i> Fees vs Donations Trend (2026)</h3>
@@ -163,23 +171,28 @@
     </div>
     <% } %>
 </div>
+<% } %>
 
 <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
     <!-- Chart 3: YTD Expense Distribution -->
+    <% if (hasPerm('Ledgers')) { %>
     <div class="card chart-card" style="margin-bottom: 0;">
         <h3 class="chart-title"><i class="bi bi-pie-chart-fill"></i> YTD Expense Breakdown</h3>
         <div class="chart-container" style="height: 300px; position: relative;">
             <canvas id="expenseBreakdownChart"></canvas>
         </div>
     </div>
+    <% } %>
     
     <!-- Chart 4: Student Concession Mix -->
+    <% if (hasPerm('Students') || hasPerm('Fees')) { %>
     <div class="card chart-card" style="margin-bottom: 0;">
         <h3 class="chart-title"><i class="bi bi-pie-chart"></i> Student Sponsorship Distribution</h3>
         <div class="chart-container" style="height: 300px; position: relative;">
             <canvas id="studentSponsorshipChart"></canvas>
         </div>
     </div>
+    <% } %>
 </div>
 
 <!-- KPI Details Modal -->
@@ -201,6 +214,7 @@
 </style>
 
 <!-- Collapsible Ledger Section -->
+<% if (hasPerm('Ledgers') || hasPerm('Fees')) { %>
 <details class="ledger-details">
     <summary class="ledger-summary">
         <span><i class="bi bi-table"></i> View 2026 Monthly Income & Expense Ledger Table</span>
@@ -214,7 +228,7 @@
                 <tr>
                     <th>Month</th>
                     <th style="text-align: right;">Fees (PKR)</th>
-                    <% if (req.tenant && req.tenant.enable_donations_module) { %>
+                    <% if (req.tenant && req.tenant.enable_donations_module && hasPerm('Donations')) { %>
                     <th style="text-align: right;">Donations (PKR)</th>
                     <% } %>
                     <th style="text-align: right; background-color: #f1f5f9; font-weight: 700;">Total Income</th>
@@ -257,7 +271,7 @@
                     <tr>
                         <td style="font-weight: 600;"><%= month.name %></td>
                         <td style="text-align: right;"><%= month.fees > 0 ? month.fees.toLocaleString() : '-' %></td>
-                        <% if (req.tenant && req.tenant.enable_donations_module) { %>
+                        <% if (req.tenant && req.tenant.enable_donations_module && hasPerm('Donations')) { %>
                         <td style="text-align: right;"><%= month.donations > 0 ? month.donations.toLocaleString() : '-' %></td>
                         <% } %>
                         <td style="text-align: right; background-color: #f8fafc; font-weight: 700;"><%= month.income > 0 ? month.income.toLocaleString() : '-' %></td>
@@ -278,7 +292,7 @@
                 <tr style="background-color: #f1f5f9; font-weight: 700; border-top: 2px solid #cbd5e1;">
                     <td>Total</td>
                     <td style="text-align: right;"><%= sumFees.toLocaleString() %></td>
-                    <% if (req.tenant && req.tenant.enable_donations_module) { %>
+                    <% if (req.tenant && req.tenant.enable_donations_module && hasPerm('Donations')) { %>
                     <td style="text-align: right;"><%= sumDonations.toLocaleString() %></td>
                     <% } %>
                     <td style="text-align: right;"><%= sumIncome.toLocaleString() %></td>
@@ -297,6 +311,7 @@
         </table>
     </div>
 </details>
+<% } %>
 
 <!-- Include Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
