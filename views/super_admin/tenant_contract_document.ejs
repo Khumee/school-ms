@@ -115,7 +115,15 @@
                     <img src="<%= tenant.logo_url %>" alt="Client Logo" style="height: 50px; object-fit: contain; margin-bottom: 5px;" onerror="this.style.display='none'">
                 <% } %>
                 <p style="margin: 0; font-weight: bold; color: #1e293b;"><%= tenant.school_name || tenant.name %></p>
-                <p style="margin: 0; color: #64748b; font-size: 12px;">Generated: <%= new Date().toLocaleDateString() %></p>
+                <% if (tenant.address) { %>
+                    <p style="margin: 0; color: #475569; font-size: 13px; max-width: 200px; margin-left: auto;"><%= tenant.address %></p>
+                <% } %>
+                <% if (tenant.contact_phone || tenant.contact_email) { %>
+                    <p style="margin: 0; color: #475569; font-size: 13px;">
+                        <%= tenant.contact_phone %><%= tenant.contact_phone && tenant.contact_email ? ' | ' : '' %><%= tenant.contact_email %>
+                    </p>
+                <% } %>
+                <p style="margin: 5px 0 0 0; color: #64748b; font-size: 12px;">Generated: <%= new Date().toLocaleDateString() %></p>
             </div>
         </div>
 

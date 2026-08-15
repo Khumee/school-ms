@@ -110,6 +110,12 @@
                                     <img src="<%= tenant.logo_url %>" alt="Client Logo" style="height: 40px; object-fit: contain; margin-top: 5px; margin-bottom: 5px;" onerror="this.style.display='none'"><br />
                                 <% } %>
                                 <strong><%= tenant.school_name || tenant.name %></strong><br />
+                                <% if (tenant.address) { %>
+                                    <%= tenant.address %><br />
+                                <% } %>
+                                <% if (tenant.contact_phone || tenant.contact_email) { %>
+                                    <%= tenant.contact_phone %><%= tenant.contact_phone && tenant.contact_email ? ' | ' : '' %><%= tenant.contact_email %><br />
+                                <% } %>
                                 <%= tenant.custom_domain ? tenant.custom_domain : (tenant.subdomain + '.nukrim.com') %>
                             </td>
                         </tr>

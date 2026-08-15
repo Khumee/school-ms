@@ -78,7 +78,7 @@ router.post('/admin/tenants/new', isSuperAdmin, (req, res) => {
             return res.render('super_admin/tenant_add', { error: 'Logo upload failed: ' + err.message });
         }
 
-        const { name, school_name, subdomain, custom_domain, status, primary_color, secondary_color, admin_username, admin_password } = req.body;
+        const { name, school_name, subdomain, custom_domain, status, primary_color, secondary_color, admin_username, admin_password, address, contact_phone, contact_email } = req.body;
         const enable_donations_module = req.body.enable_donations_module === 'on' ? 1 : 0;
         const enable_hifz_module      = req.body.enable_hifz_module === 'on' ? 1 : 0;
         const logo_url = req.file ? `/images/logos/${req.file.filename}` : '/images/default_logo.png';
@@ -89,9 +89,9 @@ router.post('/admin/tenants/new', isSuperAdmin, (req, res) => {
                 await connection.beginTransaction();
 
                 const [result] = await connection.execute(
-                    `INSERT INTO tenants (name, school_name, subdomain, custom_domain, status, primary_color, secondary_color, enable_donations_module, enable_hifz_module, logo_url) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [name, school_name, subdomain, custom_domain || null, status, primary_color, secondary_color, enable_donations_module, enable_hifz_module, logo_url]
+                    `INSERT INTO tenants (name, school_name, subdomain, custom_domain, status, primary_color, secondary_color, enable_donations_module, enable_hifz_module, logo_url, address, contact_phone, contact_email) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [name, school_name, subdomain, custom_domain || null, status, primary_color, secondary_color, enable_donations_module, enable_hifz_module, logo_url, address || null, contact_phone || null, contact_email || null]
                 );
                 const tenantId = result.insertId;
 
@@ -131,15 +131,16 @@ router.post('/admin/tenants/:id', isSuperAdmin, (req, res) => {
             return res.render('super_admin/tenant_edit', { tenant: rows[0], error: 'Logo upload failed: ' + err.message });
         }
 
-        const { school_name, subdomain, custom_domain, status, primary_color, secondary_color } = req.body;
+        const { school_name, subdomain, custom_domain, status, primary_color, secondary_color, address, contact_phone, contact_email } = req.body;
         const enable_donations_module = req.body.enable_donations_module === 'on' ? 1 : 0;
         const enable_hifz_module      = req.body.enable_hifz_module === 'on' ? 1 : 0;
 
         const fields = [school_name, subdomain, custom_domain || null, status, primary_color, secondary_color,
-                        enable_donations_module, enable_hifz_module];
+                        enable_donations_module, enable_hifz_module, address || null, contact_phone || null, contact_email || null];
         let sql = `UPDATE tenants SET school_name = ?, subdomain = ?, custom_domain = ?, status = ?, 
                    primary_color = ?, secondary_color = ?,
-                   enable_donations_module = ?, enable_hifz_module = ?`;
+                   enable_donations_module = ?, enable_hifz_module = ?,
+                   address = ?, contact_phone = ?, contact_email = ?`;
 
         if (req.file) {
             sql += `, logo_url = ?`;

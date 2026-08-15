@@ -56,6 +56,18 @@
                         <label for="custom_domain"><i class="bi bi-link-45deg"></i> Custom Domain</label>
                         <input type="text" id="custom_domain" name="custom_domain" class="form-control" value="<%= tenant.custom_domain || '' %>" placeholder="optional">
                     </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="address"><i class="bi bi-geo-alt-fill"></i> School Address</label>
+                        <textarea id="address" name="address" class="form-control" rows="2" placeholder="123 Main St, City, Country"><%= tenant.address || '' %></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact_phone"><i class="bi bi-telephone-fill"></i> Contact Phone</label>
+                        <input type="text" id="contact_phone" name="contact_phone" class="form-control" value="<%= tenant.contact_phone || '' %>" placeholder="+1234567890">
+                    </div>
+                    <div class="form-group">
+                        <label for="contact_email"><i class="bi bi-envelope-fill"></i> Contact Email</label>
+                        <input type="email" id="contact_email" name="contact_email" class="form-control" value="<%= tenant.contact_email || '' %>" placeholder="info@school.com">
+                    </div>
                     <div class="form-group">
                         <label for="status"><i class="bi bi-toggle2-on"></i> Status</label>
                         <select id="status" name="status" class="form-control">
