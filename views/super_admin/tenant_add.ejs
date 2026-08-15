@@ -37,7 +37,7 @@
         <% } %>
 
         <div class="card" style="padding: 1.5rem; max-width: 640px;">
-            <form action="/admin/tenants/new" method="POST" enctype="multipart/form-data">
+            <form action="/admin/tenants/new" method="POST" enctype="multipart/form-data" onsubmit="return handleLogoCompress(event)">
                 
                 <h3 style="font-size: 1rem; font-weight: 600; color: var(--primary-color); margin-bottom: 1rem;">
                     <i class="bi bi-building"></i> School Information
@@ -143,5 +143,65 @@
             </form>
         </div>
     </main>
+
+    <script>
+        let isCompressing = false;
+        function handleLogoCompress(event) {
+            if (isCompressing) return true; // Already compressed, let it submit
+            
+            const fileInput = document.getElementById('logo');
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                event.preventDefault();
+                const file = fileInput.files[0];
+                
+                const img = new Image();
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 400; // Logo doesn't need to be huge
+                        const MAX_HEIGHT = 400;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob(function(blob) {
+                            const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                            
+                            const dataTransfer = new DataTransfer();
+                            dataTransfer.items.add(newFile);
+                            fileInput.files = dataTransfer.files;
+                            
+                            isCompressing = true;
+                            event.target.submit();
+                        }, 'image/jpeg', 0.85);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+                return false;
+            }
+            return true;
+        }
+    </script>
 </body>
 </html>
