@@ -19,11 +19,8 @@
         <% const hasPerm = (p) => session.roleName === 'Admin' || (session.permissions && session.permissions.includes(p)); %>
         <nav class="main-nav">
             <div class="nav-container">
-                <a href="/" class="brand-link">
-                    <% if (tenant && tenant.logo_url) { %>
-                        <img src="<%= tenant.logo_url %>" alt="Logo" class="nav-logo">
-                    <% } %>
-                    <span class="brand-name"><%= tenant ? tenant.school_name : 'School Portal' %></span>
+                <a href="/" class="brand-link" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+                    <img src="/images/omnischool_logo.png" alt="OmniSchool" style="height: 36px; width: auto; object-fit: contain; filter: brightness(0) invert(1);">
                 </a>
                 <button class="mobile-menu-btn" onclick="document.getElementById('main-nav-links').classList.toggle('active')">
                     <i class="bi bi-list"></i>
@@ -116,8 +113,10 @@
                         </div>
                     </li>
                     <li style="display: flex; align-items: center; padding-left: 1rem; margin-left: 0.5rem; border-left: 1px solid rgba(255,255,255,0.3);">
-                        <span style="font-size: 0.65rem; color: rgba(255,255,255,0.7); margin-right: 0.5rem; font-weight: 500; text-transform: uppercase;">Powered By</span>
-                        <img src="/images/omnischool_logo.png" alt="OmniSchool" style="height: 28px; width: auto; object-fit: contain; filter: brightness(0) invert(1);" title="Powered by OmniSchool">
+                        <% if (tenant && tenant.logo_url) { %>
+                            <img src="<%= tenant.logo_url %>" alt="Logo" class="nav-logo" style="height: 32px; width: 32px; object-fit: contain; border-radius: 4px; margin-right: 0.5rem; background: white; padding: 2px;">
+                        <% } %>
+                        <span style="font-size: 0.85rem; font-weight: 600; color: white;"><%= tenant ? tenant.school_name : 'School Portal' %></span>
                     </li>
                 </ul>
             </div>
