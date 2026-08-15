@@ -305,7 +305,12 @@ router.post('/donations/donor/delete/:id', isAuthenticated, async (req, res) => 
 
 // POST /donations/add - record donation payment
 router.post('/donations/add', isAuthenticated, async (req, res) => {
-    const { donor_id, amount, date, for_month, fund_category, payment_method, notes, direct_ref, donation_type } = req.body;
+    let { donor_id, amount, date, for_month, for_month_only, for_year_only, fund_category, payment_method, notes, direct_ref, donation_type } = req.body;
+    
+    if (!for_month && for_month_only && for_year_only) {
+        for_month = `${for_year_only}-${for_month_only}`;
+    }
+
     try {
         const tenantId = req.tenant.id;
         let finalNotes = notes || null;
@@ -330,7 +335,12 @@ router.post('/donations/add', isAuthenticated, async (req, res) => {
 
 // POST /donations/edit/:id - update a donation record
 router.post('/donations/edit/:id', isAuthenticated, async (req, res) => {
-    const { amount, date, for_month, fund_category, payment_method, notes, direct_ref, donation_type } = req.body;
+    let { amount, date, for_month, for_month_only, for_year_only, fund_category, payment_method, notes, direct_ref, donation_type } = req.body;
+    
+    if (!for_month && for_month_only && for_year_only) {
+        for_month = `${for_year_only}-${for_month_only}`;
+    }
+
     try {
         let finalNotes = notes || null;
         if (fund_category === 'general' && direct_ref) {

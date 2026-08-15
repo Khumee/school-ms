@@ -105,7 +105,15 @@
         </div>
         <div class="form-group" style="margin-bottom: 1rem;">
             <label>For Month</label>
-            <input type="month" id="editForMonth" name="for_month" class="form-control" required>
+            <div style="display: flex; gap: 0.5rem;">
+                <select id="editForMonthOnly" name="for_month_only" class="form-control" required>
+                    <option value="01">Jan</option><option value="02">Feb</option><option value="03">Mar</option>
+                    <option value="04">Apr</option><option value="05">May</option><option value="06">Jun</option>
+                    <option value="07">Jul</option><option value="08">Aug</option><option value="09">Sep</option>
+                    <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+                </select>
+                <input type="number" id="editForYearOnly" name="for_year_only" class="form-control" required style="width: 100px;">
+            </div>
         </div>
         <div class="form-group" style="margin-bottom: 1rem;">
             <label>Account to Transfer Fund</label>
@@ -363,8 +371,25 @@
                 <input type="date" id="date" name="date" class="form-control" value="<%= new Date().toISOString().slice(0, 10) %>">
             </div>
             <div class="form-group">
-                <label for="for_month">For Month</label>
-                <input type="month" id="for_month" name="for_month" class="form-control" required value="<%= new Date().toISOString().slice(0, 7) %>">
+                <label>For Month</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <% const _cm = new Date().getMonth() + 1; const _cy = new Date().getFullYear(); %>
+                    <select id="for_month_only" name="for_month_only" class="form-control" required>
+                        <option value="01" <%= _cm === 1 ? 'selected' : '' %>>Jan</option>
+                        <option value="02" <%= _cm === 2 ? 'selected' : '' %>>Feb</option>
+                        <option value="03" <%= _cm === 3 ? 'selected' : '' %>>Mar</option>
+                        <option value="04" <%= _cm === 4 ? 'selected' : '' %>>Apr</option>
+                        <option value="05" <%= _cm === 5 ? 'selected' : '' %>>May</option>
+                        <option value="06" <%= _cm === 6 ? 'selected' : '' %>>Jun</option>
+                        <option value="07" <%= _cm === 7 ? 'selected' : '' %>>Jul</option>
+                        <option value="08" <%= _cm === 8 ? 'selected' : '' %>>Aug</option>
+                        <option value="09" <%= _cm === 9 ? 'selected' : '' %>>Sep</option>
+                        <option value="10" <%= _cm === 10 ? 'selected' : '' %>>Oct</option>
+                        <option value="11" <%= _cm === 11 ? 'selected' : '' %>>Nov</option>
+                        <option value="12" <%= _cm === 12 ? 'selected' : '' %>>Dec</option>
+                    </select>
+                    <input type="number" id="for_year_only" name="for_year_only" class="form-control" value="<%= _cy %>" required style="width: 100px;">
+                </div>
             </div>
         </div>
         <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
@@ -417,7 +442,9 @@
         document.getElementById('editModalTitle').innerText = 'Edit Donation: ' + d.donor_name;
         document.getElementById('editAmount').value = d.amount;
         document.getElementById('editDate').value = d.date;
-        document.getElementById('editForMonth').value = d.for_month || d.date.slice(0,7);
+        const fm = d.for_month || d.date.slice(0,7);
+        document.getElementById('editForMonthOnly').value = fm.slice(5,7);
+        document.getElementById('editForYearOnly').value = fm.slice(0,4);
         document.getElementById('editFundCategory').value = d.fund_category;
         document.getElementById('editDonationType').value = d.donation_type || 'Sadqa';
         document.getElementById('editPaymentMethod').value = d.payment_method || '';
