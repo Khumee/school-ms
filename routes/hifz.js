@@ -751,7 +751,7 @@ router.get('/hifz/report/weekly', isAuthenticated, async (req, res) => {
             `SELECT e.*, s.name as student_name, s.reg_no, c.name as class_name,
                     COUNT(d.id) as days_logged,
                     SUM(CASE WHEN d.is_absent = 1 THEN 1 ELSE 0 END) as days_absent,
-                    AVG(CASE WHEN d.sabaq_status = 'recited' THEN CAST(d.sabaq_to_line AS SIGNED) - CAST(d.sabaq_from_line AS SIGNED) + 1 ELSE NULL END) as avg_lines
+                    AVG(CASE WHEN d.sabaq_status = 'recited' THEN GREATEST(0, CAST(d.sabaq_to_line AS SIGNED) - CAST(d.sabaq_from_line AS SIGNED) + 1) ELSE NULL END) as avg_lines
              FROM hifz_enrollment e
              JOIN students s ON e.student_id = s.id
              JOIN classes c ON e.class_id = c.id
