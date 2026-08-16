@@ -202,11 +202,11 @@ router.get('/hifz/student/:studentId/diary', isAuthenticated, async (req, res) =
         
         const todayStr = new Date().toISOString().split('T')[0];
         const [[holiday]] = await db.query(
-            `SELECT name, description FROM hifz_school_holidays WHERE tenant_id = ? AND holiday_date = ?`,
+            `SELECT description FROM hifz_school_holidays WHERE tenant_id = ? AND holiday_date = ?`,
             [tenantId, todayStr]
         );
         const isHoliday = !!holiday;
-        const holidayDesc = holiday ? (holiday.description || holiday.name) : null;
+        const holidayDesc = holiday ? (holiday.description || 'Hifz Holiday') : null;
 
         res.render('hifz_diary', { ...data, studentId, isHoliday, holidayDesc });
     } catch (err) {
@@ -303,11 +303,11 @@ router.get('/hifz/mark-all', isAuthenticated, async (req, res) => {
 
         // Check if today is a holiday
         const [[holiday]] = await db.query(
-            `SELECT name, description FROM hifz_school_holidays WHERE tenant_id = ? AND holiday_date = ?`,
+            `SELECT description FROM hifz_school_holidays WHERE tenant_id = ? AND holiday_date = ?`,
             [tenantId, today]
         );
         const isHoliday = !!holiday;
-        const holidayDesc = holiday ? (holiday.description || holiday.name) : null;
+        const holidayDesc = holiday ? (holiday.description || 'Hifz Holiday') : null;
 
         const [students] = await db.execute(
             `SELECT e.*, s.name as student_name, s.reg_no,
@@ -367,7 +367,7 @@ router.get('/hifz/mark-all', isAuthenticated, async (req, res) => {
             };
         }));
 
-        res.render('hifz_mark_all', { students: studentsWithPrefill, today });
+        res.render('hifz_mark_all', { students: studentsWithPrefill, today, isHoliday, holidayDesc });
     } catch (err) {
         console.error('Hifz Mark All Error:', err);
         res.status(500).send('Error loading Quick Mark All.');
