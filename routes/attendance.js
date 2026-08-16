@@ -10,6 +10,14 @@ router.get('/attendance/employees', isAuthenticated, async (req, res) => {
         const tenantId = req.tenant.id;
         const dateStr = req.query.date || DateTime.now().toISODate();
         
+        // Check if today is a holiday
+        const [[holiday]] = await db.query(
+            `SELECT name FROM holidays WHERE tenant_id = ? AND date = ?`,
+            [tenantId, dateStr]
+        );
+        const isHoliday = !!holiday;
+        const holidayDesc = holiday ? holiday.name : null;
+
         // Fetch active employees (excluding inactive ones)
         const [employees] = await db.execute(
             "SELECT * FROM employees WHERE tenant_id = ? AND status != 'inactive' ORDER BY name ASC",
@@ -61,6 +69,8 @@ router.get('/attendance/employees', isAuthenticated, async (req, res) => {
             attendanceDetailsMap,
             isSunday,
             holiday: holiday || null,
+            isHoliday,
+            holidayDesc,
             holidaysList,
             tenantSettings: tenantRow || { school_start_time: '08:00:00', school_end_time: '14:00:00', late_threshold_minutes: 15, late_days_deduction_trigger: 4 }
         });
@@ -348,12 +358,22 @@ router.get('/attendance/students', isAuthenticated, async (req, res) => {
             }
         }
 
+        // Check if today is a holiday
+        const [[holiday]] = await db.query(
+            `SELECT name FROM holidays WHERE tenant_id = ? AND date = ?`,
+            [tenantId, dateStr]
+        );
+        const isHoliday = !!holiday;
+        const holidayDesc = holiday ? holiday.name : null;
+
         res.render('attendance_students', {
             classes,
             selectedClassId: classId,
             students,
             dateStr,
-            attendanceMap
+            attendanceMap,
+            isHoliday,
+            holidayDesc
         });
     } catch (err) {
         console.error(err);

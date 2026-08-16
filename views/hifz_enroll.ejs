@@ -47,12 +47,27 @@
                     <input type='date' id='enrolled_date' name='enrolled_date' class='form-control' required value='<%= new Date().toISOString().split("T")[0] %>'>
                 </div>
                 <div class='form-group'>
+                    <label for='initial_avg_lines'>Prev. Average Lines/Day</label>
+                    <input type='number' step='0.1' min='0' id='initial_avg_lines' name='initial_avg_lines' class='form-control' placeholder='e.g., 5.5' required>
+                </div>
+            </div>
+            
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                <div class='form-group'>
                     <label for='start_para'>Starting Para</label>
                     <select id='start_para' name='start_para' class='form-control' required>
                         <% for(let p=1; p<=30; p++) { %>
                             <option value="<%= p %>">Para <%= p %></option>
                         <% } %>
                     </select>
+                </div>
+                <div class='form-group'>
+                    <label for='start_page'>Starting Page</label>
+                    <input type='number' min='1' id='start_page' name='start_page' class='form-control' value='1' required>
+                </div>
+                <div class='form-group'>
+                    <label for='start_line'>Starting Line</label>
+                    <input type='number' min='1' id='start_line' name='start_line' class='form-control' value='1' required>
                 </div>
             </div>
             

@@ -59,6 +59,13 @@
     </div>
 </div>
 
+<% if (typeof isHoliday !== 'undefined' && isHoliday) { %>
+    <div class="alert" style="background-color: #fef2f2; color: #991b1b; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #fecaca; text-align: center;">
+        <i class="bi bi-calendar-x" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+        <h3 style="margin: 0 0 0.5rem 0;">School Holiday</h3>
+        <p style="margin: 0;">This date is marked as a holiday (<%= holidayDesc %>). Attendance cannot be recorded.</p>
+    </div>
+<% } else { %>
 <!-- Table Form -->
 <div class="card">
     <form action="/attendance/employees" method="POST">

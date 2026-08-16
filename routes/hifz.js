@@ -199,8 +199,16 @@ router.get('/hifz/student/:studentId/diary', isAuthenticated, async (req, res) =
         const studentId = parseInt(req.params.studentId);
         const data = await getStudentHifzData(tenantId, studentId);
         if (!data) return res.status(404).send('Student not enrolled in Hifz.');
+        
+        const todayStr = new Date().toISOString().split('T')[0];
+        const [[holiday]] = await db.query(
+            `SELECT name, description FROM hifz_school_holidays WHERE tenant_id = ? AND holiday_date = ?`,
+            [tenantId, todayStr]
+        );
+        const isHoliday = !!holiday;
+        const holidayDesc = holiday ? (holiday.description || holiday.name) : null;
 
-        res.render('hifz_diary', { ...data, studentId });
+        res.render('hifz_diary', { ...data, studentId, isHoliday, holidayDesc });
     } catch (err) {
         console.error('Hifz Diary Form Error:', err);
         res.status(500).send('Error loading Hifz diary form.');
@@ -292,6 +300,14 @@ router.get('/hifz/mark-all', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
         const today = req.query.date || new Date().toISOString().split('T')[0];
+
+        // Check if today is a holiday
+        const [[holiday]] = await db.query(
+            `SELECT name, description FROM hifz_school_holidays WHERE tenant_id = ? AND holiday_date = ?`,
+            [tenantId, today]
+        );
+        const isHoliday = !!holiday;
+        const holidayDesc = holiday ? (holiday.description || holiday.name) : null;
 
         const [students] = await db.execute(
             `SELECT e.*, s.name as student_name, s.reg_no,
@@ -564,17 +580,26 @@ router.post('/hifz/enroll', isAuthenticated, async (req, res) => {
         const tenantId = req.tenant.id;
         const { student_id, class_id, enrolled_date, notes, start_para } = req.body;
         const currentPara = parseInt(start_para) || 1;
-        const totalLines = Math.max(0, currentPara - 1) * 288;
+        const startPage = parseInt(req.body.start_page) || 1;
+        const startLine = parseInt(req.body.start_line) || 1;
+        const initialAvgLines = parseFloat(req.body.initial_avg_lines) || 0;
+        
+        const linesPerPage = req.tenant.hifz_lines_per_page || 15;
+        const pagesPerPara = req.tenant.hifz_pages_per_para || 20;
+        
+        const totalLines = (Math.max(0, currentPara - 1) * pagesPerPara * linesPerPage) + 
+                           (Math.max(0, startPage - 1) * linesPerPage) + 
+                           (Math.max(0, startLine - 1));
         
         let currentPhase = 'early';
         if (currentPara > 10) currentPhase = 'mid';
         if (currentPara >= 20) currentPhase = 'advanced';
 
         await db.execute(
-            `INSERT INTO hifz_enrollment (tenant_id, student_id, class_id, enrolled_date, notes, current_para, total_lines_memorized, current_phase)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-             ON DUPLICATE KEY UPDATE status='active', class_id=VALUES(class_id), notes=VALUES(notes), current_para=VALUES(current_para), total_lines_memorized=VALUES(total_lines_memorized), current_phase=VALUES(current_phase)`,
-            [tenantId, student_id, class_id, enrolled_date || new Date().toISOString().split('T')[0], notes || null, currentPara, totalLines, currentPhase]
+            `INSERT INTO hifz_enrollment (tenant_id, student_id, class_id, enrolled_date, notes, current_para, total_lines_memorized, current_phase, avg_lines_30d)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE status='active', class_id=VALUES(class_id), notes=VALUES(notes), current_para=VALUES(current_para), total_lines_memorized=VALUES(total_lines_memorized), current_phase=VALUES(current_phase), avg_lines_30d=VALUES(avg_lines_30d)`,
+            [tenantId, student_id, class_id, enrolled_date || new Date().toISOString().split('T')[0], notes || null, currentPara, totalLines, currentPhase, initialAvgLines]
         );
         // Also update the students table class_id
         await db.execute(

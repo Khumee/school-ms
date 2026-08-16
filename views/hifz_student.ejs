@@ -105,9 +105,9 @@
 <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; margin-bottom: 2rem;">
     <!-- Left Column: Metrics & Streak -->
     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-        <!-- Khatam Prediction Box -->
+        <!-- Completion Prediction Box -->
         <div class="khatam-box">
-            <span class="khatam-title">Estimated Khatam Date</span>
+            <span class="khatam-title">Estimated Completion Date</span>
             <div class="khatam-date">
                 <% if (enrollment.predicted_khatam_date) { %>
                     <%= new Date(enrollment.predicted_khatam_date).toLocaleDateString(undefined, {month: 'long', year: 'numeric'}) %>
@@ -203,6 +203,63 @@
 
     <!-- Right Column: Para Heatmap -->
     <div class="card" style="padding: 1.5rem;">
+        
+        <!-- Timeline Forecast -->
+        <% 
+            const enrolledDate = new Date(enrollment.enrolled_date || enrollment.created_at || Date.now());
+            const targetDate = new Date(enrolledDate);
+            targetDate.setFullYear(targetDate.getFullYear() + 2);
+            const predictedDate = enrollment.predicted_khatam_date ? new Date(enrollment.predicted_khatam_date) : null;
+            
+            const targetDuration = targetDate - enrolledDate;
+            const predictedDuration = predictedDate ? (predictedDate - enrolledDate) : targetDuration;
+            
+            const maxDuration = Math.max(targetDuration, predictedDuration);
+            
+            const targetWidth = Math.max(5, (targetDuration / maxDuration) * 100);
+            const predictedWidth = predictedDate ? Math.max(5, (predictedDuration / maxDuration) * 100) : 0;
+            
+            const isLate = predictedDate && predictedDate > targetDate;
+        %>
+        <h3 style="margin-top: 0; margin-bottom: 1.25rem; font-size: 1.2rem; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
+            <i class="bi bi-bar-chart-steps"></i> Completion Timeline Forecast (2-Year Target)
+        </h3>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                <span style="font-weight: 600; color: #334155; font-size: 0.9rem;">Target Completion (2 Years)</span>
+                <span style="font-weight: 600; color: #10b981; font-size: 0.9rem;"><%= targetDate.toLocaleDateString(undefined, {month: 'short', year: 'numeric', day: 'numeric'}) %></span>
+            </div>
+            <div style="background-color: #f1f5f9; border-radius: 99px; height: 24px; width: 100%; position: relative;">
+                <div style="background: linear-gradient(90deg, #10b981, #34d399); border-radius: 99px; height: 100%; width: <%= targetWidth %>%; position: relative; display: flex; align-items: center; padding: 0 10px; color: white; font-size: 0.75rem; font-weight: bold; justify-content: flex-end;">
+                    <% if (targetWidth > 15) { %><i class="bi bi-flag-fill" style="margin-right: 4px;"></i> Target<% } %>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 2.5rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                <span style="font-weight: 600; color: #334155; font-size: 0.9rem;">Predicted Completion (Current Pace)</span>
+                <span style="font-weight: 600; color: <%= isLate ? '#ef4444' : '#3b82f6' %>; font-size: 0.9rem;">
+                    <%= predictedDate ? predictedDate.toLocaleDateString(undefined, {month: 'short', year: 'numeric', day: 'numeric'}) : 'Calculating...' %>
+                </span>
+            </div>
+            <div style="background-color: #f1f5f9; border-radius: 99px; height: 24px; width: 100%; position: relative;">
+                <% if (predictedDate) { %>
+                    <div style="background: linear-gradient(90deg, <%= isLate ? '#ef4444, #f87171' : '#3b82f6, #60a5fa' %>); border-radius: 99px; height: 100%; width: <%= predictedWidth %>%; position: relative; display: flex; align-items: center; padding: 0 10px; color: white; font-size: 0.75rem; font-weight: bold; justify-content: flex-end;">
+                        <% if (predictedWidth > 15) { %><i class="bi bi-lightning-fill" style="margin-right: 4px;"></i> <%= isLate ? 'Behind Schedule' : 'On Track' %><% } %>
+                    </div>
+                <% } else { %>
+                    <div style="background-color: #cbd5e1; border-radius: 99px; height: 100%; width: 10%; display: flex; align-items: center; padding: 0 10px; color: white; font-size: 0.75rem;">...</div>
+                <% } %>
+            </div>
+            <% if (isLate) { %>
+                <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #dc2626; margin-bottom: 0;"><i class="bi bi-exclamation-circle-fill"></i> The student needs to memorize faster to meet the 2-year deadline.</p>
+            <% } else if (predictedDate) { %>
+                <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #059669; margin-bottom: 0;"><i class="bi bi-check-circle-fill"></i> The student is on track to meet or beat the 2-year deadline.</p>
+            <% } %>
+        </div>
+
         <h3 style="margin-top: 0; margin-bottom: 1.25rem; font-size: 1.2rem; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;">
             <i class="bi bi-grid-3x3-gap"></i> Quran Memorization Progress Heatmap (30 Paras)
         </h3>
@@ -328,8 +385,14 @@
                                     <% } else if (e.sabaq_status === 'not_recited') { %>
                                         <span class="status-cell status-unpaid" style="font-size: 0.75rem;">NAGHA</span>
                                     <% } else { %>
-                                        Para <%= e.sabaq_from_para %>
-                                        <small style="color: #64748b; display: block;">Pages <%= e.sabaq_from_page %>-<%= e.sabaq_to_page %> (Lines <%= e.sabaq_from_line %>-<%= e.sabaq_to_line %>)</small>
+                                    <div>
+                                        <div style="font-weight: 600; color: #0f172a;">Sabaq (New Lesson)</div>
+                                        <% if (e.sabaq_from_page === e.sabaq_to_page) { %>
+                                            <small style="color: #64748b; display: block;">Page <%= e.sabaq_from_page %> (Lines <%= e.sabaq_from_line %>-<%= e.sabaq_to_line %>)</small>
+                                        <% } else if (e.sabaq_from_page) { %>
+                                            <small style="color: #64748b; display: block;">P<%= e.sabaq_from_page %>:L<%= e.sabaq_from_line %> - P<%= e.sabaq_to_page %>:L<%= e.sabaq_to_line %></small>
+                                        <% } %>
+                                    </div>
                                     <% } %>
                                 </td>
                                 <td>

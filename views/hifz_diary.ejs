@@ -141,7 +141,14 @@
     <div class="card" id="diary-form" style="padding: 1.5rem;">
         <h3 style="margin-top: 0; font-size: 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; color: #0f172a;"><i class="bi bi-pencil-square"></i> Record Entry</h3>
         
-        <form action="/hifz/student/<%= studentId %>/diary" method="POST">
+        <% if (typeof isHoliday !== 'undefined' && isHoliday) { %>
+            <div class="alert" style="background-color: #fef2f2; color: #991b1b; padding: 1.5rem; border-radius: 8px; margin-bottom: 0; border: 1px solid #fecaca; text-align: center;">
+                <i class="bi bi-calendar-x" style="font-size: 2rem; display: block; margin-bottom: 0.5rem;"></i>
+                <h3 style="margin: 0 0 0.5rem 0;">Hifz Holiday</h3>
+                <p style="margin: 0;">This date is marked as a holiday (<%= holidayDesc %>). No Hifz diaries can be recorded.</p>
+            </div>
+        <% } else { %>
+        <form action="/hifz/student/<%= studentId %>/diary" method="POST" onsubmit="return validateDiaryForm()">
             <div style="display: grid; grid-template-columns: 1fr 2.5fr; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-end;">
                 <div class="form-group">
                     <label for="entry_date" style="font-weight: 600;">Date</label>
@@ -269,10 +276,32 @@
                 <button type="submit" class="btn-primary" style="height: 42px; padding: 0 2rem; font-weight: 600;"><i class="bi bi-save"></i> Save Diary Entry</button>
             </div>
         </form>
+        <% } %>
     </div>
 </div>
 
 <script>
+    function validateDiaryForm() {
+        const sabaqStatus = document.getElementById('sabaq_status').value;
+        if (sabaqStatus !== 'recited') return true;
+
+        const fromPage = parseInt(document.getElementById('sabaq_from_page').value) || 0;
+        const toPage = parseInt(document.getElementById('sabaq_to_page').value) || 0;
+        const fromLine = parseInt(document.getElementById('sabaq_from_line').value) || 0;
+        const toLine = parseInt(document.getElementById('sabaq_to_line').value) || 0;
+
+        if (fromPage > toPage) {
+            alert("To Page cannot be less than From Page.");
+            return false;
+        }
+
+        if (fromPage === toPage && fromLine > toLine) {
+            alert("On the same page, To Line must be greater than or equal to From Line.");
+            return false;
+        }
+        return true;
+    }
+
     function calcTotalLines() {
         const fromPage = parseInt(document.getElementById('sabaq_from_page').value) || 0;
         const toPage = parseInt(document.getElementById('sabaq_to_page').value) || 0;

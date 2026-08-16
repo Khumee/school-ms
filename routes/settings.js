@@ -254,7 +254,7 @@ router.post('/settings/holidays/school', isAuthenticated, async (req, res) => {
                 while (current <= end) {
                     const dateStr = current.toISOString().split('T')[0];
                     await db.execute(
-                        `INSERT IGNORE INTO holidays (tenant_id, date, description) VALUES (?, ?, ?)`,
+                        `INSERT IGNORE INTO holidays (tenant_id, date, name) VALUES (?, ?, ?)`,
                         [req.tenant.id, dateStr, description || null]
                     );
                     current.setDate(current.getDate() + 1);
@@ -262,7 +262,7 @@ router.post('/settings/holidays/school', isAuthenticated, async (req, res) => {
             }
         } else if (holiday_date) {
             await db.execute(
-                `INSERT IGNORE INTO holidays (tenant_id, date, description) VALUES (?, ?, ?)`,
+                `INSERT IGNORE INTO holidays (tenant_id, date, name) VALUES (?, ?, ?)`,
                 [req.tenant.id, holiday_date, description || null]
             );
         }
