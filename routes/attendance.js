@@ -10,14 +10,6 @@ router.get('/attendance/employees', isAuthenticated, async (req, res) => {
         const tenantId = req.tenant.id;
         const dateStr = req.query.date || DateTime.now().toISODate();
         
-        // Check if today is a holiday
-        const [[holiday]] = await db.query(
-            `SELECT name FROM holidays WHERE tenant_id = ? AND date = ?`,
-            [tenantId, dateStr]
-        );
-        const isHoliday = !!holiday;
-        const holidayDesc = holiday ? holiday.name : null;
-
         // Fetch active employees (excluding inactive ones)
         const [employees] = await db.execute(
             "SELECT * FROM employees WHERE tenant_id = ? AND status != 'inactive' ORDER BY name ASC",
@@ -49,6 +41,8 @@ router.get('/attendance/employees', isAuthenticated, async (req, res) => {
             'SELECT * FROM holidays WHERE tenant_id = ? AND date = ? LIMIT 1',
             [tenantId, dateStr]
         );
+        const isHoliday = !!holiday;
+        const holidayDesc = holiday ? holiday.name : null;
 
         // Fetch all holidays for managing
         const [holidaysList] = await db.execute(
