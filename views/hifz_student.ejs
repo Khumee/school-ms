@@ -317,7 +317,7 @@
                 </thead>
                 <tbody>
                     <% if (entries.length > 0) { %>
-                        <% entries.forEach(e => { %>
+                        <% entries.slice(0, 7).forEach(e => { %>
                             <tr>
                                 <td style="font-weight: 600;"><%= new Date(e.entry_date).toLocaleDateString() %></td>
                                 <td>

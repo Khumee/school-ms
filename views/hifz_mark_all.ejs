@@ -159,20 +159,20 @@
                                 <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                                     <span style="font-size: 0.8rem; font-weight: 600; width: 40px; color: #1e3a8a;">Start:</span>
                                     <span style="font-size: 0.8rem;">Page</span>
-                                    <input type="number" id="from-page-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_from_page]" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="30"
+                                    <input type="number" id="from-page-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_from_page]" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="<%= req.tenant.hifz_pages_per_para || 20 %>"
                                            value="<%= s.sabaq_from_page || (s.prefill ? s.prefill.sabaq_from_page : 1) %>" onchange="calcTotalLines('<%= s.student_id %>')">
                                     <span style="font-size: 0.8rem;">Line</span>
-                                    <input type="number" id="from-line-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_from_line]" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="16"
+                                    <input type="number" id="from-line-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_from_line]" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="<%= req.tenant.hifz_lines_per_page || 15 %>"
                                            value="<%= s.sabaq_from_line || (s.prefill ? s.prefill.sabaq_from_line : 1) %>" onchange="calcTotalLines('<%= s.student_id %>')">
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                                     <span style="font-size: 0.8rem; font-weight: 600; width: 40px; color: #1e3a8a;">End:</span>
                                     <span style="font-size: 0.8rem;">Page</span>
-                                    <input type="number" id="to-page-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_to_page]" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="30"
+                                    <input type="number" id="to-page-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_to_page]" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="<%= req.tenant.hifz_pages_per_para || 20 %>"
                                            value="<%= s.sabaq_to_page || (s.prefill ? s.prefill.sabaq_to_page : 1) %>" onchange="calcTotalLines('<%= s.student_id %>')">
                                     <span style="font-size: 0.8rem;">Line</span>
-                                    <input type="number" id="to-line-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_to_line]" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="16"
-                                           value="<%= s.sabaq_to_line || (s.prefill ? s.prefill.sabaq_to_line : 16) %>" onchange="calcTotalLines('<%= s.student_id %>')">
+                                    <input type="number" id="to-line-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabaq_to_line]" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="<%= req.tenant.hifz_lines_per_page || 15 %>"
+                                           value="<%= s.sabaq_to_line || (s.prefill ? s.prefill.sabaq_to_line : (req.tenant.hifz_lines_per_page || 15)) %>" onchange="calcTotalLines('<%= s.student_id %>')">
                                 </div>
                                 <div style="font-size: 0.8rem; font-weight: 700; color: #0284c7; margin-top: 0.15rem;">
                                     Total lines: <span id="total-lines-<%= s.student_id %>">--</span>
@@ -250,7 +250,7 @@
         const display = document.getElementById('total-lines-' + studentId);
 
         if (fromPage > 0 && toPage >= fromPage) {
-            const linesPerPage = 15; // standard Quran lines per page
+            const linesPerPage = parseInt("<%= req.tenant.hifz_lines_per_page || 15 %>", 10);
             let total = 0;
             if (toPage === fromPage) {
                 total = Math.max(0, toLine - fromLine + 1);

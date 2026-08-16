@@ -199,18 +199,18 @@
                                 <label style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a;">Start:</label>
                                 <div style="display: flex; gap: 0.35rem; align-items: center;">
                                     <span style="font-size: 0.8rem; color: #475569;">Page</span>
-                                    <input type="number" id="sabaq_from_page" name="sabaq_from_page" class="form-control" min="1" max="30" value="<%= prefill ? prefill.sabaq_from_page : 1 %>" onchange="calcTotalLines()">
+                                    <input type="number" id="sabaq_from_page" name="sabaq_from_page" class="form-control" min="1" max="<%= req.tenant.hifz_pages_per_para || 20 %>" value="<%= prefill ? prefill.sabaq_from_page : 1 %>" onchange="calcTotalLines()">
                                     <span style="font-size: 0.8rem; color: #475569;">Line</span>
-                                    <input type="number" id="sabaq_from_line" name="sabaq_from_line" class="form-control" min="1" max="16" value="<%= prefill ? prefill.sabaq_from_line : 1 %>" onchange="calcTotalLines()">
+                                    <input type="number" id="sabaq_from_line" name="sabaq_from_line" class="form-control" min="1" max="<%= req.tenant.hifz_lines_per_page || 15 %>" value="<%= prefill ? prefill.sabaq_from_line : 1 %>" onchange="calcTotalLines()">
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a;">End:</label>
                                 <div style="display: flex; gap: 0.35rem; align-items: center;">
                                     <span style="font-size: 0.8rem; color: #475569;">Page</span>
-                                    <input type="number" id="sabaq_to_page" name="sabaq_to_page" class="form-control" min="1" max="30" value="<%= prefill ? prefill.sabaq_to_page : 1 %>" onchange="calcTotalLines()">
+                                    <input type="number" id="sabaq_to_page" name="sabaq_to_page" class="form-control" min="1" max="<%= req.tenant.hifz_pages_per_para || 20 %>" value="<%= prefill ? prefill.sabaq_to_page : 1 %>" onchange="calcTotalLines()">
                                     <span style="font-size: 0.8rem; color: #475569;">Line</span>
-                                    <input type="number" id="sabaq_to_line" name="sabaq_to_line" class="form-control" min="1" max="16" value="<%= prefill ? prefill.sabaq_to_line : 16 %>" onchange="calcTotalLines()">
+                                    <input type="number" id="sabaq_to_line" name="sabaq_to_line" class="form-control" min="1" max="<%= req.tenant.hifz_lines_per_page || 15 %>" value="<%= prefill ? prefill.sabaq_to_line : (req.tenant.hifz_lines_per_page || 15) %>" onchange="calcTotalLines()">
                                 </div>
                             </div>
                         </div>
@@ -281,7 +281,7 @@
         const display = document.getElementById('sabaq_total_lines');
 
         if (fromPage > 0 && toPage >= fromPage) {
-            const linesPerPage = 15; // standard Quran lines per page
+            const linesPerPage = parseInt("<%= req.tenant.hifz_lines_per_page || 15 %>", 10);
             let total = 0;
             if (toPage === fromPage) {
                 total = Math.max(0, toLine - fromLine + 1);

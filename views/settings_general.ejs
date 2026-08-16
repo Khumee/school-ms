@@ -77,6 +77,28 @@
         </div>
 
         <div class="section-header" style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+            <h3 style="margin: 0;">Hifz Settings (Quran Structure)</h3>
+        </div>
+
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="form-group">
+                <label for="hifz_pages_per_para" style="font-weight: 600;">Pages per Para</label>
+                <input type="number" id="hifz_pages_per_para" name="hifz_pages_per_para" class="form-control" value="<%= currentTenant.hifz_pages_per_para || 20 %>" min="1" required>
+                <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Usually 18 or 20.</p>
+            </div>
+            <div class="form-group">
+                <label for="hifz_lines_per_page" style="font-weight: 600;">Lines per Page</label>
+                <input type="number" id="hifz_lines_per_page" name="hifz_lines_per_page" class="form-control" value="<%= currentTenant.hifz_lines_per_page || 15 %>" min="1" required>
+                <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Usually 15 or 16.</p>
+            </div>
+            <div class="form-group">
+                <label for="hifz_total_pages" style="font-weight: 600;">Total Pages in Quran</label>
+                <input type="number" id="hifz_total_pages" name="hifz_total_pages" class="form-control" value="<%= currentTenant.hifz_total_pages || 600 %>" min="1" required>
+                <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Usually around 600.</p>
+            </div>
+        </div>
+
+        <div class="section-header" style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
             <h3 style="margin: 0;">Late Fee Configuration</h3>
         </div>
 

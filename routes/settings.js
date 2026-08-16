@@ -46,9 +46,9 @@ router.get('/settings/general', isAuthenticated, async (req, res) => {
 router.post('/settings/general', isAuthenticated, upload.single('logo'), async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        const { primary_color, secondary_color, fine_start_days, fine_amount_per_day, school_start_time, school_end_time, late_threshold_minutes, late_days_deduction_trigger } = req.body;
+        const { primary_color, secondary_color, fine_start_days, fine_amount_per_day, school_start_time, school_end_time, late_threshold_minutes, late_days_deduction_trigger, hifz_pages_per_para, hifz_lines_per_page, hifz_total_pages } = req.body;
         
-        let updateQuery = 'UPDATE tenants SET primary_color = ?, secondary_color = ?, fine_start_days = ?, fine_amount_per_day = ?, school_start_time = ?, school_end_time = ?, late_threshold_minutes = ?, late_days_deduction_trigger = ?';
+        let updateQuery = 'UPDATE tenants SET primary_color = ?, secondary_color = ?, fine_start_days = ?, fine_amount_per_day = ?, school_start_time = ?, school_end_time = ?, late_threshold_minutes = ?, late_days_deduction_trigger = ?, hifz_pages_per_para = ?, hifz_lines_per_page = ?, hifz_total_pages = ?';
         const queryParams = [
             primary_color, 
             secondary_color,
@@ -57,7 +57,10 @@ router.post('/settings/general', isAuthenticated, upload.single('logo'), async (
             school_start_time || '08:00:00',
             school_end_time || '14:00:00',
             late_threshold_minutes ? parseInt(late_threshold_minutes) : 15,
-            late_days_deduction_trigger ? parseInt(late_days_deduction_trigger) : 4
+            late_days_deduction_trigger ? parseInt(late_days_deduction_trigger) : 4,
+            hifz_pages_per_para ? parseInt(hifz_pages_per_para) : 20,
+            hifz_lines_per_page ? parseInt(hifz_lines_per_page) : 15,
+            hifz_total_pages ? parseInt(hifz_total_pages) : 600
         ];
 
         // If a new logo was uploaded
