@@ -161,13 +161,30 @@
                 <form action="/admin/tenants/<%= tenant.id %>/invoices/generate" method="POST">
                     <div class="modal-body">
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Billing Period Start</label>
-                                <input type="date" name="billing_period_start" class="form-control" required>
+                            <div class="col-md-12 mb-1">
+                                <label class="form-label fw-bold" style="margin-bottom: 0;">Billing Period Selection</label>
+                                <div>
+                                    <div class="form-check form-check-inline mt-1">
+                                        <input class="form-check-input" type="radio" name="period_type" id="pt_month" value="month" checked onchange="togglePeriodType()">
+                                        <label class="form-check-label" for="pt_month">Select Month</label>
+                                    </div>
+                                    <div class="form-check form-check-inline mt-1">
+                                        <input class="form-check-input" type="radio" name="period_type" id="pt_custom" value="custom" onchange="togglePeriodType()">
+                                        <label class="form-check-label" for="pt_custom">Custom Dates</label>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-12" id="month_selector_container">
+                                <label class="form-label">Billing Month</label>
+                                <input type="month" id="billing_month" class="form-control" onchange="updateCustomDatesFromMonth()">
+                            </div>
+                            <div class="col-md-6 custom_date_field" style="display:none;">
+                                <label class="form-label">Billing Period Start</label>
+                                <input type="date" name="billing_period_start" id="billing_period_start" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 custom_date_field" style="display:none;">
                                 <label class="form-label">Billing Period End</label>
-                                <input type="date" name="billing_period_end" class="form-control" required>
+                                <input type="date" name="billing_period_end" id="billing_period_end" class="form-control" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Issue Date</label>
@@ -253,5 +270,43 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function togglePeriodType() {
+            const isMonth = document.getElementById('pt_month').checked;
+            document.getElementById('month_selector_container').style.display = isMonth ? 'block' : 'none';
+            document.querySelectorAll('.custom_date_field').forEach(el => {
+                el.style.display = isMonth ? 'none' : 'block';
+            });
+            if (isMonth) {
+                updateCustomDatesFromMonth();
+            }
+        }
+        
+        function updateCustomDatesFromMonth() {
+            const monthVal = document.getElementById('billing_month').value;
+            if (!monthVal) return;
+            const parts = monthVal.split('-');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            
+            const startDate = `${year}-${month.toString().padStart(2, '0')}-01`;
+            const nextMonthDate = new Date(year, month, 0); // Day 0 is last day of previous month, wait!
+            // Wait, new Date(year, month, 0) gives the last day of `month`. e.g. new Date(2026, 8, 0) gives Aug 31 because month is 0-indexed in Date, so month=8 is September, day 0 is last day of Aug.
+            // But from input type="month", month is 1-indexed. So month=8 is Aug. 
+            // So new Date(year, month, 0) gives last day of Aug. That's perfect.
+            const endDate = `${year}-${month.toString().padStart(2, '0')}-${nextMonthDate.getDate().toString().padStart(2, '0')}`;
+            
+            document.getElementById('billing_period_start').value = startDate;
+            document.getElementById('billing_period_end').value = endDate;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            document.getElementById('billing_month').value = `${year}-${month}`;
+            togglePeriodType();
+        });
+    </script>
 </body>
 </html>
