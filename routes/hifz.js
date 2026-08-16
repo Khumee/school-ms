@@ -791,7 +791,7 @@ router.get('/hifz/report/weekly', isAuthenticated, async (req, res) => {
              JOIN classes c ON e.class_id = c.id
              LEFT JOIN hifz_diary_entries d ON d.student_id = e.student_id AND d.tenant_id = e.tenant_id AND d.entry_date >= ?
              WHERE e.tenant_id = ? AND e.status = 'active'
-             GROUP BY e.id
+             GROUP BY e.id, s.name, s.reg_no, c.name
              ORDER BY c.name, s.name`,
             [weekAgoStr, tenantId]
         );
