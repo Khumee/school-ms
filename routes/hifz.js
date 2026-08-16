@@ -737,56 +737,6 @@ router.post('/hifz/test/:studentId', isAuthenticated, async (req, res) => {
     }
 });
 
-// ============================================================
-// GET /hifz/calendar — School Holidays
-// ============================================================
-router.get('/hifz/calendar', isAuthenticated, async (req, res) => {
-    try {
-        const [holidays] = await db.execute(
-            `SELECT * FROM hifz_school_holidays WHERE tenant_id = ? ORDER BY holiday_date DESC`,
-            [req.tenant.id]
-        );
-        res.render('hifz_calendar', { holidays });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Error loading calendar.');
-    }
-});
-
-router.post('/hifz/calendar', isAuthenticated, async (req, res) => {
-    const { holiday_type, holiday_date, holiday_from, holiday_to, description } = req.body;
-    try {
-        if (holiday_type === 'range' && holiday_from && holiday_to) {
-            const start = new Date(holiday_from);
-            const end = new Date(holiday_to);
-            if (start <= end) {
-                let current = new Date(start);
-                while (current <= end) {
-                    const dateStr = current.toISOString().split('T')[0];
-                    await db.execute(
-                        `INSERT IGNORE INTO hifz_school_holidays (tenant_id, holiday_date, description) VALUES (?, ?, ?)`,
-                        [req.tenant.id, dateStr, description || null]
-                    );
-                    current.setDate(current.getDate() + 1);
-                }
-            }
-        } else if (holiday_date) {
-            await db.execute(
-                `INSERT IGNORE INTO hifz_school_holidays (tenant_id, holiday_date, description) VALUES (?, ?, ?)`,
-                [req.tenant.id, holiday_date, description || null]
-            );
-        }
-        res.redirect('/hifz/calendar');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Error adding holiday.');
-    }
-});
-
-router.post('/hifz/calendar/delete/:id', isAuthenticated, async (req, res) => {
-    await db.execute(`DELETE FROM hifz_school_holidays WHERE id = ? AND tenant_id = ?`, [req.params.id, req.tenant.id]);
-    res.redirect('/hifz/calendar');
-});
 
 // ============================================================
 // GET /hifz/report/weekly — Weekly Report
@@ -801,7 +751,7 @@ router.get('/hifz/report/weekly', isAuthenticated, async (req, res) => {
             `SELECT e.*, s.name as student_name, s.reg_no, c.name as class_name,
                     COUNT(d.id) as days_logged,
                     SUM(CASE WHEN d.is_absent = 1 THEN 1 ELSE 0 END) as days_absent,
-                    AVG(CASE WHEN d.sabaq_status = 'recited' THEN d.sabaq_to_line - d.sabaq_from_line + 1 ELSE NULL END) as avg_lines
+                    AVG(CASE WHEN d.sabaq_status = 'recited' THEN CAST(d.sabaq_to_line AS SIGNED) - CAST(d.sabaq_from_line AS SIGNED) + 1 ELSE NULL END) as avg_lines
              FROM hifz_enrollment e
              JOIN students s ON e.student_id = s.id
              JOIN classes c ON e.class_id = c.id

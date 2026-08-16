@@ -218,4 +218,104 @@ router.post('/settings/merge', isAuthenticated, async (req, res) => {
     }
 });
 
+// ============================================================
+// GET /settings/holidays — Unified Holidays Manager
+// ============================================================
+router.get('/settings/holidays', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const [schoolHolidays] = await db.execute(
+            `SELECT * FROM holidays WHERE tenant_id = ? ORDER BY date DESC`,
+            [tenantId]
+        );
+        const [hifzHolidays] = await db.execute(
+            `SELECT * FROM hifz_school_holidays WHERE tenant_id = ? ORDER BY holiday_date DESC`,
+            [tenantId]
+        );
+        const activeTab = req.query.tab || 'school';
+        res.render('settings_holidays', { schoolHolidays, hifzHolidays, activeTab });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading holidays.');
+    }
+});
+
+// ============================================================
+// POST /settings/holidays/school — Add School Holiday(s)
+// ============================================================
+router.post('/settings/holidays/school', isAuthenticated, async (req, res) => {
+    const { holiday_type, holiday_date, holiday_from, holiday_to, description } = req.body;
+    try {
+        if (holiday_type === 'range' && holiday_from && holiday_to) {
+            const start = new Date(holiday_from);
+            const end = new Date(holiday_to);
+            if (start <= end) {
+                let current = new Date(start);
+                while (current <= end) {
+                    const dateStr = current.toISOString().split('T')[0];
+                    await db.execute(
+                        `INSERT IGNORE INTO holidays (tenant_id, date, description) VALUES (?, ?, ?)`,
+                        [req.tenant.id, dateStr, description || null]
+                    );
+                    current.setDate(current.getDate() + 1);
+                }
+            }
+        } else if (holiday_date) {
+            await db.execute(
+                `INSERT IGNORE INTO holidays (tenant_id, date, description) VALUES (?, ?, ?)`,
+                [req.tenant.id, holiday_date, description || null]
+            );
+        }
+        res.redirect('/settings/holidays?tab=school');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error adding school holiday.');
+    }
+});
+
+// POST /settings/holidays/school/delete/:id
+router.post('/settings/holidays/school/delete/:id', isAuthenticated, async (req, res) => {
+    await db.execute(`DELETE FROM holidays WHERE id = ? AND tenant_id = ?`, [req.params.id, req.tenant.id]);
+    res.redirect('/settings/holidays?tab=school');
+});
+
+// ============================================================
+// POST /settings/holidays/hifz — Add Hifz Holiday(s)
+// ============================================================
+router.post('/settings/holidays/hifz', isAuthenticated, async (req, res) => {
+    const { holiday_type, holiday_date, holiday_from, holiday_to, description } = req.body;
+    try {
+        if (holiday_type === 'range' && holiday_from && holiday_to) {
+            const start = new Date(holiday_from);
+            const end = new Date(holiday_to);
+            if (start <= end) {
+                let current = new Date(start);
+                while (current <= end) {
+                    const dateStr = current.toISOString().split('T')[0];
+                    await db.execute(
+                        `INSERT IGNORE INTO hifz_school_holidays (tenant_id, holiday_date, description) VALUES (?, ?, ?)`,
+                        [req.tenant.id, dateStr, description || null]
+                    );
+                    current.setDate(current.getDate() + 1);
+                }
+            }
+        } else if (holiday_date) {
+            await db.execute(
+                `INSERT IGNORE INTO hifz_school_holidays (tenant_id, holiday_date, description) VALUES (?, ?, ?)`,
+                [req.tenant.id, holiday_date, description || null]
+            );
+        }
+        res.redirect('/settings/holidays?tab=hifz');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error adding Hifz holiday.');
+    }
+});
+
+// POST /settings/holidays/hifz/delete/:id
+router.post('/settings/holidays/hifz/delete/:id', isAuthenticated, async (req, res) => {
+    await db.execute(`DELETE FROM hifz_school_holidays WHERE id = ? AND tenant_id = ?`, [req.params.id, req.tenant.id]);
+    res.redirect('/settings/holidays?tab=hifz');
+});
+
 module.exports = router;
