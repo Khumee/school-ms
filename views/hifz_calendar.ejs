@@ -12,8 +12,35 @@
         
         <form action="/hifz/calendar" method="POST">
             <div class="form-group" style="margin-bottom: 1rem;">
+                <label style="font-weight: 600;">Holiday Type</label>
+                <div style="margin-top: 0.25rem;">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="holiday_type" id="type_single" value="single" checked onchange="toggleHolidayType()">
+                        <label class="form-check-label" for="type_single">Single Day</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="holiday_type" id="type_range" value="range" onchange="toggleHolidayType()">
+                        <label class="form-check-label" for="type_range">Date Range</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" id="single_date_div" style="margin-bottom: 1rem;">
                 <label for="holiday_date" style="font-weight: 600;">Holiday Date</label>
-                <input type="date" name="holiday_date" id="holiday_date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>" required>
+                <input type="date" name="holiday_date" id="holiday_date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+            </div>
+
+            <div id="range_date_div" style="display: none; margin-bottom: 1rem;">
+                <div style="display: flex; gap: 1rem;">
+                    <div style="flex: 1;">
+                        <label for="holiday_from" style="font-weight: 600;">From Date</label>
+                        <input type="date" name="holiday_from" id="holiday_from" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="holiday_to" style="font-weight: 600;">To Date</label>
+                        <input type="date" name="holiday_to" id="holiday_to" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>">
+                    </div>
+                </div>
             </div>
             
             <div class="form-group" style="margin-bottom: 1.5rem;">
@@ -67,3 +94,11 @@
 </div>
 
 <%- include('partials/footer') %>
+
+<script>
+    function toggleHolidayType() {
+        const isSingle = document.getElementById('type_single').checked;
+        document.getElementById('single_date_div').style.display = isSingle ? 'block' : 'none';
+        document.getElementById('range_date_div').style.display = isSingle ? 'none' : 'block';
+    }
+</script>

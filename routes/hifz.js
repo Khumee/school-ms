@@ -754,12 +754,28 @@ router.get('/hifz/calendar', isAuthenticated, async (req, res) => {
 });
 
 router.post('/hifz/calendar', isAuthenticated, async (req, res) => {
-    const { holiday_date, description } = req.body;
+    const { holiday_type, holiday_date, holiday_from, holiday_to, description } = req.body;
     try {
-        await db.execute(
-            `INSERT IGNORE INTO hifz_school_holidays (tenant_id, holiday_date, description) VALUES (?, ?, ?)`,
-            [req.tenant.id, holiday_date, description || null]
-        );
+        if (holiday_type === 'range' && holiday_from && holiday_to) {
+            const start = new Date(holiday_from);
+            const end = new Date(holiday_to);
+            if (start <= end) {
+                let current = new Date(start);
+                while (current <= end) {
+                    const dateStr = current.toISOString().split('T')[0];
+                    await db.execute(
+                        `INSERT IGNORE INTO hifz_school_holidays (tenant_id, holiday_date, description) VALUES (?, ?, ?)`,
+                        [req.tenant.id, dateStr, description || null]
+                    );
+                    current.setDate(current.getDate() + 1);
+                }
+            }
+        } else if (holiday_date) {
+            await db.execute(
+                `INSERT IGNORE INTO hifz_school_holidays (tenant_id, holiday_date, description) VALUES (?, ?, ?)`,
+                [req.tenant.id, holiday_date, description || null]
+            );
+        }
         res.redirect('/hifz/calendar');
     } catch (err) {
         console.error(err);
