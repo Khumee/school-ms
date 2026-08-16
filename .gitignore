@@ -3,14 +3,20 @@ node_modules/
 .env.local
 *.xlsx
 *.sql.dump
-school_db_dump.sql
 .claude/
 npm-debug.log*
 public/images/logos/
-scratch/
+
+# Local helper scripts, SQL dumps, certificates
 scripts/
-portfolio/
+scratch/
+
+# Business docs (not code)
 go-to-market/
+portfolio/
+
+# Sensitive files
+*.pem
+*.key
 Cloudfare Origin Certifficate.txt
 Private certiifcate.txt
-Muhaimin Islamic School 2026.xlsx
