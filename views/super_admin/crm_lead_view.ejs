@@ -53,7 +53,7 @@
                 </button>
                 <% if (lead.converted_tenant_id) { %>
                     <span class="status-cell status-paid" style="padding: 0.5rem 1rem; font-size: 0.9rem;"><i class="bi bi-check-circle-fill"></i> Converted Tenant (#<%= lead.converted_tenant_id %>)</span>
-                <% } else { %>
+                <% } else if (typeof role === 'undefined' || role === 'super_admin') { %>
                     <button type="button" class="btn-primary" onclick="openConvertModal()" style="background-color: #2563eb;">
                         <i class="bi bi-arrow-right-circle"></i> Convert to Tenant
                     </button>
@@ -82,97 +82,64 @@
             </div>
         <% } %>
 
-        <div class="grid-2col">
-            <!-- Left Column: School Profile & Commercials -->
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+            <!-- Left Column: Lead Info Card & Commercial Rates -->
             <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                <!-- Profile Card -->
-                <div class="card" style="padding: 1.5rem;">
-                    <h3 style="margin-top: 0; font-size: 1.1rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; color: #0f172a;">
-                        <i class="bi bi-info-circle"></i> Lead Details & Status
+                <!-- Lead Details Card -->
+                <div style="background: #ffffff; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <h3 style="font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #f1f5f9;">
+                        <i class="bi bi-info-circle-fill" style="color: #4f46e5;"></i> Lead Information
                     </h3>
 
-                    <!-- Status Quick Update Form -->
-                    <form action="/admin/crm/leads/<%= lead.id %>/status" method="POST" style="margin-bottom: 1.25rem; background: #f8fafc; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0;">
-                        <label style="font-size: 0.8rem; font-weight: 700; color: #475569; display: block; margin-bottom: 0.25rem;">Current Pipeline Status:</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <select name="status" class="form-control" style="font-size: 0.85rem;" onchange="this.form.submit()">
-                                <option value="new" <%= lead.status === 'new' ? 'selected' : '' %>>New Lead</option>
-                                <option value="contacted" <%= lead.status === 'contacted' ? 'selected' : '' %>>Contacted</option>
-                                <option value="meeting_scheduled" <%= lead.status === 'meeting_scheduled' ? 'selected' : '' %>>Meeting Scheduled</option>
-                                <option value="demo_given" <%= lead.status === 'demo_given' ? 'selected' : '' %>>Demo Given</option>
-                                <option value="negotiation" <%= lead.status === 'negotiation' ? 'selected' : '' %>>Negotiation</option>
-                                <option value="won" <%= lead.status === 'won' ? 'selected' : '' %>>Won / Converted</option>
-                                <option value="lost" <%= lead.status === 'lost' ? 'selected' : '' %>>Lost</option>
-                            </select>
-                        </div>
-                    </form>
-
-                    <table style="width: 100%; font-size: 0.9rem; border-collapse: collapse;">
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 0.5rem 0; color: #64748b;">Contact Person</td>
-                            <td style="padding: 0.5rem 0; text-align: right; font-weight: 600;"><%= lead.contact_person %> (<%= lead.designation || 'Contact' %>)</td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 0.5rem 0; color: #64748b;">Phone</td>
-                            <td style="padding: 0.5rem 0; text-align: right; font-weight: 600;"><a href="tel:<%= lead.phone %>"><%= lead.phone %></a></td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 0.5rem 0; color: #64748b;">Email</td>
-                            <td style="padding: 0.5rem 0; text-align: right; font-weight: 600;"><%= lead.email || '-' %></td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 0.5rem 0; color: #64748b;">Est. Students</td>
-                            <td style="padding: 0.5rem 0; text-align: right; font-weight: 600;"><%= lead.est_students ? lead.est_students.toLocaleString() : '-' %></td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 0.5rem 0; color: #64748b;">Current System</td>
-                            <td style="padding: 0.5rem 0; text-align: right; font-weight: 600;"><%= lead.current_system || 'Manual Registers' %></td>
-                        </tr>
-                        <tr style="border-bottom: 1px solid #f1f5f9;">
-                            <td style="padding: 0.5rem 0; color: #64748b;">Assigned Rep</td>
-                            <td style="padding: 0.5rem 0; text-align: right; font-weight: 600;"><%= lead.rep_name || 'Unassigned' %></td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 0.5rem 0; color: #64748b;">Lead Source</td>
-                            <td style="padding: 0.5rem 0; text-align: right; font-weight: 600;"><%= lead.lead_source || 'Field Visit' %></td>
-                        </tr>
-                    </table>
-
-                    <div style="margin-top: 1rem; text-align: right;">
-                        <a href="/admin/crm/leads/<%= lead.id %>/edit" class="btn-secondary" style="font-size: 0.85rem;"><i class="bi bi-pencil"></i> Edit Lead Profile</a>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;">
+                        <div><strong style="color: #64748b;">Contact Person:</strong> <%= lead.contact_person %> (<%= lead.designation || 'Contact' %>)</div>
+                        <div><strong style="color: #64748b;">Phone:</strong> <a href="tel:<%= lead.phone %>" style="color: #2563eb; text-decoration: none;"><%= lead.phone %></a></div>
+                        <div><strong style="color: #64748b;">Email:</strong> <%= lead.email || 'N/A' %></div>
+                        <div><strong style="color: #64748b;">City / Address:</strong> <%= lead.city || '' %>, <%= lead.address || 'N/A' %></div>
+                        <div><strong style="color: #64748b;">Est. Student Count:</strong> <%= lead.est_students || 0 %></div>
+                        <div><strong style="color: #64748b;">Current System:</strong> <%= lead.current_system || 'Manual / Paper' %></div>
+                        <div><strong style="color: #64748b;">Assigned Rep:</strong> <span style="background: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600;"><%= lead.rep_name || 'Unassigned' %></span></div>
+                        <div><strong style="color: #64748b;">Lead Source:</strong> <%= lead.lead_source || 'Direct Outreach' %></div>
+                        <% if (lead.notes) { %>
+                            <div style="margin-top: 0.5rem; padding: 0.75rem; background: #f8fafc; border-radius: 6px; border-left: 3px solid #6366f1; font-size: 0.85rem;">
+                                <strong>Internal Notes:</strong> <%= lead.notes %>
+                            </div>
+                        <% } %>
                     </div>
                 </div>
 
-                <!-- Agreed Commercials & Commission Card -->
-                <div class="card" style="padding: 1.5rem; background-color: #faf5ff; border: 1px solid #f3e8ff;">
-                    <h3 style="margin-top: 0; font-size: 1.1rem; border-bottom: 1px solid #e9d5ff; padding-bottom: 0.75rem; color: #581c87;">
-                        <i class="bi bi-currency-dollar"></i> Negotiated Rates & Rep Commission
+                <!-- Agreed Commercial Rates Card -->
+                <div style="background: #ffffff; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <h3 style="font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #f1f5f9;">
+                        <i class="bi bi-currency-dollar" style="color: #10b981;"></i> Commercial Rates & Commission
                     </h3>
 
                     <form action="/admin/crm/leads/<%= lead.id %>/pricing" method="POST" style="display: flex; flex-direction: column; gap: 0.75rem;">
                         <div class="form-group">
                             <label style="font-size: 0.8rem; font-weight: 600;">Agreed Setup / Onboarding Fee (PKR)</label>
-                            <input type="number" step="0.01" name="agreed_setup_fee" class="form-control" value="<%= lead.agreed_setup_fee || 0 %>">
+                            <input type="number" step="0.01" name="agreed_setup_fee" class="form-control" value="<%= lead.agreed_setup_fee || 0 %>" <%= (typeof role !== 'undefined' && role === 'sales_rep') ? 'readonly' : '' %>>
                         </div>
                         <div class="form-group">
                             <label style="font-size: 0.8rem; font-weight: 600;">Agreed Monthly SaaS Fee (PKR)</label>
-                            <input type="number" step="0.01" name="agreed_monthly_rate" class="form-control" value="<%= lead.agreed_monthly_rate || 0 %>">
+                            <input type="number" step="0.01" name="agreed_monthly_rate" class="form-control" value="<%= lead.agreed_monthly_rate || 0 %>" <%= (typeof role !== 'undefined' && role === 'sales_rep') ? 'readonly' : '' %>>
                         </div>
                         <div class="form-group">
                             <label style="font-size: 0.8rem; font-weight: 600;">Agreed Per-Student Monthly Rate (PKR)</label>
-                            <input type="number" step="0.01" name="agreed_rate_per_student" class="form-control" value="<%= lead.agreed_rate_per_student || 0 %>">
+                            <input type="number" step="0.01" name="agreed_rate_per_student" class="form-control" value="<%= lead.agreed_rate_per_student || 0 %>" <%= (typeof role !== 'undefined' && role === 'sales_rep') ? 'readonly' : '' %>>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                             <div class="form-group">
                                 <label style="font-size: 0.8rem; font-weight: 600;">Sales Rep Comm (%)</label>
-                                <input type="number" step="0.1" name="rep_commission_pct" class="form-control" value="<%= lead.rep_commission_pct || 0 %>">
+                                <input type="number" step="0.1" name="rep_commission_pct" class="form-control" value="<%= lead.rep_commission_pct || 0 %>" <%= (typeof role !== 'undefined' && role === 'sales_rep') ? 'readonly' : '' %>>
                             </div>
                             <div class="form-group">
                                 <label style="font-size: 0.8rem; font-weight: 600;">Flat Comm (PKR)</label>
-                                <input type="number" step="0.01" name="rep_commission_flat" class="form-control" value="<%= lead.rep_commission_flat || 0 %>">
+                                <input type="number" step="0.01" name="rep_commission_flat" class="form-control" value="<%= lead.rep_commission_flat || 0 %>" <%= (typeof role !== 'undefined' && role === 'sales_rep') ? 'readonly' : '' %>>
                             </div>
                         </div>
-                        <button type="submit" class="btn-primary" style="background-color: #7e22ce; margin-top: 0.5rem;"><i class="bi bi-save"></i> Save Financial Rates</button>
+                        <% if (typeof role === 'undefined' || role === 'super_admin') { %>
+                            <button type="submit" class="btn-primary" style="background-color: #7e22ce; margin-top: 0.5rem;"><i class="bi bi-save"></i> Save Financial Rates</button>
+                        <% } %>
                     </form>
                 </div>
             </div>

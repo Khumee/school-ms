@@ -34,5 +34,14 @@ module.exports = {
             return next();
         }
         res.redirect('/admin/login');
+    },
+    isOnlySuperAdmin: (req, res, next) => {
+        if (req.session && req.session.masterAdminId) {
+            if (req.session.masterAdminRole === 'sales_rep') {
+                return res.redirect('/admin/crm/leads');
+            }
+            return next();
+        }
+        res.redirect('/admin/login');
     }
 };

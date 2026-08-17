@@ -47,20 +47,26 @@
     </div>
 </nav>
 
+<% const userRole = (typeof role !== 'undefined' && role) ? role : (typeof req !== 'undefined' && req.session ? req.session.masterAdminRole : 'super_admin'); %>
+
 <div class="superadmin-nav-bar">
-    <a href="/admin" class="superadmin-nav-link <%= activeTab === 'tenants' ? 'active' : '' %>">
-        <i class="bi bi-buildings"></i> Tenants
-    </a>
+    <% if (userRole === 'super_admin') { %>
+        <a href="/admin" class="superadmin-nav-link <%= activeTab === 'tenants' ? 'active' : '' %>">
+            <i class="bi bi-buildings"></i> Tenants
+        </a>
+    <% } %>
     <a href="/admin/crm/leads" class="superadmin-nav-link <%= activeTab === 'leads' ? 'active' : '' %>">
-        <i class="bi bi-funnel-fill"></i> CRM Leads
+        <i class="bi bi-funnel-fill"></i> <%= userRole === 'sales_rep' ? 'My Leads' : 'CRM Leads' %>
     </a>
     <a href="/admin/crm/meetings" class="superadmin-nav-link <%= activeTab === 'meetings' ? 'active' : '' %>">
-        <i class="bi bi-calendar-event"></i> Meetings & Visits
+        <i class="bi bi-calendar-event"></i> <%= userRole === 'sales_rep' ? 'My Meetings & Visits' : 'Meetings & Visits' %>
     </a>
-    <a href="/admin/crm/team" class="superadmin-nav-link <%= activeTab === 'team' ? 'active' : '' %>">
-        <i class="bi bi-people-fill"></i> Sales Team
-    </a>
+    <% if (userRole === 'super_admin') { %>
+        <a href="/admin/crm/team" class="superadmin-nav-link <%= activeTab === 'team' ? 'active' : '' %>">
+            <i class="bi bi-people-fill"></i> Sales Team
+        </a>
+    <% } %>
     <a href="/admin/crm/finances" class="superadmin-nav-link <%= activeTab === 'finances' ? 'active' : '' %>">
-        <i class="bi bi-cash-stack"></i> Finances & Expenses
+        <i class="bi bi-cash-stack"></i> <%= userRole === 'sales_rep' ? 'My Expenses & Advances' : 'Finances & Expenses' %>
     </a>
 </div>

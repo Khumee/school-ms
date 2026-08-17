@@ -5,7 +5,7 @@ const fs = require('fs');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
-const { isSuperAdmin } = require('../middleware/auth');
+const { isSuperAdmin, isOnlySuperAdmin } = require('../middleware/auth');
 
 // Strict Domain Isolation: Prevent tenants from accessing super admin routes
 router.use((req, res, next) => {
@@ -47,9 +47,20 @@ router.post('/admin/login', async (req, res) => {
             [username ? username.trim() : '']
         );
         if (rows.length > 0 && await bcrypt.compare(password, rows[0].password)) {
+            if (rows[0].is_active === 0) {
+                return res.render('super_admin/login', { error: 'Account is deactivated. Please contact Super Admin.' });
+            }
             req.session.masterAdminId = rows[0].id;
             req.session.masterAdminUsername = rows[0].username;
-            return req.session.save(() => res.redirect('/admin'));
+            req.session.masterAdminRole = rows[0].role || 'super_admin';
+
+            return req.session.save(() => {
+                if (rows[0].role === 'sales_rep') {
+                    res.redirect('/admin/crm/leads');
+                } else {
+                    res.redirect('/admin');
+                }
+            });
         }
         res.render('super_admin/login', { error: 'Invalid username or password.' });
     } catch (err) {
@@ -64,7 +75,7 @@ router.get('/admin/logout', (req, res) => {
 });
 
 // GET Tenant Dashboard (list)
-router.get('/admin', isSuperAdmin, async (req, res) => {
+router.get('/admin', isOnlySuperAdmin, async (req, res) => {
     const [tenants] = await db.pool.execute('SELECT * FROM tenants ORDER BY created_at DESC');
     res.render('super_admin/dashboard', { 
         tenants, 
@@ -552,6 +563,9 @@ async function ensureCrmSchema() {
 router.get('/admin/crm/leads', isSuperAdmin, async (req, res) => {
     try {
         await ensureCrmSchema();
+        const userRole = req.session.masterAdminRole || 'super_admin';
+        const userId = req.session.masterAdminId;
+
         const { search, status, rep_id } = req.query;
         let querySql = `
             SELECT l.*, m.name as rep_name, m.username as rep_username
@@ -560,6 +574,14 @@ router.get('/admin/crm/leads', isSuperAdmin, async (req, res) => {
             WHERE 1=1
         `;
         const params = [];
+
+        if (userRole === 'sales_rep') {
+            querySql += ` AND l.assigned_to = ?`;
+            params.push(userId);
+        } else if (rep_id) {
+            querySql += ` AND l.assigned_to = ?`;
+            params.push(rep_id);
+        }
 
         if (search) {
             querySql += ` AND (l.school_name LIKE ? OR l.contact_person LIKE ? OR l.city LIKE ? OR l.phone LIKE ?)`;
@@ -570,21 +592,31 @@ router.get('/admin/crm/leads', isSuperAdmin, async (req, res) => {
             querySql += ` AND l.status = ?`;
             params.push(status);
         }
-        if (rep_id) {
-            querySql += ` AND l.assigned_to = ?`;
-            params.push(rep_id);
-        }
 
         querySql += ` ORDER BY l.updated_at DESC`;
 
         const [leads] = await db.pool.execute(querySql, params);
         const [reps] = await db.pool.execute(`SELECT id, username, name FROM master_admins WHERE is_active = 1 ORDER BY name`);
 
-        // Compute Stats
-        const [totalRows] = await db.pool.execute(`SELECT COUNT(*) as cnt FROM crm_leads`);
-        const [activeMtgRows] = await db.pool.execute(`SELECT COUNT(*) as cnt FROM crm_leads WHERE status = 'meeting_scheduled' OR next_meeting_date >= NOW()`);
-        const [wonRows] = await db.pool.execute(`SELECT COUNT(*) as cnt FROM crm_leads WHERE status = 'won'`);
-        const [valRows] = await db.pool.execute(`SELECT SUM(agreed_monthly_rate + agreed_setup_fee) as val FROM crm_leads WHERE status != 'lost'`);
+        // Compute Stats based on user role scope
+        let totalSql = `SELECT COUNT(*) as cnt FROM crm_leads`;
+        let activeMtgSql = `SELECT COUNT(*) as cnt FROM crm_leads WHERE (status = 'meeting_scheduled' OR next_meeting_date >= NOW())`;
+        let wonSql = `SELECT COUNT(*) as cnt FROM crm_leads WHERE status = 'won'`;
+        let valSql = `SELECT SUM(agreed_monthly_rate + agreed_setup_fee) as val FROM crm_leads WHERE status != 'lost'`;
+        
+        const statParams = [];
+        if (userRole === 'sales_rep') {
+            totalSql += ` WHERE assigned_to = ?`;
+            activeMtgSql += ` AND assigned_to = ?`;
+            wonSql += ` AND assigned_to = ?`;
+            valSql += ` AND assigned_to = ?`;
+            statParams.push(userId);
+        }
+
+        const [totalRows] = await db.pool.execute(totalSql, statParams);
+        const [activeMtgRows] = await db.pool.execute(activeMtgSql, statParams);
+        const [wonRows] = await db.pool.execute(wonSql, statParams);
+        const [valRows] = await db.pool.execute(valSql, statParams);
 
         const stats = {
             totalLeads: totalRows[0]?.cnt || 0,
@@ -599,6 +631,7 @@ router.get('/admin/crm/leads', isSuperAdmin, async (req, res) => {
             stats,
             query: req.query,
             username: req.session.masterAdminUsername,
+            role: userRole,
             success: req.query.success
         });
     } catch (err) {
@@ -645,6 +678,9 @@ router.post('/admin/crm/leads/new', isSuperAdmin, async (req, res) => {
 router.get('/admin/crm/leads/:id', isSuperAdmin, async (req, res) => {
     try {
         const leadId = req.params.id;
+        const userRole = req.session.masterAdminRole || 'super_admin';
+        const userId = req.session.masterAdminId;
+
         const [[lead]] = await db.pool.execute(
             `SELECT l.*, m.name as rep_name, m.username as rep_username
              FROM crm_leads l
@@ -654,6 +690,11 @@ router.get('/admin/crm/leads/:id', isSuperAdmin, async (req, res) => {
         );
 
         if (!lead) return res.status(404).send('Lead not found.');
+
+        // Data Scope check for sales reps
+        if (userRole === 'sales_rep' && lead.assigned_to != userId) {
+            return res.status(403).send('Unauthorized. You can only view leads assigned to you.');
+        }
 
         const [meetings] = await db.pool.execute(
             `SELECT mt.*, m.name as rep_name, m.username as rep_username
@@ -668,6 +709,7 @@ router.get('/admin/crm/leads/:id', isSuperAdmin, async (req, res) => {
             lead,
             meetings,
             username: req.session.masterAdminUsername,
+            role: userRole,
             success: req.query.success
         });
     } catch (err) {
@@ -730,7 +772,7 @@ router.post('/admin/crm/leads/:id/status', isSuperAdmin, async (req, res) => {
 });
 
 // POST /admin/crm/leads/:id/pricing — Update Financial Rates & Commission
-router.post('/admin/crm/leads/:id/pricing', isSuperAdmin, async (req, res) => {
+router.post('/admin/crm/leads/:id/pricing', isOnlySuperAdmin, async (req, res) => {
     try {
         const leadId = req.params.id;
         const { agreed_setup_fee, agreed_monthly_rate, agreed_rate_per_student, rep_commission_pct, rep_commission_flat } = req.body;
@@ -810,7 +852,7 @@ router.post('/admin/crm/leads/:id/meeting', isSuperAdmin, async (req, res) => {
 });
 
 // POST /admin/crm/leads/:id/convert — Convert Lead to Tenant
-router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
+router.post('/admin/crm/leads/:id/convert', isOnlySuperAdmin, async (req, res) => {
     try {
         const leadId = req.params.id;
         const { school_name, subdomain, admin_email, admin_password } = req.body;
@@ -852,18 +894,25 @@ router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
 router.get('/admin/crm/meetings', isSuperAdmin, async (req, res) => {
     try {
         await ensureCrmSchema();
+        const userRole = req.session.masterAdminRole || 'super_admin';
+        const userId = req.session.masterAdminId;
         const { rep_id, type } = req.query;
 
-        // Fetch upcoming meetings
-        const [upcoming] = await db.pool.execute(
-            `SELECT l.id, l.school_name, l.contact_person, l.phone, l.next_meeting_date, l.next_meeting_agenda, m.name as rep_name
-             FROM crm_leads l
-             LEFT JOIN master_admins m ON l.assigned_to = m.id
-             WHERE l.next_meeting_date >= NOW()
-             ORDER BY l.next_meeting_date ASC`
-        );
+        let upcomingSql = `
+            SELECT l.id, l.school_name, l.contact_person, l.phone, l.next_meeting_date, l.next_meeting_agenda, m.name as rep_name
+            FROM crm_leads l
+            LEFT JOIN master_admins m ON l.assigned_to = m.id
+            WHERE l.next_meeting_date >= NOW()
+        `;
+        const upcomingParams = [];
+        if (userRole === 'sales_rep') {
+            upcomingSql += ` AND l.assigned_to = ?`;
+            upcomingParams.push(userId);
+        }
+        upcomingSql += ` ORDER BY l.next_meeting_date ASC`;
 
-        // Fetch all meeting logs
+        const [upcoming] = await db.pool.execute(upcomingSql, upcomingParams);
+
         let querySql = `
             SELECT mt.*, l.school_name, m.name as rep_name
             FROM crm_meetings mt
@@ -872,7 +921,10 @@ router.get('/admin/crm/meetings', isSuperAdmin, async (req, res) => {
             WHERE 1=1
         `;
         const params = [];
-        if (rep_id) {
+        if (userRole === 'sales_rep') {
+            querySql += ` AND (mt.rep_id = ? OR l.assigned_to = ?)`;
+            params.push(userId, userId);
+        } else if (rep_id) {
             querySql += ` AND mt.rep_id = ?`;
             params.push(rep_id);
         }
@@ -891,6 +943,7 @@ router.get('/admin/crm/meetings', isSuperAdmin, async (req, res) => {
             reps,
             query: req.query,
             username: req.session.masterAdminUsername,
+            role: userRole,
             success: req.query.success
         });
     } catch (err) {
@@ -900,7 +953,7 @@ router.get('/admin/crm/meetings', isSuperAdmin, async (req, res) => {
 });
 
 // GET /admin/crm/team — Sales Team Management
-router.get('/admin/crm/team', isSuperAdmin, async (req, res) => {
+router.get('/admin/crm/team', isOnlySuperAdmin, async (req, res) => {
     try {
         await ensureCrmSchema();
         const [reps] = await db.pool.execute(
@@ -914,6 +967,7 @@ router.get('/admin/crm/team', isSuperAdmin, async (req, res) => {
         res.render('super_admin/crm_team', {
             reps,
             username: req.session.masterAdminUsername,
+            role: 'super_admin',
             success: req.query.success,
             error: req.query.error
         });
@@ -924,7 +978,7 @@ router.get('/admin/crm/team', isSuperAdmin, async (req, res) => {
 });
 
 // POST /admin/crm/team/new — Create Sales Rep
-router.post('/admin/crm/team/new', isSuperAdmin, async (req, res) => {
+router.post('/admin/crm/team/new', isOnlySuperAdmin, async (req, res) => {
     try {
         const { username, password, name, phone, commission_rate } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -943,7 +997,7 @@ router.post('/admin/crm/team/new', isSuperAdmin, async (req, res) => {
 });
 
 // POST /admin/crm/team/:id/edit — Edit Sales Rep
-router.post('/admin/crm/team/:id/edit', isSuperAdmin, async (req, res) => {
+router.post('/admin/crm/team/:id/edit', isOnlySuperAdmin, async (req, res) => {
     try {
         const repId = req.params.id;
         const { name, phone, commission_rate, password } = req.body;
@@ -969,7 +1023,7 @@ router.post('/admin/crm/team/:id/edit', isSuperAdmin, async (req, res) => {
 });
 
 // POST /admin/crm/team/:id/toggle — Activate/Deactivate Sales Rep
-router.post('/admin/crm/team/:id/toggle', isSuperAdmin, async (req, res) => {
+router.post('/admin/crm/team/:id/toggle', isOnlySuperAdmin, async (req, res) => {
     try {
         const repId = req.params.id;
         await db.pool.execute(`UPDATE master_admins SET is_active = NOT is_active WHERE id = ?`, [repId]);
@@ -984,11 +1038,26 @@ router.post('/admin/crm/team/:id/toggle', isSuperAdmin, async (req, res) => {
 router.get('/admin/crm/finances', isSuperAdmin, async (req, res) => {
     try {
         await ensureCrmSchema();
+        const userRole = req.session.masterAdminRole || 'super_admin';
+        const userId = req.session.masterAdminId;
+
         const [reps] = await db.pool.execute(`SELECT id, username, name FROM master_admins WHERE is_active = 1 ORDER BY name`);
 
-        const [disbursedRow] = await db.pool.execute(`SELECT SUM(amount) as total FROM crm_rep_finances WHERE transaction_type = 'disbursement'`);
-        const [expenseRow] = await db.pool.execute(`SELECT SUM(amount) as total FROM crm_rep_finances WHERE transaction_type = 'expense_claim'`);
-        const [commRow] = await db.pool.execute(`SELECT SUM(amount) as total FROM crm_rep_finances WHERE transaction_type = 'commission_payout'`);
+        let disbursedSql = `SELECT SUM(amount) as total FROM crm_rep_finances WHERE transaction_type = 'disbursement'`;
+        let expenseSql = `SELECT SUM(amount) as total FROM crm_rep_finances WHERE transaction_type = 'expense_claim'`;
+        let commSql = `SELECT SUM(amount) as total FROM crm_rep_finances WHERE transaction_type = 'commission_payout'`;
+        const statParams = [];
+
+        if (userRole === 'sales_rep') {
+            disbursedSql += ` AND rep_id = ?`;
+            expenseSql += ` AND rep_id = ?`;
+            commSql += ` AND rep_id = ?`;
+            statParams.push(userId);
+        }
+
+        const [disbursedRow] = await db.pool.execute(disbursedSql, statParams);
+        const [expenseRow] = await db.pool.execute(expenseSql, statParams);
+        const [commRow] = await db.pool.execute(commSql, statParams);
 
         const summary = {
             totalDisbursed: disbursedRow[0]?.total || 0,
@@ -997,24 +1066,39 @@ router.get('/admin/crm/finances', isSuperAdmin, async (req, res) => {
         };
 
         // Per rep balances
-        const [repBalances] = await db.pool.execute(
-            `SELECT m.id, m.name, m.username,
-                    COALESCE(SUM(CASE WHEN f.transaction_type = 'disbursement' THEN f.amount ELSE 0 END), 0) as disbursed,
-                    COALESCE(SUM(CASE WHEN f.transaction_type = 'expense_claim' THEN f.amount ELSE 0 END), 0) as expenses
-             FROM master_admins m
-             LEFT JOIN crm_rep_finances f ON f.rep_id = m.id
-             GROUP BY m.id, m.name, m.username
-             ORDER BY m.name`
-        );
+        let repBalSql = `
+            SELECT m.id, m.name, m.username,
+                   COALESCE(SUM(CASE WHEN f.transaction_type = 'disbursement' THEN f.amount ELSE 0 END), 0) as disbursed,
+                   COALESCE(SUM(CASE WHEN f.transaction_type = 'expense_claim' THEN f.amount ELSE 0 END), 0) as expenses
+            FROM master_admins m
+            LEFT JOIN crm_rep_finances f ON f.rep_id = m.id
+            WHERE 1=1
+        `;
+        const repBalParams = [];
+        if (userRole === 'sales_rep') {
+            repBalSql += ` AND m.id = ?`;
+            repBalParams.push(userId);
+        }
+        repBalSql += ` GROUP BY m.id, m.name, m.username ORDER BY m.name`;
+
+        const [repBalances] = await db.pool.execute(repBalSql, repBalParams);
 
         // Transaction Ledger
-        const [transactions] = await db.pool.execute(
-            `SELECT f.*, r.name as rep_name, c.name as creator_name
-             FROM crm_rep_finances f
-             JOIN master_admins r ON f.rep_id = r.id
-             JOIN master_admins c ON f.created_by = c.id
-             ORDER BY f.transaction_date DESC, f.id DESC`
-        );
+        let txSql = `
+            SELECT f.*, r.name as rep_name, c.name as creator_name
+            FROM crm_rep_finances f
+            JOIN master_admins r ON f.rep_id = r.id
+            JOIN master_admins c ON f.created_by = c.id
+            WHERE 1=1
+        `;
+        const txParams = [];
+        if (userRole === 'sales_rep') {
+            txSql += ` AND f.rep_id = ?`;
+            txParams.push(userId);
+        }
+        txSql += ` ORDER BY f.transaction_date DESC, f.id DESC`;
+
+        const [transactions] = await db.pool.execute(txSql, txParams);
 
         res.render('super_admin/crm_finances', {
             summary,
@@ -1022,6 +1106,7 @@ router.get('/admin/crm/finances', isSuperAdmin, async (req, res) => {
             transactions,
             reps,
             username: req.session.masterAdminUsername,
+            role: userRole,
             success: req.query.success
         });
     } catch (err) {
@@ -1031,7 +1116,7 @@ router.get('/admin/crm/finances', isSuperAdmin, async (req, res) => {
 });
 
 // POST /admin/crm/finances/disburse — Disburse Funds
-router.post('/admin/crm/finances/disburse', isSuperAdmin, async (req, res) => {
+router.post('/admin/crm/finances/disburse', isOnlySuperAdmin, async (req, res) => {
     try {
         const creatorId = req.session.masterAdminId;
         const { rep_id, transaction_type, amount, transaction_date, description } = req.body;

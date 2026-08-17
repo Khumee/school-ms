@@ -38,8 +38,10 @@
 
     <main class="main-content">
         <div class="section-header">
-            <h1 class="section-title"><i class="bi bi-cash-stack"></i> Sales Team Finances & Expenses</h1>
-            <button type="button" class="btn-primary" onclick="openDisburseModal()"><i class="bi bi-plus-circle"></i> Disburse Funds to Rep</button>
+            <h1 class="section-title"><i class="bi bi-cash-stack"></i> <%= (typeof role !== 'undefined' && role === 'sales_rep') ? 'My Expenses & Advances' : 'Sales Team Finances & Expenses' %></h1>
+            <% if (typeof role === 'undefined' || role === 'super_admin') { %>
+                <button type="button" class="btn-primary" onclick="openDisburseModal()"><i class="bi bi-plus-circle"></i> Disburse Funds to Rep</button>
+            <% } %>
         </div>
 
         <% if (typeof success !== 'undefined' && success) { %>
