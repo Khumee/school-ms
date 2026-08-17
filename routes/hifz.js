@@ -619,21 +619,30 @@ router.post('/hifz/update-progress/:student_id', isAuthenticated, async (req, re
         const tenantId = req.tenant.id;
         const studentId = req.params.student_id;
         const currentPara = parseInt(req.body.current_para) || 1;
-        const linesDone = parseInt(req.body.lines_done) || 0;
-        
-        const totalLines = (Math.max(0, currentPara - 1) * 288) + linesDone;
-        
+        const currentPage = parseInt(req.body.current_page) || 1;
+        const currentLine = parseInt(req.body.current_line) || 1;
+        const avgLines = parseFloat(req.body.avg_lines) || 0;
+
+        const linesPerPage = req.tenant.hifz_lines_per_page || 15;
+        const pagesPerPara = req.tenant.hifz_pages_per_para || 20;
+
+        const linesDoneInPara = (Math.max(0, currentPage - 1) * linesPerPage) + Math.max(0, currentLine - 1);
+        const totalLines = (Math.max(0, currentPara - 1) * pagesPerPara * linesPerPage) + linesDoneInPara;
+
         let currentPhase = 'early';
         if (currentPara > 10) currentPhase = 'mid';
         if (currentPara >= 20) currentPhase = 'advanced';
 
         await db.execute(
             `UPDATE hifz_enrollment 
-             SET current_para = ?, current_para_lines_done = ?, total_lines_memorized = ?, current_phase = ?, updated_at = NOW()
+             SET current_para = ?, current_para_lines_done = ?, total_lines_memorized = ?, current_phase = ?, avg_lines_30d = ?, updated_at = NOW()
              WHERE tenant_id = ? AND student_id = ?`,
-            [currentPara, linesDone, totalLines, currentPhase, tenantId, studentId]
+            [currentPara, linesDoneInPara, totalLines, currentPhase, avgLines, tenantId, studentId]
         );
-        
+
+        // Update Khatam prediction dynamically
+        await updateStudentKhatamPrediction(tenantId, studentId);
+
         res.redirect('/hifz/student/' + studentId);
     } catch (err) {
         console.error(err);

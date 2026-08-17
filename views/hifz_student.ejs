@@ -269,8 +269,12 @@
                 const isMilestone = [5, 15, 25, 30].includes(p.para);
                 let cellTitle = `Para ${p.para}: Not Started`;
                 if (p.status === 'completed' && p.test) {
-                    const passDate = p.test.completed_date ? new Date(p.test.completed_date).toLocaleDateString() : 'N/A';
-                    cellTitle = `Para ${p.para}: Passed on ${passDate}`;
+                    if (p.test.test_result === 'prior_memorization') {
+                        cellTitle = `Para ${p.para}: Prior Memorization (Test Not Given)`;
+                    } else {
+                        const passDate = p.test.completed_date ? new Date(p.test.completed_date).toLocaleDateString() : 'N/A';
+                        cellTitle = `Para ${p.para}: Passed on ${passDate}`;
+                    }
                 } else if (p.status === 'in_progress') {
                     cellTitle = `Para ${p.para}: In Progress`;
                 } else if (p.status === 'test-pending') {
@@ -306,6 +310,9 @@
                 <span style="width: 12px; height: 12px; border-radius: 3px; background-color: #dcfce7; border: 1px solid #bbf7d0; display: inline-block;"></span> Completed (Tested)
             </div>
             <div style="display: flex; align-items: center; gap: 0.25rem;">
+                <span style="width: 12px; height: 12px; border-radius: 3px; background-color: #e0f2fe; border: 1px solid #bae6fd; display: inline-block;"></span> Prior Memorization
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.25rem;">
                 <span style="width: 12px; height: 12px; border-radius: 3px; background-color: #fef3c7; border: 1px solid #fde68a; display: inline-block;"></span> Pending Test
             </div>
             <div style="display: flex; align-items: center; gap: 0.25rem;">
@@ -320,7 +327,7 @@
         <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e2e8f0;">
             <h4 style="margin-top: 0; margin-bottom: 0.75rem; color: #0f172a;"><i class="bi bi-star-fill" style="color: #d97706;"></i> Milestone Intermediate Tests</h4>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
-                <% [5, 10, 15, 20, 25].forEach(milestone => { 
+                <% [5, 15, 25].forEach(milestone => { 
                     const record = paraMap.find(p => p.para === milestone && p.status === 'completed');
                 %>
                     <div 
@@ -472,7 +479,7 @@
 
 <!-- Update Progress Modal -->
 <div id="progressModalOverlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999;" onclick="closeProgressModal()"></div>
-<div id="progressModal" class="modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ffffff; padding: 2rem; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); z-index: 1000; width: 90%; max-width: 400px;">
+<div id="progressModal" class="modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ffffff; padding: 2rem; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); z-index: 1000; width: 90%; max-width: 450px;">
     <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-pencil-square"></i> Set Current Progress</h3>
     <form action="/hifz/update-progress/<%= studentId %>" method="POST">
         <div class="form-group" style="margin-bottom: 1rem;">
@@ -483,14 +490,31 @@
                 <% } %>
             </select>
         </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <% 
+                const linesPerPage = req.tenant.hifz_lines_per_page || 15;
+                const pagesPerPara = req.tenant.hifz_pages_per_para || 20;
+                const currLines = enrollment.current_para_lines_done || 0;
+                const initPage = Math.min(pagesPerPara, Math.floor(currLines / linesPerPage) + 1);
+                const initLine = (currLines % linesPerPage) + 1;
+            %>
+            <div class="form-group">
+                <label for="current_page" style="font-weight: 600;">Current Page in Para</label>
+                <input type="number" name="current_page" id="current_page" class="form-control" min="1" max="<%= pagesPerPara %>" value="<%= initPage %>" required>
+            </div>
+            <div class="form-group">
+                <label for="current_line" style="font-weight: 600;">Start Line in Page</label>
+                <input type="number" name="current_line" id="current_line" class="form-control" min="1" max="<%= linesPerPage %>" value="<%= initLine %>" required>
+            </div>
+        </div>
         <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label for="lines_done" style="font-weight: 600;">Lines Done in Current Para</label>
-            <input type="number" name="lines_done" id="lines_done" class="form-control" value="<%= enrollment.current_para_lines_done || 0 %>" min="0" required>
-            <small style="color: var(--muted);">Assuming 288 lines per completely memorized Para.</small>
+            <label for="avg_lines" style="font-weight: 600;">Existing Average Lines/Day</label>
+            <input type="number" step="0.1" min="0" name="avg_lines" id="avg_lines" class="form-control" value="<%= enrollment.avg_lines_30d || 0 %>" placeholder="e.g. 5.5" required>
+            <small style="color: var(--muted);">Used to calculate Khatam prediction & student pace.</small>
         </div>
         <div style="display: flex; gap: 1rem; justify-content: flex-end;">
             <button type="button" class="btn-secondary" onclick="closeProgressModal()">Cancel</button>
-            <button type="submit" class="btn-primary">Update</button>
+            <button type="submit" class="btn-primary">Update Progress</button>
         </div>
     </form>
 </div>
@@ -516,6 +540,8 @@ function closeProgressModal() {
             resultBadge = '<span class="status-cell status-paid"><i class="bi bi-check-circle-fill"></i> PASSED</span>';
         } else if (result === 'FAIL' || result === 'FAILED') {
             resultBadge = '<span class="status-cell status-unpaid"><i class="bi bi-x-circle-fill"></i> FAILED</span>';
+        } else if (result === 'PRIOR_MEMORIZATION' || result === 'TEST_NOT_GIVEN') {
+            resultBadge = '<span class="status-cell" style="background-color: #e0f2fe; color: #0369a1;"><i class="bi bi-info-circle-fill"></i> PRIOR MEMORIZATION (Test Not Given)</span>';
         } else {
             resultBadge = '<span class="status-cell" style="background-color: #fef3c7; color: #d97706;"><i class="bi bi-clock"></i> PENDING</span>';
         }

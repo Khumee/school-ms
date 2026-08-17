@@ -15,20 +15,7 @@
     </style>
 </head>
 <body>
-    <nav class="main-nav">
-        <div class="nav-container">
-            <a href="/admin" class="brand-link" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
-                <img src="/images/omnischool_logo.png" alt="OmniSchool" style="height: 32px; width: auto; border-radius: 4px;">
-                <span class="brand-name" style="font-weight: 700; color: #1e293b;">OmniSchool</span>
-            </a>
-            <ul class="nav-links">
-                <li class="user-menu">
-                    <span class="user-greeting"><i class="bi bi-person-circle"></i> Hi, <%= username %></span>
-                    <a href="/admin/logout" class="btn-danger nav-btn"><i class="bi bi-box-arrow-right"></i> Logout</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
+    <%- include('nav', { activeTab: 'tenants', req: typeof req !== 'undefined' ? req : {} }) %>
 
     <main class="main-content">
         <div class="section-header">

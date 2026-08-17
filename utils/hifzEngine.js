@@ -215,8 +215,21 @@ function buildParaMap(currentPara, completions = []) {
             const comp = completionMap[i];
             map.push({ 
                 para: i, 
-                status: comp.test_result === 'pass' ? 'completed' : 'test-pending', 
+                status: comp.test_result === 'pass' ? 'completed' : (comp.test_result === 'prior_memorization' ? 'completed' : 'test-pending'), 
                 test: comp 
+            });
+        } else if (i < currentPara) {
+            map.push({
+                para: i,
+                status: 'completed',
+                test: {
+                    para_no: i,
+                    completed_date: null,
+                    test_date: null,
+                    test_result: 'prior_memorization',
+                    test_evaluator_name: 'Prior Entry',
+                    test_notes: 'Memorized prior to starting point (Test Not Given)'
+                }
             });
         } else if (i === currentPara) {
             map.push({ para: i, status: 'in_progress', test: null });

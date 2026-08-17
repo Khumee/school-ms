@@ -254,12 +254,33 @@
                         </div>
                     </div>
 
-                    <div class="manzil-inputs-div" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-size: 0.85rem; font-weight: 600;">Select up to 3 Paras to Revise</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="number" name="manzil_para_1" class="form-control" min="1" max="30" placeholder="Para 1" value="<%= prefill ? prefill.manzil_para_1 : 1 %>">
-                            <input type="number" name="manzil_para_2" class="form-control" min="1" max="30" placeholder="Para 2" value="<%= prefill ? prefill.manzil_para_2 : Math.max(1, enrollment.current_para - 2) %>">
-                            <input type="number" name="manzil_para_3" class="form-control" min="1" max="30" placeholder="Para 3" value="<%= prefill ? prefill.manzil_para_3 : Math.max(1, enrollment.current_para - 1) %>">
+                    <div class="manzil-inputs-div" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <label style="font-size: 0.85rem; font-weight: 600; color: #78350f;">Revision Quantity:</label>
+                            <div class="status-group" id="manzil-count-group">
+                                <button type="button" class="btn-toggle-chip <%= (prefill && prefill.manzil_para_3) ? '' : ((prefill && prefill.manzil_para_2) ? '' : 'active-recited') %>" onclick="setManzilQty(1, this)">1 Para</button>
+                                <button type="button" class="btn-toggle-chip <%= (prefill && prefill.manzil_para_2 && !prefill.manzil_para_3) ? 'active-recited' : '' %>" onclick="setManzilQty(2, this)">2 Paras</button>
+                                <button type="button" class="btn-toggle-chip <%= (prefill && prefill.manzil_para_3) ? 'active-recited' : '' %>" onclick="setManzilQty(3, this)">3 Paras</button>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <label style="font-size: 0.85rem; font-weight: 600; color: #78350f; width: 100%;">Start Revision From:</label>
+                            <div style="display: flex; gap: 0.5rem; align-items: center; width: 100%;">
+                                <input type="number" id="manzil_start_para" class="form-control" style="max-width: 100px;" min="1" max="30" value="<%= (prefill && prefill.manzil_para_1) ? prefill.manzil_para_1 : 1 %>" onchange="recalcManzilFields()">
+                                <div style="display: flex; gap: 0.35rem;">
+                                    <button type="button" class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="setManzilStart(1)">Para 1</button>
+                                    <% if (enrollment.current_para > 1) { %>
+                                        <button type="button" class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="setManzilStart(<%= Math.max(1, enrollment.current_para - 1) %>)">Para <%= Math.max(1, enrollment.current_para - 1) %> (Prev)</button>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+                            <input type="number" id="manzil_p1" name="manzil_para_1" class="form-control" min="1" max="30" placeholder="Para 1" value="<%= prefill ? prefill.manzil_para_1 : 1 %>">
+                            <input type="number" id="manzil_p2" name="manzil_para_2" class="form-control" min="1" max="30" placeholder="Para 2" value="<%= (prefill && prefill.manzil_para_2) ? prefill.manzil_para_2 : '' %>">
+                            <input type="number" id="manzil_p3" name="manzil_para_3" class="form-control" min="1" max="30" placeholder="Para 3" value="<%= (prefill && prefill.manzil_para_3) ? prefill.manzil_para_3 : '' %>">
                         </div>
                     </div>
                 </div>
@@ -300,6 +321,39 @@
             return false;
         }
         return true;
+    }
+
+    let currentManzilQty = <%= (prefill && prefill.manzil_para_3) ? 3 : ((prefill && prefill.manzil_para_2) ? 2 : 1) %>;
+    function setManzilQty(qty, btn) {
+        currentManzilQty = qty;
+        const group = document.getElementById('manzil-count-group');
+        group.querySelectorAll('.btn-toggle-chip').forEach(b => b.className = 'btn-toggle-chip');
+        btn.classList.add('active-recited');
+        recalcManzilFields();
+    }
+
+    function setManzilStart(p) {
+        document.getElementById('manzil_start_para').value = p;
+        recalcManzilFields();
+    }
+
+    function recalcManzilFields() {
+        const startP = parseInt(document.getElementById('manzil_start_para').value) || 1;
+        const p1Input = document.getElementById('manzil_p1');
+        const p2Input = document.getElementById('manzil_p2');
+        const p3Input = document.getElementById('manzil_p3');
+
+        p1Input.value = startP;
+        if (currentManzilQty >= 2) {
+            p2Input.value = (startP % 30) + 1;
+        } else {
+            p2Input.value = '';
+        }
+        if (currentManzilQty >= 3) {
+            p3Input.value = ((startP + 1) % 30) + 1;
+        } else {
+            p3Input.value = '';
+        }
     }
 
     function calcTotalLines() {

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - Meetings & Field Visits</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #4338ca;
+        }
+    </style>
+</head>
+<body>
+    <%- include('nav', { activeTab: 'meetings', req: typeof req !== 'undefined' ? req : {} }) %>
+
+    <main class="main-content">
+        <div class="section-header">
+            <h1 class="section-title"><i class="bi bi-calendar-event"></i> Meetings, Customer Demands & Field Visits</h1>
+        </div>
+
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> <%= success %></div>
+        <% } %>
+
+        <!-- Filter Bar -->
+        <div class="card" style="margin-bottom: 1.5rem; padding: 1rem;">
+            <form method="GET" action="/admin/crm/meetings" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <select name="rep_id" class="form-control" style="max-width: 200px;" onchange="this.form.submit()">
+                    <option value="">-- All Sales Reps --</option>
+                    <% reps.forEach(r => { %>
+                        <option value="<%= r.id %>" <%= query.rep_id == r.id ? 'selected' : '' %>><%= r.name || r.username %></option>
+                    <% }) %>
+                </select>
+
+                <select name="type" class="form-control" style="max-width: 200px;" onchange="this.form.submit()">
+                    <option value="">-- All Meeting Types --</option>
+                    <option value="in_person_visit" <%= query.type === 'in_person_visit' ? 'selected' : '' %>>In-Person Visit</option>
+                    <option value="phone_call" <%= query.type === 'phone_call' ? 'selected' : '' %>>Phone Call</option>
+                    <option value="video_demo" <%= query.type === 'video_demo' ? 'selected' : '' %>>Video Demo</option>
+                    <option value="follow_up" <%= query.type === 'follow_up' ? 'selected' : '' %>>Follow-up</option>
+                </select>
+
+                <a href="/admin/crm/meetings" class="btn-secondary" style="padding: 0.5rem 1rem;">Reset</a>
+            </form>
+        </div>
+
+        <!-- UPCOMING MEETINGS CARD -->
+        <div class="card" style="margin-bottom: 2rem; padding: 1.5rem; border-top: 4px solid #86198f;">
+            <h3 style="margin-top: 0; font-size: 1.1rem; color: #86198f; border-bottom: 1px solid #f5d0fe; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                <i class="bi bi-clock-history"></i> Upcoming Scheduled Visits & Follow-ups (<%= upcoming.length %>)
+            </h3>
+
+            <% if (upcoming.length > 0) { %>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                    <% upcoming.forEach(u => { %>
+                        <div style="background-color: #fae8ff; border: 1px solid #f0abfc; border-radius: 8px; padding: 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <strong style="font-size: 1rem; color: #701a75;"><%= u.school_name %></strong>
+                                <span style="font-size: 0.75rem; font-weight: 700; background: #86198f; color: white; padding: 0.15rem 0.4rem; border-radius: 4px;">
+                                    <%= new Date(u.next_meeting_date).toLocaleDateString([], {month:'short', day:'numeric'}) %>
+                                </span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #4a044e; margin-top: 0.25rem;">
+                                Contact: <strong><%= u.contact_person %> (<%= u.phone %>)</strong>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #701a75; margin-top: 0.25rem;">
+                                Scheduled Rep: <strong><%= u.rep_name %></strong>
+                            </div>
+                            <% if (u.next_meeting_agenda) { %>
+                                <div style="font-size: 0.85rem; font-weight: 600; color: #a21caf; margin-top: 0.5rem; background: white; padding: 0.4rem; border-radius: 4px;">
+                                    Agenda: <%= u.next_meeting_agenda %>
+                                </div>
+                            <% } %>
+                            <div style="margin-top: 0.75rem; text-align: right;">
+                                <a href="/admin/crm/leads/<%= u.id %>" class="btn-primary" style="font-size: 0.75rem; padding: 0.3rem 0.75rem; background-color: #86198f;">Open Lead 360 & Log</a>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div style="color: #64748b; font-size: 0.9rem;">No upcoming meetings scheduled at this time.</div>
+            <% } %>
+        </div>
+
+        <!-- PAST MEETINGS & CUSTOMER DEMANDS LOG -->
+        <div class="card table-container">
+            <h3 style="padding: 1.25rem 1.25rem 0 1.25rem; margin: 0; font-size: 1.1rem; color: #0f172a;">
+                <i class="bi bi-list-stars"></i> All Meeting Logs & Visit Expenses
+            </h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>School / Lead</th>
+                        <th>Type & Rep</th>
+                        <th>Discussion Notes & Customer Demands</th>
+                        <th>Expense</th>
+                        <th>Outcome</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (meetings.length > 0) { %>
+                        <% meetings.forEach(m => { %>
+                            <tr>
+                                <td style="white-space: nowrap; font-weight: 600;">
+                                    <%= new Date(m.meeting_date).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) %>
+                                </td>
+                                <td>
+                                    <a href="/admin/crm/leads/<%= m.lead_id %>" style="font-weight: 700; color: #4f46e5; text-decoration: none;"><%= m.school_name %></a>
+                                    <div style="font-size: 0.8rem; color: #64748b;"><%= m.person_met || 'Contact Person' %></div>
+                                </td>
+                                <td>
+                                    <div style="font-weight: 600;"><%= m.rep_name %></div>
+                                    <span class="status-cell" style="background-color: #f1f5f9; color: #334155; font-size: 0.7rem; text-transform: uppercase;">
+                                        <%= m.meeting_type.replace('_', ' ') %>
+                                    </span>
+                                </td>
+                                <td style="max-width: 350px;">
+                                    <div style="font-size: 0.85rem; color: #1e293b;"><%= m.discussion_notes %></div>
+                                    <% if (m.client_demands) { %>
+                                        <div style="margin-top: 0.25rem; font-size: 0.8rem; color: #991b1b; background: #fef2f2; padding: 0.3rem 0.5rem; border-radius: 4px; font-weight: 600;">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> Demand: <%= m.client_demands %>
+                                        </div>
+                                    <% } %>
+                                </td>
+                                <td style="font-weight: 600; color: #92400e;">
+                                    <% if (m.expense_amount > 0) { %>
+                                        Rs. <%= Number(m.expense_amount).toLocaleString() %>
+                                        <% if (m.expense_notes) { %><div style="font-size: 0.75rem; color: #64748b; font-weight: normal;"><%= m.expense_notes %></div><% } %>
+                                    <% } else { %>
+                                        -
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <span class="status-cell" style="background-color: #e0e7ff; color: #3730a3; font-size: 0.75rem; text-transform: uppercase;">
+                                        <%= m.outcome.replace('_', ' ') %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="/admin/crm/leads/<%= m.lead_id %>" class="btn-secondary nav-btn" style="font-size: 0.75rem;"><i class="bi bi-eye"></i> View Lead</a>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: #64748b; padding: 2rem;">
+                                No meetings logged yet.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>

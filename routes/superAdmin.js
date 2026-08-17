@@ -444,4 +444,505 @@ router.post('/admin/tenants/:id/contract/delete', isSuperAdmin, async (req, res)
     }
 });
 
+// ============================================================
+// SUPER ADMIN CRM & SALES LEADS MODULE
+// ============================================================
+
+// GET /admin/crm/leads — List all leads & pipeline overview
+router.get('/admin/crm/leads', isSuperAdmin, async (req, res) => {
+    try {
+        const { search, status, rep_id } = req.query;
+        let querySql = `
+            SELECT l.*, m.name as rep_name, m.username as rep_username
+            FROM crm_leads l
+            LEFT JOIN master_admins m ON l.assigned_to = m.id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (search) {
+            querySql += ` AND (l.school_name LIKE ? OR l.contact_person LIKE ? OR l.city LIKE ? OR l.phone LIKE ?)`;
+            const s = `%${search.trim()}%`;
+            params.push(s, s, s, s);
+        }
+        if (status) {
+            querySql += ` AND l.status = ?`;
+            params.push(status);
+        }
+        if (rep_id) {
+            querySql += ` AND l.assigned_to = ?`;
+            params.push(rep_id);
+        }
+
+        querySql += ` ORDER BY l.updated_at DESC`;
+
+        const [leads] = await db.pool.execute(querySql, params);
+        const [reps] = await db.pool.execute(`SELECT id, username, name FROM master_admins WHERE is_active = 1 ORDER BY name`);
+
+        // Compute Stats
+        const [totalRows] = await db.pool.execute(`SELECT COUNT(*) as cnt FROM crm_leads`);
+        const [activeMtgRows] = await db.pool.execute(`SELECT COUNT(*) as cnt FROM crm_leads WHERE status = 'meeting_scheduled' OR next_meeting_date >= NOW()`);
+        const [wonRows] = await db.pool.execute(`SELECT COUNT(*) as cnt FROM crm_leads WHERE status = 'won'`);
+        const [valRows] = await db.pool.execute(`SELECT SUM(agreed_monthly_rate + agreed_setup_fee) as val FROM crm_leads WHERE status != 'lost'`);
+
+        const stats = {
+            totalLeads: totalRows[0]?.cnt || 0,
+            activeMeetings: activeMtgRows[0]?.cnt || 0,
+            wonLeads: wonRows[0]?.cnt || 0,
+            pipelineValue: valRows[0]?.val || 0
+        };
+
+        res.render('super_admin/crm_leads_list', {
+            leads,
+            reps,
+            stats,
+            query: req.query,
+            username: req.session.masterAdminUsername,
+            success: req.query.success
+        });
+    } catch (err) {
+        console.error('CRM Leads Error:', err);
+        res.status(500).send('Error loading CRM leads.');
+    }
+});
+
+// GET /admin/crm/leads/new — Add Lead Form
+router.get('/admin/crm/leads/new', isSuperAdmin, async (req, res) => {
+    try {
+        const [reps] = await db.pool.execute(`SELECT id, username, name FROM master_admins WHERE is_active = 1 ORDER BY name`);
+        res.render('super_admin/crm_lead_form', { isEdit: false, lead: {}, reps, username: req.session.masterAdminUsername });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading new lead form.');
+    }
+});
+
+// POST /admin/crm/leads/new — Create Lead
+router.post('/admin/crm/leads/new', isSuperAdmin, async (req, res) => {
+    try {
+        const { school_name, contact_person, designation, phone, email, address, city, est_students, current_system, assigned_to, status, lead_source, notes } = req.body;
+        
+        await db.pool.execute(
+            `INSERT INTO crm_leads 
+             (school_name, contact_person, designation, phone, email, address, city, est_students, current_system, assigned_to, status, lead_source, notes)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                school_name, contact_person, designation || null, phone, email || null,
+                address || null, city, parseInt(est_students) || 0, current_system || null,
+                assigned_to ? parseInt(assigned_to) : null, status || 'new', lead_source || null, notes || null
+            ]
+        );
+
+        res.redirect('/admin/crm/leads?success=Lead created successfully');
+    } catch (err) {
+        console.error('Error creating lead:', err);
+        res.status(500).send('Error creating lead.');
+    }
+});
+
+// GET /admin/crm/leads/:id — Lead 360 View
+router.get('/admin/crm/leads/:id', isSuperAdmin, async (req, res) => {
+    try {
+        const leadId = req.params.id;
+        const [[lead]] = await db.pool.execute(
+            `SELECT l.*, m.name as rep_name, m.username as rep_username
+             FROM crm_leads l
+             LEFT JOIN master_admins m ON l.assigned_to = m.id
+             WHERE l.id = ?`,
+            [leadId]
+        );
+
+        if (!lead) return res.status(404).send('Lead not found.');
+
+        const [meetings] = await db.pool.execute(
+            `SELECT mt.*, m.name as rep_name, m.username as rep_username
+             FROM crm_meetings mt
+             JOIN master_admins m ON mt.rep_id = m.id
+             WHERE mt.lead_id = ?
+             ORDER BY mt.meeting_date DESC`,
+            [leadId]
+        );
+
+        res.render('super_admin/crm_lead_view', {
+            lead,
+            meetings,
+            username: req.session.masterAdminUsername,
+            success: req.query.success
+        });
+    } catch (err) {
+        console.error('Error viewing lead:', err);
+        res.status(500).send('Error loading lead profile.');
+    }
+});
+
+// GET /admin/crm/leads/:id/edit — Edit Lead Form
+router.get('/admin/crm/leads/:id/edit', isSuperAdmin, async (req, res) => {
+    try {
+        const leadId = req.params.id;
+        const [[lead]] = await db.pool.execute(`SELECT * FROM crm_leads WHERE id = ?`, [leadId]);
+        if (!lead) return res.status(404).send('Lead not found.');
+
+        const [reps] = await db.pool.execute(`SELECT id, username, name FROM master_admins WHERE is_active = 1 ORDER BY name`);
+        res.render('super_admin/crm_lead_form', { isEdit: true, lead, reps, username: req.session.masterAdminUsername });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading edit form.');
+    }
+});
+
+// POST /admin/crm/leads/:id/edit — Update Lead
+router.post('/admin/crm/leads/:id/edit', isSuperAdmin, async (req, res) => {
+    try {
+        const leadId = req.params.id;
+        const { school_name, contact_person, designation, phone, email, address, city, est_students, current_system, assigned_to, status, lead_source, notes } = req.body;
+
+        await db.pool.execute(
+            `UPDATE crm_leads 
+             SET school_name = ?, contact_person = ?, designation = ?, phone = ?, email = ?, address = ?, city = ?, 
+                 est_students = ?, current_system = ?, assigned_to = ?, status = ?, lead_source = ?, notes = ?
+             WHERE id = ?`,
+            [
+                school_name, contact_person, designation || null, phone, email || null, address || null, city,
+                parseInt(est_students) || 0, current_system || null, assigned_to ? parseInt(assigned_to) : null,
+                status || 'new', lead_source || null, notes || null, leadId
+            ]
+        );
+
+        res.redirect(`/admin/crm/leads/${leadId}?success=Lead updated successfully`);
+    } catch (err) {
+        console.error('Error updating lead:', err);
+        res.status(500).send('Error updating lead.');
+    }
+});
+
+// POST /admin/crm/leads/:id/status — Quick Status Change
+router.post('/admin/crm/leads/:id/status', isSuperAdmin, async (req, res) => {
+    try {
+        const leadId = req.params.id;
+        const { status } = req.body;
+        await db.pool.execute(`UPDATE crm_leads SET status = ? WHERE id = ?`, [status, leadId]);
+        res.redirect(`/admin/crm/leads/${leadId}?success=Status updated`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error updating status.');
+    }
+});
+
+// POST /admin/crm/leads/:id/pricing — Update Financial Rates & Commission
+router.post('/admin/crm/leads/:id/pricing', isSuperAdmin, async (req, res) => {
+    try {
+        const leadId = req.params.id;
+        const { agreed_setup_fee, agreed_monthly_rate, agreed_rate_per_student, rep_commission_pct, rep_commission_flat } = req.body;
+
+        await db.pool.execute(
+            `UPDATE crm_leads
+             SET agreed_setup_fee = ?, agreed_monthly_rate = ?, agreed_rate_per_student = ?, rep_commission_pct = ?, rep_commission_flat = ?
+             WHERE id = ?`,
+            [
+                parseFloat(agreed_setup_fee) || 0, parseFloat(agreed_monthly_rate) || 0,
+                parseFloat(agreed_rate_per_student) || 0, parseFloat(rep_commission_pct) || 0,
+                parseFloat(rep_commission_flat) || 0, leadId
+            ]
+        );
+
+        res.redirect(`/admin/crm/leads/${leadId}?success=Financial rates saved`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error saving rates.');
+    }
+});
+
+// POST /admin/crm/leads/:id/meeting — Record Meeting Log & Schedule Next Visit
+router.post('/admin/crm/leads/:id/meeting', isSuperAdmin, async (req, res) => {
+    try {
+        const leadId = req.params.id;
+        const repId = req.session.masterAdminId;
+        const { meeting_date, meeting_type, person_met, discussion_notes, client_demands, outcome, next_meeting_date, next_meeting_agenda, expense_amount, expense_notes } = req.body;
+
+        const expAmt = parseFloat(expense_amount) || 0;
+
+        await db.pool.execute(
+            `INSERT INTO crm_meetings 
+             (lead_id, rep_id, meeting_date, meeting_type, person_met, discussion_notes, client_demands, outcome, next_meeting_date, next_meeting_agenda, expense_amount, expense_notes)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                leadId, repId, meeting_date || new Date(), meeting_type || 'in_person_visit',
+                person_met || null, discussion_notes, client_demands || null, outcome || 'requires_followup',
+                next_meeting_date || null, next_meeting_agenda || null, expAmt, expense_notes || null
+            ]
+        );
+
+        // Update Lead's next meeting date/agenda and pipeline status if requested
+        let newStatusQuery = '';
+        const params = [next_meeting_date || null, next_meeting_agenda || null];
+        if (outcome === 'deal_closed') {
+            newStatusQuery = `, status = 'won'`;
+        } else if (outcome === 'demo_requested') {
+            newStatusQuery = `, status = 'demo_given'`;
+        } else if (outcome === 'rejected') {
+            newStatusQuery = `, status = 'lost'`;
+        } else if (next_meeting_date) {
+            newStatusQuery = `, status = 'meeting_scheduled'`;
+        }
+        params.push(leadId);
+
+        await db.pool.execute(
+            `UPDATE crm_leads SET next_meeting_date = ?, next_meeting_agenda = ? ${newStatusQuery} WHERE id = ?`,
+            params
+        );
+
+        // If expense claimed, log to financial ledger
+        if (expAmt > 0) {
+            const [[lead]] = await db.pool.execute(`SELECT school_name FROM crm_leads WHERE id = ?`, [leadId]);
+            await db.pool.execute(
+                `INSERT INTO crm_rep_finances (rep_id, transaction_type, amount, transaction_date, description, created_by)
+                 VALUES (?, 'expense_claim', ?, ?, ?, ?)`,
+                [repId, expAmt, meeting_date ? meeting_date.split('T')[0] : new Date().toISOString().split('T')[0], `Meeting Visit Expense: ${lead ? lead.school_name : ''} (${expense_notes || 'Travel/Food'})`, repId]
+            );
+        }
+
+        res.redirect(`/admin/crm/leads/${leadId}?success=Meeting record saved`);
+    } catch (err) {
+        console.error('Error logging meeting:', err);
+        res.status(500).send('Error recording meeting.');
+    }
+});
+
+// POST /admin/crm/leads/:id/convert — Convert Lead to Tenant
+router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
+    try {
+        const leadId = req.params.id;
+        const { school_name, subdomain, admin_email, admin_password } = req.body;
+
+        const cleanSubdomain = subdomain.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const [[existing]] = await db.pool.execute('SELECT id FROM tenants WHERE subdomain = ? LIMIT 1', [cleanSubdomain]);
+        if (existing) {
+            return res.redirect(`/admin/crm/leads/${leadId}?error=Subdomain already taken`);
+        }
+
+        // Insert new tenant
+        const [tenantResult] = await db.pool.execute(
+            `INSERT INTO tenants (school_name, subdomain, status) VALUES (?, ?, 'active')`,
+            [school_name, cleanSubdomain]
+        );
+        const tenantId = tenantResult.insertId;
+
+        // Create default admin user
+        const hashedPassword = await bcrypt.hash(admin_password, 10);
+        await db.pool.execute(
+            `INSERT INTO users (tenant_id, username, password, role) VALUES (?, ?, ?, 'admin')`,
+            [tenantId, admin_email, hashedPassword]
+        );
+
+        // Update lead status & link tenant
+        await db.pool.execute(
+            `UPDATE crm_leads SET status = 'won', converted_tenant_id = ? WHERE id = ?`,
+            [tenantId, leadId]
+        );
+
+        res.redirect(`/admin/tenants/${tenantId}/contract?success=Lead converted to Tenant successfully! Please setup contract terms.`);
+    } catch (err) {
+        console.error('Error converting lead:', err);
+        res.status(500).send('Error converting lead to tenant.');
+    }
+});
+
+// GET /admin/crm/meetings — Overview of all meetings & upcoming visits
+router.get('/admin/crm/meetings', isSuperAdmin, async (req, res) => {
+    try {
+        const { rep_id, type } = req.query;
+
+        // Fetch upcoming meetings
+        const [upcoming] = await db.pool.execute(
+            `SELECT l.id, l.school_name, l.contact_person, l.phone, l.next_meeting_date, l.next_meeting_agenda, m.name as rep_name
+             FROM crm_leads l
+             LEFT JOIN master_admins m ON l.assigned_to = m.id
+             WHERE l.next_meeting_date >= NOW()
+             ORDER BY l.next_meeting_date ASC`
+        );
+
+        // Fetch all meeting logs
+        let querySql = `
+            SELECT mt.*, l.school_name, m.name as rep_name
+            FROM crm_meetings mt
+            JOIN crm_leads l ON mt.lead_id = l.id
+            JOIN master_admins m ON mt.rep_id = m.id
+            WHERE 1=1
+        `;
+        const params = [];
+        if (rep_id) {
+            querySql += ` AND mt.rep_id = ?`;
+            params.push(rep_id);
+        }
+        if (type) {
+            querySql += ` AND mt.meeting_type = ?`;
+            params.push(type);
+        }
+        querySql += ` ORDER BY mt.meeting_date DESC`;
+
+        const [meetings] = await db.pool.execute(querySql, params);
+        const [reps] = await db.pool.execute(`SELECT id, username, name FROM master_admins WHERE is_active = 1 ORDER BY name`);
+
+        res.render('super_admin/crm_meetings', {
+            upcoming,
+            meetings,
+            reps,
+            query: req.query,
+            username: req.session.masterAdminUsername,
+            success: req.query.success
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading meetings.');
+    }
+});
+
+// GET /admin/crm/team — Sales Team Management
+router.get('/admin/crm/team', isSuperAdmin, async (req, res) => {
+    try {
+        const [reps] = await db.pool.execute(
+            `SELECT m.*, 
+                    (SELECT COUNT(*) FROM crm_leads WHERE assigned_to = m.id) as total_leads,
+                    (SELECT COUNT(*) FROM crm_meetings WHERE rep_id = m.id) as total_meetings
+             FROM master_admins m
+             ORDER BY m.created_at DESC`
+        );
+
+        res.render('super_admin/crm_team', {
+            reps,
+            username: req.session.masterAdminUsername,
+            success: req.query.success,
+            error: req.query.error
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading sales team.');
+    }
+});
+
+// POST /admin/crm/team/new — Create Sales Rep
+router.post('/admin/crm/team/new', isSuperAdmin, async (req, res) => {
+    try {
+        const { username, password, name, phone, commission_rate } = req.body;
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        await db.pool.execute(
+            `INSERT INTO master_admins (username, password, role, name, phone, commission_rate, is_active)
+             VALUES (?, ?, 'sales_rep', ?, ?, ?, 1)`,
+            [username.trim(), hashedPassword, name || null, phone || null, parseFloat(commission_rate) || 0]
+        );
+
+        res.redirect('/admin/crm/team?success=Sales representative created');
+    } catch (err) {
+        console.error('Error creating sales rep:', err);
+        res.redirect('/admin/crm/team?error=Username already exists');
+    }
+});
+
+// POST /admin/crm/team/:id/edit — Edit Sales Rep
+router.post('/admin/crm/team/:id/edit', isSuperAdmin, async (req, res) => {
+    try {
+        const repId = req.params.id;
+        const { name, phone, commission_rate, password } = req.body;
+
+        if (password && password.trim().length > 0) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            await db.pool.execute(
+                `UPDATE master_admins SET name = ?, phone = ?, commission_rate = ?, password = ? WHERE id = ?`,
+                [name || null, phone || null, parseFloat(commission_rate) || 0, hashedPassword, repId]
+            );
+        } else {
+            await db.pool.execute(
+                `UPDATE master_admins SET name = ?, phone = ?, commission_rate = ? WHERE id = ?`,
+                [name || null, phone || null, parseFloat(commission_rate) || 0, repId]
+            );
+        }
+
+        res.redirect('/admin/crm/team?success=Sales representative updated');
+    } catch (err) {
+        console.error(err);
+        res.redirect('/admin/crm/team?error=Failed to update sales rep');
+    }
+});
+
+// POST /admin/crm/team/:id/toggle — Activate/Deactivate Sales Rep
+router.post('/admin/crm/team/:id/toggle', isSuperAdmin, async (req, res) => {
+    try {
+        const repId = req.params.id;
+        await db.pool.execute(`UPDATE master_admins SET is_active = NOT is_active WHERE id = ?`, [repId]);
+        res.redirect('/admin/crm/team?success=Sales rep status updated');
+    } catch (err) {
+        console.error(err);
+        res.redirect('/admin/crm/team?error=Failed to toggle status');
+    }
+});
+
+// GET /admin/crm/finances — Finances & Expense Ledger
+router.get('/admin/crm/finances', isSuperAdmin, async (req, res) => {
+    try {
+        const [reps] = await db.pool.execute(`SELECT id, username, name FROM master_admins WHERE is_active = 1 ORDER BY name`);
+
+        const [disbursedRow] = await db.pool.execute(`SELECT SUM(amount) as total FROM crm_rep_finances WHERE transaction_type = 'disbursement'`);
+        const [expenseRow] = await db.pool.execute(`SELECT SUM(amount) as total FROM crm_rep_finances WHERE transaction_type = 'expense_claim'`);
+        const [commRow] = await db.pool.execute(`SELECT SUM(amount) as total FROM crm_rep_finances WHERE transaction_type = 'commission_payout'`);
+
+        const summary = {
+            totalDisbursed: disbursedRow[0]?.total || 0,
+            totalExpenses: expenseRow[0]?.total || 0,
+            totalCommissions: commRow[0]?.total || 0
+        };
+
+        // Per rep balances
+        const [repBalances] = await db.pool.execute(
+            `SELECT m.id, m.name, m.username,
+                    COALESCE(SUM(CASE WHEN f.transaction_type = 'disbursement' THEN f.amount ELSE 0 END), 0) as disbursed,
+                    COALESCE(SUM(CASE WHEN f.transaction_type = 'expense_claim' THEN f.amount ELSE 0 END), 0) as expenses
+             FROM master_admins m
+             LEFT JOIN crm_rep_finances f ON f.rep_id = m.id
+             GROUP BY m.id, m.name, m.username
+             ORDER BY m.name`
+        );
+
+        // Transaction Ledger
+        const [transactions] = await db.pool.execute(
+            `SELECT f.*, r.name as rep_name, c.name as creator_name
+             FROM crm_rep_finances f
+             JOIN master_admins r ON f.rep_id = r.id
+             JOIN master_admins c ON f.created_by = c.id
+             ORDER BY f.transaction_date DESC, f.id DESC`
+        );
+
+        res.render('super_admin/crm_finances', {
+            summary,
+            repBalances,
+            transactions,
+            reps,
+            username: req.session.masterAdminUsername,
+            success: req.query.success
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading finances.');
+    }
+});
+
+// POST /admin/crm/finances/disburse — Disburse Funds
+router.post('/admin/crm/finances/disburse', isSuperAdmin, async (req, res) => {
+    try {
+        const creatorId = req.session.masterAdminId;
+        const { rep_id, transaction_type, amount, transaction_date, description } = req.body;
+
+        await db.pool.execute(
+            `INSERT INTO crm_rep_finances (rep_id, transaction_type, amount, transaction_date, description, created_by)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [parseInt(rep_id), transaction_type || 'disbursement', parseFloat(amount) || 0, transaction_date || new Date().toISOString().split('T')[0], description, creatorId]
+        );
+
+        res.redirect('/admin/crm/finances?success=Funds transaction recorded');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error recording disbursement.');
+    }
+});
+
 module.exports = router;

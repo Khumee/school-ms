@@ -215,12 +215,19 @@
                             </div>
 
                             <div class="manzil-inputs <%= manzilStatus === 'not_recited' ? 'manzil-disabled' : '' %>" style="display: flex; gap: 0.4rem; padding-top: 0.5rem; flex-wrap: wrap; align-items: center;">
-                                <span style="font-size: 0.8rem; font-weight: 600; width: 100%; margin-bottom: -0.15rem;">Revision Paras:</span>
-                                <input type="number" name="entries[<%= s.student_id %>][manzil_para_1]" placeholder="P1" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="30"
+                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                    <span style="font-size: 0.8rem; font-weight: 600; color: #854d0e;">Revision Paras:</span>
+                                    <div class="status-group" style="padding: 0.05rem;">
+                                        <button type="button" class="btn-toggle-chip" onclick="quickFillManzil('<%= s.student_id %>', 1)" style="padding: 0.15rem 0.35rem; font-size: 0.65rem;">1 P</button>
+                                        <button type="button" class="btn-toggle-chip" onclick="quickFillManzil('<%= s.student_id %>', 2)" style="padding: 0.15rem 0.35rem; font-size: 0.65rem;">2 P</button>
+                                        <button type="button" class="btn-toggle-chip" onclick="quickFillManzil('<%= s.student_id %>', 3)" style="padding: 0.15rem 0.35rem; font-size: 0.65rem;">3 P</button>
+                                    </div>
+                                </div>
+                                <input type="number" id="manzil-p1-<%= s.student_id %>" name="entries[<%= s.student_id %>][manzil_para_1]" placeholder="P1" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="30"
                                        value="<%= s.manzil_para_1 || (s.prefill ? s.prefill.manzil_para_1 : '') %>">
-                                <input type="number" name="entries[<%= s.student_id %>][manzil_para_2]" placeholder="P2" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="30"
+                                <input type="number" id="manzil-p2-<%= s.student_id %>" name="entries[<%= s.student_id %>][manzil_para_2]" placeholder="P2" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="30"
                                        value="<%= s.manzil_para_2 || (s.prefill ? s.prefill.manzil_para_2 : '') %>">
-                                <input type="number" name="entries[<%= s.student_id %>][manzil_para_3]" placeholder="P3" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="30"
+                                <input type="number" id="manzil-p3-<%= s.student_id %>" name="entries[<%= s.student_id %>][manzil_para_3]" placeholder="P3" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 55px;" min="1" max="30"
                                        value="<%= s.manzil_para_3 || (s.prefill ? s.prefill.manzil_para_3 : '') %>">
                             </div>
                         </div>
@@ -360,6 +367,17 @@
             sabqiStatusInput.value = 'leave';
             manzilStatusInput.value = 'leave';
         }
+    }
+
+    function quickFillManzil(studentId, count) {
+        const p1Input = document.getElementById(`manzil-p1-${studentId}`);
+        const p2Input = document.getElementById(`manzil-p2-${studentId}`);
+        const p3Input = document.getElementById(`manzil-p3-${studentId}`);
+
+        let startP = parseInt(p1Input.value) || 1;
+        p1Input.value = startP;
+        p2Input.value = count >= 2 ? ((startP % 30) + 1) : '';
+        p3Input.value = count >= 3 ? (((startP + 1) % 30) + 1) : '';
     }
 
     document.addEventListener('DOMContentLoaded', () => {

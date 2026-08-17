@@ -1,0 +1,66 @@
+<style>
+    .superadmin-nav-bar {
+        display: flex;
+        gap: 0.5rem;
+        background: #ffffff;
+        padding: 0.75rem 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 1.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .superadmin-nav-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #64748b;
+        transition: all 0.15s ease;
+    }
+    .superadmin-nav-link:hover {
+        background-color: #f1f5f9;
+        color: #1e293b;
+    }
+    .superadmin-nav-link.active {
+        background-color: #4f46e5;
+        color: #ffffff;
+        box-shadow: 0 2px 4px rgba(79, 70, 229, 0.25);
+    }
+</style>
+
+<nav class="main-nav">
+    <div class="nav-container">
+        <a href="/admin" class="brand-link" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+            <img src="/images/omnischool_logo.png" alt="OmniSchool" style="height: 32px; width: auto; border-radius: 4px;">
+            <span class="brand-name" style="font-weight: 700; color: #1e293b;">OmniSchool SuperAdmin</span>
+        </a>
+        <ul class="nav-links">
+            <li class="user-menu">
+                <span class="user-greeting"><i class="bi bi-person-circle"></i> Hi, <%= typeof username !== 'undefined' ? username : (req.session.masterAdminUsername || 'Admin') %></span>
+                <a href="/admin/logout" class="btn-danger nav-btn"><i class="bi bi-box-arrow-right"></i> Logout</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="superadmin-nav-bar">
+    <a href="/admin" class="superadmin-nav-link <%= activeTab === 'tenants' ? 'active' : '' %>">
+        <i class="bi bi-buildings"></i> Tenants
+    </a>
+    <a href="/admin/crm/leads" class="superadmin-nav-link <%= activeTab === 'leads' ? 'active' : '' %>">
+        <i class="bi bi-funnel-fill"></i> CRM Leads
+    </a>
+    <a href="/admin/crm/meetings" class="superadmin-nav-link <%= activeTab === 'meetings' ? 'active' : '' %>">
+        <i class="bi bi-calendar-event"></i> Meetings & Visits
+    </a>
+    <a href="/admin/crm/team" class="superadmin-nav-link <%= activeTab === 'team' ? 'active' : '' %>">
+        <i class="bi bi-people-fill"></i> Sales Team
+    </a>
+    <a href="/admin/crm/finances" class="superadmin-nav-link <%= activeTab === 'finances' ? 'active' : '' %>">
+        <i class="bi bi-cash-stack"></i> Finances & Expenses
+    </a>
+</div>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - Sales Finances & Expenses</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #4338ca;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .stat-val {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <%- include('nav', { activeTab: 'finances', req: typeof req !== 'undefined' ? req : {} }) %>
+
+    <main class="main-content">
+        <div class="section-header">
+            <h1 class="section-title"><i class="bi bi-cash-stack"></i> Sales Team Finances & Expenses</h1>
+            <button type="button" class="btn-primary" onclick="openDisburseModal()"><i class="bi bi-plus-circle"></i> Disburse Funds to Rep</button>
+        </div>
+
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> <%= success %></div>
+        <% } %>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Total Disbursed Advances</div>
+                <div class="stat-val" style="color: #2563eb;">Rs. <%= Number(summary.totalDisbursed || 0).toLocaleString() %></div>
+            </div>
+            <div class="stat-card">
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Total Visit Expenses Logged</div>
+                <div class="stat-val" style="color: #d97706;">Rs. <%= Number(summary.totalExpenses || 0).toLocaleString() %></div>
+            </div>
+            <div class="stat-card">
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Net Rep Advance Balance</div>
+                <div class="stat-val" style="color: #16a34a;">Rs. <%= Number((summary.totalDisbursed || 0) - (summary.totalExpenses || 0)).toLocaleString() %></div>
+            </div>
+            <div class="stat-card">
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Commissions Payouts</div>
+                <div class="stat-val" style="color: #7e22ce;">Rs. <%= Number(summary.totalCommissions || 0).toLocaleString() %></div>
+            </div>
+        </div>
+
+        <!-- Sales Rep Balance Breakdown Table -->
+        <div class="card" style="margin-bottom: 2rem; padding: 1.25rem;">
+            <h3 style="margin-top: 0; font-size: 1.1rem; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                <i class="bi bi-person-lines-fill"></i> Sales Rep Advance & Expense Balances
+            </h3>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+                <% repBalances.forEach(rb => { %>
+                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem;">
+                        <div style="font-weight: 700; font-size: 1.05rem; color: #0f172a;"><%= rb.name || rb.username %></div>
+                        <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem;">@<%= rb.username %></div>
+                        
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.25rem 0; border-bottom: 1px dashed #cbd5e1;">
+                            <span>Advance Disbursed:</span>
+                            <strong style="color: #2563eb;">Rs. <%= Number(rb.disbursed || 0).toLocaleString() %></strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.25rem 0; border-bottom: 1px dashed #cbd5e1;">
+                            <span>Expenses Claimed:</span>
+                            <strong style="color: #d97706;">Rs. <%= Number(rb.expenses || 0).toLocaleString() %></strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; padding-top: 0.5rem; font-weight: 700;">
+                            <span>Remaining Advance:</span>
+                            <span style="color: <%= (rb.disbursed - rb.expenses) >= 0 ? '#16a34a' : '#dc2626' %>;">
+                                Rs. <%= Number((rb.disbursed || 0) - (rb.expenses || 0)).toLocaleString() %>
+                            </span>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+
+        <!-- FINANCIAL TRANSACTION LEDGER -->
+        <div class="card table-container">
+            <h3 style="padding: 1.25rem 1.25rem 0 1.25rem; margin: 0; font-size: 1.1rem; color: #0f172a;">
+                <i class="bi bi-journal-text"></i> Organization Financial Ledger
+            </h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Sales Representative</th>
+                        <th>Transaction Type</th>
+                        <th>Description / Notes</th>
+                        <th>Amount</th>
+                        <th>Recorded By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (transactions.length > 0) { %>
+                        <% transactions.forEach(t => { %>
+                            <tr>
+                                <td><%= new Date(t.transaction_date).toLocaleDateString() %></td>
+                                <td style="font-weight: 600;"><%= t.rep_name %></td>
+                                <td>
+                                    <span class="status-cell" style="font-size: 0.75rem; text-transform: uppercase; background-color: <%= t.transaction_type === 'disbursement' ? '#dbeafe' : (t.transaction_type === 'expense_claim' ? '#fef3c7' : '#f3e8ff') %>; color: <%= t.transaction_type === 'disbursement' ? '#1e40af' : (t.transaction_type === 'expense_claim' ? '#92400e' : '#6b21a8') %>;">
+                                        <%= t.transaction_type.replace('_', ' ') %>
+                                    </span>
+                                </td>
+                                <td><%= t.description %></td>
+                                <td style="font-weight: 700; color: <%= t.transaction_type === 'disbursement' ? '#2563eb' : '#059669' %>;">
+                                    Rs. <%= Number(t.amount).toLocaleString() %>
+                                </td>
+                                <td style="color: #64748b; font-size: 0.85rem;"><%= t.creator_name %></td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: #64748b; padding: 2rem;">
+                                No financial transactions recorded yet.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- DISBURSE FUNDS MODAL -->
+    <div id="disburseModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: #ffffff; padding: 2rem; border-radius: 12px; max-width: 450px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+            <h3 style="margin-top: 0; color: #2563eb; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;"><i class="bi bi-cash"></i> Disburse Advance Funds to Rep</h3>
+            
+            <form action="/admin/crm/finances/disburse" method="POST">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600;">Sales Representative *</label>
+                    <select name="rep_id" class="form-control" required>
+                        <option value="">-- Select Sales Rep --</option>
+                        <% reps.forEach(r => { %>
+                            <option value="<%= r.id %>"><%= r.name || r.username %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600;">Transaction Type</label>
+                    <select name="transaction_type" class="form-control">
+                        <option value="disbursement">Advance Travel / Meeting Allowance</option>
+                        <option value="commission_payout">Commission Payout</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600;">Amount (PKR) *</label>
+                    <input type="number" step="0.01" name="amount" class="form-control" placeholder="e.g. 5000" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600;">Date *</label>
+                    <input type="date" name="transaction_date" class="form-control" value="<%= new Date().toISOString().split('T')[0] %>" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="font-weight: 600;">Description / Notes *</label>
+                    <input type="text" name="description" class="form-control" placeholder="e.g. Advance travel budget for Lahore school visits" required>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn-secondary" onclick="closeDisburseModal()">Cancel</button>
+                    <button type="submit" class="btn-primary" style="background-color: #2563eb;"><i class="bi bi-save"></i> Save Disbursement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openDisburseModal() {
+            document.getElementById('disburseModal').style.display = 'flex';
+        }
+        function closeDisburseModal() {
+            document.getElementById('disburseModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
