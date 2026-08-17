@@ -95,8 +95,13 @@
     }
 %>
 
-<div class="section-header">
-    <h1 class="section-title"><i class="bi bi-cash-coin"></i> Monthly Fee Ledger</h1>
+<div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <h1 class="section-title" style="margin: 0;"><i class="bi bi-cash-coin"></i> Fee Ledger & Management</h1>
+    <div style="display: flex; gap: 0.75rem;">
+        <button type="button" class="btn-primary" onclick="openOtherFeeModal()" style="display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #0284c7, #0369a1); border: none; padding: 0.5rem 1rem; border-radius: 6px; color: white; font-weight: 600; cursor: pointer;">
+            <i class="bi bi-plus-square-fill" style="font-size: 1.1rem;"></i> Collect Other Fees (Exam/Paper/Event)
+        </button>
+    </div>
 </div>
 
 <form action="/fees/ledger" method="GET" class="filter-bar">
@@ -156,10 +161,11 @@
 </div>
 
 <!-- View Toggles (Tabs) -->
-<div class="nav-tabs" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem;">
-    <button class="nav-tab active" id="tab-recent-btn" onclick="switchTab('recent')"><i class="bi bi-clock-history"></i> Recent Activity</button>
+<div class="nav-tabs" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; flex-wrap: wrap;">
+    <button class="nav-tab active" id="tab-recent-btn" onclick="switchTab('recent')"><i class="bi bi-clock-history"></i> Monthly Fee Recent Activity</button>
     <button class="nav-tab" id="tab-class-btn" onclick="switchTab('class')"><i class="bi bi-diagram-3-fill"></i> Monthly Class Summary (<%= activeMonthName %>)</button>
     <button class="nav-tab" id="tab-matrix-btn" onclick="switchTab('matrix')"><i class="bi bi-grid-3x3-gap-fill"></i> Full Year Matrix</button>
+    <button class="nav-tab" id="tab-other-btn" onclick="switchTab('other')"><i class="bi bi-receipt-cutoff"></i> Other Fees Activity (Exam/Paper/Event)</button>
 </div>
 
 <!-- Tab: Recent Activity Pane -->
@@ -242,7 +248,7 @@
                                     <td style="text-align: left;"><%= s.class_name %></td>
                                     <td style="text-align: right; font-weight: 600; color: #dc2626;">PKR <%= s.due.toLocaleString() %></td>
                                     <td style="text-align: center;">
-                                        <button type="button" class="btn-primary nav-btn" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="openPaymentModal('<%= s.id %>', '<%= s.name.replace(/'/g, "\\'") %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, 0, '')"><i class="bi bi-credit-card-fill"></i> Collect</button>
+                                        <button type="button" class="btn-primary nav-btn" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="openPaymentModal('<%= s.id %>', '<%= s.name.replace(/'/g, "\\'") %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-credit-card-fill"></i> Collect</button>
                                     </td>
                                 </tr>
                             <% }) %>
@@ -388,11 +394,11 @@
                                         <div style="display: flex; gap: 0.4rem; justify-content: center;">
                                             <% if (s.madePayment) { %>
                                                 <a href="/fees/receipt/<%= s.payObj.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
-                                                <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, <%= s.payObj.amount_paid %>, <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, <%= s.payObj.additional_fee || 0 %>, '<%= s.payObj.additional_fee_description || '' %>')"><i class="bi bi-pencil-fill"></i> Edit</button>
+                                                <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, <%= s.payObj.amount_paid %>, <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-pencil-fill"></i> Edit</button>
                                             <% } else if (s.isFullWaiver) { %>
-                                                <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, 0, '')"><i class="bi bi-plus-circle"></i> Add Fee</button>
+                                                <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-plus-circle"></i> Add Fee</button>
                                             <% } else { %>
-                                                <button type="button" class="btn-primary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, 0, '')"><i class="bi bi-credit-card-fill"></i> Collect</button>
+                                                <button type="button" class="btn-primary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-credit-card-fill"></i> Collect</button>
                                             <% } %>
                                         </div>
                                     </td>
@@ -486,9 +492,9 @@
                                 <div style="display: flex; gap: 0.4rem; justify-content: center;">
                                     <% if (isPaid) { %>
                                         <a href="/fees/receipt/<%= payObj.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
-                                        <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, <%= payObj.amount_paid %>, <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, <%= payObj.additional_fee || 0 %>, '<%= payObj.additional_fee_description || '' %>')"><i class="bi bi-pencil-fill"></i> Edit</button>
+                                        <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, <%= payObj.amount_paid %>, <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-pencil-fill"></i> Edit</button>
                                     <% } else { %>
-                                        <button type="button" class="btn-primary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, 0, '')"><i class="bi bi-credit-card-fill"></i> Collect</button>
+                                        <button type="button" class="btn-primary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-credit-card-fill"></i> Collect</button>
                                     <% } %>
                                 </div>
                             </td>
@@ -551,11 +557,11 @@
                                         Waiver
                                     </td>
                                 <% } else if (amtPaid !== undefined && amtPaid > 0) { %>
-                                    <td class="status-cell status-paid cell-amount" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= m %>, <%= amtPaid %>, <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, <%= payObj.additional_fee || 0 %>, '<%= payObj.additional_fee_description || '' %>')">
+                                    <td class="status-cell status-paid cell-amount" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= m %>, <%= amtPaid %>, <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)">
                                         <%= amtPaid %>
                                     </td>
                                   <% } else { %>
-                                    <td class="status-cell status-unpaid" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= m %>, '', <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>, 0, '')">
+                                    <td class="status-cell status-unpaid" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= m %>, '', <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)">
                                         -
                                     </td>
                                   <% } %>
@@ -572,9 +578,69 @@
     </div>
 </div>
 
-<!-- Payment Modal -->
+<!-- Tab: Other Fees Activity Pane -->
+<div id="pane-other" style="display: none;">
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h3 style="margin: 0; color: var(--ink);"><i class="bi bi-receipt-cutoff"></i> Other Fee Collections (Exam, Paper, Events)</h3>
+                <p style="margin: 0.25rem 0 0; color: var(--muted); font-size: 0.875rem;">Showing non-monthly custom fee payments collected.</p>
+            </div>
+            <button type="button" class="btn-primary" onclick="openOtherFeeModal()" style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #0284c7, #0369a1); border: none;">
+                <i class="bi bi-plus-circle-fill"></i> Collect Other Fee
+            </button>
+        </div>
+
+        <div class="table-container">
+            <table class="simple-ledger-table">
+                <thead>
+                    <tr>
+                        <th style="text-align: left;">Date</th>
+                        <th style="text-align: left;">Reg No</th>
+                        <th style="text-align: left;">Student Name</th>
+                        <th style="text-align: left;">Class</th>
+                        <th style="text-align: left;">Fee Type / Description</th>
+                        <th style="text-align: right;">Amount Paid</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (locals.otherPayments && otherPayments.length > 0) { %>
+                        <% otherPayments.forEach(op => { %>
+                            <tr class="student-row status-row-paid">
+                                <td style="font-weight: 500; text-align: left;"><%= new Date(op.payment_date).toLocaleDateString('en-GB') %></td>
+                                <td style="font-weight: 600; text-align: left;"><%= op.reg_no %></td>
+                                <td style="text-align: left; font-weight: 500;">
+                                    <a href="/students/view/<%= op.student_id %>" style="color: var(--primary-color); text-decoration: underline;"><%= op.student_name %></a>
+                                </td>
+                                <td style="text-align: left;"><%= op.class_name || 'Unassigned' %></td>
+                                <td style="text-align: left; font-weight: 600; color: #0369a1;">
+                                    <span style="background-color: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem;">
+                                        <i class="bi bi-tag-fill"></i> <%= op.additional_fee_description || 'Other Fee' %>
+                                    </span>
+                                </td>
+                                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                                    PKR <%= (parseFloat(op.amount_paid) > 0 ? parseFloat(op.amount_paid) : parseFloat(op.additional_fee || 0)).toLocaleString() %>
+                                </td>
+                                <td style="text-align: center;">
+                                    <a href="/fees/receipt/<%= op.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: #64748b; padding: 2rem;">No other fees collected yet.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Payment Modal -->
 <div id="paymentModal" class="card" style="display: none; max-width: 400px; margin: 0; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); box-sizing: border-box; width: 90%; max-height: 90vh; overflow-y: auto;">
-    <h3 style="margin-bottom: 1rem;" id="modalTitle">Record Payment</h3>
+    <h3 style="margin-bottom: 1rem;" id="modalTitle">Record Monthly Payment</h3>
     <form action="/fees/pay" method="POST">
         <input type="hidden" id="modalStudentId" name="student_id">
         
@@ -620,7 +686,7 @@
             </div>
             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 0.5rem 0;">
             <div style="display: flex; justify-content: space-between; font-size: 0.95rem;">
-                <span>Fee to Collect:</span>
+                <span>Monthly Fee to Collect:</span>
                 <strong id="modalExpectedFeeDisplay" style="color: var(--primary-color);">PKR 0</strong>
             </div>
         </div>
@@ -628,18 +694,6 @@
         <div class="form-group" style="margin-bottom: 1.25rem;">
             <label for="modalAmount">Amount Paid (PKR)</label>
             <input type="number" step="0.01" id="modalAmount" name="amount" class="form-control" required>
-        </div>
-
-        <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
-            <div class="form-group">
-                <label for="modalAdditionalFee">Additional Fee (PKR)</label>
-                <input type="number" step="0.01" id="modalAdditionalFee" name="additional_fee" class="form-control" value="0">
-            </div>
-            
-            <div class="form-group">
-                <label for="modalAdditionalFeeDesc">Fee Description</label>
-                <input type="text" id="modalAdditionalFeeDesc" name="additional_fee_description" class="form-control" placeholder="e.g. Exam fee">
-            </div>
         </div>
         
         <div class="form-group" style="margin-bottom: 1.25rem;">
@@ -654,11 +708,82 @@
         
         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
             <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
-            <button type="submit" class="btn-primary">Save Payment</button>
+            <button type="submit" class="btn-primary">Save Monthly Fee</button>
         </div>
     </form>
 </div>
-<div id="modalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeModal()"></div>
+
+<!-- Other Fee Payment Modal -->
+<div id="otherFeeModal" class="card" style="display: none; max-width: 440px; margin: 0; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); box-sizing: border-box; width: 90%; max-height: 90vh; overflow-y: auto;">
+    <h3 style="margin-bottom: 0.5rem; color: #0284c7;"><i class="bi bi-receipt-cutoff"></i> Collect Other Fees</h3>
+    <p style="margin-bottom: 1.25rem; font-size: 0.85rem; color: var(--muted);">Record non-monthly fees like Exam, Paper, Event, or Sports fees.</p>
+    <form action="/fees/pay-other" method="POST">
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label for="otherModalStudentId">Select Student</label>
+            <select id="otherModalStudentId" name="student_id" class="form-control" required style="font-weight: 500;">
+                <option value="">-- Choose Student --</option>
+                <% students.forEach(s => { %>
+                    <option value="<%= s.id %>"><%= s.reg_no %> - <%= s.name %> (<%= s.class_name || 'No Class' %>)</option>
+                <% }) %>
+            </select>
+        </div>
+
+        <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+            <div class="form-group">
+                <label for="otherModalFeeType">Fee Category</label>
+                <select id="otherModalFeeType" name="fee_type" class="form-control">
+                    <option value="Exam Fee">Exam Fee</option>
+                    <option value="Paper Fee">Paper Fee</option>
+                    <option value="Event Fee">Event Fee</option>
+                    <option value="Sports Fee">Sports Fee</option>
+                    <option value="Annual Charges">Annual Charges</option>
+                    <option value="ID Card Fee">ID Card Fee</option>
+                    <option value="Custom">Custom / Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="otherModalAmount">Amount Paid (PKR)</label>
+                <input type="number" step="0.01" id="otherModalAmount" name="amount" class="form-control" placeholder="e.g. 500" required>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label for="otherModalDesc">Fee Description / Remarks</label>
+            <input type="text" id="otherModalDesc" name="additional_fee_description" class="form-control" placeholder="e.g. Midterm exam fee, Annual sports day">
+        </div>
+
+        <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+            <div class="form-group">
+                <label for="otherModalMonth">Related Month</label>
+                <select id="otherModalMonth" name="month" class="form-control">
+                    <% monthsList.forEach((mName, idx) => { %>
+                        <option value="<%= idx + 1 %>" <%= activeMonthNum === (idx + 1) ? 'selected' : '' %>><%= mName %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="otherModalYear">Year</label>
+                <select id="otherModalYear" name="year" class="form-control">
+                    <% const otherCurrY = new Date().getFullYear(); for(let y = 2024; y <= otherCurrY; y++) { %>
+                        <option value="<%= y %>" <%= activeYear == y ? 'selected' : '' %>><%= y %></option>
+                    <% } %>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label for="otherModalPaymentDate">Payment Date</label>
+            <input type="date" id="otherModalPaymentDate" name="payment_date" class="form-control" value="<%= new Date().toISOString().substring(0, 10) %>">
+        </div>
+        
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button type="button" class="btn-secondary" onclick="closeOtherFeeModal()">Cancel</button>
+            <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #0284c7, #0369a1); border: none;">Save Other Fee</button>
+        </div>
+    </form>
+</div>
+<div id="modalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeModal(); closeOtherFeeModal();"></div>
 
 <script>
     const clientClassGroups = <%- JSON.stringify(classGroups) %>;
@@ -734,7 +859,7 @@
                             <td style="text-align: left;">${s.class_name}</td>
                             <td style="text-align: right; font-weight: 600; color: #dc2626;">PKR ${s.due.toLocaleString()}</td>
                             <td style="text-align: center;">
-                                <button type="button" class="btn-primary nav-btn" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="openPaymentModal('${s.id}', '${safeName}', clientActiveMonthNum, '', ${s.expectedFee}, ${s.default_monthly_fee || 0}, ${s.custom_monthly_fee || 0}, 0, '')"><i class="bi bi-credit-card-fill"></i> Collect</button>
+                                <button type="button" class="btn-primary nav-btn" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="openPaymentModal('${s.id}', '${safeName}', clientActiveMonthNum, '', ${s.expectedFee}, ${s.default_monthly_fee || 0}, ${s.custom_monthly_fee || 0})"><i class="bi bi-credit-card-fill"></i> Collect</button>
                             </td>
                         </tr>
                     `;
@@ -757,20 +882,17 @@
 
     const clientPaymentMap = <%- JSON.stringify(paymentMap || {}) %>;
 
-    function openPaymentModal(studentId, studentName, month, currentAmount, expectedFee, classFee, concession, additionalFee, additionalFeeDesc) {
+    function openPaymentModal(studentId, studentName, month, currentAmount, expectedFee, classFee, concession) {
         const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         document.getElementById('modalStudentId').value = studentId;
         document.getElementById('modalMonth').value = month;
         document.getElementById('modalAmount').value = currentAmount || expectedFee;
-        document.getElementById('modalTitle').innerText = 'Pay Fee: ' + studentName;
+        document.getElementById('modalTitle').innerText = 'Pay Monthly Fee: ' + studentName;
         
         document.getElementById('modalClassFeeDisplay').innerText = 'PKR ' + parseFloat(classFee || 0).toLocaleString();
         document.getElementById('modalConcessionDisplay').innerText = 'PKR ' + parseFloat(concession || 0).toLocaleString();
         document.getElementById('modalExpectedFeeDisplay').innerText = 'PKR ' + parseFloat(expectedFee || 0).toLocaleString();
 
-        document.getElementById('modalAdditionalFee').value = additionalFee || 0;
-        document.getElementById('modalAdditionalFeeDesc').value = additionalFeeDesc || '';
-        
         const currentYear = new Date().getFullYear();
         const selectedYear = document.getElementById('year') ? parseInt(document.getElementById('year').value) : currentYear;
         document.getElementById('modalYear').value = selectedYear;
@@ -858,38 +980,60 @@
         document.getElementById('modalOverlay').style.display = 'none';
     }
 
+    function openOtherFeeModal(studentId = null) {
+        if (studentId) {
+            document.getElementById('otherModalStudentId').value = studentId;
+        } else {
+            document.getElementById('otherModalStudentId').value = '';
+        }
+        document.getElementById('otherModalFeeType').value = 'Exam Fee';
+        document.getElementById('otherModalAmount').value = '';
+        document.getElementById('otherModalDesc').value = '';
+        document.getElementById('otherFeeModal').style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
+    }
+
+    function closeOtherFeeModal() {
+        document.getElementById('otherFeeModal').style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+
     // Tabs switching logic
     function switchTab(tabType) {
         const recentBtn = document.getElementById('tab-recent-btn');
         const classBtn = document.getElementById('tab-class-btn');
         const simpleBtn = document.getElementById('tab-simple-btn');
         const matrixBtn = document.getElementById('tab-matrix-btn');
+        const otherBtn = document.getElementById('tab-other-btn');
         
         const recentPane = document.getElementById('pane-recent');
         const classPane = document.getElementById('pane-class');
         const simplePane = document.getElementById('pane-simple');
         const matrixPane = document.getElementById('pane-matrix');
+        const otherPane = document.getElementById('pane-other');
         
         const filterViewInput = document.getElementById('filter-view-input');
 
         // Reset all
-        [recentBtn, classBtn, simpleBtn, matrixBtn].forEach(b => { if(b) b.classList.remove('active'); });
-        [recentPane, classPane, simplePane, matrixPane].forEach(p => { if(p) p.style.display = 'none'; });
+        [recentBtn, classBtn, simpleBtn, matrixBtn, otherBtn].forEach(b => { if(b) b.classList.remove('active'); });
+        [recentPane, classPane, simplePane, matrixPane, otherPane].forEach(p => { if(p) p.style.display = 'none'; });
 
         if (tabType === 'recent' && recentBtn) {
             recentBtn.classList.add('active');
-            recentPane.style.display = 'block';
+            if (recentPane) recentPane.style.display = 'block';
         } else if (tabType === 'class' && classBtn) {
             classBtn.classList.add('active');
-            classPane.style.display = 'block';
+            if (classPane) classPane.style.display = 'block';
         } else if (tabType === 'matrix' && matrixBtn) {
             matrixBtn.classList.add('active');
-            matrixPane.style.display = 'block';
+            if (matrixPane) matrixPane.style.display = 'block';
+        } else if (tabType === 'other' && otherBtn) {
+            otherBtn.classList.add('active');
+            if (otherPane) otherPane.style.display = 'block';
         } else {
-            // default to simple
-            if(simpleBtn) simpleBtn.classList.add('active');
-            if(simplePane) simplePane.style.display = 'block';
-            tabType = 'simple';
+            if (recentBtn) recentBtn.classList.add('active');
+            if (recentPane) recentPane.style.display = 'block';
+            tabType = 'recent';
         }
         
         if (filterViewInput) filterViewInput.value = tabType;

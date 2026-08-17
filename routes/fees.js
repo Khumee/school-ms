@@ -187,8 +187,19 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
              FROM fee_payments fp
              JOIN students s ON fp.student_id = s.id
              LEFT JOIN classes c ON s.class_id = c.id
-             WHERE fp.tenant_id = ?
+             WHERE fp.tenant_id = ? AND fp.month >= 1 AND fp.month <= 12
              ORDER BY fp.payment_date DESC, fp.id DESC LIMIT 10`,
+            [tenantId]
+        );
+
+        // Fetch recent other fees (Exam, Paper, Event, etc.)
+        const [otherPayments] = await db.execute(
+            `SELECT fp.*, s.name as student_name, s.reg_no, c.name as class_name
+             FROM fee_payments fp
+             JOIN students s ON fp.student_id = s.id
+             LEFT JOIN classes c ON s.class_id = c.id
+             WHERE fp.tenant_id = ? AND (fp.additional_fee > 0 OR fp.additional_fee_description IS NOT NULL OR fp.month = 13)
+             ORDER BY fp.payment_date DESC, fp.id DESC LIMIT 50`,
             [tenantId]
         );
 
@@ -204,6 +215,7 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
             activeMonthNum: activeMonth, 
             activeYear: activeYear,
             recentPayments,
+            otherPayments,
             topDefaulters
         });
     } catch (err) {
@@ -241,6 +253,36 @@ router.post('/fees/pay', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send('Error recording fee payment.');
+    }
+});
+
+// POST /fees/pay-other - record custom/one-off other fees (Exam, Paper, Event, etc.)
+router.post('/fees/pay-other', isAuthenticated, async (req, res) => {
+    const { student_id, month, year, fee_type, additional_fee_description, amount, payment_date, redirect_url } = req.body;
+    try {
+        const tenantId = req.tenant.id;
+        const activeYear = year ? parseInt(year) : new Date().getFullYear();
+        const activeMonth = month ? parseInt(month) : 13;
+        const payDate = payment_date ? new Date(payment_date) : new Date();
+        const feeAmt = parseFloat(amount) || 0.00;
+
+        let desc = fee_type || 'Other Fee';
+        if (fee_type === 'Custom' && additional_fee_description) {
+            desc = additional_fee_description;
+        } else if (additional_fee_description && fee_type !== 'Custom') {
+            desc = `${fee_type} - ${additional_fee_description}`;
+        }
+
+        await db.execute(
+            `INSERT INTO fee_payments (tenant_id, student_id, month, year, amount_paid, payment_date, recorded_by, fine_amount, fine_waived, additional_fee, additional_fee_description)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)`,
+            [tenantId, student_id, activeMonth, activeYear, feeAmt, payDate, req.session.userId, feeAmt, desc]
+        );
+
+        res.redirect(redirect_url || '/fees/ledger?view=other');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error recording other fee payment.');
     }
 });
 
@@ -294,6 +336,17 @@ router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
         const customFee = payment.custom_monthly_fee !== null ? parseFloat(payment.custom_monthly_fee) : standardFee;
         const concession = Math.max(0, standardFee - customFee);
 
+        let monthLabel = 'Monthly Fee';
+        if (payment.month === 0) {
+            monthLabel = 'Admission Fee';
+        } else if (payment.additional_fee_description) {
+            monthLabel = payment.additional_fee_description;
+        } else if (payment.month >= 1 && payment.month <= 12) {
+            monthLabel = MONTH_NAMES[payment.month - 1];
+        }
+
+        const totalAmtPaid = parseFloat(payment.amount_paid) > 0 ? parseFloat(payment.amount_paid) : parseFloat(payment.additional_fee || 0);
+
         renderPdf(res, {
             templateName: 'fee_receipt',
             data: {
@@ -301,9 +354,9 @@ router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
                 student: { name: payment.student_name, reg_no: payment.reg_no, has_concession: payment.has_concession },
                 className: payment.class_name,
                 month: payment.month,
-                monthName: payment.month === 0 ? 'Admission Fee' : MONTH_NAMES[payment.month - 1],
+                monthName: monthLabel,
                 year: payment.year,
-                amount: payment.amount_paid,
+                amount: totalAmtPaid,
                 fineAmount: payment.fine_amount || 0,
                 fineWaived: payment.fine_waived === 1,
                 standardFee,
@@ -314,7 +367,7 @@ router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
                 MONTH_NAMES
             },
             fileBaseName: `fee_receipt_${payment.id}`,
-            downloadName: `fee-receipt-${payment.reg_no}-${payment.month === 0 ? 'AdmissionFee' : MONTH_NAMES[payment.month - 1]}-${payment.year}.pdf`
+            downloadName: `fee-receipt-${payment.reg_no}-${payment.month === 0 ? 'AdmissionFee' : (payment.additional_fee_description || MONTH_NAMES[payment.month - 1] || 'OtherFee')}-${payment.year}.pdf`
         });
     } catch (err) {
         console.error(err);
