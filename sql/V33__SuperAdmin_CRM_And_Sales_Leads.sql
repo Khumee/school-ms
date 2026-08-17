@@ -30,6 +30,8 @@ CREATE TABLE IF NOT EXISTS `crm_leads` (
   `rep_commission_flat` DECIMAL(10,2) DEFAULT 0.00,
   `converted_tenant_id` INT NULL,
   `notes` TEXT NULL,
+  `next_meeting_date` DATETIME NULL,
+  `next_meeting_agenda` VARCHAR(255) NULL,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT `fk_crm_leads_assigned_to` FOREIGN KEY (`assigned_to`) REFERENCES `master_admins` (`id`) ON DELETE SET NULL,
