@@ -74,6 +74,44 @@ router.get('/admin/logout', (req, res) => {
     req.session.destroy(() => res.redirect('/admin/login'));
 });
 
+// POST /admin/change-password — Master Admin / Sales Rep Change Password
+router.post('/admin/change-password', isSuperAdmin, async (req, res) => {
+    try {
+        const masterId = req.session.masterAdminId;
+        const { current_password, new_password, confirm_password } = req.body;
+
+        if (!current_password || !new_password || !confirm_password) {
+            return res.redirect('/admin/crm/leads?error=All password fields are required.');
+        }
+
+        if (new_password !== confirm_password) {
+            return res.redirect('/admin/crm/leads?error=New password and confirmation do not match.');
+        }
+
+        if (new_password.length < 6) {
+            return res.redirect('/admin/crm/leads?error=New password must be at least 6 characters long.');
+        }
+
+        const [[adminRow]] = await db.pool.execute('SELECT password FROM master_admins WHERE id = ?', [masterId]);
+        if (!adminRow) {
+            return res.redirect('/admin/login');
+        }
+
+        const match = await bcrypt.compare(current_password, adminRow.password);
+        if (!match) {
+            return res.redirect('/admin/crm/leads?error=Current password is incorrect.');
+        }
+
+        const hashed = await bcrypt.hash(new_password, 10);
+        await db.pool.execute('UPDATE master_admins SET password = ? WHERE id = ?', [hashed, masterId]);
+
+        res.redirect('/admin/crm/leads?success=Password updated successfully!');
+    } catch (err) {
+        console.error('Master Admin Change Password Error:', err);
+        res.redirect('/admin/crm/leads?error=Error updating password.');
+    }
+});
+
 // GET Tenant Dashboard (list)
 router.get('/admin', isOnlySuperAdmin, async (req, res) => {
     const [tenants] = await db.pool.execute('SELECT * FROM tenants ORDER BY created_at DESC');
@@ -851,11 +889,20 @@ router.post('/admin/crm/leads/:id/meeting', isSuperAdmin, async (req, res) => {
     }
 });
 
-// POST /admin/crm/leads/:id/convert — Convert Lead to Tenant
-router.post('/admin/crm/leads/:id/convert', isOnlySuperAdmin, async (req, res) => {
+// POST /admin/crm/leads/:id/convert — Convert Lead to Tenant (Super Admin or Sales Rep for assigned lead)
+router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
     try {
         const leadId = req.params.id;
+        const userRole = req.session.masterAdminRole || 'super_admin';
+        const userId = req.session.masterAdminId;
         const { school_name, subdomain, admin_email, admin_password } = req.body;
+
+        const [[lead]] = await db.pool.execute('SELECT * FROM crm_leads WHERE id = ?', [leadId]);
+        if (!lead) return res.status(404).send('Lead not found.');
+
+        if (userRole === 'sales_rep' && lead.assigned_to != userId) {
+            return res.status(403).send('Unauthorized. You can only convert leads assigned to you.');
+        }
 
         const cleanSubdomain = subdomain.toLowerCase().replace(/[^a-z0-9]/g, '');
         const [[existing]] = await db.pool.execute('SELECT id FROM tenants WHERE subdomain = ? LIMIT 1', [cleanSubdomain]);
@@ -883,7 +930,11 @@ router.post('/admin/crm/leads/:id/convert', isOnlySuperAdmin, async (req, res) =
             [tenantId, leadId]
         );
 
-        res.redirect(`/admin/tenants/${tenantId}/contract?success=Lead converted to Tenant successfully! Please setup contract terms.`);
+        if (userRole === 'sales_rep') {
+            res.redirect(`/admin/crm/leads/${leadId}?success=Lead successfully converted to Active Tenant (#${tenantId})! Admin account created.`);
+        } else {
+            res.redirect(`/admin/tenants/${tenantId}/contract?success=Lead converted to Tenant successfully! Please setup contract terms.`);
+        }
     } catch (err) {
         console.error('Error converting lead:', err);
         res.status(500).send('Error converting lead to tenant.');

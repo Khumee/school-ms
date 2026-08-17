@@ -53,7 +53,7 @@
                 </button>
                 <% if (lead.converted_tenant_id) { %>
                     <span class="status-cell status-paid" style="padding: 0.5rem 1rem; font-size: 0.9rem;"><i class="bi bi-check-circle-fill"></i> Converted Tenant (#<%= lead.converted_tenant_id %>)</span>
-                <% } else if (typeof role === 'undefined' || role === 'super_admin') { %>
+                <% } else { %>
                     <button type="button" class="btn-primary" onclick="openConvertModal()" style="background-color: #2563eb;">
                         <i class="bi bi-arrow-right-circle"></i> Convert to Tenant
                     </button>
