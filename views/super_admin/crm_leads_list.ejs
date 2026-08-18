@@ -99,12 +99,14 @@
                     <option value="lost" <%= query.status === 'lost' ? 'selected' : '' %>>Lost</option>
                 </select>
 
-                <select name="rep_id" class="form-control" style="max-width: 180px;" onchange="this.form.submit()">
-                    <option value="">-- All Sales Reps --</option>
-                    <% reps.forEach(r => { %>
-                        <option value="<%= r.id %>" <%= query.rep_id == r.id ? 'selected' : '' %>><%= r.name || r.username %></option>
-                    <% }) %>
-                </select>
+                <% if (role === 'super_admin') { %>
+                    <select name="rep_id" class="form-control" style="max-width: 180px;" onchange="this.form.submit()">
+                        <option value="">-- All Sales Reps --</option>
+                        <% reps.forEach(r => { %>
+                            <option value="<%= r.id %>" <%= query.rep_id == r.id ? 'selected' : '' %>><%= r.name || r.username %></option>
+                        <% }) %>
+                    </select>
+                <% } %>
 
                 <button type="submit" class="btn-primary" style="padding: 0.5rem 1rem;"><i class="bi bi-search"></i> Filter</button>
                 <a href="/admin/crm/leads" class="btn-secondary" style="padding: 0.5rem 1rem;">Reset</a>

@@ -29,12 +29,14 @@
         <!-- Filter Bar -->
         <div class="card" style="margin-bottom: 1.5rem; padding: 1rem;">
             <form method="GET" action="/admin/crm/meetings" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                <select name="rep_id" class="form-control" style="max-width: 200px;" onchange="this.form.submit()">
-                    <option value="">-- All Sales Reps --</option>
-                    <% reps.forEach(r => { %>
-                        <option value="<%= r.id %>" <%= query.rep_id == r.id ? 'selected' : '' %>><%= r.name || r.username %></option>
-                    <% }) %>
-                </select>
+                <% if (role === 'super_admin') { %>
+                    <select name="rep_id" class="form-control" style="max-width: 200px;" onchange="this.form.submit()">
+                        <option value="">-- All Sales Reps --</option>
+                        <% reps.forEach(r => { %>
+                            <option value="<%= r.id %>" <%= query.rep_id == r.id ? 'selected' : '' %>><%= r.name || r.username %></option>
+                        <% }) %>
+                    </select>
+                <% } %>
 
                 <select name="type" class="form-control" style="max-width: 200px;" onchange="this.form.submit()">
                     <option value="">-- All Meeting Types --</option>
