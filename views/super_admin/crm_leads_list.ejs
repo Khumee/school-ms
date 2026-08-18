@@ -162,6 +162,11 @@
                                 <td style="display: flex; gap: 0.35rem; justify-content: flex-end;">
                                     <a href="/admin/crm/leads/<%= l.id %>" class="btn-primary nav-btn" style="background-color: #4f46e5; color: white;" title="View 360"><i class="bi bi-eye"></i> View 360</a>
                                     <a href="/admin/crm/leads/<%= l.id %>/edit" class="btn-secondary nav-btn" title="Edit Lead"><i class="bi bi-pencil"></i></a>
+                                    <% if (role === 'super_admin') { %>
+                                        <form action="/admin/crm/leads/<%= l.id %>/delete" method="POST" onsubmit="return confirm('Permanently delete this lead (<%= l.school_name.replace(/'/g, "\\'") %>)? This cannot be undone.');" style="display: inline;">
+                                            <button type="submit" class="btn-secondary nav-btn" style="color: #dc2626; border-color: #fecaca;" title="Delete Lead"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    <% } %>
                                 </td>
                             </tr>
                         <% }) %>

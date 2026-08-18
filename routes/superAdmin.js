@@ -591,6 +591,22 @@ async function ensureCrmSchema() {
             ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci
         `).catch(() => {});
 
+        await db.pool.execute(`
+            CREATE TABLE IF NOT EXISTS crm_lead_handoffs (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              lead_id INT NOT NULL,
+              from_rep_id INT NULL,
+              to_rep_id INT NOT NULL,
+              handed_off_by INT NOT NULL,
+              note VARCHAR(255) NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              CONSTRAINT fk_crm_handoffs_lead FOREIGN KEY (lead_id) REFERENCES crm_leads (id) ON DELETE CASCADE,
+              CONSTRAINT fk_crm_handoffs_from_rep FOREIGN KEY (from_rep_id) REFERENCES master_admins (id) ON DELETE SET NULL,
+              CONSTRAINT fk_crm_handoffs_to_rep FOREIGN KEY (to_rep_id) REFERENCES master_admins (id) ON DELETE CASCADE,
+              CONSTRAINT fk_crm_handoffs_by FOREIGN KEY (handed_off_by) REFERENCES master_admins (id) ON DELETE CASCADE
+            ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci
+        `).catch(() => {});
+
         crmSchemaEnsured = true;
     } catch (err) {
         console.error('CRM Schema self-heal note:', err.message);
@@ -743,12 +759,32 @@ router.get('/admin/crm/leads/:id', isSuperAdmin, async (req, res) => {
             [leadId]
         );
 
+        const [reps] = await db.pool.execute(
+            `SELECT id, username, name FROM master_admins WHERE is_active = 1 AND id != ? ORDER BY name`,
+            [lead.assigned_to || 0]
+        );
+
+        const [handoffs] = await db.pool.execute(
+            `SELECT h.*, fr.name as from_rep_name, tr.name as to_rep_name, hb.name as handed_off_by_name
+             FROM crm_lead_handoffs h
+             LEFT JOIN master_admins fr ON h.from_rep_id = fr.id
+             JOIN master_admins tr ON h.to_rep_id = tr.id
+             JOIN master_admins hb ON h.handed_off_by = hb.id
+             WHERE h.lead_id = ?
+             ORDER BY h.created_at DESC`,
+            [leadId]
+        );
+
         res.render('super_admin/crm_lead_view', {
             lead,
             meetings,
+            reps,
+            handoffs,
             username: req.session.masterAdminUsername,
             role: userRole,
-            success: req.query.success
+            userId,
+            success: req.query.success,
+            error: req.query.error
         });
     } catch (err) {
         console.error('Error viewing lead:', err);
@@ -760,11 +796,19 @@ router.get('/admin/crm/leads/:id', isSuperAdmin, async (req, res) => {
 router.get('/admin/crm/leads/:id/edit', isSuperAdmin, async (req, res) => {
     try {
         const leadId = req.params.id;
+        const userRole = req.session.masterAdminRole || 'super_admin';
+        const userId = req.session.masterAdminId;
+
         const [[lead]] = await db.pool.execute(`SELECT * FROM crm_leads WHERE id = ?`, [leadId]);
         if (!lead) return res.status(404).send('Lead not found.');
 
+        // Data Scope check for sales reps
+        if (userRole === 'sales_rep' && lead.assigned_to != userId) {
+            return res.status(403).send('Unauthorized. You can only edit leads assigned to you.');
+        }
+
         const [reps] = await db.pool.execute(`SELECT id, username, name FROM master_admins WHERE is_active = 1 ORDER BY name`);
-        res.render('super_admin/crm_lead_form', { isEdit: true, lead, reps, username: req.session.masterAdminUsername });
+        res.render('super_admin/crm_lead_form', { isEdit: true, lead, reps, username: req.session.masterAdminUsername, role: userRole });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading edit form.');
@@ -775,16 +819,31 @@ router.get('/admin/crm/leads/:id/edit', isSuperAdmin, async (req, res) => {
 router.post('/admin/crm/leads/:id/edit', isSuperAdmin, async (req, res) => {
     try {
         const leadId = req.params.id;
+        const userRole = req.session.masterAdminRole || 'super_admin';
+        const userId = req.session.masterAdminId;
         const { school_name, contact_person, designation, phone, email, address, city, est_students, current_system, assigned_to, status, lead_source, notes } = req.body;
 
+        const [[existingLead]] = await db.pool.execute(`SELECT assigned_to FROM crm_leads WHERE id = ?`, [leadId]);
+        if (!existingLead) return res.status(404).send('Lead not found.');
+
+        // Data Scope check for sales reps
+        if (userRole === 'sales_rep' && existingLead.assigned_to != userId) {
+            return res.status(403).send('Unauthorized. You can only edit leads assigned to you.');
+        }
+
+        // Sales reps cannot reassign ownership here — use the dedicated Hand Off action so it stays audited
+        const newAssignedTo = userRole === 'sales_rep'
+            ? existingLead.assigned_to
+            : (assigned_to ? parseInt(assigned_to) : null);
+
         await db.pool.execute(
-            `UPDATE crm_leads 
-             SET school_name = ?, contact_person = ?, designation = ?, phone = ?, email = ?, address = ?, city = ?, 
+            `UPDATE crm_leads
+             SET school_name = ?, contact_person = ?, designation = ?, phone = ?, email = ?, address = ?, city = ?,
                  est_students = ?, current_system = ?, assigned_to = ?, status = ?, lead_source = ?, notes = ?
              WHERE id = ?`,
             [
                 school_name, contact_person, designation || null, phone, email || null, address || null, city,
-                parseInt(est_students) || 0, current_system || null, assigned_to ? parseInt(assigned_to) : null,
+                parseInt(est_students) || 0, current_system || null, newAssignedTo,
                 status || 'new', lead_source || null, notes || null, leadId
             ]
         );
@@ -793,6 +852,25 @@ router.post('/admin/crm/leads/:id/edit', isSuperAdmin, async (req, res) => {
     } catch (err) {
         console.error('Error updating lead:', err);
         res.status(500).send('Error updating lead.');
+    }
+});
+
+// POST /admin/crm/leads/:id/delete — Delete Lead (Super Admin only)
+router.post('/admin/crm/leads/:id/delete', isOnlySuperAdmin, async (req, res) => {
+    try {
+        const leadId = req.params.id;
+        const [[lead]] = await db.pool.execute('SELECT id, converted_tenant_id FROM crm_leads WHERE id = ?', [leadId]);
+        if (!lead) return res.status(404).send('Lead not found.');
+
+        if (lead.converted_tenant_id) {
+            return res.redirect(`/admin/crm/leads/${leadId}?error=Cannot delete a lead that has already been converted to an active tenant`);
+        }
+
+        await db.pool.execute('DELETE FROM crm_leads WHERE id = ?', [leadId]);
+        res.redirect('/admin/crm/leads?success=Lead deleted successfully');
+    } catch (err) {
+        console.error('Error deleting lead:', err);
+        res.redirect(`/admin/crm/leads/${req.params.id}?error=${encodeURIComponent('Deletion failed: ' + err.message)}`);
     }
 });
 
@@ -938,6 +1016,49 @@ router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
     } catch (err) {
         console.error('Error converting lead:', err);
         res.status(500).send('Error converting lead to tenant.');
+    }
+});
+
+// POST /admin/crm/leads/:id/handoff — Reassign lead to a peer sales rep
+router.post('/admin/crm/leads/:id/handoff', isSuperAdmin, async (req, res) => {
+    try {
+        const leadId = req.params.id;
+        const userRole = req.session.masterAdminRole || 'super_admin';
+        const userId = req.session.masterAdminId;
+        const { to_rep_id, note } = req.body;
+
+        const [[lead]] = await db.pool.execute('SELECT id, assigned_to FROM crm_leads WHERE id = ?', [leadId]);
+        if (!lead) return res.status(404).send('Lead not found.');
+
+        // Data Scope check: sales reps may only hand off leads currently assigned to them
+        if (userRole === 'sales_rep' && lead.assigned_to != userId) {
+            return res.status(403).send('Unauthorized. You can only hand off leads assigned to you.');
+        }
+
+        const toRepId = parseInt(to_rep_id);
+        if (!toRepId) {
+            return res.redirect(`/admin/crm/leads/${leadId}?error=Please select a rep to hand off to`);
+        }
+        if (toRepId === lead.assigned_to) {
+            return res.redirect(`/admin/crm/leads/${leadId}?error=Lead is already assigned to that rep`);
+        }
+
+        const [[toRep]] = await db.pool.execute('SELECT id FROM master_admins WHERE id = ? AND is_active = 1', [toRepId]);
+        if (!toRep) {
+            return res.redirect(`/admin/crm/leads/${leadId}?error=Selected rep is not valid`);
+        }
+
+        await db.pool.execute('UPDATE crm_leads SET assigned_to = ? WHERE id = ?', [toRepId, leadId]);
+        await db.pool.execute(
+            `INSERT INTO crm_lead_handoffs (lead_id, from_rep_id, to_rep_id, handed_off_by, note)
+             VALUES (?, ?, ?, ?, ?)`,
+            [leadId, lead.assigned_to || null, toRepId, userId, note || null]
+        );
+
+        res.redirect(`/admin/crm/leads/${leadId}?success=Lead handed off successfully`);
+    } catch (err) {
+        console.error('Error handing off lead:', err);
+        res.status(500).send('Error handing off lead.');
     }
 });
 

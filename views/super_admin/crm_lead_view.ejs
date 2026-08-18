@@ -51,6 +51,11 @@
                 <button type="button" class="btn-primary" onclick="openMeetingModal()" style="background-color: #10b981;">
                     <i class="bi bi-calendar-plus"></i> Log Visit / Meeting
                 </button>
+                <% if (!lead.converted_tenant_id && (role === 'super_admin' || (role === 'sales_rep' && lead.assigned_to == userId))) { %>
+                    <button type="button" class="btn-secondary" onclick="openHandoffModal()">
+                        <i class="bi bi-arrow-left-right"></i> Hand Off Lead
+                    </button>
+                <% } %>
                 <% if (lead.converted_tenant_id) { %>
                     <span class="status-cell status-paid" style="padding: 0.5rem 1rem; font-size: 0.9rem;"><i class="bi bi-check-circle-fill"></i> Converted Tenant (#<%= lead.converted_tenant_id %>)</span>
                 <% } else { %>
@@ -58,12 +63,20 @@
                         <i class="bi bi-arrow-right-circle"></i> Convert to Tenant
                     </button>
                 <% } %>
+                <% if (role === 'super_admin' && !lead.converted_tenant_id) { %>
+                    <form action="/admin/crm/leads/<%= lead.id %>/delete" method="POST" onsubmit="return confirm('Permanently delete this lead? This cannot be undone.');" style="display: inline;">
+                        <button type="submit" class="btn-secondary" style="color: #dc2626; border-color: #fecaca;" title="Delete Lead"><i class="bi bi-trash"></i> Delete</button>
+                    </form>
+                <% } %>
                 <a href="/admin/crm/leads" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
             </div>
         </div>
 
         <% if (typeof success !== 'undefined' && success) { %>
             <div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> <%= success %></div>
+        <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> <%= error %></div>
         <% } %>
 
         <!-- Next Meeting Banner if scheduled -->
@@ -107,6 +120,28 @@
                         <% } %>
                     </div>
                 </div>
+
+                <!-- Handoff History Card -->
+                <% if (handoffs.length > 0) { %>
+                <div style="background: #ffffff; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <h3 style="font-size: 1.1rem; font-weight: 700; color: #1e293b; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #f1f5f9;">
+                        <i class="bi bi-arrow-left-right" style="color: #f59e0b;"></i> Handoff History
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem;">
+                        <% handoffs.forEach(h => { %>
+                            <div style="padding: 0.6rem 0.75rem; background: #f8fafc; border-radius: 6px; border-left: 3px solid #f59e0b;">
+                                <div><strong><%= h.from_rep_name || 'Unassigned' %></strong> <i class="bi bi-arrow-right"></i> <strong><%= h.to_rep_name %></strong></div>
+                                <div style="color: #64748b; margin-top: 0.15rem;">
+                                    By <%= h.handed_off_by_name %> on <%= new Date(h.created_at).toLocaleString([], {year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) %>
+                                </div>
+                                <% if (h.note) { %>
+                                    <div style="margin-top: 0.25rem; font-style: italic; color: #475569;">"<%= h.note %>"</div>
+                                <% } %>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+                <% } %>
 
                 <!-- Agreed Commercial Rates Card -->
                 <div style="background: #ffffff; padding: 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
@@ -326,7 +361,41 @@
         </div>
     </div>
 
+    <!-- HAND OFF LEAD MODAL -->
+    <div id="handoffModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: #ffffff; padding: 2rem; border-radius: 12px; max-width: 480px; width: 90%; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+            <h3 style="margin-top: 0; color: #b45309; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;"><i class="bi bi-arrow-left-right"></i> Hand Off Lead to a Peer</h3>
+
+            <form action="/admin/crm/leads/<%= lead.id %>/handoff" method="POST">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600;">Hand Off To</label>
+                    <select name="to_rep_id" class="form-control" required>
+                        <option value="">-- Select Sales Rep --</option>
+                        <% reps.forEach(r => { %>
+                            <option value="<%= r.id %>"><%= r.name || r.username %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="font-weight: 600;">Note (Optional)</label>
+                    <textarea name="note" class="form-control" rows="2" placeholder="Reason for handoff, context for the new rep..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn-secondary" onclick="closeHandoffModal()">Cancel</button>
+                    <button type="submit" class="btn-primary" style="background-color: #f59e0b;"><i class="bi bi-check2"></i> Confirm Handoff</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        function openHandoffModal() {
+            document.getElementById('handoffModal').style.display = 'flex';
+        }
+        function closeHandoffModal() {
+            document.getElementById('handoffModal').style.display = 'none';
+        }
         function openMeetingModal() {
             document.getElementById('meetingModal').style.display = 'flex';
         }

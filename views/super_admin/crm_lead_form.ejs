@@ -88,12 +88,17 @@
                     </div>
                     <div class="form-group">
                         <label style="font-weight: 600;">Assigned Sales Representative</label>
-                        <select name="assigned_to" class="form-control">
-                            <option value="">-- Select Sales Rep --</option>
-                            <% reps.forEach(r => { %>
-                                <option value="<%= r.id %>" <%= (isEdit && lead.assigned_to == r.id) ? 'selected' : '' %>><%= r.name || r.username %></option>
-                            <% }) %>
-                        </select>
+                        <% if (typeof role !== 'undefined' && role === 'sales_rep') { %>
+                            <input type="text" class="form-control" value="<%= (reps.find(r => r.id == lead.assigned_to) || {}).name || 'You' %>" readonly>
+                            <small style="color: #64748b;">Use "Hand Off Lead" on the lead's page to reassign ownership.</small>
+                        <% } else { %>
+                            <select name="assigned_to" class="form-control">
+                                <option value="">-- Select Sales Rep --</option>
+                                <% reps.forEach(r => { %>
+                                    <option value="<%= r.id %>" <%= (isEdit && lead.assigned_to == r.id) ? 'selected' : '' %>><%= r.name || r.username %></option>
+                                <% }) %>
+                            </select>
+                        <% } %>
                     </div>
                     <div class="form-group">
                         <label style="font-weight: 600;">Pipeline Status</label>
