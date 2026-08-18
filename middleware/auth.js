@@ -40,7 +40,19 @@ module.exports = {
             if (req.session.masterAdminRole === 'sales_rep') {
                 return res.redirect('/admin/crm/leads');
             }
+            if (req.session.masterAdminRole === 'support_agent') {
+                return res.redirect('/admin/support/tickets');
+            }
             return next();
+        }
+        res.redirect('/admin/login');
+    },
+    isSupportStaff: (req, res, next) => {
+        if (req.session && req.session.masterAdminId) {
+            if (req.session.masterAdminRole === 'super_admin' || req.session.masterAdminRole === 'support_agent') {
+                return next();
+            }
+            return res.status(403).send('Unauthorized. Support access required.');
         }
         res.redirect('/admin/login');
     }

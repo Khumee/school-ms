@@ -95,6 +95,10 @@
                     <li><a href="/hifz"><i class="bi bi-book-half"></i> Hifz Diary</a></li>
                     <% } %>
                     
+                    <% if (hasPerm('Support')) { %>
+                    <li><a href="/support"><i class="bi bi-life-preserver"></i> Support</a></li>
+                    <% } %>
+
                     <% if (hasPerm('Settings')) { %>
                     <li class="dropdown">
                         <a href="#" class="dropbtn"><i class="bi bi-gear-fill"></i> Settings</a>

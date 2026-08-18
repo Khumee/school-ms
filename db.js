@@ -34,7 +34,8 @@ const tenantScopedTables = [
     'periods',
     'sessions',
     'student_enrollments',
-    'role_permissions'
+    'role_permissions',
+    'support_tickets'
 ];
 
 /**

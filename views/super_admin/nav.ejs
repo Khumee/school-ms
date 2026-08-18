@@ -58,20 +58,32 @@
             <i class="bi bi-buildings"></i> Tenants
         </a>
     <% } %>
-    <a href="/admin/crm/leads" class="superadmin-nav-link <%= activeTab === 'leads' ? 'active' : '' %>">
-        <i class="bi bi-funnel-fill"></i> <%= userRole === 'sales_rep' ? 'My Leads' : 'CRM Leads' %>
-    </a>
-    <a href="/admin/crm/meetings" class="superadmin-nav-link <%= activeTab === 'meetings' ? 'active' : '' %>">
-        <i class="bi bi-calendar-event"></i> <%= userRole === 'sales_rep' ? 'My Meetings & Visits' : 'Meetings & Visits' %>
-    </a>
-    <% if (userRole === 'super_admin') { %>
-        <a href="/admin/crm/team" class="superadmin-nav-link <%= activeTab === 'team' ? 'active' : '' %>">
-            <i class="bi bi-people-fill"></i> Sales Team
+    <% if (userRole === 'super_admin' || userRole === 'sales_rep') { %>
+        <a href="/admin/crm/leads" class="superadmin-nav-link <%= activeTab === 'leads' ? 'active' : '' %>">
+            <i class="bi bi-funnel-fill"></i> <%= userRole === 'sales_rep' ? 'My Leads' : 'CRM Leads' %>
+        </a>
+        <a href="/admin/crm/meetings" class="superadmin-nav-link <%= activeTab === 'meetings' ? 'active' : '' %>">
+            <i class="bi bi-calendar-event"></i> <%= userRole === 'sales_rep' ? 'My Meetings & Visits' : 'Meetings & Visits' %>
+        </a>
+        <% if (userRole === 'super_admin') { %>
+            <a href="/admin/crm/team" class="superadmin-nav-link <%= activeTab === 'team' ? 'active' : '' %>">
+                <i class="bi bi-people-fill"></i> Sales Team
+            </a>
+        <% } %>
+        <a href="/admin/crm/finances" class="superadmin-nav-link <%= activeTab === 'finances' ? 'active' : '' %>">
+            <i class="bi bi-cash-stack"></i> <%= userRole === 'sales_rep' ? 'My Expenses & Advances' : 'Finances & Expenses' %>
         </a>
     <% } %>
-    <a href="/admin/crm/finances" class="superadmin-nav-link <%= activeTab === 'finances' ? 'active' : '' %>">
-        <i class="bi bi-cash-stack"></i> <%= userRole === 'sales_rep' ? 'My Expenses & Advances' : 'Finances & Expenses' %>
-    </a>
+    <% if (userRole === 'super_admin' || userRole === 'support_agent') { %>
+        <a href="/admin/support/tickets" class="superadmin-nav-link <%= activeTab === 'support_tickets' ? 'active' : '' %>">
+            <i class="bi bi-life-preserver"></i> Support Tickets
+        </a>
+        <% if (userRole === 'super_admin') { %>
+            <a href="/admin/support/team" class="superadmin-nav-link <%= activeTab === 'support_team' ? 'active' : '' %>">
+                <i class="bi bi-headset"></i> Support Team
+            </a>
+        <% } %>
+    <% } %>
 </div>
 
 <!-- Change Password Modal for Master Admins / Sales Reps -->

@@ -57,6 +57,8 @@ router.post('/admin/login', async (req, res) => {
             return req.session.save(() => {
                 if (rows[0].role === 'sales_rep') {
                     res.redirect('/admin/crm/leads');
+                } else if (rows[0].role === 'support_agent') {
+                    res.redirect('/admin/support/tickets');
                 } else {
                     res.redirect('/admin');
                 }

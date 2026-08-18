@@ -1,0 +1,61 @@
+<%- include('partials/header') %>
+
+<style>
+    .badge-status { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+    .status-open { background-color: #e0f2fe; color: #0369a1; }
+    .status-in_progress { background-color: #fef3c7; color: #b45309; }
+    .status-resolved { background-color: #dcfce7; color: #15803d; }
+    .status-closed { background-color: #f1f5f9; color: #475569; }
+    .badge-priority { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+    .priority-low { background-color: #f1f5f9; color: #475569; }
+    .priority-medium { background-color: #ffedd5; color: #c2410c; }
+    .priority-high { background-color: #fee2e2; color: #b91c1c; }
+</style>
+
+<div class="section-header">
+    <h1 class="section-title"><i class="bi bi-life-preserver"></i> Support Tickets</h1>
+    <a href="/support/new" class="btn-primary"><i class="bi bi-plus-circle"></i> Raise New Ticket</a>
+</div>
+
+<% if (typeof success !== 'undefined' && success) { %>
+    <div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> <%= success %></div>
+<% } %>
+
+<div class="card table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>Raised By</th>
+                <th>Last Updated</th>
+                <th style="text-align: right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (tickets.length > 0) { %>
+                <% tickets.forEach(t => { %>
+                    <tr>
+                        <td style="font-weight: 700; color: #0f172a;"><%= t.subject %></td>
+                        <td><span class="badge-priority priority-<%= t.priority %>"><%= t.priority %></span></td>
+                        <td><span class="badge-status status-<%= t.status %>"><%= t.status.replace('_', ' ') %></span></td>
+                        <td><%= t.created_by_name || 'N/A' %></td>
+                        <td style="font-size: 0.85rem; color: #64748b;"><%= new Date(t.updated_at).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) %></td>
+                        <td style="text-align: right;">
+                            <a href="/support/<%= t.id %>" class="btn-primary nav-btn" style="background-color: #4f46e5; color: white;"><i class="bi bi-eye"></i> View</a>
+                        </td>
+                    </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #64748b; padding: 2rem;">
+                        No support tickets yet. <a href="/support/new">Raise your first ticket</a>.
+                    </td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+</div>
+
+<%- include('partials/footer') %>
