@@ -238,9 +238,32 @@
                         </div>
                     </div>
 
-                    <div class="sabqi-inputs-div" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        <label style="font-size: 0.85rem; font-weight: 600;">Recent Para No</label>
-                        <input type="number" name="sabqi_para" class="form-control" min="1" max="30" placeholder="Para" value="<%= prefill ? prefill.sabqi_para : Math.max(1, enrollment.current_para - 1) %>">
+                    <div class="sabqi-inputs-div" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <label style="font-size: 0.85rem; font-weight: 600; color: #14532d;">Number of Paras:</label>
+                            <div class="status-group" id="sabqi-count-group">
+                                <button type="button" class="btn-toggle-chip <%= (prefill && prefill.sabqi_para_2) ? '' : 'active-recited' %>" onclick="setSabqiQty(1, this)">1 Para</button>
+                                <button type="button" class="btn-toggle-chip <%= (prefill && prefill.sabqi_para_2) ? 'active-recited' : '' %>" onclick="setSabqiQty(2, this)">2 Paras</button>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                            <label style="font-size: 0.85rem; font-weight: 600; color: #14532d; width: 100%;">Start Recent Para From:</label>
+                            <div style="display: flex; gap: 0.5rem; align-items: center; width: 100%;">
+                                <input type="number" id="sabqi_start_para" class="form-control" style="max-width: 100px;" min="1" max="30" value="<%= prefill ? prefill.sabqi_para : Math.max(1, enrollment.current_para - 1) %>" onchange="recalcSabqiFields()">
+                                <div style="display: flex; gap: 0.35rem;">
+                                    <button type="button" class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="setSabqiStart(1)">Para 1</button>
+                                    <% if (enrollment.current_para > 1) { %>
+                                        <button type="button" class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="setSabqiStart(<%= Math.max(1, enrollment.current_para - 1) %>)">Para <%= Math.max(1, enrollment.current_para - 1) %> (Prev)</button>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+                            <input type="number" id="sabqi_p1" name="sabqi_para" class="form-control" min="1" max="30" placeholder="Para 1" value="<%= prefill ? prefill.sabqi_para : Math.max(1, enrollment.current_para - 1) %>">
+                            <input type="number" id="sabqi_p2" name="sabqi_para_2" class="form-control" min="1" max="30" placeholder="Para 2" value="<%= (prefill && prefill.sabqi_para_2) ? prefill.sabqi_para_2 : '' %>">
+                        </div>
                     </div>
                 </div>
 
@@ -353,6 +376,33 @@
             p3Input.value = ((startP + 1) % 30) + 1;
         } else {
             p3Input.value = '';
+        }
+    }
+
+    let currentSabqiQty = <%= (prefill && prefill.sabqi_para_2) ? 2 : 1 %>;
+    function setSabqiQty(qty, btn) {
+        currentSabqiQty = qty;
+        const group = document.getElementById('sabqi-count-group');
+        group.querySelectorAll('.btn-toggle-chip').forEach(b => b.className = 'btn-toggle-chip');
+        btn.classList.add('active-recited');
+        recalcSabqiFields();
+    }
+
+    function setSabqiStart(p) {
+        document.getElementById('sabqi_start_para').value = p;
+        recalcSabqiFields();
+    }
+
+    function recalcSabqiFields() {
+        const startP = parseInt(document.getElementById('sabqi_start_para').value) || 1;
+        const p1Input = document.getElementById('sabqi_p1');
+        const p2Input = document.getElementById('sabqi_p2');
+
+        p1Input.value = startP;
+        if (currentSabqiQty >= 2) {
+            p2Input.value = (startP % 30) + 1;
+        } else {
+            p2Input.value = '';
         }
     }
 

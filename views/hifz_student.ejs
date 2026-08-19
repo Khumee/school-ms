@@ -404,7 +404,7 @@
                                 </td>
                                 <td>
                                     <% if (!e.is_absent && e.sabqi_status === 'recited' && e.sabqi_para) { %>
-                                        Para <%= e.sabqi_para %>
+                                        Paras <%= [e.sabqi_para, e.sabqi_para_2].filter(Boolean).join(', ') %>
                                     <% } else if (!e.is_absent && e.sabqi_status === 'not_recited') { %>
                                         <span style="color: #ef4444; font-weight: 600;">Nagha</span>
                                     <% } else { %>

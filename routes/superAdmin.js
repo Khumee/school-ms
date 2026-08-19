@@ -969,6 +969,38 @@ router.post('/admin/crm/leads/:id/meeting', isSuperAdmin, async (req, res) => {
     }
 });
 
+// POST /admin/crm/leads/:id/meeting/:meetingId/edit — Edit Discussion Notes of a Logged Meeting
+router.post('/admin/crm/leads/:id/meeting/:meetingId/edit', isSuperAdmin, async (req, res) => {
+    try {
+        const leadId = req.params.id;
+        const meetingId = req.params.meetingId;
+        const userRole = req.session.masterAdminRole || 'super_admin';
+        const userId = req.session.masterAdminId;
+        const { discussion_notes, client_demands } = req.body;
+
+        const [[meeting]] = await db.pool.execute(
+            `SELECT id, lead_id, rep_id FROM crm_meetings WHERE id = ? AND lead_id = ?`,
+            [meetingId, leadId]
+        );
+        if (!meeting) return res.status(404).send('Meeting record not found.');
+
+        // Data Scope check: sales reps may only edit their own meeting logs
+        if (userRole === 'sales_rep' && meeting.rep_id != userId) {
+            return res.status(403).send('Unauthorized. You can only edit meetings you logged.');
+        }
+
+        await db.pool.execute(
+            `UPDATE crm_meetings SET discussion_notes = ?, client_demands = ? WHERE id = ?`,
+            [discussion_notes, client_demands || null, meetingId]
+        );
+
+        res.redirect(`/admin/crm/leads/${leadId}?success=Meeting notes updated`);
+    } catch (err) {
+        console.error('Error editing meeting:', err);
+        res.status(500).send('Error updating meeting record.');
+    }
+});
+
 // POST /admin/crm/leads/:id/convert — Convert Lead to Tenant (Super Admin or Sales Rep for assigned lead)
 router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
     try {

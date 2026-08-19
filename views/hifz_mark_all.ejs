@@ -197,10 +197,18 @@
                                 </div>
                             </div>
 
-                            <div class="sabqi-inputs <%= sabqiStatus === 'not_recited' ? 'sabqi-disabled' : '' %>" style="display: flex; align-items: center; gap: 0.5rem; padding-top: 0.5rem;">
-                                <span style="font-size: 0.8rem; font-weight: 600;">Para:</span>
-                                <input type="number" name="entries[<%= s.student_id %>][sabqi_para]" placeholder="Para" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 65px;" min="1" max="30"
+                            <div class="sabqi-inputs <%= sabqiStatus === 'not_recited' ? 'sabqi-disabled' : '' %>" style="display: flex; gap: 0.4rem; padding-top: 0.5rem; flex-wrap: wrap; align-items: center;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                    <span style="font-size: 0.8rem; font-weight: 600;">Recent Paras:</span>
+                                    <div class="status-group" style="padding: 0.05rem;">
+                                        <button type="button" class="btn-toggle-chip" onclick="quickFillSabqi('<%= s.student_id %>', 1)" style="padding: 0.15rem 0.35rem; font-size: 0.65rem;">1 P</button>
+                                        <button type="button" class="btn-toggle-chip" onclick="quickFillSabqi('<%= s.student_id %>', 2)" style="padding: 0.15rem 0.35rem; font-size: 0.65rem;">2 P</button>
+                                    </div>
+                                </div>
+                                <input type="number" id="sabqi-p1-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabqi_para]" placeholder="Para 1" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 65px;" min="1" max="30"
                                        value="<%= s.sabqi_para || (s.prefill ? s.prefill.sabqi_para : '') %>">
+                                <input type="number" id="sabqi-p2-<%= s.student_id %>" name="entries[<%= s.student_id %>][sabqi_para_2]" placeholder="Para 2" class="form-control" style="padding: 0.2rem; font-size: 0.8rem; width: 65px;" min="1" max="30"
+                                       value="<%= s.sabqi_para_2 || (s.prefill ? s.prefill.sabqi_para_2 : '') %>">
                             </div>
                         </div>
 
@@ -378,6 +386,15 @@
         p1Input.value = startP;
         p2Input.value = count >= 2 ? ((startP % 30) + 1) : '';
         p3Input.value = count >= 3 ? (((startP + 1) % 30) + 1) : '';
+    }
+
+    function quickFillSabqi(studentId, count) {
+        const p1Input = document.getElementById(`sabqi-p1-${studentId}`);
+        const p2Input = document.getElementById(`sabqi-p2-${studentId}`);
+
+        let startP = parseInt(p1Input.value) || 1;
+        p1Input.value = startP;
+        p2Input.value = count >= 2 ? ((startP % 30) + 1) : '';
     }
 
     document.addEventListener('DOMContentLoaded', () => {

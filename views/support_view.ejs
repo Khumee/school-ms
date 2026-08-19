@@ -19,7 +19,7 @@
     </div>
     <div style="display: flex; gap: 0.5rem;">
         <% if (ticket.status !== 'closed') { %>
-            <form action="/support/<%= ticket.id %>/close" method="POST" onsubmit="return confirm('Close this ticket? You can reopen it any time by replying.');" style="display: inline;">
+            <form action="/support/<%= ticket.id %>/close" method="POST" onsubmit="confirmSubmit(event, 'Close this ticket? You can reopen it any time by replying.');" style="display: inline;">
                 <button type="submit" class="btn-secondary"><i class="bi bi-check2-circle"></i> Close Ticket</button>
             </form>
         <% } %>
