@@ -1362,13 +1362,6 @@ router.get('/admin/crm/strategy', isSuperAdmin, async (req, res) => {
 
         let feedback, insights = [], counts = null;
 
-        const [competitors] = await db.pool.execute(
-            `SELECT c.*, m.name as admin_name, m.username as admin_username
-             FROM crm_competitors c
-             JOIN master_admins m ON c.added_by = m.id
-             ORDER BY c.created_at DESC`
-        );
-
         if (userRole === 'sales_rep') {
             [feedback] = await db.pool.execute(
                 `SELECT f.*, m.name as admin_name, m.username as admin_username
@@ -1406,7 +1399,6 @@ router.get('/admin/crm/strategy', isSuperAdmin, async (req, res) => {
             feedback,
             insights,
             counts,
-            competitors,
             username: req.session.masterAdminUsername,
             role: userRole,
             userId,
@@ -1462,13 +1454,37 @@ router.post('/admin/crm/strategy/feedback/:id/delete', isSuperAdmin, async (req,
     }
 });
 
-// POST /admin/crm/strategy/competitors — Log a competitor product (Super Admin or Sales Rep)
-router.post('/admin/crm/strategy/competitors', isSuperAdmin, async (req, res) => {
+// GET /admin/crm/competitors — Competitor Tracking page (Super Admin or Sales Rep)
+router.get('/admin/crm/competitors', isSuperAdmin, async (req, res) => {
+    try {
+        const [competitors] = await db.pool.execute(
+            `SELECT c.*, m.name as admin_name, m.username as admin_username
+             FROM crm_competitors c
+             JOIN master_admins m ON c.added_by = m.id
+             ORDER BY c.created_at DESC`
+        );
+
+        res.render('super_admin/crm_competitors', {
+            competitors,
+            username: req.session.masterAdminUsername,
+            role: req.session.masterAdminRole,
+            userId: req.session.masterAdminId,
+            success: req.query.success,
+            error: req.query.error
+        });
+    } catch (err) {
+        console.error('Error loading Competitor Tracking:', err);
+        res.status(500).send('Error loading Competitor Tracking.');
+    }
+});
+
+// POST /admin/crm/competitors — Log a competitor product (Super Admin or Sales Rep)
+router.post('/admin/crm/competitors', isSuperAdmin, async (req, res) => {
     try {
         const adminId = req.session.masterAdminId;
         const { product_name, website, price_offering, user_base, strengths, weaknesses, notes } = req.body;
         if (!product_name || !product_name.trim()) {
-            return res.redirect('/admin/crm/strategy?error=Competitor product name is required');
+            return res.redirect('/admin/crm/competitors?error=Competitor product name is required');
         }
 
         await db.pool.execute(
@@ -1477,16 +1493,16 @@ router.post('/admin/crm/strategy/competitors', isSuperAdmin, async (req, res) =>
             [product_name.trim(), website || null, price_offering || null, user_base || null, strengths || null, weaknesses || null, notes || null, adminId]
         );
 
-        res.redirect('/admin/crm/strategy?success=Competitor added');
+        res.redirect('/admin/crm/competitors?success=Competitor added');
     } catch (err) {
         console.error('Error adding competitor:', err);
         res.status(500).send('Error adding competitor.');
     }
 });
 
-// POST /admin/crm/strategy/competitors/:id/delete — Remove a competitor entry
+// POST /admin/crm/competitors/:id/delete — Remove a competitor entry
 // (Super Admin can remove any; a Sales Rep only ones they added)
-router.post('/admin/crm/strategy/competitors/:id/delete', isSuperAdmin, async (req, res) => {
+router.post('/admin/crm/competitors/:id/delete', isSuperAdmin, async (req, res) => {
     try {
         const userRole = req.session.masterAdminRole || 'super_admin';
         const userId = req.session.masterAdminId;
@@ -1499,7 +1515,7 @@ router.post('/admin/crm/strategy/competitors/:id/delete', isSuperAdmin, async (r
         }
 
         await db.pool.execute(`DELETE FROM crm_competitors WHERE id = ?`, [req.params.id]);
-        res.redirect('/admin/crm/strategy?success=Competitor removed');
+        res.redirect('/admin/crm/competitors?success=Competitor removed');
     } catch (err) {
         console.error('Error deleting competitor:', err);
         res.status(500).send('Error deleting competitor.');

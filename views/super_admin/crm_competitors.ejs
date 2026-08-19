@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - Competitor Tracking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #4338ca;
+        }
+        .competitor-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 1.1rem 1.25rem;
+            background: #ffffff;
+        }
+        .competitor-card .field-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-top: 0.6rem;
+            display: block;
+        }
+        .competitor-card .field-value {
+            font-size: 0.87rem;
+            color: #1e293b;
+            white-space: pre-wrap;
+            margin-top: 0.15rem;
+        }
+    </style>
+</head>
+<body>
+    <%- include('nav', { activeTab: 'competitors', req: typeof req !== 'undefined' ? req : {} }) %>
+
+    <main class="main-content">
+        <div class="section-header">
+            <h1 class="section-title"><i class="bi bi-building-exclamation"></i> Competitor Tracking</h1>
+        </div>
+
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> <%= success %></div>
+        <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert" style="background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;"><i class="bi bi-exclamation-triangle-fill"></i> <%= error %></div>
+        <% } %>
+
+        <!-- Add Competitor -->
+        <div class="card" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+            <h3 style="margin-top: 0; font-size: 1.05rem; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                <i class="bi bi-plus-circle"></i> Log a Competitor
+            </h3>
+            <p style="font-size: 0.85rem; color: #64748b; margin-top: 0;">Log competing products you run into in the field — their pricing/offering, user base, strengths and weaknesses. This feeds directly into the AI Strategy Advisor's marketing and pricing analysis.</p>
+
+            <form action="/admin/crm/competitors" method="POST">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label style="font-weight: 600;">Product Name</label>
+                        <input type="text" name="product_name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight: 600;">Website</label>
+                        <input type="text" name="website" class="form-control" placeholder="https://...">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                    <div class="form-group">
+                        <label style="font-weight: 600;">Price / Offering</label>
+                        <textarea name="price_offering" class="form-control" rows="4" placeholder="e.g. Rs. 5000/month flat, or Rs. 50/student/month..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight: 600;">User Base</label>
+                        <textarea name="user_base" class="form-control" rows="4" placeholder="e.g. ~500 schools, mostly in Punjab"></textarea>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                    <div class="form-group">
+                        <label style="font-weight: 600;">Strengths</label>
+                        <textarea name="strengths" class="form-control" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label style="font-weight: 600;">Weaknesses</label>
+                        <textarea name="weaknesses" class="form-control" rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label style="font-weight: 600;">Other Notes</label>
+                    <textarea name="notes" class="form-control" rows="6" placeholder="Anything else worth remembering about this competitor..."></textarea>
+                </div>
+                <div style="text-align: right; margin-top: 1rem;">
+                    <button type="submit" class="btn-primary"><i class="bi bi-save"></i> Save Competitor</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Competitor List -->
+        <h3 style="font-size: 1.05rem; color: #0f172a; margin-bottom: 1rem;">
+            <i class="bi bi-list-ul"></i> Logged Competitors (<%= competitors.length %>)
+        </h3>
+
+        <% if (competitors.length > 0) { %>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem;">
+                <% competitors.forEach(c => { %>
+                    <div class="competitor-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                            <strong style="color: #0f172a; font-size: 1rem;"><%= c.product_name %></strong>
+                            <% if (role === 'super_admin' || c.added_by == userId) { %>
+                                <form action="/admin/crm/competitors/<%= c.id %>/delete" method="POST" onsubmit="return confirm('Remove this competitor entry?');">
+                                    <button type="submit" style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 0;" title="Remove"><i class="bi bi-trash"></i></button>
+                                </form>
+                            <% } %>
+                        </div>
+                        <% if (c.website) { %>
+                            <div style="font-size: 0.8rem; margin-top: 0.3rem;"><a href="<%= c.website %>" target="_blank" rel="noopener noreferrer" style="color: #4f46e5;"><i class="bi bi-link-45deg"></i> <%= c.website %></a></div>
+                        <% } %>
+                        <% if (c.price_offering) { %><span class="field-label" style="color: #92400e;"><i class="bi bi-cash"></i> Price / Offering</span><div class="field-value"><%= c.price_offering %></div><% } %>
+                        <% if (c.user_base) { %><span class="field-label" style="color: #0369a1;"><i class="bi bi-people"></i> User Base</span><div class="field-value"><%= c.user_base %></div><% } %>
+                        <% if (c.strengths) { %><span class="field-label" style="color: #166534;"><i class="bi bi-plus-square"></i> Strengths</span><div class="field-value"><%= c.strengths %></div><% } %>
+                        <% if (c.weaknesses) { %><span class="field-label" style="color: #991b1b;"><i class="bi bi-dash-square"></i> Weaknesses</span><div class="field-value"><%= c.weaknesses %></div><% } %>
+                        <% if (c.notes) { %><span class="field-label" style="color: #475569;"><i class="bi bi-journal-text"></i> Notes</span><div class="field-value"><%= c.notes %></div><% } %>
+                        <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 0.75rem; border-top: 1px solid #f1f5f9; padding-top: 0.5rem;">Added by <%= c.admin_name || c.admin_username %> · <%= new Date(c.created_at).toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'}) %></div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <div class="card" style="text-align: center; color: #94a3b8; padding: 3rem 1rem;">
+                <i class="bi bi-building" style="font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #c4b5fd;"></i>
+                No competitors logged yet. Use the form above to add the first one.
+            </div>
+        <% } %>
+    </main>
+</body>
+</html>

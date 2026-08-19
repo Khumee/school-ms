@@ -167,7 +167,8 @@
                 <% } %>
             </div>
 
-            <!-- Generated Insights -->
+            <!-- Generated Insights (Super Admin only) -->
+            <% if (role !== 'sales_rep') { %>
             <div>
                 <h3 style="margin-top: 0; font-size: 1.05rem; color: #0f172a; margin-bottom: 1rem;">
                     <i class="bi bi-lightbulb"></i> Strategy Insights
@@ -212,93 +213,10 @@
                     </div>
                 <% } %>
             </div>
-        </div>
-
-        <!-- Competitor Tracking -->
-        <div class="card" style="padding: 1.5rem; margin-top: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-                <h3 style="margin: 0; font-size: 1.05rem; color: #0f172a;"><i class="bi bi-building-exclamation"></i> Competitor Tracking</h3>
-                <button type="button" class="btn-secondary" onclick="openCompetitorModal()"><i class="bi bi-plus-lg"></i> Add Competitor</button>
-            </div>
-            <p style="font-size: 0.85rem; color: #64748b; margin-top: 0;">Log competing products you run into in the field — their pricing/offering, user base, strengths and weaknesses. This feeds directly into the AI's marketing and pricing analysis.</p>
-
-            <% if (competitors.length > 0) { %>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
-                    <% competitors.forEach(c => { %>
-                        <div class="feedback-item" style="background: #ffffff;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
-                                <strong style="color: #0f172a;"><%= c.product_name %></strong>
-                                <% if (role === 'super_admin' || c.added_by == userId) { %>
-                                    <form action="/admin/crm/strategy/competitors/<%= c.id %>/delete" method="POST" onsubmit="return confirm('Remove this competitor entry?');">
-                                        <button type="submit" style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 0;" title="Remove"><i class="bi bi-trash"></i></button>
-                                    </form>
-                                <% } %>
-                            </div>
-                            <% if (c.website) { %><div style="font-size: 0.8rem; margin-top: 0.2rem;"><a href="<%= c.website %>" target="_blank" rel="noopener noreferrer" style="color: #4f46e5;"><i class="bi bi-link-45deg"></i> <%= c.website %></a></div><% } %>
-                            <% if (c.price_offering) { %><div style="font-size: 0.8rem; color: #92400e; margin-top: 0.4rem; white-space: pre-wrap;"><i class="bi bi-cash"></i> <%= c.price_offering %></div><% } %>
-                            <% if (c.user_base) { %><div style="font-size: 0.8rem; color: #0369a1; margin-top: 0.25rem;"><i class="bi bi-people"></i> <%= c.user_base %></div><% } %>
-                            <% if (c.strengths) { %><div style="font-size: 0.8rem; color: #166534; margin-top: 0.4rem; white-space: pre-wrap;"><strong>Strengths:</strong> <%= c.strengths %></div><% } %>
-                            <% if (c.weaknesses) { %><div style="font-size: 0.8rem; color: #991b1b; margin-top: 0.25rem; white-space: pre-wrap;"><strong>Weaknesses:</strong> <%= c.weaknesses %></div><% } %>
-                            <% if (c.notes) { %><div style="font-size: 0.8rem; color: #475569; margin-top: 0.4rem; white-space: pre-wrap;"><%= c.notes %></div><% } %>
-                            <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 0.5rem;">Added by <%= c.admin_name || c.admin_username %> · <%= new Date(c.created_at).toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'}) %></div>
-                        </div>
-                    <% }) %>
-                </div>
-            <% } else { %>
-                <div style="text-align: center; color: #94a3b8; padding: 1.5rem; font-size: 0.85rem;">No competitors logged yet.</div>
             <% } %>
         </div>
     </main>
-
-    <!-- ADD COMPETITOR MODAL -->
-    <div id="competitorModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
-        <div style="background: #ffffff; padding: 2rem; border-radius: 12px; max-width: 550px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
-            <h3 style="margin-top: 0; color: #4f46e5; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;"><i class="bi bi-building-exclamation"></i> Add Competitor</h3>
-            <form action="/admin/crm/strategy/competitors" method="POST">
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label style="font-weight: 600;">Product Name</label>
-                    <input type="text" name="product_name" class="form-control" required>
-                </div>
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label style="font-weight: 600;">Website</label>
-                    <input type="text" name="website" class="form-control" placeholder="https://...">
-                </div>
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label style="font-weight: 600;">Price / Offering</label>
-                    <textarea name="price_offering" class="form-control" rows="2" placeholder="e.g. Rs. 5000/month flat, or Rs. 50/student/month..."></textarea>
-                </div>
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label style="font-weight: 600;">User Base</label>
-                    <input type="text" name="user_base" class="form-control" placeholder="e.g. ~500 schools, mostly in Punjab">
-                </div>
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label style="font-weight: 600;">Strengths</label>
-                    <textarea name="strengths" class="form-control" rows="2"></textarea>
-                </div>
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label style="font-weight: 600;">Weaknesses</label>
-                    <textarea name="weaknesses" class="form-control" rows="2"></textarea>
-                </div>
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label style="font-weight: 600;">Other Notes</label>
-                    <textarea name="notes" class="form-control" rows="2"></textarea>
-                </div>
-                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-                    <button type="button" class="btn-secondary" onclick="closeCompetitorModal()">Cancel</button>
-                    <button type="submit" class="btn-primary"><i class="bi bi-save"></i> Save Competitor</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
-        function openCompetitorModal() {
-            document.getElementById('competitorModal').style.display = 'flex';
-        }
-        function closeCompetitorModal() {
-            document.getElementById('competitorModal').style.display = 'none';
-        }
-
         function startGenerating() {
             document.getElementById('generateBtn').disabled = true;
             document.getElementById('generateBtn').innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
