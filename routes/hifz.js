@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const fs = require('fs');
+const path = require('path');
 const PDFDocument = require('pdfkit');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { isAuthenticated } = require('../middleware/auth');
@@ -377,7 +379,7 @@ router.get('/hifz/mark-all', isAuthenticated, async (req, res) => {
 });
 
 // ============================================================
-// GET /hifz/mark-all/download — Printable Manual Backup Sheet (PDF)
+// GET /hifz/mark-all/download — Printable Manual Sheet (PDF)
 // Compact grid, 25 students per page, for filling by hand when the
 // system is down. Upload the filled sheet back via /hifz/mark-all/scan.
 // ============================================================
@@ -385,6 +387,7 @@ router.get('/hifz/mark-all/download', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
         const dateStr = req.query.date || new Date().toISOString().split('T')[0];
+        const teacherName = (req.query.teacher || '').trim();
 
         const [students] = await db.execute(
             `SELECT e.current_para, s.name as student_name, s.reg_no
@@ -396,70 +399,147 @@ router.get('/hifz/mark-all/download', isAuthenticated, async (req, res) => {
             [tenantId]
         );
 
-        const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 24 });
+        const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 18 });
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="hifz-mark-diary-${dateStr}.pdf"`);
         doc.pipe(res);
 
+        // NOTE: exactly ROWS_PER_PAGE rows + header + footer must fit within
+        // one physical A4 landscape page — this PDF never auto-paginates on
+        // overflow (pdfkit only starts a new page where we explicitly call
+        // doc.addPage()), so anything drawn past the page's printable height
+        // is silently clipped, not pushed to another page. Keep a real
+        // vertical safety margin whenever these constants change.
         const ROWS_PER_PAGE = 25;
-        const ROW_H = 18;
+        const ROW_H = 18.5;
+        const GROUP_ROW_H = 12;
+        const SUB_ROW_H = 12;
+        const HEADER_H = GROUP_ROW_H + SUB_ROW_H;
+        const LOGO_SIZE = 26;
+        const TOP_BLOCK_H = 26;
         const startX = doc.page.margins.left;
         const tableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
 
-        const cols = [
-            { key: 'no', w: 18, label: '#' },
-            { key: 'reg', w: 48, label: 'Reg No' },
-            { key: 'name', w: 105, label: 'Student Name' },
-            { key: 'para', w: 36, label: 'Para' },
-            { key: 'sabaq', w: 165, label: 'Sabaq (Pg:Ln → Pg:Ln)' },
-            { key: 'sabqi', w: 80, label: 'Sabqi Para(s)' },
-            { key: 'manzil', w: 95, label: 'Manzil Para(s)' },
-            { key: 'absent', w: 32, label: 'Absent' },
-            { key: 'remarks', w: 0, label: 'Remarks' }
+        let logoAbsPath = null;
+        if (req.tenant.logo_url) {
+            const candidate = path.join(__dirname, '..', 'public', String(req.tenant.logo_url).replace(/^\/+/, ''));
+            if (fs.existsSync(candidate)) logoAbsPath = candidate;
+        }
+
+        // Grouped column layout: simple columns are one box; grouped columns
+        // (Sabaq/Sabqi/Manzil) are split into single-number boxes so each
+        // written value is easy to read back out with the AI scanner. Any
+        // number box can instead hold a single "N" for Nagha (not recited).
+        const groups = [
+            { key: 'att', title: 'Att (P/A)', w: 28 },
+            { key: 'reg', title: 'Reg No', w: 46 },
+            { key: 'name', title: 'Student Name', w: 100 },
+            { key: 'para', title: 'Para', w: 32 },
+            { key: 'sabaq', title: 'Sabaq (N = Nagha)', subs: [
+                { key: 'sabaq_from_page', label: 'F.Pg', w: 34 },
+                { key: 'sabaq_from_line', label: 'F.Ln', w: 34 },
+                { key: 'sabaq_to_page', label: 'T.Pg', w: 34 },
+                { key: 'sabaq_to_line', label: 'T.Ln', w: 34 },
+            ] },
+            { key: 'sabqi', title: 'Sabqi (N = Nagha)', subs: [
+                { key: 'sabqi_para', label: 'P1', w: 40 },
+                { key: 'sabqi_para_2', label: 'P2', w: 40 },
+            ] },
+            { key: 'manzil', title: 'Manzil (N = Nagha)', subs: [
+                { key: 'manzil_para_1', label: 'P1', w: 34 },
+                { key: 'manzil_para_2', label: 'P2', w: 34 },
+                { key: 'manzil_para_3', label: 'P3', w: 34 },
+            ] },
+            { key: 'remarks', title: 'Remarks', w: 0 },
         ];
-        const fixedWidth = cols.reduce((sum, c) => sum + c.w, 0);
-        cols[cols.length - 1].w = Math.max(80, tableWidth - fixedWidth);
+        const fixedWidth = groups.reduce((sum, g) => sum + (g.subs ? g.subs.reduce((s, c) => s + c.w, 0) : g.w), 0);
+        groups[groups.length - 1].w = Math.max(80, tableWidth - fixedWidth);
+
+        // Flatten into leaf boxes (what gets drawn per row) and group spans
+        // (what the two-row header draws), each with a fixed x position.
+        const leaves = [];
+        const groupSpans = [];
+        {
+            let x = startX;
+            groups.forEach(g => {
+                if (g.subs) {
+                    const groupW = g.subs.reduce((s, c) => s + c.w, 0);
+                    groupSpans.push({ x, w: groupW, title: g.title, isSimple: false });
+                    g.subs.forEach(sub => {
+                        leaves.push({ key: sub.key, w: sub.w, x, label: sub.label });
+                        x += sub.w;
+                    });
+                } else {
+                    groupSpans.push({ x, w: g.w, title: g.title, isSimple: true });
+                    leaves.push({ key: g.key, w: g.w, x, label: null });
+                    x += g.w;
+                }
+            });
+        }
 
         const tenantName = req.tenant.school_name || 'School';
         const totalPages = Math.max(1, Math.ceil(students.length / ROWS_PER_PAGE));
 
         function drawPageHeader(pageNum) {
-            let y = doc.page.margins.top;
-            doc.font('Helvetica-Bold').fontSize(13).fillColor('#111827')
-               .text(`${tenantName} — Hifz Mark Diary (Manual Backup Sheet)`, startX, y, { width: tableWidth, lineBreak: false });
-            y += 18;
-            doc.font('Helvetica').fontSize(8.5).fillColor('#374151')
-               .text(`Date: ${dateStr}    Page ${pageNum} of ${totalPages}    Fill by hand when the system is unavailable, then upload this sheet on the Mark All page to auto-fill.`, startX, y, { width: tableWidth, lineBreak: false });
-            y += 18;
+            const blockTop = doc.page.margins.top;
+            let textX = startX;
+            if (logoAbsPath) {
+                try {
+                    doc.image(logoAbsPath, startX, blockTop, { width: LOGO_SIZE, height: LOGO_SIZE });
+                    textX = startX + LOGO_SIZE + 8;
+                } catch (imgErr) {
+                    console.error('Hifz Mark Diary PDF: logo embed failed:', imgErr.message);
+                }
+            }
+            const textWidth = tableWidth - (textX - startX);
 
-            let x = startX;
-            doc.font('Helvetica-Bold').fontSize(7.5);
-            cols.forEach(c => {
-                doc.rect(x, y, c.w, ROW_H).fillAndStroke('#e5e7eb', '#9ca3af');
-                doc.fillColor('#111827').text(c.label, x + 2, y + 5, { width: c.w - 4, lineBreak: false });
-                x += c.w;
+            doc.font('Helvetica-Bold').fontSize(12).fillColor('#111827')
+               .text(`${tenantName} — Hifz Mark Diary (Manual Sheet)`, textX, blockTop, { width: textWidth, lineBreak: false });
+            doc.font('Helvetica').fontSize(7.5).fillColor('#374151')
+               .text(`Date: ${dateStr}   Page ${pageNum} of ${totalPages}   Teacher: ${teacherName || '________________________'}`, textX, blockTop + 15, { width: textWidth, lineBreak: false });
+
+            let y = blockTop + TOP_BLOCK_H;
+
+            doc.font('Helvetica-Bold').fontSize(7);
+            groupSpans.forEach(g => {
+                const h = g.isSimple ? HEADER_H : GROUP_ROW_H;
+                doc.rect(g.x, y, g.w, h).fillAndStroke('#e5e7eb', '#9ca3af');
+                doc.fillColor('#111827').text(g.title, g.x + 2, y + (g.isSimple ? (h / 2 - 5) : 3), { width: g.w - 4, lineBreak: false });
             });
-            return y + ROW_H;
+
+            const subY = y + GROUP_ROW_H;
+            doc.font('Helvetica-Bold').fontSize(6.5);
+            leaves.forEach(l => {
+                if (l.label) {
+                    doc.rect(l.x, subY, l.w, SUB_ROW_H).fillAndStroke('#f1f5f9', '#9ca3af');
+                    doc.fillColor('#334155').text(l.label, l.x + 1, subY + 3, { width: l.w - 2, align: 'center', lineBreak: false });
+                }
+            });
+
+            return y + HEADER_H;
         }
 
-        function drawRow(y, rowNum, s) {
+        function drawRow(y, s) {
             const values = {
-                no: String(rowNum),
+                att: '',
                 reg: s.reg_no || '',
                 name: s.student_name || '',
                 para: s.current_para ? `P${s.current_para}` : '',
-                sabaq: '', sabqi: '', manzil: '', absent: '', remarks: ''
+                remarks: ''
             };
-            let x = startX;
             doc.font('Helvetica').fontSize(7.5);
-            cols.forEach(c => {
-                doc.rect(x, y, c.w, ROW_H).stroke('#cbd5e1');
-                const val = values[c.key];
+            leaves.forEach(l => {
+                doc.rect(l.x, y, l.w, ROW_H).stroke('#cbd5e1');
+                const val = values[l.key];
                 if (val) {
-                    doc.fillColor('#1f2937').text(val, x + 2, y + 5, { width: c.w - 4, lineBreak: false });
+                    doc.fillColor('#1f2937').text(val, l.x + 2, y + 5, { width: l.w - 4, lineBreak: false });
                 }
-                x += c.w;
             });
+        }
+
+        function drawPageFooter(y) {
+            doc.font('Helvetica').fontSize(7.5).fillColor('#334155')
+               .text('Teacher\'s Signature: ______________________________          Checked / Verified by: ______________________________', startX, y + 4, { width: tableWidth, lineBreak: false });
         }
 
         let pageNum = 1;
@@ -471,13 +551,15 @@ router.get('/hifz/mark-all/download', isAuthenticated, async (req, res) => {
         } else {
             students.forEach((s, idx) => {
                 if (idx > 0 && idx % ROWS_PER_PAGE === 0) {
+                    drawPageFooter(y);
                     doc.addPage();
                     pageNum++;
                     y = drawPageHeader(pageNum);
                 }
-                drawRow(y, (idx % ROWS_PER_PAGE) + 1, s);
+                drawRow(y, s);
                 y += ROW_H;
             });
+            drawPageFooter(y);
         }
 
         doc.end();
@@ -489,7 +571,7 @@ router.get('/hifz/mark-all/download', isAuthenticated, async (req, res) => {
 
 // ============================================================
 // POST /hifz/mark-all/scan — Read a photo of a filled-in manual
-// backup sheet via Gemini and match rows back to enrolled students
+// manual sheet via Gemini and match rows back to enrolled students
 // ============================================================
 router.post('/hifz/mark-all/scan', isAuthenticated, async (req, res) => {
     try {
@@ -515,26 +597,36 @@ router.post('/hifz/mark-all/scan', isAuthenticated, async (req, res) => {
             }
         };
 
-        const prompt = `You are a strict data extraction AI reading a handwritten "Hifz Mark Diary" backup sheet.
-The sheet is a table with these columns per row: #, Reg No, Student Name, Para (printed reference), Sabaq (Pg:Ln -> Pg:Ln), Sabqi Para(s), Manzil Para(s), Absent, Remarks.
-"Reg No" and "Student Name" and "Para" are pre-printed; the rest were filled by hand and may be messy or partially blank.
+        const prompt = `You are a strict data extraction AI reading a handwritten "Hifz Mark Diary" manual sheet.
+The sheet is a table with these columns per row, left to right:
+- "Att" — a single letter box: P (Present) or A (Absent).
+- "Reg No", "Student Name", "Para" — pre-printed, not handwritten.
+- "Sabaq" — four separate single-number boxes in order: F.Pg, F.Ln, T.Pg, T.Ln (start page, start line, end page, end line).
+- "Sabqi" — two separate single-number boxes: P1, P2.
+- "Manzil" — three separate single-number boxes: P1, P2, P3.
+- "Remarks" — free text.
 
-Return ONLY a valid JSON array (no markdown formatting, no \`\`\`json). One object per row that has ANY handwriting in it. Skip rows left completely blank.
+Each of the Sabaq/Sabqi/Manzil number boxes normally holds ONE number, but may instead hold a single "N" meaning Nagha (that section was not recited that day) — if you see "N" in any box of a section, treat that whole section as Nagha for that row.
+
+Return ONLY a valid JSON array (no markdown formatting, no \`\`\`json). One object per row that has ANY handwriting in it (an Att mark counts). Skip rows left completely blank.
 Each object must have EXACTLY these keys:
 "reg_no": (the pre-printed Reg No for that row, as text)
-"absent": (true if the Absent box/column is marked/ticked, otherwise false)
-"sabaq_from_page": (number or "")
-"sabaq_from_line": (number or "")
-"sabaq_to_page": (number or "")
-"sabaq_to_line": (number or "")
-"sabqi_para": (first Sabqi para number, or "")
-"sabqi_para_2": (second Sabqi para number if written, or "")
-"manzil_para_1": (first Manzil para number, or "")
-"manzil_para_2": (second Manzil para number if written, or "")
-"manzil_para_3": (third Manzil para number if written, or "")
+"attendance": ("P" or "A" based on the Att box; default to "P" if unmarked)
+"sabaq_nagha": (true if "N" was written anywhere in the Sabaq boxes, otherwise false)
+"sabaq_from_page": (number, or "" if not written or sabaq_nagha is true)
+"sabaq_from_line": (number, or "")
+"sabaq_to_page": (number, or "")
+"sabaq_to_line": (number, or "")
+"sabqi_nagha": (true if "N" was written anywhere in the Sabqi boxes, otherwise false)
+"sabqi_para": (P1 number, or "")
+"sabqi_para_2": (P2 number, or "")
+"manzil_nagha": (true if "N" was written anywhere in the Manzil boxes, otherwise false)
+"manzil_para_1": (P1 number, or "")
+"manzil_para_2": (P2 number, or "")
+"manzil_para_3": (P3 number, or "")
 "remarks": (any handwritten remarks text, or "")
 
-Do your best to transcribe messy handwriting rather than leaving fields empty. If Absent is marked, the recitation columns for that row are usually empty — that's expected.`;
+Do your best to transcribe messy handwriting rather than leaving fields empty. If Att is "A" (Absent), the recitation boxes for that row are usually empty — that's expected, just report attendance "A" and leave the rest blank/false.`;
 
         const result = await model.generateContent([prompt, imagePart]);
         const responseText = result.response.text();
