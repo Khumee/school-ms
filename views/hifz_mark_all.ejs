@@ -84,8 +84,29 @@
         <label for="date" style="font-weight: 600; color: #475569;"><i class="bi bi-calendar3"></i> Diary Date:</label>
         <input type="date" id="date" name="date" class="form-control" style="width: auto;" value="<%= today %>" onchange="this.form.submit()">
         <span style="color: #64748b; font-size: 0.9rem;">(Changing date will load entries for that day)</span>
+        <div style="margin-left: auto; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="/hifz/mark-all/download?date=<%= today %>" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 0.35rem;"><i class="bi bi-file-earmark-pdf"></i> Download Mark Diary (PDF)</a>
+            <button type="button" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 0.35rem;" onclick="openScanModal()"><i class="bi bi-upc-scan"></i> Upload Scanned Sheet</button>
+        </div>
     </form>
 </div>
+
+<!-- SCAN UPLOAD MODAL -->
+<div id="scanModal" class="card" style="display: none; max-width: 500px; margin: 1rem auto; position: fixed; top: 15%; left: 50%; transform: translate(-50%, 0); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); box-sizing: border-box; width: 90%;">
+    <h3 style="margin-top: 0;"><i class="bi bi-upc-scan"></i> Upload Filled Mark Diary Sheet</h3>
+    <p style="font-size: 0.85rem; color: #64748b;">Upload a clear photo of the hand-filled backup sheet for <strong><%= today %></strong>. Extracted values will be filled into the matching student rows below for you to review before saving.</p>
+    <div style="position: relative; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 1.5rem; text-align: center; margin-bottom: 0.75rem;">
+        <i class="bi bi-cloud-arrow-up" style="font-size: 1.75rem; color: #94a3b8;"></i>
+        <div style="font-size: 0.85rem; color: #64748b;">Click to select or capture a photo</div>
+        <input type="file" id="scan_image_input" accept="image/*" style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer;" onchange="document.getElementById('scanSelectedText').innerText = this.files[0] ? this.files[0].name : 'No file selected'; if(this.files[0]) { scanMarkAllSheet(this); }">
+    </div>
+    <div id="scanSelectedText" style="font-size: 0.85rem; color: #64748b; text-align: center; margin-bottom: 1rem;">No file selected</div>
+    <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button type="button" class="btn-secondary" onclick="closeScanModal()">Cancel</button>
+    </div>
+    <div id="scan_status" style="font-size: 0.9rem; color: #64748b; display: none; text-align: center; margin-top: 1rem;"><i class="bi bi-hourglass-split"></i> Reading the sheet with AI... This may take a few seconds.</div>
+</div>
+<div id="scanModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeScanModal()"></div>
 
 <% if (typeof req !== 'undefined' && req.query.success) { %>
     <div class="alert" style="background-color: #dcfce7; color: #166534; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #bbf7d0;">
@@ -244,7 +265,7 @@
                     <!-- Remarks Line -->
                     <div style="margin-top: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
                         <span style="font-weight: 600; font-size: 0.8rem; color: #475569; width: 60px;">Remarks:</span>
-                        <input type="text" name="entries[<%= s.student_id %>][teacher_remarks]" class="form-control" style="padding: 0.3rem 0.5rem; font-size: 0.85rem; flex: 1;" placeholder="Enter assessment notes or corrections..." value="<%= s.teacher_remarks || '' %>">
+                        <input type="text" id="remarks-<%= s.student_id %>" name="entries[<%= s.student_id %>][teacher_remarks]" class="form-control" style="padding: 0.3rem 0.5rem; font-size: 0.85rem; flex: 1;" placeholder="Enter assessment notes or corrections..." value="<%= s.teacher_remarks || '' %>">
                     </div>
                 </div>
             <% }) %>
@@ -404,6 +425,110 @@
             calcTotalLines(studentId);
         });
     });
+
+    function openScanModal() {
+        document.getElementById('scanModal').style.display = 'block';
+        document.getElementById('scanModalOverlay').style.display = 'block';
+    }
+    function closeScanModal() {
+        document.getElementById('scanModal').style.display = 'none';
+        document.getElementById('scanModalOverlay').style.display = 'none';
+        document.getElementById('scan_image_input').value = '';
+        document.getElementById('scanSelectedText').innerText = 'No file selected';
+    }
+
+    function applyScannedRow(row) {
+        const id = row.student_id;
+        const rowEl = document.getElementById('row-' + id);
+        if (!rowEl) return false;
+
+        if (row.absent) {
+            const absentBtn = rowEl.querySelector('.status-group button[title="Absent"]');
+            if (absentBtn) absentBtn.click();
+            return true;
+        }
+
+        const setVal = (elemId, val) => {
+            if (val === undefined || val === null || val === '') return;
+            const el = document.getElementById(elemId);
+            if (el) el.value = val;
+        };
+
+        setVal('from-page-' + id, row.sabaq_from_page);
+        setVal('from-line-' + id, row.sabaq_from_line);
+        setVal('to-page-' + id, row.sabaq_to_page);
+        setVal('to-line-' + id, row.sabaq_to_line);
+        calcTotalLines(id);
+
+        setVal('sabqi-p1-' + id, row.sabqi_para);
+        setVal('sabqi-p2-' + id, row.sabqi_para_2);
+
+        setVal('manzil-p1-' + id, row.manzil_para_1);
+        setVal('manzil-p2-' + id, row.manzil_para_2);
+        setVal('manzil-p3-' + id, row.manzil_para_3);
+
+        setVal('remarks-' + id, row.remarks);
+
+        return true;
+    }
+
+    function scanMarkAllSheet(sourceInput) {
+        let file = null;
+        if (sourceInput && sourceInput.files && sourceInput.files[0]) {
+            file = sourceInput.files[0];
+        } else {
+            const fileInput = document.getElementById('scan_image_input');
+            file = fileInput && fileInput.files && fileInput.files[0];
+        }
+        if (!file) {
+            alert('Please select or capture a photo first.');
+            return;
+        }
+
+        const status = document.getElementById('scan_status');
+        status.style.display = 'block';
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64 = e.target.result.split(',')[1];
+            fetch('/hifz/mark-all/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ image_b64: base64, mime_type: file.type })
+            })
+            .then(res => {
+                const ct = res.headers.get('content-type') || '';
+                if (!ct.includes('application/json')) {
+                    throw new Error('Session expired or server error. Please log in again and retry.');
+                }
+                return res.json();
+            })
+            .then(data => {
+                status.style.display = 'none';
+                if (data.error) { alert('Error: ' + data.error); return; }
+
+                const rows = data.data || [];
+                let appliedCount = 0;
+                rows.forEach(row => { if (applyScannedRow(row)) appliedCount++; });
+
+                closeScanModal();
+
+                const unmatchedCount = (data.unmatched || []).length;
+                let msg = `Applied ${appliedCount} row(s) from the scanned sheet. Please review the values below before saving.`;
+                if (unmatchedCount > 0) {
+                    msg += `\n\n${unmatchedCount} row(s) could not be matched to a student (unclear or unrecognized Reg No) and were skipped.`;
+                }
+                alert(msg);
+            })
+            .catch(err => {
+                status.style.display = 'none';
+                alert('An error occurred during scanning: ' + err.message);
+                console.error(err);
+            });
+        };
+        reader.readAsDataURL(file);
+    }
 </script>
 
 <%- include('partials/footer') %>

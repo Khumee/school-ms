@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const PDFDocument = require('pdfkit');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { isAuthenticated } = require('../middleware/auth');
 const { requireModule } = require('../middleware/modules');
 const {
@@ -371,6 +373,208 @@ router.get('/hifz/mark-all', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error('Hifz Mark All Error:', err);
         res.status(500).send('Error loading Quick Mark All.');
+    }
+});
+
+// ============================================================
+// GET /hifz/mark-all/download — Printable Manual Backup Sheet (PDF)
+// Compact grid, 25 students per page, for filling by hand when the
+// system is down. Upload the filled sheet back via /hifz/mark-all/scan.
+// ============================================================
+router.get('/hifz/mark-all/download', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const dateStr = req.query.date || new Date().toISOString().split('T')[0];
+
+        const [students] = await db.execute(
+            `SELECT e.current_para, s.name as student_name, s.reg_no
+             FROM hifz_enrollment e
+             JOIN students s ON e.student_id = s.id
+             JOIN classes c ON e.class_id = c.id
+             WHERE e.tenant_id = ? AND e.status = 'active'
+             ORDER BY c.name, s.name`,
+            [tenantId]
+        );
+
+        const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 24 });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="hifz-mark-diary-${dateStr}.pdf"`);
+        doc.pipe(res);
+
+        const ROWS_PER_PAGE = 25;
+        const ROW_H = 18;
+        const startX = doc.page.margins.left;
+        const tableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+
+        const cols = [
+            { key: 'no', w: 18, label: '#' },
+            { key: 'reg', w: 48, label: 'Reg No' },
+            { key: 'name', w: 105, label: 'Student Name' },
+            { key: 'para', w: 36, label: 'Para' },
+            { key: 'sabaq', w: 165, label: 'Sabaq (Pg:Ln → Pg:Ln)' },
+            { key: 'sabqi', w: 80, label: 'Sabqi Para(s)' },
+            { key: 'manzil', w: 95, label: 'Manzil Para(s)' },
+            { key: 'absent', w: 32, label: 'Absent' },
+            { key: 'remarks', w: 0, label: 'Remarks' }
+        ];
+        const fixedWidth = cols.reduce((sum, c) => sum + c.w, 0);
+        cols[cols.length - 1].w = Math.max(80, tableWidth - fixedWidth);
+
+        const tenantName = req.tenant.school_name || 'School';
+        const totalPages = Math.max(1, Math.ceil(students.length / ROWS_PER_PAGE));
+
+        function drawPageHeader(pageNum) {
+            let y = doc.page.margins.top;
+            doc.font('Helvetica-Bold').fontSize(13).fillColor('#111827')
+               .text(`${tenantName} — Hifz Mark Diary (Manual Backup Sheet)`, startX, y, { width: tableWidth, lineBreak: false });
+            y += 18;
+            doc.font('Helvetica').fontSize(8.5).fillColor('#374151')
+               .text(`Date: ${dateStr}    Page ${pageNum} of ${totalPages}    Fill by hand when the system is unavailable, then upload this sheet on the Mark All page to auto-fill.`, startX, y, { width: tableWidth, lineBreak: false });
+            y += 18;
+
+            let x = startX;
+            doc.font('Helvetica-Bold').fontSize(7.5);
+            cols.forEach(c => {
+                doc.rect(x, y, c.w, ROW_H).fillAndStroke('#e5e7eb', '#9ca3af');
+                doc.fillColor('#111827').text(c.label, x + 2, y + 5, { width: c.w - 4, lineBreak: false });
+                x += c.w;
+            });
+            return y + ROW_H;
+        }
+
+        function drawRow(y, rowNum, s) {
+            const values = {
+                no: String(rowNum),
+                reg: s.reg_no || '',
+                name: s.student_name || '',
+                para: s.current_para ? `P${s.current_para}` : '',
+                sabaq: '', sabqi: '', manzil: '', absent: '', remarks: ''
+            };
+            let x = startX;
+            doc.font('Helvetica').fontSize(7.5);
+            cols.forEach(c => {
+                doc.rect(x, y, c.w, ROW_H).stroke('#cbd5e1');
+                const val = values[c.key];
+                if (val) {
+                    doc.fillColor('#1f2937').text(val, x + 2, y + 5, { width: c.w - 4, lineBreak: false });
+                }
+                x += c.w;
+            });
+        }
+
+        let pageNum = 1;
+        let y = drawPageHeader(pageNum);
+
+        if (students.length === 0) {
+            doc.font('Helvetica').fontSize(10).fillColor('#64748b')
+               .text('No active Hifz students enrolled.', startX, y + 10);
+        } else {
+            students.forEach((s, idx) => {
+                if (idx > 0 && idx % ROWS_PER_PAGE === 0) {
+                    doc.addPage();
+                    pageNum++;
+                    y = drawPageHeader(pageNum);
+                }
+                drawRow(y, (idx % ROWS_PER_PAGE) + 1, s);
+                y += ROW_H;
+            });
+        }
+
+        doc.end();
+    } catch (err) {
+        console.error('Hifz Mark Diary PDF Error:', err);
+        res.status(500).send('Error generating Mark Diary PDF.');
+    }
+});
+
+// ============================================================
+// POST /hifz/mark-all/scan — Read a photo of a filled-in manual
+// backup sheet via Gemini and match rows back to enrolled students
+// ============================================================
+router.post('/hifz/mark-all/scan', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const { image_b64, mime_type } = req.body;
+
+        if (!image_b64) {
+            return res.status(400).json({ error: 'No image data received.' });
+        }
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            return res.status(500).json({ error: 'Gemini API key not configured.' });
+        }
+
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+        const imagePart = {
+            inlineData: {
+                data: image_b64,
+                mimeType: mime_type || 'image/jpeg'
+            }
+        };
+
+        const prompt = `You are a strict data extraction AI reading a handwritten "Hifz Mark Diary" backup sheet.
+The sheet is a table with these columns per row: #, Reg No, Student Name, Para (printed reference), Sabaq (Pg:Ln -> Pg:Ln), Sabqi Para(s), Manzil Para(s), Absent, Remarks.
+"Reg No" and "Student Name" and "Para" are pre-printed; the rest were filled by hand and may be messy or partially blank.
+
+Return ONLY a valid JSON array (no markdown formatting, no \`\`\`json). One object per row that has ANY handwriting in it. Skip rows left completely blank.
+Each object must have EXACTLY these keys:
+"reg_no": (the pre-printed Reg No for that row, as text)
+"absent": (true if the Absent box/column is marked/ticked, otherwise false)
+"sabaq_from_page": (number or "")
+"sabaq_from_line": (number or "")
+"sabaq_to_page": (number or "")
+"sabaq_to_line": (number or "")
+"sabqi_para": (first Sabqi para number, or "")
+"sabqi_para_2": (second Sabqi para number if written, or "")
+"manzil_para_1": (first Manzil para number, or "")
+"manzil_para_2": (second Manzil para number if written, or "")
+"manzil_para_3": (third Manzil para number if written, or "")
+"remarks": (any handwritten remarks text, or "")
+
+Do your best to transcribe messy handwriting rather than leaving fields empty. If Absent is marked, the recitation columns for that row are usually empty — that's expected.`;
+
+        const result = await model.generateContent([prompt, imagePart]);
+        const responseText = result.response.text();
+
+        let jsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        let extractedRows;
+        try {
+            extractedRows = JSON.parse(jsonStr);
+        } catch (parseErr) {
+            console.error('Gemini scan JSON parse error:', parseErr, responseText);
+            return res.status(500).json({ error: 'Could not parse the scanned sheet. Try a clearer photo.' });
+        }
+        if (!Array.isArray(extractedRows)) extractedRows = [];
+
+        // Match extracted reg_no values back to actively enrolled Hifz students in this tenant
+        const [students] = await db.execute(
+            `SELECT e.student_id, s.reg_no, s.name as student_name
+             FROM hifz_enrollment e
+             JOIN students s ON e.student_id = s.id
+             WHERE e.tenant_id = ? AND e.status = 'active'`,
+            [tenantId]
+        );
+        const byRegNo = new Map(students.map(s => [String(s.reg_no).trim().toLowerCase(), s]));
+
+        const matched = [];
+        const unmatched = [];
+        extractedRows.forEach(row => {
+            const key = String(row.reg_no || '').trim().toLowerCase();
+            const student = byRegNo.get(key);
+            if (student) {
+                matched.push({ student_id: student.student_id, student_name: student.student_name, ...row });
+            } else {
+                unmatched.push(row);
+            }
+        });
+
+        res.json({ success: true, data: matched, unmatched });
+    } catch (err) {
+        console.error('Hifz Mark Diary Scan Error:', err);
+        res.status(500).json({ error: 'Error processing the image: ' + err.message });
     }
 });
 
