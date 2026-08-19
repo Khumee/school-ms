@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('../db');
 const { isSuperAdmin, isOnlySuperAdmin } = require('../middleware/auth');
+const { parseInsightText } = require('../utils/formatInsight');
 
 // Strict Domain Isolation: Prevent tenants from accessing super admin routes
 router.use((req, res, next) => {
@@ -1350,35 +1351,65 @@ router.post('/admin/crm/finances/disburse', isOnlySuperAdmin, async (req, res) =
 // ============================================================
 const STRATEGY_MEETINGS_LIMIT = 300;
 
-// GET /admin/crm/strategy — Advisor page: feedback log + insight history
-router.get('/admin/crm/strategy', isOnlySuperAdmin, async (req, res) => {
+// GET /admin/crm/strategy — Super Admin: full advisor (feedback log from
+// everyone + generated insights). Sales Rep: a cut-down view scoped to
+// just their own feedback notes — reps give input here but never see
+// the generated competitive/pricing strategy insights.
+router.get('/admin/crm/strategy', isSuperAdmin, async (req, res) => {
     try {
-        const [feedback] = await db.pool.execute(
-            `SELECT f.*, m.name as admin_name, m.username as admin_username
-             FROM crm_strategy_feedback f
-             JOIN master_admins m ON f.admin_id = m.id
-             ORDER BY f.created_at DESC`
+        const userRole = req.session.masterAdminRole || 'super_admin';
+        const userId = req.session.masterAdminId;
+
+        let feedback, insights = [], counts = null;
+
+        const [competitors] = await db.pool.execute(
+            `SELECT c.*, m.name as admin_name, m.username as admin_username
+             FROM crm_competitors c
+             JOIN master_admins m ON c.added_by = m.id
+             ORDER BY c.created_at DESC`
         );
 
-        const [insights] = await db.pool.execute(
-            `SELECT i.*, m.name as admin_name, m.username as admin_username
-             FROM crm_strategy_insights i
-             JOIN master_admins m ON i.generated_by = m.id
-             ORDER BY i.created_at DESC
-             LIMIT 20`
-        );
+        if (userRole === 'sales_rep') {
+            [feedback] = await db.pool.execute(
+                `SELECT f.*, m.name as admin_name, m.username as admin_username
+                 FROM crm_strategy_feedback f
+                 JOIN master_admins m ON f.admin_id = m.id
+                 WHERE f.admin_id = ?
+                 ORDER BY f.created_at DESC`,
+                [userId]
+            );
+        } else {
+            [feedback] = await db.pool.execute(
+                `SELECT f.*, m.name as admin_name, m.username as admin_username
+                 FROM crm_strategy_feedback f
+                 JOIN master_admins m ON f.admin_id = m.id
+                 ORDER BY f.created_at DESC`
+            );
 
-        const [[counts]] = await db.pool.execute(
-            `SELECT (SELECT COUNT(*) FROM crm_leads) as total_leads,
-                    (SELECT COUNT(*) FROM crm_meetings) as total_meetings`
-        );
+            [insights] = await db.pool.execute(
+                `SELECT i.*, m.name as admin_name, m.username as admin_username
+                 FROM crm_strategy_insights i
+                 JOIN master_admins m ON i.generated_by = m.id
+                 ORDER BY i.created_at DESC
+                 LIMIT 20`
+            );
+            insights = insights.map(ins => ({ ...ins, sections: parseInsightText(ins.insight_text) }));
+
+            const [[c]] = await db.pool.execute(
+                `SELECT (SELECT COUNT(*) FROM crm_leads) as total_leads,
+                        (SELECT COUNT(*) FROM crm_meetings) as total_meetings`
+            );
+            counts = c;
+        }
 
         res.render('super_admin/crm_strategy', {
             feedback,
             insights,
             counts,
+            competitors,
             username: req.session.masterAdminUsername,
-            role: req.session.masterAdminRole,
+            role: userRole,
+            userId,
             success: req.query.success,
             error: req.query.error
         });
@@ -1388,8 +1419,8 @@ router.get('/admin/crm/strategy', isOnlySuperAdmin, async (req, res) => {
     }
 });
 
-// POST /admin/crm/strategy/feedback — Add a business-context note
-router.post('/admin/crm/strategy/feedback', isOnlySuperAdmin, async (req, res) => {
+// POST /admin/crm/strategy/feedback — Add a business-context note (Super Admin or Sales Rep)
+router.post('/admin/crm/strategy/feedback', isSuperAdmin, async (req, res) => {
     try {
         const adminId = req.session.masterAdminId;
         const { feedback_text } = req.body;
@@ -1410,13 +1441,103 @@ router.post('/admin/crm/strategy/feedback', isOnlySuperAdmin, async (req, res) =
 });
 
 // POST /admin/crm/strategy/feedback/:id/delete — Remove a feedback note
-router.post('/admin/crm/strategy/feedback/:id/delete', isOnlySuperAdmin, async (req, res) => {
+// (Super Admin can remove any note; a Sales Rep only their own)
+router.post('/admin/crm/strategy/feedback/:id/delete', isSuperAdmin, async (req, res) => {
     try {
+        const userRole = req.session.masterAdminRole || 'super_admin';
+        const userId = req.session.masterAdminId;
+
+        if (userRole === 'sales_rep') {
+            const [[fb]] = await db.pool.execute(`SELECT admin_id FROM crm_strategy_feedback WHERE id = ?`, [req.params.id]);
+            if (!fb || fb.admin_id != userId) {
+                return res.status(403).send('Unauthorized. You can only remove your own feedback notes.');
+            }
+        }
+
         await db.pool.execute(`DELETE FROM crm_strategy_feedback WHERE id = ?`, [req.params.id]);
         res.redirect('/admin/crm/strategy?success=Feedback removed');
     } catch (err) {
         console.error('Error deleting strategy feedback:', err);
         res.status(500).send('Error deleting feedback.');
+    }
+});
+
+// POST /admin/crm/strategy/competitors — Log a competitor product (Super Admin or Sales Rep)
+router.post('/admin/crm/strategy/competitors', isSuperAdmin, async (req, res) => {
+    try {
+        const adminId = req.session.masterAdminId;
+        const { product_name, website, price_offering, user_base, strengths, weaknesses, notes } = req.body;
+        if (!product_name || !product_name.trim()) {
+            return res.redirect('/admin/crm/strategy?error=Competitor product name is required');
+        }
+
+        await db.pool.execute(
+            `INSERT INTO crm_competitors (product_name, website, price_offering, user_base, strengths, weaknesses, notes, added_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [product_name.trim(), website || null, price_offering || null, user_base || null, strengths || null, weaknesses || null, notes || null, adminId]
+        );
+
+        res.redirect('/admin/crm/strategy?success=Competitor added');
+    } catch (err) {
+        console.error('Error adding competitor:', err);
+        res.status(500).send('Error adding competitor.');
+    }
+});
+
+// POST /admin/crm/strategy/competitors/:id/delete — Remove a competitor entry
+// (Super Admin can remove any; a Sales Rep only ones they added)
+router.post('/admin/crm/strategy/competitors/:id/delete', isSuperAdmin, async (req, res) => {
+    try {
+        const userRole = req.session.masterAdminRole || 'super_admin';
+        const userId = req.session.masterAdminId;
+
+        if (userRole === 'sales_rep') {
+            const [[c]] = await db.pool.execute(`SELECT added_by FROM crm_competitors WHERE id = ?`, [req.params.id]);
+            if (!c || c.added_by != userId) {
+                return res.status(403).send('Unauthorized. You can only remove competitors you added.');
+            }
+        }
+
+        await db.pool.execute(`DELETE FROM crm_competitors WHERE id = ?`, [req.params.id]);
+        res.redirect('/admin/crm/strategy?success=Competitor removed');
+    } catch (err) {
+        console.error('Error deleting competitor:', err);
+        res.status(500).send('Error deleting competitor.');
+    }
+});
+
+// POST /admin/crm/strategy/transcribe — Voice-to-text for the feedback note box (Super Admin or Sales Rep)
+router.post('/admin/crm/strategy/transcribe', isSuperAdmin, async (req, res) => {
+    try {
+        const { audio_b64, mime_type } = req.body;
+        if (!audio_b64) {
+            return res.status(400).json({ error: 'No audio data received.' });
+        }
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            return res.status(500).json({ error: 'Gemini API key not configured.' });
+        }
+
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+        const audioPart = {
+            inlineData: {
+                data: audio_b64,
+                mimeType: mime_type || 'audio/webm'
+            }
+        };
+
+        const prompt = 'Transcribe this audio recording to plain text, exactly as spoken, with normal punctuation. Return ONLY the transcription — no commentary, no markdown, no speaker labels. If the audio is silent or unintelligible, return an empty string.';
+
+        const result = await model.generateContent([prompt, audioPart]);
+        const text = result.response.text().trim();
+
+        res.json({ success: true, text });
+    } catch (err) {
+        console.error('Voice transcription error:', err);
+        res.status(500).json({ error: 'Error transcribing audio: ' + err.message });
     }
 });
 
@@ -1450,6 +1571,10 @@ router.post('/admin/crm/strategy/generate', isOnlySuperAdmin, async (req, res) =
             `SELECT feedback_text, created_at FROM crm_strategy_feedback ORDER BY created_at DESC`
         );
 
+        const [competitorRows] = await db.pool.execute(
+            `SELECT product_name, website, price_offering, user_base, strengths, weaknesses, notes FROM crm_competitors ORDER BY created_at DESC`
+        );
+
         const meetingsBlock = meetings.map(m => {
             const pricingBits = [];
             if (m.agreed_setup_fee > 0) pricingBits.push(`setup Rs.${m.agreed_setup_fee}`);
@@ -1466,17 +1591,30 @@ router.post('/admin/crm/strategy/generate', isOnlySuperAdmin, async (req, res) =
             ? feedbackRows.map(f => `- [${new Date(f.created_at).toISOString().split('T')[0]}] ${f.feedback_text}`).join('\n')
             : '(none provided yet)';
 
+        const competitorsBlock = competitorRows.length
+            ? competitorRows.map(c => {
+                const bits = [`Product: ${c.product_name}`];
+                if (c.website) bits.push(`Website: ${c.website}`);
+                if (c.price_offering) bits.push(`Pricing/offering: ${c.price_offering}`);
+                if (c.user_base) bits.push(`User base: ${c.user_base}`);
+                if (c.strengths) bits.push(`Strengths: ${c.strengths}`);
+                if (c.weaknesses) bits.push(`Weaknesses: ${c.weaknesses}`);
+                if (c.notes) bits.push(`Notes: ${c.notes}`);
+                return `- ${bits.join(' | ')}`;
+            }).join('\n')
+            : '(none logged yet)';
+
         const prompt = `You are a business strategy analyst for an EdTech SaaS company ("OmniSchool") that sells a School Management System to private schools and madrassas in Pakistan.
 
-Below is real data pulled directly from the sales CRM: actual sales meeting notes, customer demands/objections, and pricing already negotiated with individual leads. Also included is context the business owner has personally added about their own priorities — treat this as important steering input, not just background.
+Below is real data pulled directly from the sales CRM: actual sales meeting notes, customer demands/objections, pricing already negotiated with individual leads, competitor products the sales team has logged from the field, and context the business owner has personally added about their own priorities — treat the owner's notes as important steering input, not just background.
 
 Your job: analyze this raw data and produce a concise, actionable strategy brief with EXACTLY these four section headings:
 
 PRICING / COSTING STRATEGY
-Based on what clients are actually asking for, pushing back on, or agreeing to (discounts requested, competitor pricing mentioned, deal sizes by student count, which pricing tiers correlate with won vs lost deals), recommend concrete pricing/packaging adjustments.
+Based on what clients are actually asking for, pushing back on, or agreeing to (discounts requested, competitor pricing mentioned, deal sizes by student count, which pricing tiers correlate with won vs lost deals) and the logged competitor pricing/offerings below, recommend concrete pricing/packaging adjustments.
 
 MARKETING STRATEGY
-Based on recurring objections, competitor systems mentioned, customer pain points, and which messaging seems to resonate (deals that went positive/won) vs fail (rejected/lost), recommend target segments, messaging angles, and channels to prioritize.
+Based on recurring objections, competitor systems mentioned, customer pain points, logged competitor strengths/weaknesses and user base, and which messaging seems to resonate (deals that went positive/won) vs fail (rejected/lost), recommend target segments, messaging angles, and channels to prioritize — including how to position against specific competitors where relevant.
 
 KEY PATTERNS OBSERVED
 The 3-5 most important recurring signals you noticed across the meetings (objections, feature requests, competitor mentions, price sensitivity, etc.) with rough frequency if apparent.
@@ -1490,6 +1628,9 @@ Return plain text only: the four headings above in capitals, each followed by sh
 
 === BUSINESS OWNER'S CONTEXT / FEEDBACK (most recent first) ===
 ${feedbackBlock}
+
+=== COMPETITOR INTELLIGENCE LOGGED BY THE TEAM ===
+${competitorsBlock}
 
 === SALES MEETING DATA (${meetings.length} most recent meetings) ===
 ${meetingsBlock}`;

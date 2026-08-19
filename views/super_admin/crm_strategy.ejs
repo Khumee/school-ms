@@ -52,6 +52,32 @@
             color: #1e293b;
             margin-top: 0.75rem;
         }
+        .insight-section {
+            margin-top: 1rem;
+            padding: 0.9rem 1rem;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+        .insight-section h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .insight-section ul, .insight-section ol {
+            margin: 0 0 0.5rem 1.1rem;
+            padding: 0;
+            font-size: 0.87rem;
+            color: #1e293b;
+            line-height: 1.55;
+        }
+        .insight-section p {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.87rem;
+            color: #1e293b;
+            line-height: 1.55;
+        }
     </style>
 </head>
 <body>
@@ -59,10 +85,12 @@
 
     <main class="main-content">
         <div class="section-header">
-            <h1 class="section-title"><i class="bi bi-stars"></i> AI Strategy Advisor</h1>
-            <form id="generateForm" action="/admin/crm/strategy/generate" method="POST" onsubmit="return startGenerating()">
-                <button type="submit" id="generateBtn" class="btn-primary"><i class="bi bi-magic"></i> Generate New Insight</button>
-            </form>
+            <h1 class="section-title"><i class="bi bi-stars"></i> <%= role === 'sales_rep' ? 'Give Feedback' : 'AI Strategy Advisor' %></h1>
+            <% if (role !== 'sales_rep') { %>
+                <form id="generateForm" action="/admin/crm/strategy/generate" method="POST" onsubmit="return startGenerating()">
+                    <button type="submit" id="generateBtn" class="btn-primary"><i class="bi bi-magic"></i> Generate New Insight</button>
+                </form>
+            <% } %>
         </div>
 
         <% if (typeof success !== 'undefined' && success) { %>
@@ -72,36 +100,50 @@
             <div class="alert" style="background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;"><i class="bi bi-exclamation-triangle-fill"></i> <%= error %></div>
         <% } %>
 
-        <div id="generatingNotice" style="display: none; background-color: #eff6ff; color: #1e3a8a; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #bfdbfe;">
-            <i class="bi bi-hourglass-split"></i> Reading your meeting history and generating a fresh strategy brief with Gemini... this can take up to 30 seconds, please don't close this page.
-        </div>
+        <% if (role !== 'sales_rep') { %>
+            <div id="generatingNotice" style="display: none; background-color: #eff6ff; color: #1e3a8a; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #bfdbfe;">
+                <i class="bi bi-hourglass-split"></i> Reading your meeting history and generating a fresh strategy brief with Gemini... this can take up to 30 seconds, please don't close this page.
+            </div>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Total Leads in CRM</div>
-                <div class="stat-val" style="color: #4f46e5;"><%= counts.total_leads %></div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Total Leads in CRM</div>
+                    <div class="stat-val" style="color: #4f46e5;"><%= counts.total_leads %></div>
+                </div>
+                <div class="stat-card">
+                    <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Total Meetings Logged</div>
+                    <div class="stat-val" style="color: #0891b2;"><%= counts.total_meetings %></div>
+                </div>
+                <div class="stat-card">
+                    <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Feedback Notes (All Staff)</div>
+                    <div class="stat-val" style="color: #16a34a;"><%= feedback.length %></div>
+                </div>
             </div>
-            <div class="stat-card">
-                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Total Meetings Logged</div>
-                <div class="stat-val" style="color: #0891b2;"><%= counts.total_meetings %></div>
-            </div>
-            <div class="stat-card">
-                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Your Feedback Notes</div>
-                <div class="stat-val" style="color: #16a34a;"><%= feedback.length %></div>
-            </div>
-        </div>
+        <% } %>
 
-        <div style="display: grid; grid-template-columns: 1fr 1.4fr; gap: 1.5rem; align-items: start;">
+        <div style="display: grid; grid-template-columns: <%= role === 'sales_rep' ? '1fr' : '1fr 1.4fr' %>; gap: 1.5rem; align-items: start; <%= role === 'sales_rep' ? 'max-width: 700px; margin: 0 auto;' : '' %>">
             <!-- Feedback / Business Context -->
             <div class="card" style="padding: 1.5rem;">
                 <h3 style="margin-top: 0; font-size: 1.05rem; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1rem;">
-                    <i class="bi bi-chat-square-text"></i> Your Feedback & Business Context
+                    <i class="bi bi-chat-square-text"></i> <%= role === 'sales_rep' ? 'Your Feedback' : 'Feedback & Business Context' %>
                 </h3>
-                <p style="font-size: 0.85rem; color: #64748b; margin-top: 0;">Add notes about your priorities, target market, constraints, or anything else the AI should factor in — every generation reads all notes below.</p>
+                <p style="font-size: 0.85rem; color: #64748b; margin-top: 0;">
+                    <% if (role === 'sales_rep') { %>
+                        Tell management what you're hearing from clients — pricing pushback, feature requests, competitor mentions, or feedback on this system itself. Management reads this directly and it feeds the AI strategy analysis.
+                    <% } else { %>
+                        Add notes about your priorities, target market, constraints, or anything else the AI should factor in — every generation reads all notes below, including ones sales reps add.
+                    <% } %>
+                </p>
 
                 <form action="/admin/crm/strategy/feedback" method="POST" style="margin-bottom: 1.25rem;">
-                    <textarea name="feedback_text" class="form-control" rows="3" placeholder="e.g. We want to focus on schools with 200+ students this quarter and are open to discounting setup fees to win them..." required></textarea>
-                    <div style="text-align: right; margin-top: 0.5rem;">
+                    <textarea name="feedback_text" id="feedback_text" class="form-control" rows="3" placeholder="e.g. We want to focus on schools with 200+ students this quarter and are open to discounting setup fees to win them..." required></textarea>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; gap: 0.5rem; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <button type="button" id="voiceBtn" class="btn-secondary" onclick="toggleVoiceRecording()">
+                                <i class="bi bi-mic-fill" id="voiceIcon"></i> <span id="voiceLabel">Record Voice Note</span>
+                            </button>
+                            <span id="voiceStatus" style="display: none; font-size: 0.8rem; color: #64748b;"><i class="bi bi-hourglass-split"></i> Transcribing...</span>
+                        </div>
                         <button type="submit" class="btn-secondary"><i class="bi bi-plus-lg"></i> Add Note</button>
                     </div>
                 </form>
@@ -143,7 +185,24 @@
                                     Based on <%= ins.meetings_analyzed %> meeting(s) &amp; <%= ins.feedback_analyzed %> feedback note(s) · by <%= ins.admin_name || ins.admin_username %>
                                 </span>
                             </div>
-                            <div class="insight-body"><%= ins.insight_text %></div>
+                            <% if (ins.sections && ins.sections.length > 0) { %>
+                                <% ins.sections.forEach(sec => { %>
+                                    <div class="insight-section">
+                                        <h4 style="color: <%= sec.color %>;"><i class="bi <%= sec.icon %>"></i> <%= sec.label %></h4>
+                                        <% sec.blocks.forEach(b => { %>
+                                            <% if (b.type === 'ul') { %>
+                                                <ul><% b.items.forEach(item => { %><li><%= item %></li><% }) %></ul>
+                                            <% } else if (b.type === 'ol') { %>
+                                                <ol><% b.items.forEach(item => { %><li><%= item %></li><% }) %></ol>
+                                            <% } else { %>
+                                                <p><%= b.text %></p>
+                                            <% } %>
+                                        <% }) %>
+                                    </div>
+                                <% }) %>
+                            <% } else { %>
+                                <div class="insight-body"><%= ins.insight_text %></div>
+                            <% } %>
                         </div>
                     <% }) %>
                 <% } else { %>
@@ -154,14 +213,195 @@
                 <% } %>
             </div>
         </div>
+
+        <!-- Competitor Tracking -->
+        <div class="card" style="padding: 1.5rem; margin-top: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                <h3 style="margin: 0; font-size: 1.05rem; color: #0f172a;"><i class="bi bi-building-exclamation"></i> Competitor Tracking</h3>
+                <button type="button" class="btn-secondary" onclick="openCompetitorModal()"><i class="bi bi-plus-lg"></i> Add Competitor</button>
+            </div>
+            <p style="font-size: 0.85rem; color: #64748b; margin-top: 0;">Log competing products you run into in the field — their pricing/offering, user base, strengths and weaknesses. This feeds directly into the AI's marketing and pricing analysis.</p>
+
+            <% if (competitors.length > 0) { %>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                    <% competitors.forEach(c => { %>
+                        <div class="feedback-item" style="background: #ffffff;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                                <strong style="color: #0f172a;"><%= c.product_name %></strong>
+                                <% if (role === 'super_admin' || c.added_by == userId) { %>
+                                    <form action="/admin/crm/strategy/competitors/<%= c.id %>/delete" method="POST" onsubmit="return confirm('Remove this competitor entry?');">
+                                        <button type="submit" style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 0;" title="Remove"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                <% } %>
+                            </div>
+                            <% if (c.website) { %><div style="font-size: 0.8rem; margin-top: 0.2rem;"><a href="<%= c.website %>" target="_blank" rel="noopener noreferrer" style="color: #4f46e5;"><i class="bi bi-link-45deg"></i> <%= c.website %></a></div><% } %>
+                            <% if (c.price_offering) { %><div style="font-size: 0.8rem; color: #92400e; margin-top: 0.4rem; white-space: pre-wrap;"><i class="bi bi-cash"></i> <%= c.price_offering %></div><% } %>
+                            <% if (c.user_base) { %><div style="font-size: 0.8rem; color: #0369a1; margin-top: 0.25rem;"><i class="bi bi-people"></i> <%= c.user_base %></div><% } %>
+                            <% if (c.strengths) { %><div style="font-size: 0.8rem; color: #166534; margin-top: 0.4rem; white-space: pre-wrap;"><strong>Strengths:</strong> <%= c.strengths %></div><% } %>
+                            <% if (c.weaknesses) { %><div style="font-size: 0.8rem; color: #991b1b; margin-top: 0.25rem; white-space: pre-wrap;"><strong>Weaknesses:</strong> <%= c.weaknesses %></div><% } %>
+                            <% if (c.notes) { %><div style="font-size: 0.8rem; color: #475569; margin-top: 0.4rem; white-space: pre-wrap;"><%= c.notes %></div><% } %>
+                            <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 0.5rem;">Added by <%= c.admin_name || c.admin_username %> · <%= new Date(c.created_at).toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'}) %></div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <div style="text-align: center; color: #94a3b8; padding: 1.5rem; font-size: 0.85rem;">No competitors logged yet.</div>
+            <% } %>
+        </div>
     </main>
 
+    <!-- ADD COMPETITOR MODAL -->
+    <div id="competitorModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: #ffffff; padding: 2rem; border-radius: 12px; max-width: 550px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+            <h3 style="margin-top: 0; color: #4f46e5; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem;"><i class="bi bi-building-exclamation"></i> Add Competitor</h3>
+            <form action="/admin/crm/strategy/competitors" method="POST">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600;">Product Name</label>
+                    <input type="text" name="product_name" class="form-control" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600;">Website</label>
+                    <input type="text" name="website" class="form-control" placeholder="https://...">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600;">Price / Offering</label>
+                    <textarea name="price_offering" class="form-control" rows="2" placeholder="e.g. Rs. 5000/month flat, or Rs. 50/student/month..."></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600;">User Base</label>
+                    <input type="text" name="user_base" class="form-control" placeholder="e.g. ~500 schools, mostly in Punjab">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600;">Strengths</label>
+                    <textarea name="strengths" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="font-weight: 600;">Weaknesses</label>
+                    <textarea name="weaknesses" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="font-weight: 600;">Other Notes</label>
+                    <textarea name="notes" class="form-control" rows="2"></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn-secondary" onclick="closeCompetitorModal()">Cancel</button>
+                    <button type="submit" class="btn-primary"><i class="bi bi-save"></i> Save Competitor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        function openCompetitorModal() {
+            document.getElementById('competitorModal').style.display = 'flex';
+        }
+        function closeCompetitorModal() {
+            document.getElementById('competitorModal').style.display = 'none';
+        }
+
         function startGenerating() {
             document.getElementById('generateBtn').disabled = true;
             document.getElementById('generateBtn').innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
             document.getElementById('generatingNotice').style.display = 'block';
             return true;
+        }
+
+        let voiceRecorder = null;
+        let voiceChunks = [];
+        let voiceStartTime = null;
+        let voiceTimerInterval = null;
+
+        async function toggleVoiceRecording() {
+            if (voiceRecorder && voiceRecorder.state === 'recording') {
+                voiceRecorder.stop();
+                return;
+            }
+            if (!navigator.mediaDevices || !window.MediaRecorder) {
+                alert('Voice recording is not supported in this browser.');
+                return;
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                voiceChunks = [];
+                voiceRecorder = new MediaRecorder(stream);
+                voiceRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) voiceChunks.push(e.data); };
+                voiceRecorder.onstop = () => {
+                    stream.getTracks().forEach(t => t.stop());
+                    clearInterval(voiceTimerInterval);
+                    const mimeType = voiceRecorder.mimeType || 'audio/webm';
+                    const blob = new Blob(voiceChunks, { type: mimeType });
+                    setVoiceUIRecording(false);
+                    transcribeVoiceNote(blob, mimeType);
+                };
+                voiceRecorder.start();
+                voiceStartTime = Date.now();
+                setVoiceUIRecording(true);
+                voiceTimerInterval = setInterval(updateVoiceTimer, 500);
+            } catch (err) {
+                alert('Could not access microphone: ' + err.message);
+            }
+        }
+
+        function setVoiceUIRecording(isRecording) {
+            const icon = document.getElementById('voiceIcon');
+            const label = document.getElementById('voiceLabel');
+            const btn = document.getElementById('voiceBtn');
+            if (isRecording) {
+                icon.className = 'bi bi-stop-fill';
+                label.textContent = 'Stop Recording (0:00)';
+                btn.style.backgroundColor = '#fee2e2';
+                btn.style.color = '#991b1b';
+            } else {
+                icon.className = 'bi bi-mic-fill';
+                label.textContent = 'Record Voice Note';
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+            }
+        }
+
+        function updateVoiceTimer() {
+            const secs = Math.floor((Date.now() - voiceStartTime) / 1000);
+            const m = Math.floor(secs / 60);
+            const s = String(secs % 60).padStart(2, '0');
+            document.getElementById('voiceLabel').textContent = `Stop Recording (${m}:${s})`;
+        }
+
+        function transcribeVoiceNote(blob, mimeType) {
+            const status = document.getElementById('voiceStatus');
+            const btn = document.getElementById('voiceBtn');
+            status.style.display = 'inline';
+            btn.disabled = true;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result.split(',')[1];
+                fetch('/admin/crm/strategy/transcribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ audio_b64: base64, mime_type: mimeType.split(';')[0] })
+                })
+                .then(res => {
+                    const ct = res.headers.get('content-type') || '';
+                    if (!ct.includes('application/json')) {
+                        throw new Error('Session expired or server error. Please log in again and retry.');
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    status.style.display = 'none';
+                    btn.disabled = false;
+                    if (data.error) { alert('Error: ' + data.error); return; }
+                    const textarea = document.getElementById('feedback_text');
+                    textarea.value = (textarea.value.trim() ? textarea.value.trim() + '\n' : '') + (data.text || '');
+                })
+                .catch(err => {
+                    status.style.display = 'none';
+                    btn.disabled = false;
+                    alert('Transcription failed: ' + err.message);
+                });
+            };
+            reader.readAsDataURL(blob);
         }
     </script>
 </body>
