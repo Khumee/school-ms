@@ -199,7 +199,7 @@
                                             <%= m.meeting_type.replace('_', ' ') %>
                                         </span>
                                         <% if (role === 'super_admin' || m.rep_id == userId) { %>
-                                            <button type="button" class="btn-secondary" style="padding: 0.15rem 0.5rem; font-size: 0.75rem;" onclick='openEditMeetingModal(<%= m.id %>, <%- JSON.stringify(m.discussion_notes || "") %>, <%- JSON.stringify(m.client_demands || "") %>)'><i class="bi bi-pencil"></i> Edit Notes</button>
+                                            <button type="button" class="btn-secondary" style="padding: 0.15rem 0.5rem; font-size: 0.75rem;" data-meeting-id="<%= m.id %>" data-discussion-notes="<%= m.discussion_notes || '' %>" data-client-demands="<%= m.client_demands || '' %>" onclick="openEditMeetingModal(this)"><i class="bi bi-pencil"></i> Edit Notes</button>
                                         <% } %>
                                     </div>
                                 </div>
@@ -431,10 +431,10 @@
         function closeMeetingModal() {
             document.getElementById('meetingModal').style.display = 'none';
         }
-        function openEditMeetingModal(meetingId, discussionNotes, clientDemands) {
-            document.getElementById('editMeetingForm').action = '/admin/crm/leads/<%= lead.id %>/meeting/' + meetingId + '/edit';
-            document.getElementById('edit_discussion_notes').value = discussionNotes;
-            document.getElementById('edit_client_demands').value = clientDemands;
+        function openEditMeetingModal(btn) {
+            document.getElementById('editMeetingForm').action = '/admin/crm/leads/<%= lead.id %>/meeting/' + btn.dataset.meetingId + '/edit';
+            document.getElementById('edit_discussion_notes').value = btn.dataset.discussionNotes;
+            document.getElementById('edit_client_demands').value = btn.dataset.clientDemands;
             document.getElementById('editMeetingModal').style.display = 'flex';
         }
         function closeEditMeetingModal() {

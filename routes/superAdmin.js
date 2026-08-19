@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('../db');
 const { isSuperAdmin, isOnlySuperAdmin } = require('../middleware/auth');
 
@@ -1337,6 +1338,177 @@ router.post('/admin/crm/finances/disburse', isOnlySuperAdmin, async (req, res) =
     } catch (err) {
         console.error(err);
         res.status(500).send('Error recording disbursement.');
+    }
+});
+
+// ============================================================
+// AI Strategy Advisor — reads real sales meeting notes/demands
+// across the whole CRM plus the owner's own feedback notes, and
+// asks Gemini for costing & marketing strategy recommendations.
+// Super-admin only: this surfaces cross-lead competitive/pricing
+// analysis that individual sales reps shouldn't see.
+// ============================================================
+const STRATEGY_MEETINGS_LIMIT = 300;
+
+// GET /admin/crm/strategy — Advisor page: feedback log + insight history
+router.get('/admin/crm/strategy', isOnlySuperAdmin, async (req, res) => {
+    try {
+        const [feedback] = await db.pool.execute(
+            `SELECT f.*, m.name as admin_name, m.username as admin_username
+             FROM crm_strategy_feedback f
+             JOIN master_admins m ON f.admin_id = m.id
+             ORDER BY f.created_at DESC`
+        );
+
+        const [insights] = await db.pool.execute(
+            `SELECT i.*, m.name as admin_name, m.username as admin_username
+             FROM crm_strategy_insights i
+             JOIN master_admins m ON i.generated_by = m.id
+             ORDER BY i.created_at DESC
+             LIMIT 20`
+        );
+
+        const [[counts]] = await db.pool.execute(
+            `SELECT (SELECT COUNT(*) FROM crm_leads) as total_leads,
+                    (SELECT COUNT(*) FROM crm_meetings) as total_meetings`
+        );
+
+        res.render('super_admin/crm_strategy', {
+            feedback,
+            insights,
+            counts,
+            username: req.session.masterAdminUsername,
+            role: req.session.masterAdminRole,
+            success: req.query.success,
+            error: req.query.error
+        });
+    } catch (err) {
+        console.error('Error loading Strategy Advisor:', err);
+        res.status(500).send('Error loading Strategy Advisor.');
+    }
+});
+
+// POST /admin/crm/strategy/feedback — Add a business-context note
+router.post('/admin/crm/strategy/feedback', isOnlySuperAdmin, async (req, res) => {
+    try {
+        const adminId = req.session.masterAdminId;
+        const { feedback_text } = req.body;
+        if (!feedback_text || !feedback_text.trim()) {
+            return res.redirect('/admin/crm/strategy?error=Feedback text cannot be empty');
+        }
+
+        await db.pool.execute(
+            `INSERT INTO crm_strategy_feedback (admin_id, feedback_text) VALUES (?, ?)`,
+            [adminId, feedback_text.trim()]
+        );
+
+        res.redirect('/admin/crm/strategy?success=Feedback added');
+    } catch (err) {
+        console.error('Error adding strategy feedback:', err);
+        res.status(500).send('Error adding feedback.');
+    }
+});
+
+// POST /admin/crm/strategy/feedback/:id/delete — Remove a feedback note
+router.post('/admin/crm/strategy/feedback/:id/delete', isOnlySuperAdmin, async (req, res) => {
+    try {
+        await db.pool.execute(`DELETE FROM crm_strategy_feedback WHERE id = ?`, [req.params.id]);
+        res.redirect('/admin/crm/strategy?success=Feedback removed');
+    } catch (err) {
+        console.error('Error deleting strategy feedback:', err);
+        res.status(500).send('Error deleting feedback.');
+    }
+});
+
+// POST /admin/crm/strategy/generate — Generate a new AI strategy insight
+router.post('/admin/crm/strategy/generate', isOnlySuperAdmin, async (req, res) => {
+    try {
+        const adminId = req.session.masterAdminId;
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            return res.redirect('/admin/crm/strategy?error=Gemini API key not configured.');
+        }
+
+        const [meetings] = await db.pool.execute(
+            `SELECT m.meeting_date, m.meeting_type, m.discussion_notes, m.client_demands, m.outcome,
+                    l.school_name, l.city, l.est_students, l.current_system, l.status,
+                    l.agreed_setup_fee, l.agreed_monthly_rate, l.agreed_rate_per_student,
+                    r.name as rep_name, r.username as rep_username
+             FROM crm_meetings m
+             JOIN crm_leads l ON m.lead_id = l.id
+             JOIN master_admins r ON m.rep_id = r.id
+             ORDER BY m.meeting_date DESC
+             LIMIT ${STRATEGY_MEETINGS_LIMIT}`
+        );
+
+        if (meetings.length === 0) {
+            return res.redirect('/admin/crm/strategy?error=No meetings logged yet to analyze.');
+        }
+
+        const [feedbackRows] = await db.pool.execute(
+            `SELECT feedback_text, created_at FROM crm_strategy_feedback ORDER BY created_at DESC`
+        );
+
+        const meetingsBlock = meetings.map(m => {
+            const pricingBits = [];
+            if (m.agreed_setup_fee > 0) pricingBits.push(`setup Rs.${m.agreed_setup_fee}`);
+            if (m.agreed_monthly_rate > 0) pricingBits.push(`monthly Rs.${m.agreed_monthly_rate}`);
+            if (m.agreed_rate_per_student > 0) pricingBits.push(`per-student Rs.${m.agreed_rate_per_student}`);
+            const pricingStr = pricingBits.length ? ` | Agreed pricing so far: ${pricingBits.join(', ')}` : '';
+
+            return `- [${new Date(m.meeting_date).toISOString().split('T')[0]}] ${m.school_name} (${m.city || 'city n/a'}, ~${m.est_students || '?'} students, currently using: ${m.current_system || 'unknown/none'}) | Lead status: ${m.status} | Meeting: ${m.meeting_type}, outcome: ${m.outcome} | Rep: ${m.rep_name || m.rep_username}${pricingStr}
+  Discussion: ${(m.discussion_notes || '').trim() || '(none recorded)'}
+  Client demands/objections: ${(m.client_demands || '').trim() || '(none recorded)'}`;
+        }).join('\n\n');
+
+        const feedbackBlock = feedbackRows.length
+            ? feedbackRows.map(f => `- [${new Date(f.created_at).toISOString().split('T')[0]}] ${f.feedback_text}`).join('\n')
+            : '(none provided yet)';
+
+        const prompt = `You are a business strategy analyst for an EdTech SaaS company ("OmniSchool") that sells a School Management System to private schools and madrassas in Pakistan.
+
+Below is real data pulled directly from the sales CRM: actual sales meeting notes, customer demands/objections, and pricing already negotiated with individual leads. Also included is context the business owner has personally added about their own priorities — treat this as important steering input, not just background.
+
+Your job: analyze this raw data and produce a concise, actionable strategy brief with EXACTLY these four section headings:
+
+PRICING / COSTING STRATEGY
+Based on what clients are actually asking for, pushing back on, or agreeing to (discounts requested, competitor pricing mentioned, deal sizes by student count, which pricing tiers correlate with won vs lost deals), recommend concrete pricing/packaging adjustments.
+
+MARKETING STRATEGY
+Based on recurring objections, competitor systems mentioned, customer pain points, and which messaging seems to resonate (deals that went positive/won) vs fail (rejected/lost), recommend target segments, messaging angles, and channels to prioritize.
+
+KEY PATTERNS OBSERVED
+The 3-5 most important recurring signals you noticed across the meetings (objections, feature requests, competitor mentions, price sensitivity, etc.) with rough frequency if apparent.
+
+IMMEDIATE ACTION ITEMS
+A short numbered list of the next concrete steps for the sales team and the business owner.
+
+Ground every recommendation in specifics from the data below — reference actual patterns you found, don't give generic SaaS sales advice. If the data is too sparse to support a claim, say so rather than inventing detail.
+
+Return plain text only: the four headings above in capitals, each followed by short paragraphs or "-" bullet points. No markdown tables, no asterisks for bold.
+
+=== BUSINESS OWNER'S CONTEXT / FEEDBACK (most recent first) ===
+${feedbackBlock}
+
+=== SALES MEETING DATA (${meetings.length} most recent meetings) ===
+${meetingsBlock}`;
+
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        const result = await model.generateContent(prompt);
+        const insightText = result.response.text().trim();
+
+        await db.pool.execute(
+            `INSERT INTO crm_strategy_insights (generated_by, meetings_analyzed, feedback_analyzed, insight_text)
+             VALUES (?, ?, ?, ?)`,
+            [adminId, meetings.length, feedbackRows.length, insightText]
+        );
+
+        res.redirect('/admin/crm/strategy?success=New strategy insight generated');
+    } catch (err) {
+        console.error('Error generating strategy insight:', err);
+        res.redirect('/admin/crm/strategy?error=' + encodeURIComponent('Error generating insight: ' + err.message));
     }
 });
 

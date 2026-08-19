@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - AI Strategy Advisor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #4338ca;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .stat-val {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-top: 0.25rem;
+        }
+        .feedback-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.6rem;
+            background: #f8fafc;
+        }
+        .insight-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.25rem;
+            background: #ffffff;
+        }
+        .insight-body {
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: #1e293b;
+            margin-top: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <%- include('nav', { activeTab: 'strategy', req: typeof req !== 'undefined' ? req : {} }) %>
+
+    <main class="main-content">
+        <div class="section-header">
+            <h1 class="section-title"><i class="bi bi-stars"></i> AI Strategy Advisor</h1>
+            <form id="generateForm" action="/admin/crm/strategy/generate" method="POST" onsubmit="return startGenerating()">
+                <button type="submit" id="generateBtn" class="btn-primary"><i class="bi bi-magic"></i> Generate New Insight</button>
+            </form>
+        </div>
+
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> <%= success %></div>
+        <% } %>
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert" style="background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;"><i class="bi bi-exclamation-triangle-fill"></i> <%= error %></div>
+        <% } %>
+
+        <div id="generatingNotice" style="display: none; background-color: #eff6ff; color: #1e3a8a; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #bfdbfe;">
+            <i class="bi bi-hourglass-split"></i> Reading your meeting history and generating a fresh strategy brief with Gemini... this can take up to 30 seconds, please don't close this page.
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Total Leads in CRM</div>
+                <div class="stat-val" style="color: #4f46e5;"><%= counts.total_leads %></div>
+            </div>
+            <div class="stat-card">
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Total Meetings Logged</div>
+                <div class="stat-val" style="color: #0891b2;"><%= counts.total_meetings %></div>
+            </div>
+            <div class="stat-card">
+                <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Your Feedback Notes</div>
+                <div class="stat-val" style="color: #16a34a;"><%= feedback.length %></div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1.4fr; gap: 1.5rem; align-items: start;">
+            <!-- Feedback / Business Context -->
+            <div class="card" style="padding: 1.5rem;">
+                <h3 style="margin-top: 0; font-size: 1.05rem; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                    <i class="bi bi-chat-square-text"></i> Your Feedback & Business Context
+                </h3>
+                <p style="font-size: 0.85rem; color: #64748b; margin-top: 0;">Add notes about your priorities, target market, constraints, or anything else the AI should factor in — every generation reads all notes below.</p>
+
+                <form action="/admin/crm/strategy/feedback" method="POST" style="margin-bottom: 1.25rem;">
+                    <textarea name="feedback_text" class="form-control" rows="3" placeholder="e.g. We want to focus on schools with 200+ students this quarter and are open to discounting setup fees to win them..." required></textarea>
+                    <div style="text-align: right; margin-top: 0.5rem;">
+                        <button type="submit" class="btn-secondary"><i class="bi bi-plus-lg"></i> Add Note</button>
+                    </div>
+                </form>
+
+                <% if (feedback.length > 0) { %>
+                    <% feedback.forEach(f => { %>
+                        <div class="feedback-item">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                                <div style="font-size: 0.85rem; color: #1e293b; white-space: pre-wrap;"><%= f.feedback_text %></div>
+                                <form action="/admin/crm/strategy/feedback/<%= f.id %>/delete" method="POST" onsubmit="return confirm('Remove this note?');">
+                                    <button type="submit" style="background: none; border: none; color: #94a3b8; cursor: pointer; padding: 0;" title="Remove"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
+                            <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.4rem;">
+                                <%= f.admin_name || f.admin_username %> · <%= new Date(f.created_at).toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'}) %>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div style="text-align: center; color: #94a3b8; padding: 1.5rem; font-size: 0.85rem;">No notes yet. Add context above so the AI's recommendations line up with your actual priorities.</div>
+                <% } %>
+            </div>
+
+            <!-- Generated Insights -->
+            <div>
+                <h3 style="margin-top: 0; font-size: 1.05rem; color: #0f172a; margin-bottom: 1rem;">
+                    <i class="bi bi-lightbulb"></i> Strategy Insights
+                </h3>
+
+                <% if (insights.length > 0) { %>
+                    <% insights.forEach((ins, idx) => { %>
+                        <div class="insight-card" style="<%= idx === 0 ? 'border-top: 4px solid #4f46e5;' : '' %>">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                <strong style="color: #0f172a;">
+                                    <% if (idx === 0) { %><span style="background: #4f46e5; color: #fff; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 4px; margin-right: 0.5rem;">LATEST</span><% } %>
+                                    <%= new Date(ins.created_at).toLocaleString([], {weekday:'short', year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) %>
+                                </strong>
+                                <span style="font-size: 0.75rem; color: #64748b;">
+                                    Based on <%= ins.meetings_analyzed %> meeting(s) &amp; <%= ins.feedback_analyzed %> feedback note(s) · by <%= ins.admin_name || ins.admin_username %>
+                                </span>
+                            </div>
+                            <div class="insight-body"><%= ins.insight_text %></div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="card" style="text-align: center; color: #94a3b8; padding: 3rem 1rem;">
+                        <i class="bi bi-stars" style="font-size: 2rem; display: block; margin-bottom: 0.5rem; color: #c4b5fd;"></i>
+                        No strategy insights generated yet. Click "Generate New Insight" above to have Gemini analyze all logged meetings and your feedback notes.
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function startGenerating() {
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('generateBtn').innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+            document.getElementById('generatingNotice').style.display = 'block';
+            return true;
+        }
+    </script>
+</body>
+</html>
