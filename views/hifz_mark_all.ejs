@@ -142,6 +142,48 @@
 </div>
 <div id="scanModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeScanModal()"></div>
 
+<!-- SCAN REVIEW MODAL — spreadsheet-style preview of extracted data, editable, before it's applied to the sheet below -->
+<div id="scanReviewModal" class="card" style="display: none; max-width: 95vw; width: 1150px; margin: 1rem auto; position: fixed; top: 5%; left: 50%; transform: translate(-50%, 0); z-index: 1001; box-shadow: 0 10px 25px rgba(0,0,0,0.25); box-sizing: border-box; max-height: 90vh; overflow-y: auto;">
+    <h3 style="margin-top: 0;"><i class="bi bi-table"></i> Review Extracted Data</h3>
+    <p style="font-size: 0.85rem; color: #64748b;">Check and correct the values the AI read from the sheet below — nothing is applied to the diary yet. Tick "Nag?" for a section to mark it Nagha (this ignores that section's number boxes).</p>
+    <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <table style="border-collapse: collapse; width: 100%; font-size: 0.78rem; white-space: nowrap;">
+            <thead>
+                <tr style="background: #f1f5f9;">
+                    <th rowspan="2" style="padding: 0.4rem; border: 1px solid #e2e8f0;">Reg No</th>
+                    <th rowspan="2" style="padding: 0.4rem; border: 1px solid #e2e8f0;">Name</th>
+                    <th rowspan="2" style="padding: 0.4rem; border: 1px solid #e2e8f0;">Att</th>
+                    <th colspan="5" style="padding: 0.4rem; border: 1px solid #e2e8f0;">Sabaq</th>
+                    <th colspan="3" style="padding: 0.4rem; border: 1px solid #e2e8f0;">Sabqi</th>
+                    <th colspan="4" style="padding: 0.4rem; border: 1px solid #e2e8f0;">Manzil</th>
+                    <th rowspan="2" style="padding: 0.4rem; border: 1px solid #e2e8f0;">Remarks</th>
+                </tr>
+                <tr style="background: #f8fafc;">
+                    <th style="padding: 0.3rem; border: 1px solid #e2e8f0;">F.Pg</th>
+                    <th style="padding: 0.3rem; border: 1px solid #e2e8f0;">F.Ln</th>
+                    <th style="padding: 0.3rem; border: 1px solid #e2e8f0;">T.Pg</th>
+                    <th style="padding: 0.3rem; border: 1px solid #e2e8f0;">T.Ln</th>
+                    <th style="padding: 0.3rem; border: 1px solid #e2e8f0;">Nag?</th>
+                    <th style="padding: 0.3rem; border: 1px solid #e2e8f0;">P1</th>
+                    <th style="padding: 0.3rem; border: 1px solid #e2e8f0;">P2</th>
+                    <th style="padding: 0.3rem; border: 1px solid #e2e8f0;">Nag?</th>
+                    <th style="padding: 0.3rem; border: 1px solid #e2e8f0;">P1</th>
+                    <th style="padding: 0.3rem; border: 1px solid #e2e8f0;">P2</th>
+                    <th style="padding: 0.3rem; border: 1px solid #e2e8f0;">P3</th>
+                    <th style="padding: 0.3rem; border: 1px solid #e2e8f0;">Nag?</th>
+                </tr>
+            </thead>
+            <tbody id="scanReviewTbody"></tbody>
+        </table>
+    </div>
+    <div id="scanReviewUnmatchedNote" style="display:none; font-size: 0.8rem; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 0.5rem 0.75rem; margin-top: 0.75rem;"></div>
+    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1rem;">
+        <button type="button" class="btn-secondary" onclick="closeScanReviewModal()">Cancel</button>
+        <button type="button" class="btn-primary" onclick="applyScanReview()"><i class="bi bi-check2-circle"></i> Apply to Sheet</button>
+    </div>
+</div>
+<div id="scanReviewModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.45); z-index: 1000;" onclick="closeScanReviewModal()"></div>
+
 <% if (typeof req !== 'undefined' && req.query.success) { %>
     <div class="alert" style="background-color: #dcfce7; color: #166534; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #bbf7d0;">
         <i class="bi bi-check-circle-fill"></i> Hifz diaries saved successfully!
@@ -573,7 +615,7 @@
             if (el) el.value = val;
         };
         const clickNagha = (sectionClass) => {
-            const btn = rowEl.querySelector('.' + sectionClass + ' .status-group button[title="Nagha"]');
+            const btn = rowEl.querySelector('.' + sectionClass + ' .status-group button[onclick*="not_recited"]');
             if (btn) btn.click();
         };
 
@@ -613,6 +655,88 @@
         return true;
     }
 
+    // ---- Scan review table: editable spreadsheet-style preview of what the
+    // AI extracted, shown before anything is written into the diary rows.
+    let scanReviewRows = [];
+
+    function openScanReviewModal(rows, unmatched) {
+        scanReviewRows = rows.map(r => ({ ...r }));
+        renderScanReviewTable();
+
+        const note = document.getElementById('scanReviewUnmatchedNote');
+        if (unmatched && unmatched.length > 0) {
+            note.style.display = 'block';
+            const regNos = unmatched.map(u => u.reg_no || '?').join(', ');
+            note.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + unmatched.length +
+                ' row(s) could not be matched to an enrolled student and are not shown below: ' + regNos;
+        } else {
+            note.style.display = 'none';
+        }
+
+        document.getElementById('scanReviewModal').style.display = 'block';
+        document.getElementById('scanReviewModalOverlay').style.display = 'block';
+    }
+
+    function closeScanReviewModal() {
+        document.getElementById('scanReviewModal').style.display = 'none';
+        document.getElementById('scanReviewModalOverlay').style.display = 'none';
+        scanReviewRows = [];
+    }
+
+    function scanReviewNumberCell(idx, field, disabled) {
+        const row = scanReviewRows[idx];
+        const val = row[field];
+        return `<input type="number" data-idx="${idx}" data-field="${field}" value="${val === undefined || val === null ? '' : val}"
+                    onchange="scanReviewRows[${idx}]['${field}'] = this.value"
+                    style="width: 44px; padding: 0.2rem; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 4px;" ${disabled ? 'disabled' : ''}>`;
+    }
+
+    function scanReviewNaghaCheckbox(idx, section) {
+        const checked = scanReviewRows[idx][section + '_nagha'];
+        return `<input type="checkbox" ${checked ? 'checked' : ''} onchange="scanReviewRows[${idx}]['${section}_nagha'] = this.checked; renderScanReviewTable()">`;
+    }
+
+    function renderScanReviewTable() {
+        const tbody = document.getElementById('scanReviewTbody');
+        tbody.innerHTML = scanReviewRows.map((row, idx) => {
+            const isAbsent = row.attendance === 'A';
+            return `
+            <tr style="background: ${idx % 2 === 0 ? '#fff' : '#f8fafc'}; ${isAbsent ? 'opacity: 0.6;' : ''}">
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0; font-weight: 600;">${row.reg_no || ''}</td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0;">${row.student_name || ''}</td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0;">
+                    <select onchange="scanReviewRows[${idx}].attendance = this.value; renderScanReviewTable()" style="padding: 0.2rem; font-size: 0.78rem;">
+                        <option value="P" ${!isAbsent ? 'selected' : ''}>P</option>
+                        <option value="A" ${isAbsent ? 'selected' : ''}>A</option>
+                    </select>
+                </td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0;">${scanReviewNumberCell(idx, 'sabaq_from_page', isAbsent || row.sabaq_nagha)}</td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0;">${scanReviewNumberCell(idx, 'sabaq_from_line', isAbsent || row.sabaq_nagha)}</td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0;">${scanReviewNumberCell(idx, 'sabaq_to_page', isAbsent || row.sabaq_nagha)}</td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0;">${scanReviewNumberCell(idx, 'sabaq_to_line', isAbsent || row.sabaq_nagha)}</td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0; text-align:center;">${isAbsent ? '' : scanReviewNaghaCheckbox(idx, 'sabaq')}</td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0;">${scanReviewNumberCell(idx, 'sabqi_para', isAbsent || row.sabqi_nagha)}</td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0;">${scanReviewNumberCell(idx, 'sabqi_para_2', isAbsent || row.sabqi_nagha)}</td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0; text-align:center;">${isAbsent ? '' : scanReviewNaghaCheckbox(idx, 'sabqi')}</td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0;">${scanReviewNumberCell(idx, 'manzil_para_1', isAbsent || row.manzil_nagha)}</td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0;">${scanReviewNumberCell(idx, 'manzil_para_2', isAbsent || row.manzil_nagha)}</td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0;">${scanReviewNumberCell(idx, 'manzil_para_3', isAbsent || row.manzil_nagha)}</td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0; text-align:center;">${isAbsent ? '' : scanReviewNaghaCheckbox(idx, 'manzil')}</td>
+                <td style="padding: 0.3rem; border: 1px solid #e2e8f0;">
+                    <input type="text" value="${(row.remarks || '').replace(/"/g, '&quot;')}" onchange="scanReviewRows[${idx}].remarks = this.value"
+                        style="width: 90px; padding: 0.2rem; font-size: 0.78rem; border: 1px solid #cbd5e1; border-radius: 4px;">
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    function applyScanReview() {
+        let appliedCount = 0;
+        scanReviewRows.forEach(row => { if (applyScannedRow(row)) appliedCount++; });
+        closeScanReviewModal();
+        alert(`Applied ${appliedCount} row(s) to the sheet below. Please review the highlighted rows before saving.`);
+    }
+
     function scanMarkAllSheet() {
         if (!scanImgObj) {
             alert('Please select or capture a photo first.');
@@ -637,10 +761,17 @@
                 })
                 .then(res => {
                     const ct = res.headers.get('content-type') || '';
-                    if (!ct.includes('application/json')) {
-                        throw new Error('Session expired or server error. Please log in again and retry.');
+                    if (ct.includes('application/json')) return res.json();
+                    // Non-JSON response: figure out the most useful message from the status
+                    // code rather than always blaming the session (a slow AI response can
+                    // trip a reverse-proxy timeout and come back as an HTML 502/504 page).
+                    if (res.status === 401) {
+                        throw new Error('Your session has expired. Please log in again and retry.');
                     }
-                    return res.json();
+                    if (res.status === 502 || res.status === 503 || res.status === 504) {
+                        throw new Error('The server took too long to respond — AI scanning can take over a minute. Please try again in a moment.');
+                    }
+                    throw new Error('Unexpected server response (status ' + res.status + '). Please try again.');
                 })
                 .then(data => {
                     status.style.display = 'none';
@@ -648,20 +779,18 @@
                     if (data.error) { alert('Error: ' + data.error); return; }
 
                     const rows = data.data || [];
-                    let appliedCount = 0;
-                    rows.forEach(row => { if (applyScannedRow(row)) appliedCount++; });
+                    const unmatchedCount = (data.unmatched || []).length;
+                    if (rows.length === 0) {
+                        if (unmatchedCount > 0) {
+                            alert(`Found ${unmatchedCount} row(s) on the sheet, but none matched an enrolled student's Reg No. Nothing to review.`);
+                        } else {
+                            alert('No rows could be read from that photo. If the sheet looked sideways or blurry in the preview, try rotating it or retaking the photo in better light.');
+                        }
+                        return;
+                    }
 
                     closeScanModal();
-
-                    const unmatchedCount = (data.unmatched || []).length;
-                    let msg = `Applied ${appliedCount} row(s) from the scanned sheet. Please review the values below before saving.`;
-                    if (unmatchedCount > 0) {
-                        msg += `\n\n${unmatchedCount} row(s) could not be matched to a student (unclear or unrecognized Reg No) and were skipped.`;
-                    }
-                    if (appliedCount === 0 && unmatchedCount === 0) {
-                        msg = 'No rows could be read from that photo. If the sheet looked sideways or blurry in the preview, try rotating it or retaking the photo in better light.';
-                    }
-                    alert(msg);
+                    openScanReviewModal(rows, data.unmatched || []);
                 })
                 .catch(err => {
                     status.style.display = 'none';

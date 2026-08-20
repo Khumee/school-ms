@@ -440,20 +440,23 @@ router.get('/hifz/mark-all/download', isAuthenticated, async (req, res) => {
             { key: 'reg', title: 'Reg No', w: 46 },
             { key: 'name', title: 'Student Name', w: 100 },
             { key: 'para', title: 'Para', w: 32 },
-            { key: 'sabaq', title: 'Sabaq (N = Nagha)', subs: [
-                { key: 'sabaq_from_page', label: 'F.Pg', w: 34 },
-                { key: 'sabaq_from_line', label: 'F.Ln', w: 34 },
-                { key: 'sabaq_to_page', label: 'T.Pg', w: 34 },
-                { key: 'sabaq_to_line', label: 'T.Ln', w: 34 },
+            { key: 'sabaq', title: 'Sabaq', subs: [
+                { key: 'sabaq_from_page', label: 'F.Pg', w: 32 },
+                { key: 'sabaq_from_line', label: 'F.Ln', w: 32 },
+                { key: 'sabaq_to_page', label: 'T.Pg', w: 32 },
+                { key: 'sabaq_to_line', label: 'T.Ln', w: 32 },
+                { key: 'sabaq_nagha_col', label: 'Nag?', w: 26 },
             ] },
-            { key: 'sabqi', title: 'Sabqi (N = Nagha)', subs: [
-                { key: 'sabqi_para', label: 'P1', w: 40 },
-                { key: 'sabqi_para_2', label: 'P2', w: 40 },
+            { key: 'sabqi', title: 'Sabqi', subs: [
+                { key: 'sabqi_para', label: 'P1', w: 36 },
+                { key: 'sabqi_para_2', label: 'P2', w: 36 },
+                { key: 'sabqi_nagha_col', label: 'Nag?', w: 26 },
             ] },
-            { key: 'manzil', title: 'Manzil (N = Nagha)', subs: [
-                { key: 'manzil_para_1', label: 'P1', w: 34 },
-                { key: 'manzil_para_2', label: 'P2', w: 34 },
-                { key: 'manzil_para_3', label: 'P3', w: 34 },
+            { key: 'manzil', title: 'Manzil', subs: [
+                { key: 'manzil_para_1', label: 'P1', w: 32 },
+                { key: 'manzil_para_2', label: 'P2', w: 32 },
+                { key: 'manzil_para_3', label: 'P3', w: 32 },
+                { key: 'manzil_nagha_col', label: 'Nag?', w: 26 },
             ] },
             { key: 'remarks', title: 'Remarks', w: 0 },
         ];
@@ -607,26 +610,30 @@ The photo may be rotated (sideways or upside down) — mentally rotate it uprigh
 The sheet is a table with these columns per row, left to right:
 - "Att" — a single letter box: P (Present) or A (Absent).
 - "Reg No", "Student Name", "Para" — pre-printed, not handwritten.
-- "Sabaq" — four separate single-number boxes in order: F.Pg, F.Ln, T.Pg, T.Ln (start page, start line, end page, end line).
-- "Sabqi" — two separate single-number boxes: P1, P2.
-- "Manzil" — three separate single-number boxes: P1, P2, P3.
+- "Sabaq" — four single-number boxes in order (F.Pg, F.Ln, T.Pg, T.Ln = start page, start line, end page, end line), followed by a "Nag?" box.
+- "Sabqi" — two single-number boxes (P1, P2), followed by a "Nag?" box.
+- "Manzil" — three single-number boxes (P1, P2, P3), followed by a "Nag?" box.
 - "Remarks" — free text.
 
-Each of the Sabaq/Sabqi/Manzil number boxes normally holds ONE number, but may instead hold a single "N" meaning Nagha (that section was not recited that day) — if you see "N" in any box of a section, treat that whole section as Nagha for that row.
+Each section's "Nag?" box is normally left blank. Treat a section (Sabaq, Sabqi, or Manzil) as Nagha (not recited that day) for that row if ANY of the following is true:
+- the "Nag?" box for that section has any mark in it at all (N, a tick, a cross, a dot — anything),
+- OR the letter "N" appears in any of that section's number boxes,
+- OR any of that section's number boxes is left blank, has a cross/X, or otherwise doesn't contain a clean legible number, while other boxes in the row clearly do have handwriting (i.e. the row wasn't just skipped entirely).
+When a section is Nagha, leave all of that section's numeric fields blank/empty in your output — do not guess a number.
 
 Return ONLY a valid JSON array (no markdown formatting, no \`\`\`json). One object per row that has ANY handwriting in it (an Att mark counts). Skip rows left completely blank.
 Each object must have EXACTLY these keys:
 "reg_no": (the pre-printed Reg No for that row, as text)
 "attendance": ("P" or "A" based on the Att box; default to "P" if unmarked)
-"sabaq_nagha": (true if "N" was written anywhere in the Sabaq boxes, otherwise false)
+"sabaq_nagha": (true per the Nagha rule above for the Sabaq section, otherwise false)
 "sabaq_from_page": (number, or "" if not written or sabaq_nagha is true)
 "sabaq_from_line": (number, or "")
 "sabaq_to_page": (number, or "")
 "sabaq_to_line": (number, or "")
-"sabqi_nagha": (true if "N" was written anywhere in the Sabqi boxes, otherwise false)
+"sabqi_nagha": (true per the Nagha rule above for the Sabqi section, otherwise false)
 "sabqi_para": (P1 number, or "")
 "sabqi_para_2": (P2 number, or "")
-"manzil_nagha": (true if "N" was written anywhere in the Manzil boxes, otherwise false)
+"manzil_nagha": (true per the Nagha rule above for the Manzil section, otherwise false)
 "manzil_para_1": (P1 number, or "")
 "manzil_para_2": (P2 number, or "")
 "manzil_para_3": (P3 number, or "")
