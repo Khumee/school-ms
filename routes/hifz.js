@@ -445,18 +445,18 @@ router.get('/hifz/mark-all/download', isAuthenticated, async (req, res) => {
                 { key: 'sabaq_from_line', label: 'F.Ln', w: 32 },
                 { key: 'sabaq_to_page', label: 'T.Pg', w: 32 },
                 { key: 'sabaq_to_line', label: 'T.Ln', w: 32 },
-                { key: 'sabaq_nagha_col', label: 'Nag?', w: 26 },
+                { key: 'sabaq_nagha_col', label: 'N?', w: 26 },
             ] },
             { key: 'sabqi', title: 'Sabqi', subs: [
                 { key: 'sabqi_para', label: 'P1', w: 36 },
                 { key: 'sabqi_para_2', label: 'P2', w: 36 },
-                { key: 'sabqi_nagha_col', label: 'Nag?', w: 26 },
+                { key: 'sabqi_nagha_col', label: 'N?', w: 26 },
             ] },
             { key: 'manzil', title: 'Manzil', subs: [
                 { key: 'manzil_para_1', label: 'P1', w: 32 },
                 { key: 'manzil_para_2', label: 'P2', w: 32 },
                 { key: 'manzil_para_3', label: 'P3', w: 32 },
-                { key: 'manzil_nagha_col', label: 'Nag?', w: 26 },
+                { key: 'manzil_nagha_col', label: 'N?', w: 26 },
             ] },
             { key: 'remarks', title: 'Remarks', w: 0 },
         ];
@@ -617,13 +617,13 @@ The photo may be rotated (sideways or upside down) — mentally rotate it uprigh
 The sheet is a table with these columns per row, left to right:
 - "Att" — a single letter box: P (Present) or A (Absent).
 - "Reg No", "Student Name", "Para" — pre-printed, not handwritten.
-- "Sabaq" — four single-number boxes in order (F.Pg, F.Ln, T.Pg, T.Ln = start page, start line, end page, end line), followed by a "Nag?" box.
-- "Sabqi" — two single-number boxes (P1, P2), followed by a "Nag?" box.
-- "Manzil" — three single-number boxes (P1, P2, P3), followed by a "Nag?" box.
+- "Sabaq" — four single-number boxes in order (F.Pg, F.Ln, T.Pg, T.Ln = start page, start line, end page, end line), followed by a "N?" box.
+- "Sabqi" — two single-number boxes (P1, P2), followed by a "N?" box.
+- "Manzil" — three single-number boxes (P1, P2, P3), followed by a "N?" box.
 - "Remarks" — free text.
 
-Each section's "Nag?" box is normally left blank. Treat a section (Sabaq, Sabqi, or Manzil) as Nagha (not recited that day) for that row ONLY if:
-- the "Nag?" box for that section has any mark in it at all (N, a tick, a cross, a dot — anything),
+Each section's "N?" box is normally left blank. Treat a section (Sabaq, Sabqi, or Manzil) as Nagha (not recited that day) for that row ONLY if:
+- the "N?" box for that section has any mark in it at all (N, a tick, a cross, a dot — anything),
 - OR the letter "N" appears in any of that section's number boxes,
 - OR EVERY one of that section's number boxes is blank/crossed/unreadable — the whole section left empty — while other parts of the row clearly have handwriting (so the row wasn't just skipped in full).
 When a section is Nagha, leave all of that section's numeric fields blank/empty in your output — do not guess a number.
