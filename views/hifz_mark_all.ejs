@@ -119,14 +119,24 @@
 <div id="scanModal" class="card" style="display: none; max-width: 500px; margin: 1rem auto; position: fixed; top: 15%; left: 50%; transform: translate(-50%, 0); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); box-sizing: border-box; width: 90%;">
     <h3 style="margin-top: 0;"><i class="bi bi-upc-scan"></i> Upload Filled Mark Diary Sheet</h3>
     <p style="font-size: 0.85rem; color: #64748b;">Upload a clear photo of the hand-filled manual sheet. Extracted values will be filled into the matching student rows below for the diary date currently selected above (<strong><%= today %></strong>) — make sure that matches the date printed on the sheet before saving.</p>
-    <div style="position: relative; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 1.5rem; text-align: center; margin-bottom: 0.75rem;">
+    <div id="scanDropZone" style="position: relative; border: 2px dashed #cbd5e1; border-radius: 8px; padding: 1.5rem; text-align: center; margin-bottom: 0.75rem;">
         <i class="bi bi-cloud-arrow-up" style="font-size: 1.75rem; color: #94a3b8;"></i>
         <div style="font-size: 0.85rem; color: #64748b;">Click to select or capture a photo</div>
-        <input type="file" id="scan_image_input" accept="image/*" style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer;" onchange="document.getElementById('scanSelectedText').innerText = this.files[0] ? this.files[0].name : 'No file selected'; if(this.files[0]) { scanMarkAllSheet(this); }">
+        <input type="file" id="scan_image_input" accept="image/*" style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer;" onchange="handleScanFileSelect(this)">
     </div>
     <div id="scanSelectedText" style="font-size: 0.85rem; color: #64748b; text-align: center; margin-bottom: 1rem;">No file selected</div>
+    <div id="scanPreviewWrap" style="display: none; margin-bottom: 1rem;">
+        <div style="text-align: center; background: #f1f5f9; border-radius: 8px; padding: 0.5rem;">
+            <img id="scanPreviewImg" style="max-width: 100%; max-height: 260px; border-radius: 4px;">
+        </div>
+        <div style="display: flex; justify-content: center; margin-top: 0.5rem;">
+            <button type="button" class="btn-secondary" onclick="rotateScanImage()"><i class="bi bi-arrow-clockwise"></i> Rotate</button>
+        </div>
+        <p style="font-size: 0.8rem; color: #94a3b8; text-align: center; margin: 0.35rem 0 0;">If the sheet appears sideways or upside down above, use Rotate until it's upright before scanning — this makes a big difference to accuracy.</p>
+    </div>
     <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
         <button type="button" class="btn-secondary" onclick="closeScanModal()">Cancel</button>
+        <button type="button" id="scanSubmitBtn" class="btn-primary" style="display: none;" onclick="scanMarkAllSheet()"><i class="bi bi-upc-scan"></i> Scan This Sheet</button>
     </div>
     <div id="scan_status" style="font-size: 0.9rem; color: #64748b; display: none; text-align: center; margin-top: 1rem;"><i class="bi bi-hourglass-split"></i> Reading the sheet with AI... This may take a few seconds.</div>
 </div>
@@ -477,6 +487,79 @@
         document.getElementById('scanModalOverlay').style.display = 'none';
         document.getElementById('scan_image_input').value = '';
         document.getElementById('scanSelectedText').innerText = 'No file selected';
+        document.getElementById('scanPreviewWrap').style.display = 'none';
+        document.getElementById('scanSubmitBtn').style.display = 'none';
+        scanImgObj = null;
+        scanRotation = 0;
+    }
+
+    // Max long-edge dimension the scanned sheet is downscaled to before
+    // upload. Handwritten numbers in the grid boxes are small, so this is
+    // kept much higher than the 400px used for logos/photos elsewhere —
+    // going lower starts hurting Gemini's ability to read the digits.
+    const SCAN_MAX_DIM = 1800;
+    const SCAN_JPEG_QUALITY = 0.85;
+
+    let scanImgObj = null;
+    let scanRotation = 0;
+
+    function handleScanFileSelect(input) {
+        const file = input.files && input.files[0];
+        document.getElementById('scanSelectedText').innerText = file ? file.name : 'No file selected';
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                scanImgObj = img;
+                scanRotation = 0;
+                document.getElementById('scanPreviewWrap').style.display = 'block';
+                document.getElementById('scanSubmitBtn').style.display = 'inline-flex';
+                renderScanPreview();
+            };
+            img.onerror = function() {
+                alert('Could not read that image. Please choose a different photo.');
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function rotateScanImage() {
+        if (!scanImgObj) return;
+        scanRotation = (scanRotation + 90) % 360;
+        renderScanPreview();
+    }
+
+    // Draws the currently loaded image onto a canvas, downscaled to
+    // SCAN_MAX_DIM on its long edge and rotated by scanRotation degrees.
+    function buildScanCanvas() {
+        const ow = scanImgObj.width, oh = scanImgObj.height;
+        const scale = Math.min(1, SCAN_MAX_DIM / Math.max(ow, oh));
+        const sw = Math.round(ow * scale), sh = Math.round(oh * scale);
+
+        const base = document.createElement('canvas');
+        base.width = sw;
+        base.height = sh;
+        base.getContext('2d').drawImage(scanImgObj, 0, 0, sw, sh);
+
+        if (scanRotation === 0) return base;
+
+        const swapped = (scanRotation === 90 || scanRotation === 270);
+        const rotated = document.createElement('canvas');
+        rotated.width = swapped ? sh : sw;
+        rotated.height = swapped ? sw : sh;
+        const ctx = rotated.getContext('2d');
+        ctx.translate(rotated.width / 2, rotated.height / 2);
+        ctx.rotate(scanRotation * Math.PI / 180);
+        ctx.drawImage(base, -sw / 2, -sh / 2);
+        return rotated;
+    }
+
+    function renderScanPreview() {
+        const canvas = buildScanCanvas();
+        document.getElementById('scanPreviewImg').src = canvas.toDataURL('image/jpeg', SCAN_JPEG_QUALITY);
     }
 
     function applyScannedRow(row) {
@@ -530,62 +613,65 @@
         return true;
     }
 
-    function scanMarkAllSheet(sourceInput) {
-        let file = null;
-        if (sourceInput && sourceInput.files && sourceInput.files[0]) {
-            file = sourceInput.files[0];
-        } else {
-            const fileInput = document.getElementById('scan_image_input');
-            file = fileInput && fileInput.files && fileInput.files[0];
-        }
-        if (!file) {
+    function scanMarkAllSheet() {
+        if (!scanImgObj) {
             alert('Please select or capture a photo first.');
             return;
         }
 
         const status = document.getElementById('scan_status');
+        const submitBtn = document.getElementById('scanSubmitBtn');
         status.style.display = 'block';
+        submitBtn.disabled = true;
 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const base64 = e.target.result.split(',')[1];
-            fetch('/hifz/mark-all/scan', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'same-origin',
-                body: JSON.stringify({ image_b64: base64, mime_type: file.type })
-            })
-            .then(res => {
-                const ct = res.headers.get('content-type') || '';
-                if (!ct.includes('application/json')) {
-                    throw new Error('Session expired or server error. Please log in again and retry.');
-                }
-                return res.json();
-            })
-            .then(data => {
-                status.style.display = 'none';
-                if (data.error) { alert('Error: ' + data.error); return; }
+        const canvas = buildScanCanvas();
+        canvas.toBlob(function(blob) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result.split(',')[1];
+                fetch('/hifz/mark-all/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ image_b64: base64, mime_type: 'image/jpeg' })
+                })
+                .then(res => {
+                    const ct = res.headers.get('content-type') || '';
+                    if (!ct.includes('application/json')) {
+                        throw new Error('Session expired or server error. Please log in again and retry.');
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    status.style.display = 'none';
+                    submitBtn.disabled = false;
+                    if (data.error) { alert('Error: ' + data.error); return; }
 
-                const rows = data.data || [];
-                let appliedCount = 0;
-                rows.forEach(row => { if (applyScannedRow(row)) appliedCount++; });
+                    const rows = data.data || [];
+                    let appliedCount = 0;
+                    rows.forEach(row => { if (applyScannedRow(row)) appliedCount++; });
 
-                closeScanModal();
+                    closeScanModal();
 
-                const unmatchedCount = (data.unmatched || []).length;
-                let msg = `Applied ${appliedCount} row(s) from the scanned sheet. Please review the values below before saving.`;
-                if (unmatchedCount > 0) {
-                    msg += `\n\n${unmatchedCount} row(s) could not be matched to a student (unclear or unrecognized Reg No) and were skipped.`;
-                }
-                alert(msg);
-            })
-            .catch(err => {
-                status.style.display = 'none';
-                alert('An error occurred during scanning: ' + err.message);
-                console.error(err);
-            });
-        };
-        reader.readAsDataURL(file);
+                    const unmatchedCount = (data.unmatched || []).length;
+                    let msg = `Applied ${appliedCount} row(s) from the scanned sheet. Please review the values below before saving.`;
+                    if (unmatchedCount > 0) {
+                        msg += `\n\n${unmatchedCount} row(s) could not be matched to a student (unclear or unrecognized Reg No) and were skipped.`;
+                    }
+                    if (appliedCount === 0 && unmatchedCount === 0) {
+                        msg = 'No rows could be read from that photo. If the sheet looked sideways or blurry in the preview, try rotating it or retaking the photo in better light.';
+                    }
+                    alert(msg);
+                })
+                .catch(err => {
+                    status.style.display = 'none';
+                    submitBtn.disabled = false;
+                    alert('An error occurred during scanning: ' + err.message);
+                    console.error(err);
+                });
+            };
+            reader.readAsDataURL(blob);
+        }, 'image/jpeg', SCAN_JPEG_QUALITY);
     }
 </script>
 

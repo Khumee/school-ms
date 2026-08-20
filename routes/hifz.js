@@ -603,6 +603,7 @@ router.post('/hifz/mark-all/scan', isAuthenticated, async (req, res) => {
         };
 
         const prompt = `You are a strict data extraction AI reading a handwritten "Hifz Mark Diary" manual sheet.
+The photo may be rotated (sideways or upside down) — mentally rotate it upright before reading; do not let orientation stop you from extracting the table.
 The sheet is a table with these columns per row, left to right:
 - "Att" — a single letter box: P (Present) or A (Absent).
 - "Reg No", "Student Name", "Para" — pre-printed, not handwritten.
