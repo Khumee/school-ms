@@ -313,6 +313,11 @@ router.get('/hifz/mark-all', isAuthenticated, async (req, res) => {
         const isHoliday = !!holiday;
         const holidayDesc = holiday ? (holiday.description || 'Hifz Holiday') : null;
 
+        const [qariTeachers] = await db.execute(
+            `SELECT id, name FROM employees WHERE tenant_id = ? AND designation = 'Qari (Male Quran Teacher)' AND status != 'inactive' ORDER BY name`,
+            [tenantId]
+        );
+
         const [students] = await db.execute(
             `SELECT e.*, s.name as student_name, s.reg_no,
                     c.name as class_name,
@@ -371,7 +376,7 @@ router.get('/hifz/mark-all', isAuthenticated, async (req, res) => {
             };
         }));
 
-        res.render('hifz_mark_all', { students: studentsWithPrefill, today, isHoliday, holidayDesc });
+        res.render('hifz_mark_all', { students: studentsWithPrefill, today, isHoliday, holidayDesc, qariTeachers });
     } catch (err) {
         console.error('Hifz Mark All Error:', err);
         res.status(500).send('Error loading Quick Mark All.');
