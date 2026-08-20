@@ -142,6 +142,18 @@
 </div>
 <div id="scanModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeScanModal()"></div>
 
+<!-- APP DIALOG — in-app replacement for native alert() -->
+<div id="appDialogOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.45); z-index:1100;"></div>
+<div id="appDialog" class="card" style="display:none; max-width:440px; width:90%; margin:1rem auto; position:fixed; top:30%; left:50%; transform:translate(-50%,0); z-index:1101; box-shadow:0 10px 25px rgba(0,0,0,0.3); box-sizing:border-box; padding:1.25rem;">
+    <div style="display:flex; gap:0.75rem; align-items:flex-start;">
+        <i id="appDialogIcon" class="bi bi-info-circle-fill" style="font-size:1.4rem; color:#3b82f6; flex-shrink:0; margin-top:0.1rem;"></i>
+        <div id="appDialogMsg" style="font-size:0.9rem; color:#1f2937; white-space:pre-line;"></div>
+    </div>
+    <div style="display:flex; justify-content:flex-end; margin-top:1rem;">
+        <button type="button" class="btn-primary" onclick="closeAppDialog()">OK</button>
+    </div>
+</div>
+
 <!-- SCAN REVIEW MODAL — spreadsheet-style preview of extracted data, editable, before it's applied to the sheet below -->
 <div id="scanReviewModal" class="card" style="display: none; max-width: 95vw; width: 1150px; margin: 1rem auto; position: fixed; top: 5%; left: 50%; transform: translate(-50%, 0); z-index: 1001; box-shadow: 0 10px 25px rgba(0,0,0,0.25); box-sizing: border-box; max-height: 90vh; overflow-y: auto;">
     <h3 style="margin-top: 0;"><i class="bi bi-table"></i> Review Extracted Data</h3>
@@ -362,6 +374,19 @@
 <% } %>
 
 <script>
+    function appDialog(message, kind) {
+        document.getElementById('appDialogMsg').innerText = message;
+        const icon = document.getElementById('appDialogIcon');
+        icon.className = kind === 'error' ? 'bi bi-x-circle-fill' : (kind === 'warn' ? 'bi bi-exclamation-triangle-fill' : 'bi bi-info-circle-fill');
+        icon.style.color = kind === 'error' ? '#dc2626' : (kind === 'warn' ? '#d97706' : '#3b82f6');
+        document.getElementById('appDialog').style.display = 'block';
+        document.getElementById('appDialogOverlay').style.display = 'block';
+    }
+    function closeAppDialog() {
+        document.getElementById('appDialog').style.display = 'none';
+        document.getElementById('appDialogOverlay').style.display = 'none';
+    }
+
     function calcTotalLines(studentId) {
         const fromPage = parseInt(document.getElementById('from-page-' + studentId).value) || 0;
         const toPage = parseInt(document.getElementById('to-page-' + studentId).value) || 0;
@@ -512,7 +537,7 @@
     }
     function submitDownload() {
         const d = document.getElementById('download_date').value;
-        if (!d) { alert('Please choose a date.'); return; }
+        if (!d) { appDialog('Please choose a date.', 'warn'); return; }
         const teacher = document.getElementById('download_teacher').value.trim();
         let url = '/hifz/mark-all/download?date=' + encodeURIComponent(d);
         if (teacher) url += '&teacher=' + encodeURIComponent(teacher);
@@ -561,7 +586,7 @@
                 renderScanPreview();
             };
             img.onerror = function() {
-                alert('Could not read that image. Please choose a different photo.');
+                appDialog('Could not read that image. Please choose a different photo.', 'error');
             };
             img.src = e.target.result;
         };
@@ -734,12 +759,12 @@
         let appliedCount = 0;
         scanReviewRows.forEach(row => { if (applyScannedRow(row)) appliedCount++; });
         closeScanReviewModal();
-        alert(`Applied ${appliedCount} row(s) to the sheet below. Please review the highlighted rows before saving.`);
+        appDialog(`Applied ${appliedCount} row(s) to the sheet below. Please review the highlighted rows before saving.`, 'info');
     }
 
     function scanMarkAllSheet() {
         if (!scanImgObj) {
-            alert('Please select or capture a photo first.');
+            appDialog('Please select or capture a photo first.', 'warn');
             return;
         }
 
@@ -776,15 +801,15 @@
                 .then(data => {
                     status.style.display = 'none';
                     submitBtn.disabled = false;
-                    if (data.error) { alert('Error: ' + data.error); return; }
+                    if (data.error) { appDialog(data.error, 'error'); return; }
 
                     const rows = data.data || [];
                     const unmatchedCount = (data.unmatched || []).length;
                     if (rows.length === 0) {
                         if (unmatchedCount > 0) {
-                            alert(`Found ${unmatchedCount} row(s) on the sheet, but none matched an enrolled student's Reg No. Nothing to review.`);
+                            appDialog(`Found ${unmatchedCount} row(s) on the sheet, but none matched an enrolled student's Reg No. Nothing to review.`, 'warn');
                         } else {
-                            alert('No rows could be read from that photo. If the sheet looked sideways or blurry in the preview, try rotating it or retaking the photo in better light.');
+                            appDialog('No rows could be read from that photo. If the sheet looked sideways or blurry in the preview, try rotating it or retaking the photo in better light.', 'warn');
                         }
                         return;
                     }
@@ -795,7 +820,7 @@
                 .catch(err => {
                     status.style.display = 'none';
                     submitBtn.disabled = false;
-                    alert('An error occurred during scanning: ' + err.message);
+                    appDialog('An error occurred during scanning: ' + err.message, 'error');
                     console.error(err);
                 });
             };
