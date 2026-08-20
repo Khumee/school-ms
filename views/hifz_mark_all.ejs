@@ -102,10 +102,10 @@
     <div class="form-group" style="margin-bottom: 1rem;">
         <label for="download_teacher" style="font-weight: 600;">Teacher Name (optional)</label>
         <select id="download_teacher" class="form-control">
-            <option value="">Leave blank to write by hand on the printed sheet</option>
             <% qariTeachers.forEach(t => { %>
                 <option value="<%= t.name %>"><%= t.name %></option>
             <% }) %>
+            <option value="">Leave blank to write by hand on the printed sheet</option>
         </select>
     </div>
     <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
