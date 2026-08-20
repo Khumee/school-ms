@@ -596,7 +596,14 @@ router.post('/hifz/mark-all/scan', isAuthenticated, async (req, res) => {
         }
 
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+        // Thinking (extended internal reasoning) is on by default for this model and
+        // was measured burning ~7.5k invisible tokens per scan — most of the 45-90s
+        // latency that was tripping the nginx proxy timeout. Not needed for a
+        // mechanical "read boxes, emit JSON" task, so it's switched off.
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-2.5-flash',
+            generationConfig: { thinkingConfig: { thinkingBudget: 0 } }
+        });
 
         const imagePart = {
             inlineData: {
@@ -615,11 +622,13 @@ The sheet is a table with these columns per row, left to right:
 - "Manzil" — three single-number boxes (P1, P2, P3), followed by a "Nag?" box.
 - "Remarks" — free text.
 
-Each section's "Nag?" box is normally left blank. Treat a section (Sabaq, Sabqi, or Manzil) as Nagha (not recited that day) for that row if ANY of the following is true:
+Each section's "Nag?" box is normally left blank. Treat a section (Sabaq, Sabqi, or Manzil) as Nagha (not recited that day) for that row ONLY if:
 - the "Nag?" box for that section has any mark in it at all (N, a tick, a cross, a dot — anything),
 - OR the letter "N" appears in any of that section's number boxes,
-- OR any of that section's number boxes is left blank, has a cross/X, or otherwise doesn't contain a clean legible number, while other boxes in the row clearly do have handwriting (i.e. the row wasn't just skipped entirely).
+- OR EVERY one of that section's number boxes is blank/crossed/unreadable — the whole section left empty — while other parts of the row clearly have handwriting (so the row wasn't just skipped in full).
 When a section is Nagha, leave all of that section's numeric fields blank/empty in your output — do not guess a number.
+
+Do NOT mark a section Nagha just because SOME of its boxes are blank while others have a legible number. Sections routinely only use some of their boxes — e.g. Manzil often has only its P1 box filled in when just one para was revised that day, leaving P2/P3 blank on purpose. A blank sub-box sitting next to a filled one is normal, not Nagha: transcribe whatever numbers ARE legibly written and simply leave the untouched fields as "".
 
 Return ONLY a valid JSON array (no markdown formatting, no \`\`\`json). One object per row that has ANY handwriting in it (an Att mark counts). Skip rows left completely blank.
 Each object must have EXACTLY these keys:
