@@ -156,10 +156,30 @@ router.post('/admin/tenants/new', isSuperAdmin, (req, res) => {
                 );
                 const tenantId = result.insertId;
 
+                // Create default Admin role
+                const [roleResult] = await connection.execute(
+                    `INSERT INTO roles (name, tenant_id) VALUES ('Admin', ?)`,
+                    [tenantId]
+                );
+                const roleId = roleResult.insertId;
+
+                // Add default permissions for the Admin role
+                const permissions = [
+                    'Dashboard', 'Students', 'Employees', 'Fees', 
+                    'Donations', 'Attendance', 'Ledgers', 'Hifz', 'Settings'
+                ];
+                for (const perm of permissions) {
+                    await connection.execute(
+                        `INSERT INTO role_permissions (role_id, function_name, allowed, tenant_id) VALUES (?, ?, 1, ?)`,
+                        [roleId, perm, tenantId]
+                    );
+                }
+
+                // Create default admin user linked to the Admin role
                 const hashedPwd = await bcrypt.hash(admin_password, 10);
                 await connection.execute(
-                    `INSERT INTO users (tenant_id, username, password, role) VALUES (?, ?, ?, 'admin')`,
-                    [tenantId, admin_username, hashedPwd]
+                    `INSERT INTO users (tenant_id, username, password, role_id) VALUES (?, ?, ?, ?)`,
+                    [tenantId, admin_username, hashedPwd, roleId]
                 );
 
                 await connection.commit();
@@ -1024,30 +1044,61 @@ router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
             return res.redirect(`/admin/crm/leads/${leadId}?error=Subdomain already taken`);
         }
 
-        // Insert new tenant
-        const [tenantResult] = await db.pool.execute(
-            `INSERT INTO tenants (school_name, subdomain, status) VALUES (?, ?, 'active')`,
-            [school_name, cleanSubdomain]
-        );
-        const tenantId = tenantResult.insertId;
+        const connection = await db.pool.getConnection();
+        try {
+            await connection.beginTransaction();
 
-        // Create default admin user
-        const hashedPassword = await bcrypt.hash(admin_password, 10);
-        await db.pool.execute(
-            `INSERT INTO users (tenant_id, username, password, role) VALUES (?, ?, ?, 'admin')`,
-            [tenantId, admin_email, hashedPassword]
-        );
+            // Insert new tenant
+            const [tenantResult] = await connection.execute(
+                `INSERT INTO tenants (school_name, subdomain, status) VALUES (?, ?, 'active')`,
+                [school_name, cleanSubdomain]
+            );
+            const tenantId = tenantResult.insertId;
 
-        // Update lead status & link tenant
-        await db.pool.execute(
-            `UPDATE crm_leads SET status = 'won', converted_tenant_id = ? WHERE id = ?`,
-            [tenantId, leadId]
-        );
+            // Create default Admin role
+            const [roleResult] = await connection.execute(
+                `INSERT INTO roles (name, tenant_id) VALUES ('Admin', ?)`,
+                [tenantId]
+            );
+            const roleId = roleResult.insertId;
 
-        if (userRole === 'sales_rep') {
-            res.redirect(`/admin/crm/leads/${leadId}?success=Lead successfully converted to Active Tenant (#${tenantId})! Admin account created.`);
-        } else {
-            res.redirect(`/admin/tenants/${tenantId}/contract?success=Lead converted to Tenant successfully! Please setup contract terms.`);
+            // Add default permissions for the Admin role
+            const permissions = [
+                'Dashboard', 'Students', 'Employees', 'Fees', 
+                'Donations', 'Attendance', 'Ledgers', 'Hifz', 'Settings'
+            ];
+            for (const perm of permissions) {
+                await connection.execute(
+                    `INSERT INTO role_permissions (role_id, function_name, allowed, tenant_id) VALUES (?, ?, 1, ?)`,
+                    [roleId, perm, tenantId]
+                );
+            }
+
+            // Create default admin user
+            const hashedPassword = await bcrypt.hash(admin_password, 10);
+            await connection.execute(
+                `INSERT INTO users (tenant_id, username, password, role_id) VALUES (?, ?, ?, ?)`,
+                [tenantId, admin_email, hashedPassword, roleId]
+            );
+
+            // Update lead status & link tenant
+            await connection.execute(
+                `UPDATE crm_leads SET status = 'won', converted_tenant_id = ? WHERE id = ?`,
+                [tenantId, leadId]
+            );
+
+            await connection.commit();
+
+            if (userRole === 'sales_rep') {
+                res.redirect(`/admin/crm/leads/${leadId}?success=Lead successfully converted to Active Tenant (#${tenantId})! Admin account created.`);
+            } else {
+                res.redirect(`/admin/tenants/${tenantId}/contract?success=Lead converted to Tenant successfully! Please setup contract terms.`);
+            }
+        } catch (innerErr) {
+            await connection.rollback();
+            throw innerErr;
+        } finally {
+            connection.release();
         }
     } catch (err) {
         console.error('Error converting lead:', err);
