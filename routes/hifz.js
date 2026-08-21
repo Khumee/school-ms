@@ -4,7 +4,7 @@ const db = require('../db');
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { generateGeminiContent } = require('../utils/geminiHelper');
 const { isAuthenticated } = require('../middleware/auth');
 const { requireModule } = require('../middleware/modules');
 const {
@@ -590,21 +590,6 @@ router.post('/hifz/mark-all/scan', isAuthenticated, async (req, res) => {
             return res.status(400).json({ error: 'No image data received.' });
         }
 
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            return res.status(500).json({ error: 'Gemini API key not configured.' });
-        }
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        // Thinking (extended internal reasoning) is on by default for this model and
-        // was measured burning ~7.5k invisible tokens per scan — most of the 45-90s
-        // latency that was tripping the nginx proxy timeout. Not needed for a
-        // mechanical "read boxes, emit JSON" task, so it's switched off.
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
-            generationConfig: { thinkingConfig: { thinkingBudget: 0 } }
-        });
-
         const imagePart = {
             inlineData: {
                 data: image_b64,
@@ -650,7 +635,10 @@ Each object must have EXACTLY these keys:
 
 Do your best to transcribe messy handwriting rather than leaving fields empty. If Att is "A" (Absent), the recitation boxes for that row are usually empty — that's expected, just report attendance "A" and leave the rest blank/false.`;
 
-        const result = await model.generateContent([prompt, imagePart]);
+        const result = await generateGeminiContent([prompt, imagePart], {
+            model: 'gemini-2.5-flash',
+            generationConfig: { thinkingConfig: { thinkingBudget: 0 } }
+        });
         const responseText = result.response.text();
 
         let jsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -688,7 +676,10 @@ Do your best to transcribe messy handwriting rather than leaving fields empty. I
         res.json({ success: true, data: matched, unmatched });
     } catch (err) {
         console.error('Hifz Mark Diary Scan Error:', err);
-        res.status(500).json({ error: 'Error processing the image: ' + err.message });
+        const errMsg = err.message.includes('busy processing other sheets')
+            ? err.message
+            : 'Error processing the image: ' + err.message;
+        res.status(500).json({ error: errMsg });
     }
 });
 

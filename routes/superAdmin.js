@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { generateGeminiContent } = require('../utils/geminiHelper');
 const db = require('../db');
 const { isSuperAdmin, isOnlySuperAdmin } = require('../middleware/auth');
 const { parseInsightText } = require('../utils/formatInsight');
@@ -1530,14 +1530,6 @@ router.post('/admin/crm/strategy/transcribe', isSuperAdmin, async (req, res) => 
             return res.status(400).json({ error: 'No audio data received.' });
         }
 
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            return res.status(500).json({ error: 'Gemini API key not configured.' });
-        }
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
         const audioPart = {
             inlineData: {
                 data: audio_b64,
@@ -1547,13 +1539,18 @@ router.post('/admin/crm/strategy/transcribe', isSuperAdmin, async (req, res) => 
 
         const prompt = 'Transcribe this audio recording to plain text, exactly as spoken, with normal punctuation. Return ONLY the transcription — no commentary, no markdown, no speaker labels. If the audio is silent or unintelligible, return an empty string.';
 
-        const result = await model.generateContent([prompt, audioPart]);
+        const result = await generateGeminiContent([prompt, audioPart], {
+            model: 'gemini-2.5-flash'
+        });
         const text = result.response.text().trim();
 
         res.json({ success: true, text });
     } catch (err) {
         console.error('Voice transcription error:', err);
-        res.status(500).json({ error: 'Error transcribing audio: ' + err.message });
+        const errMsg = err.message.includes('busy processing other sheets')
+            ? err.message
+            : 'Error transcribing audio: ' + err.message;
+        res.status(500).json({ error: errMsg });
     }
 });
 
@@ -1562,8 +1559,7 @@ router.post('/admin/crm/strategy/generate', isOnlySuperAdmin, async (req, res) =
     try {
         const adminId = req.session.masterAdminId;
 
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
+        if (!process.env.GEMINI_API_KEY) {
             return res.redirect('/admin/crm/strategy?error=Gemini API key not configured.');
         }
 
@@ -1651,9 +1647,9 @@ ${competitorsBlock}
 === SALES MEETING DATA (${meetings.length} most recent meetings) ===
 ${meetingsBlock}`;
 
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-        const result = await model.generateContent(prompt);
+        const result = await generateGeminiContent(prompt, {
+            model: 'gemini-2.5-flash'
+        });
         const insightText = result.response.text().trim();
 
         await db.pool.execute(
@@ -1665,7 +1661,10 @@ ${meetingsBlock}`;
         res.redirect('/admin/crm/strategy?success=New strategy insight generated');
     } catch (err) {
         console.error('Error generating strategy insight:', err);
-        res.redirect('/admin/crm/strategy?error=' + encodeURIComponent('Error generating insight: ' + err.message));
+        const errMsg = err.message.includes('busy processing other sheets')
+            ? err.message
+            : 'Error generating insight: ' + err.message;
+        res.redirect('/admin/crm/strategy?error=' + encodeURIComponent(errMsg));
     }
 });
 

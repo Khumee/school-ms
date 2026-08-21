@@ -5,7 +5,7 @@ const { isAuthenticated } = require('../middleware/auth');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { generateGeminiContent } = require('../utils/geminiHelper');
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -558,11 +558,6 @@ router.post('/students/admission-form/scan', isAuthenticated, async (req, res) =
             return res.status(400).json({ error: 'No image data received.' });
         }
 
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            return res.status(500).json({ error: 'Gemini API key not configured.' });
-        }
-
         // Minimal logging
         console.log("----- IMAGE RECEIVED FOR OCR -----");
         console.log("MimeType:", mime_type);
@@ -570,10 +565,6 @@ router.post('/students/admission-form/scan', isAuthenticated, async (req, res) =
         console.log("Base64 length (chars):", image_b64.length);
         console.log("Approx decoded size (bytes):", Math.round(image_b64.length * 0.75));
         // Note: No file saved to disk – we directly pass base64 to Gemini
-
-
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const imagePart = {
             inlineData: {
@@ -601,7 +592,9 @@ Required keys:
 If a field is absolutely not present on the page, leave it as an empty string "".
 However, you MUST try to fill as many fields as possible.`;
 
-        const result = await model.generateContent([prompt, imagePart]);
+        const result = await generateGeminiContent([prompt, imagePart], {
+            model: 'gemini-2.5-flash'
+        });
         const responseText = result.response.text();
 
         console.log("----- GEMINI RAW RESPONSE -----");
@@ -614,7 +607,10 @@ However, you MUST try to fill as many fields as possible.`;
         res.json({ success: true, data: extractedData, raw: responseText });
     } catch (err) {
         console.error('OCR Error:', err);
-        res.status(500).json({ error: 'Error processing image: ' + err.message });
+        const errMsg = err.message.includes('busy processing other sheets')
+            ? err.message
+            : 'Error processing image: ' + err.message;
+        res.status(500).json({ error: errMsg });
     }
 });
 
