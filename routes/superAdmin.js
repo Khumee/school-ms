@@ -1050,8 +1050,8 @@ router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
 
             // Insert new tenant
             const [tenantResult] = await connection.execute(
-                `INSERT INTO tenants (school_name, subdomain, status) VALUES (?, ?, 'active')`,
-                [school_name, cleanSubdomain]
+                `INSERT INTO tenants (name, school_name, subdomain, status) VALUES (?, ?, ?, 'active')`,
+                [school_name, school_name, cleanSubdomain]
             );
             const tenantId = tenantResult.insertId;
 
