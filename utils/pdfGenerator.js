@@ -24,7 +24,9 @@ function resolvePublicAsset(relPath) {
  * cleans up the scratch files. Mirrors the pattern used in madrassa-ms.
  */
 function renderPdf(res, { templateName, data, fileBaseName, downloadName }) {
-    const templatePath = path.join(__dirname, '..', 'views', 'pdf', `${templateName}.ejs`);
+    const templatePath = templateName.includes('/') 
+        ? path.join(__dirname, '..', 'views', `${templateName}.ejs`)
+        : path.join(__dirname, '..', 'views', 'pdf', `${templateName}.ejs`);
 
     ejs.renderFile(templatePath, data, (renderErr, html) => {
         if (renderErr) {

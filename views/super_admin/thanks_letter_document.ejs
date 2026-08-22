@@ -234,13 +234,13 @@
 </head>
 <body>
 
-    <button class="btn-print no-print" onclick="window.print()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: text-top; margin-right: 6px;">
+    <a class="btn-print no-print" style="text-decoration: none; color: white; display: flex; align-items: center;" href="/admin/crm/leads/<%= lead.id %>/thanks-letter/pdf">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 8px;">
             <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
             <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
         </svg>
-        Print / Save PDF
-    </button>
+        Download Official PDF
+    </a>
 
     <div class="letter-container">
         <div class="accent-bar"></div>
@@ -289,7 +289,7 @@
                 </div>
 
                 <p>
-                    With your new tailored onboarding plan, your dedicated success manager will be reaching out shortly to guide you through the initial setup, data migration, and staff training phases. We are committed to ensuring a seamless transition and a brilliant start to this new chapter.
+                    Our platform is built to optimize your day-to-day operations, giving you more time to focus on what truly matters: student success. We are committed to ensuring a seamless transition and a brilliant start to this new chapter.
                 </p>
 
                 <p>
@@ -304,13 +304,17 @@
                     <div style="width: 80px; height: 3px; background-color: var(--primary); margin-bottom: 15px;"></div>
                     <div class="signature-details">
                         <h4>Khurram Shahzad</h4>
-                        <p>Chief Executive Officer</p>
+                        <p>Chief Technology Officer</p>
                         <p>Muhaimin Technologies</p>
                     </div>
                 </div>
             </div>
 
             <div class="footer-section">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px;">
+                    <img src="<%= typeof omniLogo !== 'undefined' ? omniLogo : '/images/omnischool_logo.png' %>" alt="OmniSchool" style="height: 30px;" onerror="this.style.display='none'">
+                    <span style="font-size: 16px; font-weight: 600;">Omni School</span>
+                </div>
                 <strong>Muhaimin Technologies</strong> | Empowering Education Through Innovation<br>
                 <div style="margin-top: 10px; color: #94a3b8;">
                     Visit us at <a href="https://muhaimintech.com" target="_blank">www.muhaimintech.com</a> | support@muhaimintech.com

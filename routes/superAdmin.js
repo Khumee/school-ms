@@ -8,6 +8,7 @@ const { generateGeminiContent } = require('../utils/geminiHelper');
 const db = require('../db');
 const { isSuperAdmin, isOnlySuperAdmin } = require('../middleware/auth');
 const { parseInsightText } = require('../utils/formatInsight');
+const { renderPdf, resolvePublicAsset } = require('../utils/pdfGenerator');
 
 // Strict Domain Isolation: Prevent tenants from accessing super admin routes
 router.use((req, res, next) => {
@@ -388,6 +389,35 @@ router.get('/admin/tenants/:id/contract/view', isSuperAdmin, async (req, res) =>
         });
     } catch (err) {
         console.error('Error viewing contract:', err);
+        res.redirect('/admin?error=Database error');
+    }
+});
+
+// GET View Printable Contract (PDF via Puppeteer/Python script)
+router.get('/admin/tenants/:id/contract/pdf', isSuperAdmin, async (req, res) => {
+    try {
+        const tenantId = req.params.id;
+        const [[tenant]] = await db.pool.execute('SELECT * FROM tenants WHERE id = ?', [tenantId]);
+        const [[contract]] = await db.pool.execute('SELECT * FROM tenant_contracts WHERE tenant_id = ?', [tenantId]);
+        
+        if (!tenant || !contract) {
+            return res.redirect(`/admin/tenants/${tenantId}/contract?error=Please generate a contract first`);
+        }
+
+        const tenantForPdf = { ...tenant, logo_url: resolvePublicAsset(tenant.logo_url) };
+
+        renderPdf(res, {
+            templateName: 'super_admin/tenant_contract_document',
+            data: { 
+                title: 'SaaS Contract - ' + tenant.name, 
+                tenant: tenantForPdf, 
+                contract 
+            },
+            fileBaseName: `contract-${tenantId}`,
+            downloadName: `SaaS-Contract-${tenant.school_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+        });
+    } catch (err) {
+        console.error('Error generating contract PDF:', err);
         res.redirect('/admin?error=Database error');
     }
 });
@@ -1195,6 +1225,38 @@ router.get('/admin/crm/leads/:id/thanks-letter', isSuperAdmin, async (req, res) 
     } catch (err) {
         console.error('Error generating thanks letter:', err);
         res.status(500).send('Error generating thanks letter.');
+    }
+});
+
+// GET /admin/crm/leads/:id/thanks-letter/pdf - Download onboarding thanks letter PDF
+router.get('/admin/crm/leads/:id/thanks-letter/pdf', isSuperAdmin, async (req, res) => {
+    try {
+        const leadId = req.params.id;
+        const [[lead]] = await db.pool.execute('SELECT * FROM crm_leads WHERE id = ?', [leadId]);
+        if (!lead) return res.status(404).send('Lead not found.');
+        
+        let tenantForPdf = null;
+        if (lead.converted_tenant_id) {
+            const [[t]] = await db.pool.execute('SELECT * FROM tenants WHERE id = ?', [lead.converted_tenant_id]);
+            if (t) {
+                tenantForPdf = { ...t, logo_url: resolvePublicAsset(t.logo_url) };
+            }
+        }
+
+        renderPdf(res, {
+            templateName: 'super_admin/thanks_letter_document',
+            data: {
+                title: 'Welcome Letter - ' + lead.school_name,
+                lead,
+                tenant: tenantForPdf,
+                omniLogo: resolvePublicAsset('/images/omnischool_logo.png')
+            },
+            fileBaseName: `thanks-letter-${leadId}`,
+            downloadName: `Welcome-Letter-${lead.school_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+        });
+    } catch (err) {
+        console.error('Error generating thanks letter PDF:', err);
+        res.status(500).send('Error generating thanks letter PDF.');
     }
 });
 
