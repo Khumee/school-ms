@@ -411,7 +411,8 @@ router.get('/admin/tenants/:id/contract/pdf', isSuperAdmin, async (req, res) => 
             data: { 
                 title: 'SaaS Contract - ' + tenant.name, 
                 tenant: tenantForPdf, 
-                contract 
+                contract,
+                isPdf: true
             },
             fileBaseName: `contract-${tenantId}`,
             downloadName: `SaaS-Contract-${tenant.school_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
@@ -1249,7 +1250,8 @@ router.get('/admin/crm/leads/:id/thanks-letter/pdf', isSuperAdmin, async (req, r
                 title: 'Welcome Letter - ' + lead.school_name,
                 lead,
                 tenant: tenantForPdf,
-                omniLogo: resolvePublicAsset('/images/omnischool_logo.png')
+                omniLogo: resolvePublicAsset('/images/omnischool_logo.png'),
+                isPdf: true
             },
             fileBaseName: `thanks-letter-${leadId}`,
             downloadName: `Welcome-Letter-${lead.school_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
