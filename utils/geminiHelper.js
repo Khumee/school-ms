@@ -17,7 +17,7 @@ async function generateGeminiContent(contents, options = {}) {
         throw new Error('Gemini API key not configured in .env');
     }
 
-    const modelName = options.model || 'gemini-2.5-flash';
+    const modelName = options.model || 'gemini-3.6-flash';
     const generationConfig = options.generationConfig || {};
 
     let attempts = 0;

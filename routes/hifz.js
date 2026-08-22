@@ -636,7 +636,7 @@ Each object must have EXACTLY these keys:
 Do your best to transcribe messy handwriting rather than leaving fields empty. If Att is "A" (Absent), the recitation boxes for that row are usually empty — that's expected, just report attendance "A" and leave the rest blank/false.`;
 
         const result = await generateGeminiContent([prompt, imagePart], {
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3.6-flash',
             generationConfig: { thinkingConfig: { thinkingBudget: 0 } }
         });
         const responseText = result.response.text();

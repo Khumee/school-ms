@@ -593,7 +593,7 @@ If a field is absolutely not present on the page, leave it as an empty string ""
 However, you MUST try to fill as many fields as possible.`;
 
         const result = await generateGeminiContent([prompt, imagePart], {
-            model: 'gemini-2.5-flash'
+            model: 'gemini-3.6-flash'
         });
         const responseText = result.response.text();
 

@@ -1591,7 +1591,7 @@ router.post('/admin/crm/strategy/transcribe', isSuperAdmin, async (req, res) => 
         const prompt = 'Transcribe this audio recording to plain text, exactly as spoken, with normal punctuation. Return ONLY the transcription — no commentary, no markdown, no speaker labels. If the audio is silent or unintelligible, return an empty string.';
 
         const result = await generateGeminiContent([prompt, audioPart], {
-            model: 'gemini-2.5-flash'
+            model: 'gemini-3.6-flash'
         });
         const text = result.response.text().trim();
 
@@ -1699,7 +1699,7 @@ ${competitorsBlock}
 ${meetingsBlock}`;
 
         const result = await generateGeminiContent(prompt, {
-            model: 'gemini-2.5-flash'
+            model: 'gemini-3.6-flash'
         });
         const insightText = result.response.text().trim();
 

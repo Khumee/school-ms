@@ -65,9 +65,6 @@
             border-radius: 4px;
         }
         .photo-box {
-            position: absolute;
-            top: 20mm;
-            right: 20mm;
             width: 35mm;
             height: 45mm;
             border: 2px dashed #cbd5e1;
@@ -147,17 +144,11 @@
                 page-break-inside: avoid;
             }
             .title { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .photo-box { top: 15mm; right: 15mm; }
         }
     </style>
 </head>
 <body onload="window.print()">
     <div class="page">
-        <!-- Photo Placeholder -->
-        <div class="photo-box">
-            Paste<br>Passport Size<br>Photograph Here
-        </div>
-
         <!-- Header -->
         <div class="header">
             <% if (tenant.logo_url) { %>
@@ -166,6 +157,10 @@
             <div class="school-info">
                 <h1><%= tenant.name %></h1>
                 <p>Admission & Student Profile Record</p>
+            </div>
+            <!-- Photo Placeholder -->
+            <div class="photo-box">
+                Paste<br>Passport Size<br>Photograph Here
             </div>
         </div>
 
@@ -249,11 +244,13 @@
                 <div class="label">Previous School Details (If any)</div>
                 <div class="value"><%= student.previous_school_info || '-' %></div>
             </div>
-            </div>
-            
-            <div class="column-right">
-                <!-- Section 5: Financials & Support -->
-        <div class="section">
+        </div>
+        
+        </div> <!-- End of column-left -->
+        
+        <div class="column-right">
+            <!-- Section 5: Financials & Support -->
+            <div class="section">
             <div class="section-title">5. Family Support & Financial Details</div>
             <div class="grid">
                 <div class="field">
@@ -299,7 +296,7 @@
                 <% } %>
             </div>
         </div>
-        </div>
+        </div> <!-- End of main-columns -->
 
         <!-- Signatures -->
         <div class="signatures">
