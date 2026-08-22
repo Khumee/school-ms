@@ -1205,32 +1205,8 @@ router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
     }
 });
 
-// GET /admin/crm/leads/:id/thanks-letter - Generate onboarding thanks letter
+// GET /admin/crm/leads/:id/thanks-letter - Download onboarding thanks letter PDF
 router.get('/admin/crm/leads/:id/thanks-letter', isSuperAdmin, async (req, res) => {
-    try {
-        const leadId = req.params.id;
-        const [[lead]] = await db.pool.execute('SELECT * FROM crm_leads WHERE id = ?', [leadId]);
-        if (!lead) return res.status(404).send('Lead not found.');
-        
-        let tenant = null;
-        if (lead.converted_tenant_id) {
-            const [[t]] = await db.pool.execute('SELECT * FROM tenants WHERE id = ?', [lead.converted_tenant_id]);
-            tenant = t;
-        }
-
-        res.render('super_admin/thanks_letter_document', {
-            title: 'Welcome Letter - ' + lead.school_name,
-            lead,
-            tenant
-        });
-    } catch (err) {
-        console.error('Error generating thanks letter:', err);
-        res.status(500).send('Error generating thanks letter.');
-    }
-});
-
-// GET /admin/crm/leads/:id/thanks-letter/pdf - Download onboarding thanks letter PDF
-router.get('/admin/crm/leads/:id/thanks-letter/pdf', isSuperAdmin, async (req, res) => {
     try {
         const leadId = req.params.id;
         const [[lead]] = await db.pool.execute('SELECT * FROM crm_leads WHERE id = ?', [leadId]);
@@ -1257,8 +1233,8 @@ router.get('/admin/crm/leads/:id/thanks-letter/pdf', isSuperAdmin, async (req, r
             downloadName: `Welcome-Letter-${lead.school_name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
         });
     } catch (err) {
-        console.error('Error generating thanks letter PDF:', err);
-        res.status(500).send('Error generating thanks letter PDF.');
+        console.error('Error generating thanks letter:', err);
+        res.status(500).send('Error generating thanks letter.');
     }
 });
 
