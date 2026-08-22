@@ -58,6 +58,7 @@
                 <% } %>
                 <% if (lead.converted_tenant_id) { %>
                     <span class="status-cell status-paid" style="padding: 0.5rem 1rem; font-size: 0.9rem;"><i class="bi bi-check-circle-fill"></i> Converted Tenant (#<%= lead.converted_tenant_id %>)</span>
+                    <a href="/admin/crm/leads/<%= lead.id %>/thanks-letter" class="btn-primary" target="_blank" style="background-color: #8b5cf6;"><i class="bi bi-envelope-paper"></i> Print Thanks Letter</a>
                 <% } else { %>
                     <button type="button" class="btn-primary" onclick="openConvertModal()" style="background-color: #2563eb;">
                         <i class="bi bi-arrow-right-circle"></i> Convert to Tenant
@@ -159,8 +160,16 @@
                             <input type="number" step="0.01" name="agreed_monthly_rate" class="form-control" value="<%= lead.agreed_monthly_rate || 0 %>" <%= (typeof role !== 'undefined' && role === 'sales_rep') ? 'readonly' : '' %>>
                         </div>
                         <div class="form-group">
-                            <label style="font-size: 0.8rem; font-weight: 600;">Agreed Per-Student Monthly Rate (PKR)</label>
-                            <input type="number" step="0.01" name="agreed_rate_per_student" class="form-control" value="<%= lead.agreed_rate_per_student || 0 %>" <%= (typeof role !== 'undefined' && role === 'sales_rep') ? 'readonly' : '' %>>
+                            <label style="font-size: 0.8rem; font-weight: 600;">Agreed Base Students Threshold</label>
+                            <input type="number" name="agreed_base_students_threshold" class="form-control" value="<%= lead.agreed_base_students_threshold || 100 %>" <%= (typeof role !== 'undefined' && role === 'sales_rep') ? 'readonly' : '' %>>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.8rem; font-weight: 600;">Agreed Base Amount (PKR)</label>
+                            <input type="number" step="0.01" name="agreed_base_amount" class="form-control" value="<%= lead.agreed_base_amount || 1000 %>" <%= (typeof role !== 'undefined' && role === 'sales_rep') ? 'readonly' : '' %>>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.8rem; font-weight: 600;">Agreed Extra Student Rate (PKR)</label>
+                            <input type="number" step="0.01" name="agreed_extra_student_rate" class="form-control" value="<%= lead.agreed_extra_student_rate || 5 %>" <%= (typeof role !== 'undefined' && role === 'sales_rep') ? 'readonly' : '' %>>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                             <div class="form-group">

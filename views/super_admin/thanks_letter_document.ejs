@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #2563eb;
+            --accent: #f59e0b;
+            --text-main: #1e293b;
+            --text-light: #475569;
+            --bg-light: #f8fafc;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .letter-container {
+            background-color: white;
+            width: 100%;
+            max-width: 850px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        /* Top Accent Bar */
+        .accent-bar {
+            height: 8px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), #8b5cf6, var(--accent));
+            width: 100%;
+        }
+
+        .header-section {
+            padding: 50px 50px 30px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid #e2e8f0;
+            background: linear-gradient(180deg, var(--bg-light) 0%, white 100%);
+        }
+
+        .brand-logos {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .mt-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .mt-logo img {
+            height: 45px;
+            background: #1e293b;
+            padding: 6px;
+            border-radius: 8px;
+        }
+        
+        .mt-logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mt-logo-text h1 {
+            font-family: 'Playfair Display', serif;
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1.1;
+        }
+
+        .omni-branding {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .school-logo-container {
+            text-align: right;
+            max-width: 250px;
+        }
+
+        .school-logo {
+            max-height: 80px;
+            max-width: 180px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .school-name-header {
+            font-family: 'Playfair Display', serif;
+            margin: 10px 0 0 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        .content-section {
+            padding: 50px 60px;
+            line-height: 1.8;
+            font-size: 15px;
+            color: var(--text-light);
+        }
+
+        .date-text {
+            font-weight: 500;
+            margin-bottom: 40px;
+            color: #94a3b8;
+        }
+
+        .salutation {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            color: var(--text-main);
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .highlight-box {
+            background-color: var(--bg-light);
+            border-left: 4px solid var(--primary);
+            padding: 20px 25px;
+            margin: 35px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 16px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .signature-section {
+            margin-top: 60px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .signature-details h4 {
+            font-family: 'Playfair Display', serif;
+            margin: 0 0 5px 0;
+            font-size: 18px;
+            color: var(--text-main);
+        }
+
+        .signature-details p {
+            margin: 0;
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .footer-section {
+            background-color: var(--text-main);
+            color: white;
+            padding: 30px 50px;
+            text-align: center;
+            font-size: 13px;
+        }
+        
+        .footer-section a {
+            color: #93c5fd;
+            text-decoration: none;
+        }
+
+        /* Decorative Elements */
+        .decor-circle-1 {
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(79,70,229,0.1) 0%, rgba(79,70,229,0) 70%);
+            z-index: 0;
+        }
+
+        .content-relative {
+            position: relative;
+            z-index: 1;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .letter-container {
+                box-shadow: none;
+                max-width: 100%;
+                border-radius: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+        
+        .btn-print {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
+            transition: transform 0.2s;
+            z-index: 999;
+        }
+        
+        .btn-print:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+    <button class="btn-print no-print" onclick="window.print()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: text-top; margin-right: 6px;">
+            <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+            <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+        </svg>
+        Print / Save PDF
+    </button>
+
+    <div class="letter-container">
+        <div class="accent-bar"></div>
+        <div class="decor-circle-1"></div>
+        
+        <div class="content-relative">
+            <div class="header-section">
+                <div class="brand-logos">
+                    <div class="mt-logo">
+                        <img src="https://muhaimintech.com/Frame121.png" alt="Muhaimin Technologies" onerror="this.style.display='none'">
+                        <div class="mt-logo-text">
+                            <h1>Muhaimin Tech.</h1>
+                            <div class="omni-branding">Omni School Powered</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="school-logo-container">
+                    <% if (tenant && tenant.logo_url) { %>
+                        <img src="<%= tenant.logo_url %>" alt="School Logo" class="school-logo" onerror="this.style.display='none'">
+                    <% } %>
+                    <h2 class="school-name-header"><%= lead.school_name %></h2>
+                </div>
+            </div>
+
+            <div class="content-section">
+                <div class="date-text">
+                    <%= new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                </div>
+
+                <div class="salutation">
+                    Dear <%= lead.contact_person || 'Esteemed Partner' %>,
+                </div>
+
+                <p>
+                    On behalf of the entire team at <strong>Muhaimin Technologies</strong>, it is my absolute pleasure to officially welcome <strong><%= lead.school_name %></strong> to the Omni School family. 
+                </p>
+
+                <p>
+                    We recognize that choosing a technological partner to manage and streamline your educational institution is a significant decision. We are deeply honored by the trust you have placed in our <strong>Omni School ERP</strong> platform. Our mission has always been to empower educators, and we are thrilled to bring that vision to your campus.
+                </p>
+
+                <div class="highlight-box">
+                    "Technology will never replace great teachers, but technology in the hands of great teachers is transformational." 
+                    <br><span style="font-size: 13px; color: #64748b; font-weight: 400;">— George Couros</span>
+                </div>
+
+                <p>
+                    With your new tailored onboarding plan, your dedicated success manager will be reaching out shortly to guide you through the initial setup, data migration, and staff training phases. We are committed to ensuring a seamless transition and a brilliant start to this new chapter.
+                </p>
+
+                <p>
+                    Should you or your team have any immediate questions, our support desk is at your full disposal. 
+                </p>
+
+                <p>
+                    Thank you once again for choosing Muhaimin Technologies. Here is to a future of innovation, excellence, and shared success!
+                </p>
+
+                <div class="signature-section">
+                    <div style="width: 80px; height: 3px; background-color: var(--primary); margin-bottom: 15px;"></div>
+                    <div class="signature-details">
+                        <h4>Khurram Shahzad</h4>
+                        <p>Chief Executive Officer</p>
+                        <p>Muhaimin Technologies</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-section">
+                <strong>Muhaimin Technologies</strong> | Empowering Education Through Innovation<br>
+                <div style="margin-top: 10px; color: #94a3b8;">
+                    Visit us at <a href="https://muhaimintech.com" target="_blank">www.muhaimintech.com</a> | support@muhaimintech.com
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

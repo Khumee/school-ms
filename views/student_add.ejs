@@ -3,8 +3,10 @@
 <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <h1 class="section-title"><i class="bi bi-person-plus-fill"></i> New Student Admission</h1>
     <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <% if (tenant.feature_ocr_student) { %>
         <span id="header_scan_status" style="font-size: 0.9rem; color: #64748b; display: none;"><i class="bi bi-hourglass-split"></i> AI Processing...</span>
         <button type="button" id="header_scan_btn" class="btn-primary" onclick="openScanModal()" style="background-color: #4f46e5; border-color: #4f46e5;"><i class="bi bi-magic"></i> Auto-fill via Form Scan</button>
+        <% } %>
         <a href="/students" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Directory</a>
     </div>
 </div>

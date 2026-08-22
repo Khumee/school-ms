@@ -48,14 +48,33 @@
             </div>
             <div class="col-md-3">
                 <div class="card text-center py-4">
-                    <h6 class="text-muted text-uppercase mb-2">Rate (PKR)</h6>
-                    <h2 class="mb-0 text-dark"><%= contract ? parseFloat(contract.rate_per_student).toFixed(0) : '0' %></h2>
+                    <h6 class="text-muted text-uppercase mb-2">Base / Threshold</h6>
+                    <h2 class="mb-0 text-dark"><%= contract ? 'Rs ' + parseFloat(contract.base_amount).toFixed(0) + ' / ' + contract.base_students_threshold : '0' %></h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center py-4">
+                    <h6 class="text-muted text-uppercase mb-2">Extra Rate</h6>
+                    <h2 class="mb-0 text-dark">Rs <%= contract ? parseFloat(contract.extra_student_rate).toFixed(0) : '0' %></h2>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="card text-center py-4" style="background-color: #e0f2fe; border: 1px solid #bae6fd;">
                     <h6 class="text-muted text-uppercase mb-2" style="color: #0369a1 !important;">Suggested Monthly Total</h6>
-                    <h2 class="mb-0 text-primary">Rs <%= contract ? (parseFloat(contract.rate_per_student) * activeStudents).toLocaleString() : '0' %></h2>
+                    <%
+                        let suggestedTotal = 0;
+                        if (contract) {
+                            if (contract.base_amount > 0) {
+                                suggestedTotal = parseFloat(contract.base_amount);
+                                if (activeStudents > contract.base_students_threshold) {
+                                    suggestedTotal += (activeStudents - contract.base_students_threshold) * parseFloat(contract.extra_student_rate);
+                                }
+                            } else {
+                                suggestedTotal = parseFloat(contract.rate_per_student || 0) * activeStudents;
+                            }
+                        }
+                    %>
+                    <h2 class="mb-0 text-primary">Rs <%= suggestedTotal.toLocaleString() %></h2>
                 </div>
             </div>
         </div>

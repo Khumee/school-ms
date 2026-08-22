@@ -583,6 +583,10 @@ router.get('/hifz/mark-all/download', isAuthenticated, async (req, res) => {
 // ============================================================
 router.post('/hifz/mark-all/scan', isAuthenticated, async (req, res) => {
     try {
+        if (!req.tenant.feature_ocr_hifz) {
+            return res.status(403).json({ error: 'AI Hifz Sheet Scan feature is not enabled for this tenant.' });
+        }
+        
         const tenantId = req.tenant.id;
         const { image_b64, mime_type } = req.body;
 

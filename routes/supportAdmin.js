@@ -68,6 +68,37 @@ router.get('/admin/support/tickets', isSupportStaff, async (req, res) => {
     }
 });
 
+// GET /admin/support/create - form to create ticket for tenant
+router.get('/admin/support/create', isSupportStaff, async (req, res) => {
+    try {
+        const [tenants] = await db.pool.execute('SELECT id, school_name, subdomain FROM tenants WHERE status = "active" ORDER BY school_name');
+        res.render('super_admin/support_ticket_create', { tenants, error: null });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+// POST /admin/support/create - create ticket for tenant
+router.post('/admin/support/create', isSupportStaff, async (req, res) => {
+    try {
+        await ensureSupportSchema();
+        const { tenant_id, subject, category, priority, description } = req.body;
+        
+        await db.pool.execute(
+            `INSERT INTO support_tickets (tenant_id, opened_by_user_id, subject, category, priority, status, description)
+             VALUES (?, ?, ?, ?, ?, 'open', ?)`,
+            [tenant_id, null, subject, category, priority, description]
+        );
+        
+        res.redirect('/admin/support/tickets?success=Ticket created successfully');
+    } catch (err) {
+        console.error(err);
+        const [tenants] = await db.pool.execute('SELECT id, school_name, subdomain FROM tenants WHERE status = "active" ORDER BY school_name');
+        res.render('super_admin/support_ticket_create', { tenants, error: 'Failed to create ticket.' });
+    }
+});
+
 // GET /admin/support/tickets/:id — ticket detail + reply form
 router.get('/admin/support/tickets/:id', isSupportStaff, async (req, res) => {
     try {

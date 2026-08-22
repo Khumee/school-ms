@@ -142,6 +142,8 @@ router.post('/admin/tenants/new', isSuperAdmin, (req, res) => {
         const { name, school_name, subdomain, custom_domain, status, primary_color, secondary_color, admin_username, admin_password, address, contact_phone, contact_email } = req.body;
         const enable_donations_module = req.body.enable_donations_module === 'on' ? 1 : 0;
         const enable_hifz_module      = req.body.enable_hifz_module === 'on' ? 1 : 0;
+        const feature_ocr_student     = req.body.feature_ocr_student === 'on' ? 1 : 0;
+        const feature_ocr_hifz        = req.body.feature_ocr_hifz === 'on' ? 1 : 0;
         const logo_url = req.file ? `/images/logos/${req.file.filename}` : '/images/default_logo.png';
 
         try {
@@ -150,9 +152,9 @@ router.post('/admin/tenants/new', isSuperAdmin, (req, res) => {
                 await connection.beginTransaction();
 
                 const [result] = await connection.execute(
-                    `INSERT INTO tenants (name, school_name, subdomain, custom_domain, status, primary_color, secondary_color, enable_donations_module, enable_hifz_module, logo_url, address, contact_phone, contact_email) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [name, school_name, subdomain, custom_domain || null, status, primary_color, secondary_color, enable_donations_module, enable_hifz_module, logo_url, address || null, contact_phone || null, contact_email || null]
+                    `INSERT INTO tenants (name, school_name, subdomain, custom_domain, status, primary_color, secondary_color, enable_donations_module, enable_hifz_module, feature_ocr_student, feature_ocr_hifz, logo_url, address, contact_phone, contact_email) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [name, school_name, subdomain, custom_domain || null, status, primary_color, secondary_color, enable_donations_module, enable_hifz_module, feature_ocr_student, feature_ocr_hifz, logo_url, address || null, contact_phone || null, contact_email || null]
                 );
                 const tenantId = result.insertId;
 
@@ -215,12 +217,15 @@ router.post('/admin/tenants/:id', isSuperAdmin, (req, res) => {
         const { school_name, subdomain, custom_domain, status, primary_color, secondary_color, address, contact_phone, contact_email } = req.body;
         const enable_donations_module = req.body.enable_donations_module === 'on' ? 1 : 0;
         const enable_hifz_module      = req.body.enable_hifz_module === 'on' ? 1 : 0;
+        const feature_ocr_student     = req.body.feature_ocr_student === 'on' ? 1 : 0;
+        const feature_ocr_hifz        = req.body.feature_ocr_hifz === 'on' ? 1 : 0;
 
         const fields = [school_name, subdomain, custom_domain || null, status, primary_color, secondary_color,
-                        enable_donations_module, enable_hifz_module, address || null, contact_phone || null, contact_email || null];
+                        enable_donations_module, enable_hifz_module, feature_ocr_student, feature_ocr_hifz, address || null, contact_phone || null, contact_email || null];
         let sql = `UPDATE tenants SET school_name = ?, subdomain = ?, custom_domain = ?, status = ?, 
                    primary_color = ?, secondary_color = ?,
                    enable_donations_module = ?, enable_hifz_module = ?,
+                   feature_ocr_student = ?, feature_ocr_hifz = ?,
                    address = ?, contact_phone = ?, contact_email = ?`;
 
         if (req.file) {
@@ -233,6 +238,36 @@ router.post('/admin/tenants/:id', isSuperAdmin, (req, res) => {
         await db.pool.execute(sql, fields);
         res.redirect('/admin?success=Tenant updated successfully');
     });
+});
+
+// GET Impersonate Tenant
+router.get('/admin/impersonate/:id', isSuperAdmin, async (req, res) => {
+    try {
+        const tenantId = req.params.id;
+        const [tenants] = await db.pool.execute('SELECT subdomain FROM tenants WHERE id = ?', [tenantId]);
+        if (tenants.length === 0) return res.status(404).send('Tenant not found');
+
+        const tenant = tenants[0];
+        
+        // Generate a random token using crypto
+        const crypto = require('crypto');
+        const token = crypto.randomBytes(32).toString('hex');
+        
+        // Insert the token (master_admin_id comes from req.session.admin.id)
+        await db.pool.execute(
+            'INSERT INTO impersonation_tokens (token, master_admin_id, tenant_id) VALUES (?, ?, ?)',
+            [token, req.session.admin.id, tenantId]
+        );
+
+        // Construct target URL
+        const baseHost = req.headers.host.replace('admin.', '');
+        const targetUrl = `${req.protocol}://${tenant.subdomain}.${baseHost}/impersonate?token=${token}`;
+        
+        res.redirect(targetUrl);
+    } catch (err) {
+        console.error('Impersonation error:', err);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 // POST Delete Tenant
@@ -292,7 +327,8 @@ router.post('/admin/tenants/:id/contract', isSuperAdmin, async (req, res) => {
     try {
         const tenantId = req.params.id;
         const {
-            rate_per_student, contract_start_date, free_trial_start, free_trial_end,
+            rate_per_student, base_students_threshold, base_amount, extra_student_rate,
+            contract_start_date, free_trial_start, free_trial_end,
             billing_start_date, max_students_allowed, support_sla, cancellation_notice_days, data_retention_days
         } = req.body;
 
@@ -305,21 +341,25 @@ router.post('/admin/tenants/:id/contract', isSuperAdmin, async (req, res) => {
         if (existing) {
             await db.pool.execute(`
                 UPDATE tenant_contracts SET 
-                rate_per_student=?, contract_start_date=?, free_trial_start=?, free_trial_end=?,
+                rate_per_student=?, base_students_threshold=?, base_amount=?, extra_student_rate=?,
+                contract_start_date=?, free_trial_start=?, free_trial_end=?,
                 billing_start_date=?, max_students_allowed=?, support_sla=?, cancellation_notice_days=?, data_retention_days=?
                 WHERE tenant_id=?
             `, [
-                rate_per_student || 0, contract_start_date, free_trial_start || null, free_trial_end || null,
+                rate_per_student || 0, base_students_threshold || 100, base_amount || 1000, extra_student_rate || 5,
+                contract_start_date, free_trial_start || null, free_trial_end || null,
                 billing_start_date, max_students_allowed || 500, support_sla || 'Standard 24h', cancellation_notice_days || 30, data_retention_days || 30,
                 tenantId
             ]);
         } else {
             await db.pool.execute(`
                 INSERT INTO tenant_contracts 
-                (tenant_id, rate_per_student, contract_start_date, free_trial_start, free_trial_end, billing_start_date, max_students_allowed, support_sla, cancellation_notice_days, data_retention_days)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (tenant_id, rate_per_student, base_students_threshold, base_amount, extra_student_rate,
+                 contract_start_date, free_trial_start, free_trial_end, billing_start_date, max_students_allowed, support_sla, cancellation_notice_days, data_retention_days)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `, [
-                tenantId, rate_per_student || 0, contract_start_date, free_trial_start || null, free_trial_end || null,
+                tenantId, rate_per_student || 0, base_students_threshold || 100, base_amount || 1000, extra_student_rate || 5,
+                contract_start_date, free_trial_start || null, free_trial_end || null,
                 billing_start_date, max_students_allowed || 500, support_sla || 'Standard 24h', cancellation_notice_days || 30, data_retention_days || 30
             ]);
         }
@@ -388,10 +428,21 @@ router.post('/admin/tenants/:id/invoices/generate', isSuperAdmin, async (req, re
         const tenantId = req.params.id;
         const { billing_period_start, billing_period_end, issue_date, due_date, total_students_billed, discount, notes } = req.body;
         
-        const [[contract]] = await db.pool.execute('SELECT rate_per_student FROM tenant_contracts WHERE tenant_id = ?', [tenantId]);
-        const rate = contract ? parseFloat(contract.rate_per_student) : 0;
+        const [[contract]] = await db.pool.execute('SELECT base_students_threshold, base_amount, extra_student_rate, rate_per_student FROM tenant_contracts WHERE tenant_id = ?', [tenantId]);
         
-        const subtotal = rate * parseInt(total_students_billed);
+        let subtotal = 0;
+        const students = parseInt(total_students_billed) || 0;
+        
+        if (contract) {
+            if (contract.base_amount > 0) {
+                subtotal = parseFloat(contract.base_amount);
+                if (students > contract.base_students_threshold) {
+                    subtotal += (students - contract.base_students_threshold) * parseFloat(contract.extra_student_rate);
+                }
+            } else {
+                subtotal = parseFloat(contract.rate_per_student || 0) * students;
+            }
+        }
         const disc = parseFloat(discount || 0);
         const total = subtotal - disc;
         
@@ -915,15 +966,16 @@ router.post('/admin/crm/leads/:id/status', isSuperAdmin, async (req, res) => {
 router.post('/admin/crm/leads/:id/pricing', isOnlySuperAdmin, async (req, res) => {
     try {
         const leadId = req.params.id;
-        const { agreed_setup_fee, agreed_monthly_rate, agreed_rate_per_student, rep_commission_pct, rep_commission_flat } = req.body;
+        const { agreed_setup_fee, agreed_monthly_rate, agreed_base_students_threshold, agreed_base_amount, agreed_extra_student_rate, rep_commission_pct, rep_commission_flat } = req.body;
 
         await db.pool.execute(
             `UPDATE crm_leads
-             SET agreed_setup_fee = ?, agreed_monthly_rate = ?, agreed_rate_per_student = ?, rep_commission_pct = ?, rep_commission_flat = ?
+             SET agreed_setup_fee = ?, agreed_monthly_rate = ?, agreed_base_students_threshold = ?, agreed_base_amount = ?, agreed_extra_student_rate = ?, rep_commission_pct = ?, rep_commission_flat = ?
              WHERE id = ?`,
             [
                 parseFloat(agreed_setup_fee) || 0, parseFloat(agreed_monthly_rate) || 0,
-                parseFloat(agreed_rate_per_student) || 0, parseFloat(rep_commission_pct) || 0,
+                parseInt(agreed_base_students_threshold) || 100, parseFloat(agreed_base_amount) || 1000,
+                parseFloat(agreed_extra_student_rate) || 5, parseFloat(rep_commission_pct) || 0,
                 parseFloat(rep_commission_flat) || 0, leadId
             ]
         );
@@ -1081,6 +1133,22 @@ router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
                 [tenantId, admin_email, hashedPassword, roleId]
             );
 
+            // Insert default contract with negotiated tiered rates
+            const today = new Date().toISOString().split('T')[0];
+            await connection.execute(
+                `INSERT INTO tenant_contracts 
+                (tenant_id, base_students_threshold, base_amount, extra_student_rate, contract_start_date, billing_start_date) 
+                VALUES (?, ?, ?, ?, ?, ?)`,
+                [
+                    tenantId, 
+                    lead.agreed_base_students_threshold || 100, 
+                    lead.agreed_base_amount || 1000, 
+                    lead.agreed_extra_student_rate || 5,
+                    today,
+                    today
+                ]
+            );
+
             // Update lead status & link tenant
             await connection.execute(
                 `UPDATE crm_leads SET status = 'won', converted_tenant_id = ? WHERE id = ?`,
@@ -1103,6 +1171,30 @@ router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
     } catch (err) {
         console.error('Error converting lead:', err);
         res.status(500).send('Error converting lead to tenant.');
+    }
+});
+
+// GET /admin/crm/leads/:id/thanks-letter - Generate onboarding thanks letter
+router.get('/admin/crm/leads/:id/thanks-letter', isSuperAdmin, async (req, res) => {
+    try {
+        const leadId = req.params.id;
+        const [[lead]] = await db.pool.execute('SELECT * FROM crm_leads WHERE id = ?', [leadId]);
+        if (!lead) return res.status(404).send('Lead not found.');
+        
+        let tenant = null;
+        if (lead.converted_tenant_id) {
+            const [[t]] = await db.pool.execute('SELECT * FROM tenants WHERE id = ?', [lead.converted_tenant_id]);
+            tenant = t;
+        }
+
+        res.render('super_admin/thanks_letter_document', {
+            title: 'Welcome Letter - ' + lead.school_name,
+            lead,
+            tenant
+        });
+    } catch (err) {
+        console.error('Error generating thanks letter:', err);
+        res.status(500).send('Error generating thanks letter.');
     }
 });
 

@@ -9,6 +9,47 @@ router.get('/login', (req, res) => {
     res.render('login', { error: null });
 });
 
+// GET Impersonate (accept token from Super Admin)
+router.get('/impersonate', async (req, res) => {
+    const { token } = req.query;
+    if (!token) return res.status(400).send('Missing impersonation token');
+
+    try {
+        const [tokens] = await db.pool.execute(
+            'SELECT * FROM impersonation_tokens WHERE token = ? AND tenant_id = ? AND created_at > (NOW() - INTERVAL 5 MINUTE)',
+            [token, req.tenant.id]
+        );
+
+        if (tokens.length === 0) {
+            return res.status(403).send('Invalid or expired impersonation token');
+        }
+
+        const impersonation = tokens[0];
+
+        // Delete the token so it can only be used once
+        await db.pool.execute('DELETE FROM impersonation_tokens WHERE id = ?', [impersonation.id]);
+
+        // Fetch all permissions for Admin role for this tenant (or just grant all)
+        // In OmniSchool, the 'Admin' role name is generally used. We will grant a virtual Admin session.
+        req.session.userId = -1; // Virtual user
+        req.session.roleId = -1;
+        req.session.roleName = 'Admin';
+        req.session.username = 'SuperAdmin_Impersonator';
+        req.session.permissions = [
+            'Dashboard', 'Students', 'Employees', 'Fees', 
+            'Donations', 'Attendance', 'Ledgers', 'Hifz', 'Settings'
+        ];
+
+        return req.session.save((err) => {
+            if (err) return res.status(500).send('Session save error');
+            res.redirect('/');
+        });
+    } catch (err) {
+        console.error('Impersonation Error:', err);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
 // POST Login
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;

@@ -151,8 +151,16 @@
                 <td><%= new Date(contract.billing_start_date).toLocaleDateString() %></td>
             </tr>
             <tr>
-                <th>Rate Per Student (PKR)</th>
-                <td>Rs <%= parseFloat(contract.rate_per_student).toFixed(2) %> / month</td>
+                <th>Base Students Threshold</th>
+                <td><%= contract.base_students_threshold %> Students</td>
+            </tr>
+            <tr>
+                <th>Base Amount (PKR)</th>
+                <td>Rs <%= parseFloat(contract.base_amount).toFixed(2) %> / month</td>
+            </tr>
+            <tr>
+                <th>Extra Rate Per Student (PKR)</th>
+                <td>Rs <%= parseFloat(contract.extra_student_rate).toFixed(2) %> / month</td>
             </tr>
             <tr>
                 <th>Maximum Students Allowed</th>
@@ -169,7 +177,7 @@
             <p>Subject to the terms and conditions of this Agreement, the Provider grants the Client a non-exclusive, non-transferable right to access and use the SaaS platform solely for the Client's internal business operations. The Client is restricted to the Maximum Students Allowed as specified in the Commercial Terms. Exceeding this limit may result in additional charges.</p>
 
             <h2>3. Billing and Payment</h2>
-            <p>Billing shall commence on the Billing Start Date. Invoices will be generated on a monthly basis reflecting the number of active students recorded in the system, multiplied by the Rate Per Student. Payments are due within seven (7) days of the invoice issue date. Failure to pay within the specified timeframe may result in suspension of services.</p>
+            <p>Billing shall commence on the Billing Start Date. Invoices will be generated on a monthly basis based on the number of active students recorded in the system. The Client will be billed the Base Amount for up to the Base Students Threshold. Any active students exceeding this threshold will be billed at the Extra Rate Per Student. Payments are due within seven (7) days of the invoice issue date. Failure to pay within the specified timeframe may result in suspension of services.</p>
 
             <h2>4. Data Protection and Liability</h2>
             <p><strong>4.1 Data Loss:</strong> The Provider utilizes industry-standard backup protocols to ensure data integrity. However, as a cloud-based service, data loss may occur due to unforeseen system failures, cyber-attacks, or events outside the Provider's reasonable control. The Provider shall not be held liable for any data loss, corruption, or business interruption that occurs as a result of such events.</p>

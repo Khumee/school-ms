@@ -29,6 +29,7 @@
     <main class="main-content">
         <div class="section-header">
             <h1 class="section-title"><i class="bi bi-life-preserver"></i> Support Tickets (<%= openCount %> Open)</h1>
+            <a href="/admin/support/create" class="btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;"><i class="bi bi-plus-circle"></i> Create Ticket for Tenant</a>
         </div>
 
         <% if (typeof success !== 'undefined' && success) { %>

@@ -552,6 +552,10 @@ router.get('/students/admission-form/empty', isAuthenticated, async (req, res) =
 // POST /students/admission-form/scan  (accepts raw base64 JSON from client - no multer, no compression)
 router.post('/students/admission-form/scan', isAuthenticated, async (req, res) => {
     try {
+        if (!req.tenant.feature_ocr_student) {
+            return res.status(403).json({ error: 'AI Student Form Scan feature is not enabled for this tenant.' });
+        }
+
         const { image_b64, mime_type, file_size } = req.body;
 
         if (!image_b64) {

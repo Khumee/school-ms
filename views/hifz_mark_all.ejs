@@ -86,7 +86,9 @@
         <span style="color: #64748b; font-size: 0.9rem;">(Changing date will load entries for that day)</span>
         <div style="margin-left: auto; display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <button type="button" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 0.35rem;" onclick="openDownloadModal()"><i class="bi bi-file-earmark-pdf"></i> Download Mark Diary (PDF)</button>
+            <% if (tenant.feature_ocr_hifz) { %>
             <button type="button" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 0.35rem;" onclick="openScanModal()"><i class="bi bi-upc-scan"></i> Upload Scanned Sheet</button>
+            <% } %>
         </div>
     </form>
 </div>
