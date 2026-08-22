@@ -254,10 +254,10 @@ router.get('/admin/impersonate/:id', isSuperAdmin, async (req, res) => {
         const crypto = require('crypto');
         const token = crypto.randomBytes(32).toString('hex');
         
-        // Insert the token (master_admin_id comes from req.session.admin.id)
+        // Insert the token (master_admin_id comes from req.session.masterAdminId)
         await db.pool.execute(
             'INSERT INTO impersonation_tokens (token, master_admin_id, tenant_id) VALUES (?, ?, ?)',
-            [token, req.session.admin.id, tenantId]
+            [token, req.session.masterAdminId, tenantId]
         );
 
         // Construct target URL
