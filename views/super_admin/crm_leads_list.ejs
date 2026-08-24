@@ -56,7 +56,10 @@
     <main class="main-content">
         <div class="section-header">
             <h1 class="section-title"><i class="bi bi-funnel-fill"></i> CRM Leads & School Prospects</h1>
-            <a href="/admin/crm/leads/new" class="btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;"><i class="bi bi-plus-circle"></i> Add New Lead</a>
+            <div style="display: flex; gap: 0.5rem;">
+                <a href="/admin/crm/referees" class="btn-secondary" style="display: inline-flex; align-items: center; gap: 0.5rem;"><i class="bi bi-person-heart"></i> <%= role === 'sales_rep' ? 'My Referees' : 'Referees' %></a>
+                <a href="/admin/crm/leads/new" class="btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;"><i class="bi bi-plus-circle"></i> Add New Lead</a>
+            </div>
         </div>
 
         <% if (typeof success !== 'undefined' && success) { %>
