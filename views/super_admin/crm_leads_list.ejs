@@ -134,6 +134,9 @@
                                 <td>
                                     <div style="font-weight: 700; color: #0f172a;"><%= l.school_name %></div>
                                     <div style="font-size: 0.8rem; color: #64748b;"><i class="bi bi-geo-alt"></i> <%= l.city || 'N/A' %></div>
+                                    <% if (l.group_director) { %>
+                                        <div style="font-size: 0.8rem; color: #4338ca; font-weight: 600; margin-top: 0.2rem;" title="One Level Up Decision Maker"><i class="bi bi-person-workspace"></i> Dir: <%= l.group_director %></div>
+                                    <% } %>
                                 </td>
                                 <td>
                                     <div style="font-weight: 600; color: #1e293b;"><%= l.contact_person %> <%= l.designation ? `(${l.designation})` : '' %></div>

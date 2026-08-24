@@ -654,7 +654,9 @@ async function ensureCrmSchema() {
             `ALTER TABLE crm_leads ADD COLUMN agreed_monthly_rate DECIMAL(10,2) DEFAULT 0.00`,
             `ALTER TABLE crm_leads ADD COLUMN agreed_rate_per_student DECIMAL(10,2) DEFAULT 0.00`,
             `ALTER TABLE crm_leads ADD COLUMN rep_commission_pct DECIMAL(5,2) DEFAULT 0.00`,
-            `ALTER TABLE crm_leads ADD COLUMN rep_commission_flat DECIMAL(10,2) DEFAULT 0.00`
+            `ALTER TABLE crm_leads ADD COLUMN rep_commission_flat DECIMAL(10,2) DEFAULT 0.00`,
+            `ALTER TABLE crm_leads ADD COLUMN group_director VARCHAR(255) NULL`,
+            `ALTER TABLE crm_leads ADD COLUMN referred_by_contact VARCHAR(255) NULL`
         ];
         for (const colSql of columnsToAdd) {
             try { await db.pool.execute(colSql); } catch (e) {}
@@ -800,6 +802,50 @@ router.get('/admin/crm/leads', isSuperAdmin, async (req, res) => {
     }
 });
 
+// GET /admin/crm/referees — List all referees/lead sources
+router.get('/admin/crm/referees', isSuperAdmin, async (req, res) => {
+    try {
+        await ensureCrmSchema();
+        const userRole = req.session.masterAdminRole || 'super_admin';
+        const userId = req.session.masterAdminId;
+
+        const { search } = req.query;
+        let querySql = `
+            SELECT l.id, l.school_name, l.contact_person, l.phone as lead_phone, l.status, l.referred_by_contact, m.name as rep_name
+            FROM crm_leads l
+            LEFT JOIN master_admins m ON l.assigned_to = m.id
+            WHERE l.referred_by_contact IS NOT NULL AND l.referred_by_contact != ''
+        `;
+        const params = [];
+
+        if (userRole === 'sales_rep') {
+            querySql += ` AND l.assigned_to = ?`;
+            params.push(userId);
+        }
+
+        if (search) {
+            querySql += ` AND (l.referred_by_contact LIKE ? OR l.school_name LIKE ?)`;
+            const s = `%${search.trim()}%`;
+            params.push(s, s);
+        }
+
+        querySql += ` ORDER BY l.updated_at DESC`;
+
+        const [referees] = await db.pool.execute(querySql, params);
+
+        res.render('super_admin/crm_referees', {
+            referees,
+            query: req.query,
+            username: req.session.masterAdminUsername,
+            role: userRole,
+            success: req.query.success
+        });
+    } catch (err) {
+        console.error('CRM Referees Error:', err);
+        res.status(500).send('Error loading CRM referees.');
+    }
+});
+
 // GET /admin/crm/leads/new — Add Lead Form
 router.get('/admin/crm/leads/new', isSuperAdmin, async (req, res) => {
     try {
@@ -814,16 +860,17 @@ router.get('/admin/crm/leads/new', isSuperAdmin, async (req, res) => {
 // POST /admin/crm/leads/new — Create Lead
 router.post('/admin/crm/leads/new', isSuperAdmin, async (req, res) => {
     try {
-        const { school_name, contact_person, designation, phone, email, address, city, est_students, current_system, assigned_to, status, lead_source, notes } = req.body;
+        const { school_name, contact_person, designation, phone, email, address, city, est_students, current_system, assigned_to, status, lead_source, notes, group_director, referred_by_contact } = req.body;
         
         await db.pool.execute(
             `INSERT INTO crm_leads 
-             (school_name, contact_person, designation, phone, email, address, city, est_students, current_system, assigned_to, status, lead_source, notes)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (school_name, contact_person, designation, phone, email, address, city, est_students, current_system, assigned_to, status, lead_source, notes, group_director, referred_by_contact)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 school_name, contact_person, designation || null, phone, email || null,
                 address || null, city, parseInt(est_students) || 0, current_system || null,
-                assigned_to ? parseInt(assigned_to) : null, status || 'new', lead_source || null, notes || null
+                assigned_to ? parseInt(assigned_to) : null, status || 'new', lead_source || null, notes || null,
+                group_director || null, referred_by_contact || null
             ]
         );
 
@@ -927,7 +974,7 @@ router.post('/admin/crm/leads/:id/edit', isSuperAdmin, async (req, res) => {
         const leadId = req.params.id;
         const userRole = req.session.masterAdminRole || 'super_admin';
         const userId = req.session.masterAdminId;
-        const { school_name, contact_person, designation, phone, email, address, city, est_students, current_system, assigned_to, status, lead_source, notes } = req.body;
+        const { school_name, contact_person, designation, phone, email, address, city, est_students, current_system, assigned_to, status, lead_source, notes, group_director, referred_by_contact } = req.body;
 
         const [[existingLead]] = await db.pool.execute(`SELECT assigned_to FROM crm_leads WHERE id = ?`, [leadId]);
         if (!existingLead) return res.status(404).send('Lead not found.');
@@ -945,12 +992,13 @@ router.post('/admin/crm/leads/:id/edit', isSuperAdmin, async (req, res) => {
         await db.pool.execute(
             `UPDATE crm_leads
              SET school_name = ?, contact_person = ?, designation = ?, phone = ?, email = ?, address = ?, city = ?,
-                 est_students = ?, current_system = ?, assigned_to = ?, status = ?, lead_source = ?, notes = ?
+                 est_students = ?, current_system = ?, assigned_to = ?, status = ?, lead_source = ?, notes = ?,
+                 group_director = ?, referred_by_contact = ?
              WHERE id = ?`,
             [
                 school_name, contact_person, designation || null, phone, email || null, address || null, city,
                 parseInt(est_students) || 0, current_system || null, newAssignedTo,
-                status || 'new', lead_source || null, notes || null, leadId
+                status || 'new', lead_source || null, notes || null, group_director || null, referred_by_contact || null, leadId
             ]
         );
 

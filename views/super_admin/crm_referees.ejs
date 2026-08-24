@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Referees & Lead Providers</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #4338ca;
+        }
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-new { background-color: #e0f2fe; color: #0369a1; }
+        .status-contacted { background-color: #fef3c7; color: #b45309; }
+        .status-meeting_scheduled { background-color: #fae8ff; color: #86198f; }
+        .status-demo_given { background-color: #e0e7ff; color: #3730a3; }
+        .status-negotiation { background-color: #ffedd5; color: #c2410c; }
+        .status-won { background-color: #dcfce7; color: #15803d; }
+        .status-lost { background-color: #fee2e2; color: #b91c1c; }
+    </style>
+</head>
+<body>
+    <%- include('nav', { activeTab: 'referees', req: typeof req !== 'undefined' ? req : {} }) %>
+
+    <main class="main-content">
+        <div class="section-header">
+            <h1 class="section-title"><i class="bi bi-person-heart"></i> <%= role === 'sales_rep' ? 'My Referees & Contacts' : 'Referees & Lead Contacts' %></h1>
+            <div style="color: #64748b; font-size: 0.95rem;">List of contacts who provided lead sources or referrals</div>
+        </div>
+
+        <% if (typeof success !== 'undefined' && success) { %>
+            <div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> <%= success %></div>
+        <% } %>
+
+        <!-- Filter & Search Bar -->
+        <div class="card" style="margin-bottom: 1.5rem; padding: 1rem;">
+            <form method="GET" action="/admin/crm/referees" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <input type="text" name="search" class="form-control" style="max-width: 350px;" placeholder="Search referee contact name/number or school..." value="<%= query.search || '' %>">
+                
+                <button type="submit" class="btn-primary" style="padding: 0.5rem 1rem;"><i class="bi bi-search"></i> Search</button>
+                <a href="/admin/crm/referees" class="btn-secondary" style="padding: 0.5rem 1rem;">Reset</a>
+            </form>
+        </div>
+
+        <!-- Referees Table -->
+        <div class="card table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Referee Contact / Info</th>
+                        <th>Referred Lead / School</th>
+                        <th>Lead Status</th>
+                        <% if (role !== 'sales_rep') { %>
+                            <th>Assigned Sales Rep</th>
+                        <% } %>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (referees.length > 0) { %>
+                        <% referees.forEach(ref => { %>
+                            <tr>
+                                <td>
+                                    <div style="font-weight: 700; color: #1e293b; font-size: 0.95rem; display: flex; align-items: center; gap: 0.35rem;">
+                                        <i class="bi bi-person-circle" style="color: #4f46e5; font-size: 1.1rem;"></i>
+                                        <%= ref.referred_by_contact %>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="/admin/crm/leads/<%= ref.id %>" style="font-weight: 600; color: #2563eb; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i class="bi bi-building"></i> <%= ref.school_name %>
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge-status status-<%= ref.status %>">
+                                        <%= ref.status.replace('_', ' ') %>
+                                    </span>
+                                </td>
+                                <% if (role !== 'sales_rep') { %>
+                                    <td>
+                                        <% if (ref.rep_name) { %>
+                                            <span class="status-cell" style="background-color: #f1f5f9; color: #334155;"><i class="bi bi-person-fill"></i> <%= ref.rep_name %></span>
+                                        <% } else { %>
+                                            <span style="color: #94a3b8; font-style: italic;">Unassigned</span>
+                                        <% } %>
+                                    </td>
+                                <% } %>
+                                <td style="text-align: right;">
+                                    <a href="/admin/crm/leads/<%= ref.id %>" class="btn-primary nav-btn" style="background-color: #4f46e5; color: white;" title="View Lead 360"><i class="bi bi-eye"></i> View Lead</a>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="<%= role === 'sales_rep' ? 4 : 5 %>" style="text-align: center; color: #64748b; padding: 3rem 1rem;">
+                                <i class="bi bi-people" style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem; color: #cbd5e1;"></i>
+                                No referees found matching your search.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>
