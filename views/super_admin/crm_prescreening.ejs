@@ -92,11 +92,9 @@
                                 <button type="button" class="btn btn-primary btn-sm" onclick="openConvertModal(<%= JSON.stringify(lead) %>)">
                                     <i class="bi bi-person-plus"></i> Convert
                                 </button>
-                                <form action="/admin/crm/prescreening/<%= lead.id %>/reject" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to reject this lead?');">
-                                    <button type="submit" class="btn btn-danger btn-sm">
-                                        <i class="bi bi-x-lg"></i> Reject
-                                    </button>
-                                </form>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="openRejectModal(<%= lead.id %>)">
+                                    <i class="bi bi-x-lg"></i> Reject
+                                </button>
                             </td>
                         </tr>
                     <% }) %>
@@ -151,6 +149,23 @@
         </div>
     </div>
 
+    <!-- Reject Modal -->
+    <div id="rejectModal" class="modal-overlay">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title" style="color: #dc2626;"><i class="bi bi-exclamation-triangle"></i> Reject Lead</h3>
+                <button type="button" class="close-btn" onclick="closeRejectModal()">&times;</button>
+            </div>
+            <p style="color: #475569; margin-bottom: 1.5rem;">Are you sure you want to reject this lead? This action cannot be undone and it will be permanently removed from your prescreening pool.</p>
+            <form id="rejectForm" method="POST" action="">
+                <div class="modal-footer">
+                    <button type="button" class="btn" style="background: #e2e8f0; color: #475569;" onclick="closeRejectModal()">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Yes, Reject Lead</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         function openConvertModal(lead) {
             document.getElementById('convertForm').action = `/admin/crm/prescreening/${lead.id}/convert`;
@@ -160,6 +175,15 @@
 
         function closeConvertModal() {
             document.getElementById('convertModal').style.display = 'none';
+        }
+
+        function openRejectModal(leadId) {
+            document.getElementById('rejectForm').action = `/admin/crm/prescreening/${leadId}/reject`;
+            document.getElementById('rejectModal').style.display = 'flex';
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').style.display = 'none';
         }
     </script>
 </body>
