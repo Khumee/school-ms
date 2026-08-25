@@ -11,14 +11,12 @@ const MAX_MONTHLY_REQUESTS = 500;
 let apiRequestsMadeThisRun = 0;
 
 const targetCities = [
-    // Northward: From Capital up to Peshawar and Abbottabad
-    "Wah Cantonment", "Attock", "Haripur", "Abbottabad", "Mansehra",
-    "Nowshera", "Mardan", "Swabi", "Peshawar", "Kohat", 
+    // Far North & KPK (Starting at the top of the country)
+    "Swat", "Muzaffarabad", "Mirpur", "Mansehra", "Abbottabad", "Haripur",
+    "Peshawar", "Mardan", "Swabi", "Nowshera", "Kohat", "Bannu", "Dera Ismail Khan", "Attock", "Wah Cantonment",
 
-    // Southward: Down GT Road to Lahore
+    // Northern/Central Punjab (Moving South down GT Road)
     "Jhelum", "Kharian", "Gujrat", "Gujranwala", "Kamoke", "Muridke", "Sheikhupura", "Lahore",
-    
-    // Central/Eastern Punjab
     "Sialkot", "Hafizabad", "Mandi Bahauddin", "Kasur", "Pattoki", "Okara", "Sahiwal",
 
     // Central/Western Punjab
@@ -28,12 +26,12 @@ const targetCities = [
     "Multan", "Khanewal", "Vehari", "Burewala", "Muzaffargarh", "Kot Addu", "Dera Ghazi Khan", "Layyah", "Rajanpur", 
     "Bahawalpur", "Rahim Yar Khan", "Sadiqabad",
 
-    // Down through Sindh to Karachi
+    // Sindh (North to South)
     "Kashmore", "Ghotki", "Sukkur", "Shikarpur", "Larkana", "Khairpur", "Dadu", "Nawabshah",
     "Hyderabad", "Tando Adam", "Tando Allahyar", "Mirpur Khas", "Thatta", "Badin", "Karachi",
 
-    // Remaining distinct regions (placed at the end of the cycle)
-    "Quetta", "Gwadar", "Hub", "Dera Ismail Khan", "Bannu", "Swat", "Muzaffarabad", "Mirpur"
+    // Balochistan & Deep South
+    "Hub", "Gwadar", "Quetta"
 ];
 
 async function ensureTables(connection) {
