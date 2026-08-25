@@ -11,22 +11,29 @@ const MAX_MONTHLY_REQUESTS = 500;
 let apiRequestsMadeThisRun = 0;
 
 const targetCities = [
-    // Punjab
-    "Lahore", "Faisalabad", "Gujranwala", "Multan", "Bahawalpur", "Sargodha", "Sialkot", "Sheikhupura", 
-    "Rahim Yar Khan", "Jhang", "Dera Ghazi Khan", "Gujrat", "Sahiwal", "Wah Cantonment", "Kasur", "Okara", 
-    "Chiniot", "Kamoke", "Hafizabad", "Sadiqabad", "Burewala", "Vehari", "Muridke", "Jhelum", "Khanewal", 
-    "Muzaffargarh", "Mandi Bahauddin", "Khushab", "Attock", "Bhakkar", "Kharian", "Mianwali", "Kot Addu", 
-    "Layyah", "Rajanpur", "Pattoki", "Haroonabad", "Toba Tek Singh", "Shakargarh", "Samundri", "Gojra", "Murree", 
-    // Sindh
-    "Karachi", "Hyderabad", "Sukkur", "Larkana", "Nawabshah", "Mirpur Khas", "Jacobabad", "Shikarpur", 
-    "Khairpur", "Dadu", "Tando Adam", "Tando Allahyar", "Umerkot", "Badin", "Ghotki", "Kashmore", "Thatta", 
-    // KPK
-    "Peshawar", "Mardan", "Mingora", "Kohat", "Abbottabad", "Dera Ismail Khan", "Nowshera", "Charsadda", 
-    "Swabi", "Chitral", "Mansehra", "Bannu", "Timargara", "Karak", "Haripur", "Swat", 
-    // Balochistan
-    "Quetta", "Turbat", "Khuzdar", "Hub", "Chaman", "Gwadar", "Sibi", "Zhob", "Dera Murad Jamali", 
-    // AJK & Gilgit
-    "Muzaffarabad", "Mirpur", "Rawalakot", "Gilgit", "Skardu"
+    // Northward: From Capital up to Peshawar and Abbottabad
+    "Wah Cantonment", "Attock", "Haripur", "Abbottabad", "Mansehra",
+    "Nowshera", "Mardan", "Swabi", "Peshawar", "Kohat", 
+
+    // Southward: Down GT Road to Lahore
+    "Jhelum", "Kharian", "Gujrat", "Gujranwala", "Kamoke", "Muridke", "Sheikhupura", "Lahore",
+    
+    // Central/Eastern Punjab
+    "Sialkot", "Hafizabad", "Mandi Bahauddin", "Kasur", "Pattoki", "Okara", "Sahiwal",
+
+    // Central/Western Punjab
+    "Faisalabad", "Chiniot", "Sargodha", "Khushab", "Mianwali", "Bhakkar", "Jhang", "Toba Tek Singh", "Gojra",
+
+    // Southern Punjab
+    "Multan", "Khanewal", "Vehari", "Burewala", "Muzaffargarh", "Kot Addu", "Dera Ghazi Khan", "Layyah", "Rajanpur", 
+    "Bahawalpur", "Rahim Yar Khan", "Sadiqabad",
+
+    // Down through Sindh to Karachi
+    "Kashmore", "Ghotki", "Sukkur", "Shikarpur", "Larkana", "Khairpur", "Dadu", "Nawabshah",
+    "Hyderabad", "Tando Adam", "Tando Allahyar", "Mirpur Khas", "Thatta", "Badin", "Karachi",
+
+    // Remaining distinct regions (placed at the end of the cycle)
+    "Quetta", "Gwadar", "Hub", "Dera Ismail Khan", "Bannu", "Swat", "Muzaffarabad", "Mirpur"
 ];
 
 async function ensureTables(connection) {
