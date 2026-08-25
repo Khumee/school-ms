@@ -237,6 +237,15 @@ async function main() {
                     continue;
                 }
 
+                // Strictly require a Pakistani mobile number (starts with 03 or +923 / 923)
+                const digitsOnly = phone.replace(/\D/g, '');
+                const isMobile = digitsOnly.startsWith('03') || digitsOnly.startsWith('923');
+                
+                if (!isMobile) {
+                    console.log(`[SKIPPED] ${place.name} (Landline: ${phone})`);
+                    continue;
+                }
+
                 const address = place.vicinity || place.formatted_address || city;
                 const sourceUrl = `https://maps.google.com/?q=place_id:${place.place_id}`;
                 

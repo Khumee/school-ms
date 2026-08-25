@@ -161,14 +161,11 @@
                                         let waPhone = lead.phone.replace(/\D/g, '');
                                         if (waPhone.startsWith('0')) waPhone = '92' + waPhone.substring(1);
                                         
-                                        const baseMsgEn = `Hello from OmniSchool! 👋\n\nWe noticed ${lead.school_name} is doing fantastic work in the community. As education evolves, managing campus operations seamlessly is more critical than ever.\n\nOmniSchool is a complete, all-in-one School Management System designed to automate your fee collection, academics, and administration—saving you hours of administrative work every week.`;
-                                        const baseMsgUr = `\n\nالسلام علیکم! ہم نے دیکھا کہ آپ کا ادارہ زبردست کام کر رہا ہے۔ آج کے جدید دور میں سکول کے نظام کو بہتر اور ڈیجیٹل بنانا بہت ضروری ہو چکا ہے۔ OmniSchool ایک مکمل سکول مینجمنٹ سسٹم ہے جو آپ کی فیس کلیکشن، امتحانات، اور تمام انتظامی امور کو خودکار (Automate) کر دیتا ہے۔`;
+                                        const newMsgText = `OmniSchool — Simplify Your School Management\n\nHello!\n\nRunning a school isn't easy — fee collection, attendance, exams, and daily admin tasks take up hours every week.\n\nOmniSchool automates your entire school system in one place:\n✅ Fee Collection\n✅ Academics & Result Management\n✅ Attendance & Admin Tasks\n\nWatch this 2-minute demo video and see exactly how it works:\nhttps://omnischoolapp.com/video/`;
+                                        const newMsgFooter = `\n\nHave questions? Just reply — we're happy to walk you through it.\n\n🌐 Learn more: https://omnischoolapp.com`;
                                         
-                                        const videoIntro = `\n\n▶️ Watch our quick 2-minute product demo here to see it in action:\nhttps://omnischoolapp.com/video/`;
-                                        const endMsg = `\n\nLearn more at our website: https://omnischoolapp.com`;
-                                        
-                                        const waMsgSchool = encodeURIComponent(baseMsgEn + baseMsgUr + videoIntro + 'demo-en.mp4' + endMsg);
-                                        const waMsgHifz = encodeURIComponent(baseMsgEn + baseMsgUr + videoIntro + 'hifz-demo.mp4' + endMsg);
+                                        const waMsgSchool = encodeURIComponent(newMsgText + 'demo-en.mp4' + newMsgFooter);
+                                        const waMsgHifz = encodeURIComponent(newMsgText + 'hifz-demo.mp4' + newMsgFooter);
                                     %>
                                         <div style="display: flex; gap: 0.25rem;">
                                             <a href="https://wa.me/<%= waPhone %>?text=<%= waMsgSchool %>" target="_blank" class="btn btn-sm" style="background: #25D366; color: white; padding: 0.35rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;" title="Send School Video">
@@ -370,11 +367,10 @@
             
             const video = document.getElementById('testWaVideo').value;
             
-            const baseMsgEn = `Hello from OmniSchool! 👋\n\nAs education evolves, managing campus operations seamlessly is more critical than ever.\n\nOmniSchool is a complete, all-in-one School Management System designed to automate your fee collection, academics, and administration—saving you hours of administrative work every week.`;
-            const baseMsgUr = `\n\nالسلام علیکم! آج کے جدید دور میں سکول کے نظام کو بہتر اور ڈیجیٹل بنانا بہت ضروری ہو چکا ہے۔ OmniSchool ایک مکمل سکول مینجمنٹ سسٹم ہے جو آپ کی فیس کلیکشن، امتحانات، اور تمام انتظامی امور کو خودکار (Automate) کر دیتا ہے۔`;
-            const endMsg = `\n\n▶️ Watch our quick 2-minute product demo here to see it in action:\nhttps://omnischoolapp.com/video/${video}\n\nLearn more at our website: https://omnischoolapp.com`;
+            const newMsgText = `OmniSchool — Simplify Your School Management\n\nHello!\n\nRunning a school isn't easy — fee collection, attendance, exams, and daily admin tasks take up hours every week.\n\nOmniSchool automates your entire school system in one place:\n✅ Fee Collection\n✅ Academics & Result Management\n✅ Attendance & Admin Tasks\n\nWatch this 2-minute demo video and see exactly how it works:\nhttps://omnischoolapp.com/video/${video}`;
+            const newMsgFooter = `\n\nHave questions? Just reply — we're happy to walk you through it.\n\n🌐 Learn more: https://omnischoolapp.com`;
             
-            const rawMsg = baseMsgEn + baseMsgUr + endMsg;
+            const rawMsg = newMsgText + newMsgFooter;
             
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(rawMsg)}`, '_blank');
         }
