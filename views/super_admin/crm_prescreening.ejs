@@ -118,6 +118,36 @@
                     <% }) %>
                 </tbody>
             </table>
+
+            <% if (totalPages > 1) { %>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e2e8f0;">
+                    <div style="font-size: 0.875rem; color: #64748b;">
+                        Showing page <strong><%= currentPage %></strong> of <strong><%= totalPages %></strong> (<%= totalLeads %> total leads)
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <% 
+                            let baseUrl = '/admin/crm/prescreening?';
+                            if (query.city) baseUrl += `city=${encodeURIComponent(query.city)}&`;
+                            if (query.search) baseUrl += `search=${encodeURIComponent(query.search)}&`;
+                        %>
+                        <% if (currentPage > 1) { %>
+                            <a href="<%= baseUrl %>page=<%= currentPage - 1 %>" class="btn btn-sm" style="background: #f1f5f9; color: #475569; text-decoration: none;">&laquo; Prev</a>
+                        <% } else { %>
+                            <button class="btn btn-sm" style="background: #f8fafc; color: #94a3b8; cursor: not-allowed;" disabled>&laquo; Prev</button>
+                        <% } %>
+
+                        <% if (currentPage < totalPages) { %>
+                            <a href="<%= baseUrl %>page=<%= currentPage + 1 %>" class="btn btn-sm" style="background: #f1f5f9; color: #475569; text-decoration: none;">Next &raquo;</a>
+                        <% } else { %>
+                            <button class="btn btn-sm" style="background: #f8fafc; color: #94a3b8; cursor: not-allowed;" disabled>Next &raquo;</button>
+                        <% } %>
+                    </div>
+                </div>
+            <% } else if (totalLeads > 0) { %>
+                <div style="margin-top: 1rem; font-size: 0.875rem; color: #64748b; text-align: right;">
+                    Showing all <%= totalLeads %> leads
+                </div>
+            <% } %>
         </div>
     </div>
 

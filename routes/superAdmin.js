@@ -726,29 +726,41 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
     try {
         await ensureCrmSchema();
         
+        const page = parseInt(req.query.page) || 1;
+        const limit = 20;
+        const offset = (page - 1) * limit;
+
         const { city, search } = req.query;
-        let querySql = "SELECT * FROM crm_scraped_leads WHERE status = 'pending'";
+        let baseCondition = "status = 'pending'";
         const params = [];
 
         if (city) {
-            querySql += " AND city = ?";
+            baseCondition += " AND city = ?";
             params.push(city);
         }
 
         if (search) {
-            querySql += " AND (school_name LIKE ? OR address LIKE ?)";
+            baseCondition += " AND (school_name LIKE ? OR address LIKE ?)";
             const s = `%${search.trim()}%`;
             params.push(s, s);
         }
 
-        querySql += " ORDER BY created_at DESC";
+        const countSql = `SELECT COUNT(*) as total FROM crm_scraped_leads WHERE ${baseCondition}`;
+        const [[{ total }]] = await db.pool.execute(countSql, params);
+        const totalPages = Math.ceil(total / limit) || 1;
 
-        const [scraped_leads] = await db.pool.execute(querySql, params);
+        const querySql = `SELECT * FROM crm_scraped_leads WHERE ${baseCondition} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+        const queryParams = [...params, limit.toString(), offset.toString()];
+
+        const [scraped_leads] = await db.pool.execute(querySql, queryParams);
         const [reps] = await db.pool.execute("SELECT id, username, name FROM master_admins WHERE is_active = 1 AND role = 'sales_rep' ORDER BY name");
         const [citiesRow] = await db.pool.execute("SELECT DISTINCT city FROM crm_scraped_leads WHERE city IS NOT NULL AND city != '' ORDER BY city");
         
         res.render('super_admin/crm_prescreening', {
             scraped_leads,
+            currentPage: page,
+            totalPages,
+            totalLeads: total,
             reps,
             cities: citiesRow.map(c => c.city),
             query: req.query,
