@@ -53,9 +53,14 @@
                 <h1>Prescreening Scraped Leads</h1>
                 <p style="color: #64748b; margin-top: 0.5rem; font-size: 0.9rem;">Review auto-generated leads from the web scraper before adding them to the CRM.</p>
             </div>
-            <a href="/admin/crm/scraper-map" class="btn btn-primary" style="background: #10b981; border: none; padding: 0.5rem 1rem; border-radius: 6px; color: white; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
-                <i class="bi bi-map-fill"></i> View Coverage Map
-            </a>
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="button" class="btn btn-secondary" style="background: #25D366; border: none; padding: 0.5rem 1rem; border-radius: 6px; color: white; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;" onclick="openTestWhatsAppModal()">
+                    <i class="bi bi-whatsapp"></i> Test WhatsApp Msg
+                </button>
+                <a href="/admin/crm/scraper-map" class="btn btn-primary" style="background: #10b981; border: none; padding: 0.5rem 1rem; border-radius: 6px; color: white; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <i class="bi bi-map-fill"></i> View Coverage Map
+                </a>
+            </div>
         </div>
 
         <!-- Select2 CSS/JS for searchable dropdown -->
@@ -143,12 +148,21 @@
                                 <% if (lead.phone) { 
                                     let waPhone = lead.phone.replace(/\D/g, '');
                                     if (waPhone.startsWith('0')) waPhone = '92' + waPhone.substring(1);
-                                    const waMsg = encodeURIComponent("Hi " + lead.school_name + ",\n\nWe would love to show you how OmniSchool CRM can help manage your campus.\nCheck out our product video here: [Link]");
+                                    
+                                    const baseMsg = `Hello from OmniSchool! 👋\n\nWe noticed ${lead.school_name} is doing fantastic work in the community. As education evolves, managing campus operations seamlessly is more critical than ever.\n\nOmniSchool is a complete, all-in-one School Management System designed to automate your fee collection, academics, and administration—saving you hours of administrative work every week.\n\n▶️ Watch our quick 2-minute product demo here to see it in action:\nhttps://omnischool.pk/videos/`;
+                                    const endMsg = `\n\nLearn more at our website: https://omnischool.pk\n\nWe would love to connect and show you how we can add value to your campus!`;
+                                    
+                                    const waMsgSchool = encodeURIComponent(baseMsg + 'demo_english_FULL.mp4' + endMsg);
+                                    const waMsgHifz = encodeURIComponent(baseMsg + 'demo_hifz_FULL.mp4' + endMsg);
                                 %>
-                                    <br>
-                                    <a href="https://wa.me/<%= waPhone %>?text=<%= waMsg %>" target="_blank" class="btn btn-sm" style="background: #25D366; color: white; padding: 0.2rem 0.5rem; font-size: 0.75rem; margin-top: 0.5rem; display: inline-flex; align-items: center; gap: 0.25rem;">
-                                        <i class="bi bi-whatsapp"></i> Message
-                                    </a>
+                                    <div style="display: flex; gap: 0.25rem; margin-top: 0.5rem; flex-wrap: wrap;">
+                                        <a href="https://wa.me/<%= waPhone %>?text=<%= waMsgSchool %>" target="_blank" class="btn btn-sm" style="background: #25D366; color: white; padding: 0.15rem 0.4rem; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 0.25rem;" title="Send School Video">
+                                            <i class="bi bi-whatsapp"></i> School
+                                        </a>
+                                        <a href="https://wa.me/<%= waPhone %>?text=<%= waMsgHifz %>" target="_blank" class="btn btn-sm" style="background: #25D366; color: white; padding: 0.15rem 0.4rem; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 0.25rem;" title="Send Hifz Video">
+                                            <i class="bi bi-whatsapp"></i> Hifz
+                                        </a>
+                                    </div>
                                 <% } %>
                             </td>
                             <td><span class="badge" style="background: #e2e8f0; color: #475569;"><%= lead.search_term_used || 'N/A' %></span></td>
@@ -253,6 +267,31 @@
         </div>
     </div>
 
+    <!-- Test WhatsApp Modal -->
+    <div id="testWaModal" class="modal-overlay">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title" style="color: #1e293b;"><i class="bi bi-whatsapp" style="color: #25D366;"></i> Test WhatsApp Message</h3>
+                <button type="button" class="close-btn" onclick="closeTestWhatsAppModal()">&times;</button>
+            </div>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: #475569;">Test Phone Number</label>
+                <input type="text" id="testWaPhone" class="form-control" placeholder="e.g. 03001234567">
+            </div>
+            <div class="form-group">
+                <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: #475569;">Select Video Version</label>
+                <select id="testWaVideo" class="form-control">
+                    <option value="demo_english_FULL.mp4">English Demo</option>
+                    <option value="demo_hifz_FULL.mp4">Hifz Demo</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" style="background: #e2e8f0; color: #475569;" onclick="closeTestWhatsAppModal()">Cancel</button>
+                <button type="button" class="btn btn-primary" style="background: #25D366; border: none; font-weight: 600;" onclick="sendTestWhatsApp()">Send Test via WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Reject Modal -->
     <div id="rejectModal" class="modal-overlay">
         <div class="modal" style="max-width: 400px;">
@@ -288,6 +327,29 @@
 
         function closeRejectModal() {
             document.getElementById('rejectModal').style.display = 'none';
+        }
+
+        function openTestWhatsAppModal() {
+            document.getElementById('testWaModal').style.display = 'flex';
+        }
+        
+        function closeTestWhatsAppModal() {
+            document.getElementById('testWaModal').style.display = 'none';
+        }
+        
+        function sendTestWhatsApp() {
+            let phone = document.getElementById('testWaPhone').value.replace(/\D/g, '');
+            if (phone.startsWith('0')) phone = '92' + phone.substring(1);
+            if (!phone) {
+                alert('Please enter a valid test phone number.');
+                return;
+            }
+            
+            const video = document.getElementById('testWaVideo').value;
+            
+            const rawMsg = `Hello from OmniSchool! 👋\n\nAs education evolves, managing campus operations seamlessly is more critical than ever.\n\nOmniSchool is a complete, all-in-one School Management System designed to automate your fee collection, academics, and administration—saving you hours of administrative work every week.\n\n▶️ Watch our quick 2-minute product demo here to see it in action:\nhttps://omnischool.pk/videos/${video}\n\nLearn more at our website: https://omnischool.pk\n\nWe would love to connect and show you how we can add value to your campus!`;
+            
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(rawMsg)}`, '_blank');
         }
     </script>
 </body>
