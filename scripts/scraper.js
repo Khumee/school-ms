@@ -119,7 +119,10 @@ async function scrapePhoneWithPuppeteer(browser, placeId, lat, lng) {
             }
         });
         
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 });
+        await page.goto(url, { waitUntil: 'networkidle2', timeout: 25000 });
+        
+        // Hard wait for sidebar animation
+        await new Promise(r => setTimeout(r, 2000));
         
         // Try finding the copy phone button first
         await page.waitForSelector('button[data-tooltip="Copy phone number"]', { timeout: 3000 }).catch(() => {});
