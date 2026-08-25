@@ -122,19 +122,31 @@ async function scrapePhoneWithPuppeteer(browser, placeId, lat, lng) {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 });
         
         // Try finding the copy phone button first
-        await page.waitForSelector('button[data-tooltip="Copy phone number"]', { timeout: 4000 }).catch(() => {});
+        await page.waitForSelector('button[data-tooltip="Copy phone number"]', { timeout: 3000 }).catch(() => {});
         
-        const phone = await page.evaluate(() => {
+        const extracted = await page.evaluate(() => {
             const btn = document.querySelector('button[data-tooltip="Copy phone number"]');
-            if (btn) return btn.getAttribute('aria-label').replace('Phone: ', '').trim();
+            if (btn) return { phone: btn.getAttribute('aria-label').replace('Phone: ', '').trim() };
             
             const telBtn = document.querySelector('button[data-item-id^="phone:tel:"]');
-            if (telBtn) return telBtn.getAttribute('aria-label').replace('Phone: ', '').trim();
+            if (telBtn) return { phone: telBtn.getAttribute('aria-label').replace('Phone: ', '').trim() };
             
-            return null;
+            return { text: document.body.innerText };
         });
         
-        return phone;
+        if (extracted.phone) return extracted.phone;
+        
+        if (extracted.text) {
+            // Regex to match Pakistani phone numbers like +92 300 1234567, 0300-1234567, +92 51 4840664, 0547 642081
+            const phoneRegex = /(?:\+92|0)[-\s]?\d{2,4}[-\s]?\d{6,7}/g;
+            const matches = extracted.text.match(phoneRegex);
+            if (matches && matches.length > 0) {
+                // Return the first match that isn't a completely generic number, or just the first one
+                return matches[0].trim();
+            }
+        }
+        
+        return null;
     } catch (err) {
         console.error("Puppeteer scraping error:", err.message);
         return null;
