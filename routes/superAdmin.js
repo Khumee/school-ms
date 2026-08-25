@@ -725,12 +725,33 @@ async function ensureCrmSchema() {
 router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
     try {
         await ensureCrmSchema();
-        const [scraped_leads] = await db.pool.execute("SELECT * FROM crm_scraped_leads WHERE status = 'pending' ORDER BY created_at DESC");
+        
+        const { city, search } = req.query;
+        let querySql = "SELECT * FROM crm_scraped_leads WHERE status = 'pending'";
+        const params = [];
+
+        if (city) {
+            querySql += " AND city = ?";
+            params.push(city);
+        }
+
+        if (search) {
+            querySql += " AND (school_name LIKE ? OR address LIKE ?)";
+            const s = `%${search.trim()}%`;
+            params.push(s, s);
+        }
+
+        querySql += " ORDER BY created_at DESC";
+
+        const [scraped_leads] = await db.pool.execute(querySql, params);
         const [reps] = await db.pool.execute("SELECT id, username, name FROM master_admins WHERE is_active = 1 AND role = 'sales_rep' ORDER BY name");
+        const [citiesRow] = await db.pool.execute("SELECT DISTINCT city FROM crm_scraped_leads WHERE city IS NOT NULL AND city != '' ORDER BY city");
         
         res.render('super_admin/crm_prescreening', {
             scraped_leads,
             reps,
+            cities: citiesRow.map(c => c.city),
+            query: req.query,
             activeTab: 'prescreening',
             username: req.session.masterAdminUsername,
             role: req.session.masterAdminRole || 'super_admin',

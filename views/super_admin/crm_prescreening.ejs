@@ -55,6 +55,24 @@
             </div>
         </div>
 
+        <form method="GET" action="/admin/crm/prescreening" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 250px;">
+                <input type="text" name="search" class="form-control" placeholder="Search school name or address..." value="<%= query.search || '' %>">
+            </div>
+            <div style="width: 250px;">
+                <select name="city" class="form-control">
+                    <option value="">All Cities</option>
+                    <% cities.forEach(c => { %>
+                        <option value="<%= c %>" <%= query.city === c ? 'selected' : '' %>><%= c %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <% if (query.search || query.city) { %>
+                <a href="/admin/crm/prescreening" class="btn" style="background: #e2e8f0; color: #475569;">Clear</a>
+            <% } %>
+        </form>
+
         <div class="card">
             <table class="table">
                 <thead>
