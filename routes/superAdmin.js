@@ -730,7 +730,7 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
         const limit = 20;
         const offset = (page - 1) * limit;
 
-        const { city, search } = req.query;
+        const { city, search, has_phone } = req.query;
         let baseCondition = "status = 'pending'";
         const params = [];
 
@@ -743,6 +743,12 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
             baseCondition += " AND (school_name LIKE ? OR address LIKE ?)";
             const s = `%${search.trim()}%`;
             params.push(s, s);
+        }
+
+        if (has_phone === 'yes') {
+            baseCondition += " AND phone IS NOT NULL AND phone != '' AND phone != 'N/A'";
+        } else if (has_phone === 'no') {
+            baseCondition += " AND (phone IS NULL OR phone = '' OR phone = 'N/A')";
         }
 
         const countSql = `SELECT COUNT(*) as total FROM crm_scraped_leads WHERE ${baseCondition}`;

@@ -101,6 +101,11 @@ async function fetchNearbyPlaces(lat, lng, pageToken = null) {
     return await apiRequest(url);
 }
 
+async function fetchPlaceDetails(placeId) {
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=formatted_phone_number&key=${GOOGLE_API_KEY}`;
+    return await apiRequest(url);
+}
+
 async function main() {
     console.log("Starting Grid-Based Google Places API Scraper...");
     if (!GOOGLE_API_KEY) {
@@ -210,6 +215,27 @@ async function main() {
                 // NearbySearch respects keywords, but we still strictly double-check the name just in case
                 const nameLower = place.name.toLowerCase();
                 if (!nameLower.includes('school') && !nameLower.includes('academy')) continue;
+                
+                // Fetch Phone Number using Place Details
+                let phone = "";
+                if (currentUsage + apiRequestsMadeThisRun >= MAX_MONTHLY_REQUESTS) {
+                    console.log("Monthly request limit reached during Place Details fetch. Aborting.");
+                    break;
+                }
+                
+                try {
+                    const details = await fetchPlaceDetails(place.place_id);
+                    if (details && details.result && details.result.formatted_phone_number) {
+                        phone = details.result.formatted_phone_number;
+                    }
+                } catch (e) {
+                    console.error(`Error fetching details for ${place.name}:`, e.message);
+                }
+
+                if (!phone) {
+                    console.log(`[SKIPPED] ${place.name} (No Phone Number)`);
+                    continue;
+                }
 
                 const address = place.vicinity || place.formatted_address || city;
                 const sourceUrl = `https://maps.google.com/?q=place_id:${place.place_id}`;
@@ -230,9 +256,9 @@ async function main() {
                         INSERT INTO crm_scraped_leads (school_name, phone, address, city, source_url, search_term_used, status)
                         VALUES (?, ?, ?, ?, ?, ?, 'pending')
                     `, [
-                        place.name, "", address, city, sourceUrl, `Nearby Grid (Idx: ${gridState.spiral_index})`
+                        place.name, phone, address, city, sourceUrl, `Nearby Grid (Idx: ${gridState.spiral_index})`
                     ]);
-                    console.log(`[ADDED] ${place.name}`);
+                    console.log(`[ADDED] ${place.name} - ${phone}`);
                     totalNewLeads++;
                 }
             }
