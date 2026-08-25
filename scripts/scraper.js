@@ -109,6 +109,10 @@ async function scrapePhoneWithPuppeteer(browser, placeId, lat, lng) {
     try {
         page = await browser.newPage();
         
+        // Set a standard desktop User-Agent so Google doesn't serve a mobile or headless layout
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36');
+        await page.setViewport({ width: 1280, height: 800 });
+        
         // Block images/css for speed
         await page.setRequestInterception(true);
         page.on('request', (req) => {
