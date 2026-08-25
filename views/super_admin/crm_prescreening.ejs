@@ -55,23 +55,55 @@
             </div>
         </div>
 
-        <form method="GET" action="/admin/crm/prescreening" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 250px;">
-                <input type="text" name="search" class="form-control" placeholder="Search school name or address..." value="<%= query.search || '' %>">
+        <!-- Select2 CSS/JS for searchable dropdown -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        
+        <form action="/admin/crm/prescreening" method="GET" class="filter-form" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1.5rem;">
+            <div class="form-group" style="flex: 1; min-width: 250px;">
+                <label style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 0.25rem; display: block;">Search Name/Address</label>
+                <input type="text" name="search" class="form-control" placeholder="e.g. Model Town..." value="<%= query.search || '' %>" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.5rem 0.75rem;">
             </div>
-            <div style="width: 250px;">
-                <select name="city" class="form-control">
+            <div class="form-group" style="flex: 1; min-width: 200px;">
+                <label style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 0.25rem; display: block;">Filter by City</label>
+                <select name="city" id="cityFilter" class="form-control" onchange="this.form.submit()" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.5rem 0.75rem;">
                     <option value="">All Cities</option>
                     <% cities.forEach(c => { %>
                         <option value="<%= c %>" <%= query.city === c ? 'selected' : '' %>><%= c %></option>
                     <% }) %>
                 </select>
             </div>
-            <button type="submit" class="btn btn-primary">Filter</button>
-            <% if (query.search || query.city) { %>
-                <a href="/admin/crm/prescreening" class="btn" style="background: #e2e8f0; color: #475569;">Clear</a>
-            <% } %>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary" style="background: #4f46e5; border: none; padding: 0.5rem 1rem; border-radius: 6px; color: white; font-weight: 600; height: 38px;">Filter</button>
+                <% if (query.search || query.city) { %>
+                    <a href="/admin/crm/prescreening" class="btn btn-secondary" style="background: #e2e8f0; color: #475569; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; margin-left: 0.5rem; display: inline-flex; align-items: center; height: 38px;">Clear</a>
+                <% } %>
+            </div>
         </form>
+
+        <script>
+            // Initialize Select2 on the city filter when document is ready
+            document.addEventListener('DOMContentLoaded', function() {
+                // Check if jQuery exists (Select2 requires it). If not, load it.
+                if (typeof jQuery === 'undefined') {
+                    const jq = document.createElement('script');
+                    jq.src = "https://code.jquery.com/jquery-3.6.0.min.js";
+                    jq.onload = function() {
+                        $('#cityFilter').select2({ placeholder: "Search city..." });
+                        // Ensure Select2 triggers the form submit when changed
+                        $('#cityFilter').on('select2:select', function (e) {
+                            this.form.submit();
+                        });
+                    };
+                    document.head.appendChild(jq);
+                } else {
+                    $('#cityFilter').select2({ placeholder: "Search city..." });
+                    $('#cityFilter').on('select2:select', function (e) {
+                        this.form.submit();
+                    });
+                }
+            });
+        </script>
 
         <div class="card">
             <table class="table">
@@ -96,7 +128,7 @@
                             <td>
                                 <strong><%= lead.school_name %></strong>
                                 <% if (lead.source_url) { %>
-                                    <br><a href="<%= lead.source_url %>" target="_blank" style="font-size: 0.75rem; color: #3b82f6;">View Source</a>
+                                    <br><a href="<%= lead.source_url %>" target="_blank" style="font-size: 0.75rem; color: #10b981; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem; margin-top: 0.25rem;"><i class="bi bi-geo-alt-fill"></i> View on Map</a>
                                 <% } %>
                             </td>
                             <td>
