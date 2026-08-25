@@ -104,7 +104,8 @@ async function fetchNearbyPlaces(lat, lng, pageToken = null) {
 const puppeteer = require('puppeteer');
 
 async function scrapePhoneWithPuppeteer(browser, placeId, lat, lng) {
-    const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}&query_place_id=${placeId}`;
+    // Append &hl=en to force English, overriding server's regional IP settings (e.g., German)
+    const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}&query_place_id=${placeId}&hl=en`;
     let page = null;
     try {
         page = await browser.newPage();
@@ -124,6 +125,16 @@ async function scrapePhoneWithPuppeteer(browser, placeId, lat, lng) {
         });
         
         await page.goto(url, { waitUntil: 'networkidle2', timeout: 25000 });
+        
+        // Bypass GDPR Consent wall if server is in Europe (e.g. Germany)
+        try {
+            const consentBtn = await page.$('form[action="https://consent.google.com/save"] button');
+            if (consentBtn) {
+                console.log("Bypassing Google GDPR consent wall...");
+                await consentBtn.click();
+                await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {});
+            }
+        } catch(e) {}
         
         // Hard wait for sidebar animation
         await new Promise(r => setTimeout(r, 2000));
