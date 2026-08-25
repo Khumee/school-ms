@@ -730,7 +730,7 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
         const limit = 20;
         const offset = (page - 1) * limit;
 
-        const { city, search, has_phone } = req.query;
+        const { city, search, phone_type } = req.query;
         let baseCondition = "status = 'pending'";
         const params = [];
 
@@ -745,10 +745,10 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
             params.push(s, s);
         }
 
-        if (has_phone === 'yes') {
-            baseCondition += " AND phone IS NOT NULL AND phone != '' AND phone != 'N/A'";
-        } else if (has_phone === 'no') {
-            baseCondition += " AND (phone IS NULL OR phone = '' OR phone = 'N/A')";
+        if (phone_type === 'mobile') {
+            baseCondition += " AND (REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', '') LIKE '03%' OR REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', '') LIKE '923%')";
+        } else if (phone_type === 'landline') {
+            baseCondition += " AND phone IS NOT NULL AND phone != '' AND REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', '') NOT LIKE '03%' AND REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', '') NOT LIKE '923%'";
         }
 
         const countSql = `SELECT COUNT(*) as total FROM crm_scraped_leads WHERE ${baseCondition}`;
