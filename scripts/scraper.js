@@ -174,11 +174,16 @@ async function main() {
         const diff = new Date() - start;
         const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-        // Select exactly 1 city per day based on the day of the year
-        const cityIndex = dayOfYear % targetCities.length;
-        const citiesToScrapeToday = [targetCities[cityIndex]];
-
-        console.log(`[Day ${dayOfYear}] Target City: ${citiesToScrapeToday[0]}`);
+        // As requested, process 10 cities at a time since API usage is now extremely low
+        const NUM_ROTATING = 10;
+        const rotationStartIndex = (dayOfYear * NUM_ROTATING) % targetCities.length;
+        
+        let citiesToScrapeToday = [];
+        for (let i = 0; i < NUM_ROTATING; i++) {
+            citiesToScrapeToday.push(targetCities[(rotationStartIndex + i) % targetCities.length]);
+        }
+        
+        console.log(`[Day ${dayOfYear}] Target Cities: ${citiesToScrapeToday.join(', ')}`);
 
         let totalNewLeads = 0;
         let browser = null;
