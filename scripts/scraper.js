@@ -9,6 +9,8 @@ const db = require('../db');
  */
 
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
+const MAX_MONTHLY_REQUESTS = 500;
+let apiRequestsMadeThisRun = 0;
 
 // Comprehensive list of notable Pakistani cities
 const targetCities = [
@@ -30,6 +32,17 @@ const targetCities = [
     "Muzaffarabad", "Mirpur", "Rawalakot", "Gilgit", "Skardu"
 ];
 
+async function ensureScraperLogsTable(connection) {
+    await connection.execute(`
+        CREATE TABLE IF NOT EXISTS crm_scraper_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            requests_made INT NOT NULL,
+            month_year VARCHAR(7) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci;
+    `);
+}
+
 async function fetchGooglePlaces(query, pageToken = null) {
     if (!GOOGLE_API_KEY) {
         throw new Error("GOOGLE_PLACES_API_KEY is not set in the .env file!");
@@ -42,6 +55,7 @@ async function fetchGooglePlaces(query, pageToken = null) {
         await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
+    apiRequestsMadeThisRun++;
     const response = await fetch(url);
     const data = await response.json();
     
@@ -60,32 +74,56 @@ async function main() {
         process.exit(1);
     }
 
-    // Determine the rotating cities for today based on the day of the year
-    const start = new Date(new Date().getFullYear(), 0, 0);
-    const diff = new Date() - start;
-    const oneDay = 1000 * 60 * 60 * 24;
-    const dayOfYear = Math.floor(diff / oneDay);
-    
-    // Pick 5 cities from the rotation array based on day of year
-    const CITIES_PER_DAY = 5;
-    const rotationStartIndex = (dayOfYear * CITIES_PER_DAY) % targetCities.length;
-    
-    let rotatingCities = [];
-    for (let i = 0; i < CITIES_PER_DAY; i++) {
-        rotatingCities.push(targetCities[(rotationStartIndex + i) % targetCities.length]);
-    }
-    
-    // Always include Rawalpindi and Islamabad, then add the rotating ones
-    // Use a Set to ensure no duplicates if Rawalpindi happens to be in the rotating list
-    const citiesToScrapeToday = [...new Set(["Rawalpindi", "Islamabad", ...rotatingCities])];
-    
-    console.log(`[Day ${dayOfYear}] Target Cities for Today: ${citiesToScrapeToday.join(', ')}`);
-
     const connection = await db.pool.getConnection();
-    let totalNewLeads = 0;
-
+    
     try {
+        await ensureScraperLogsTable(connection);
+
+        const today = new Date();
+        const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+        const [[usageRow]] = await connection.execute(
+            "SELECT SUM(requests_made) as total FROM crm_scraper_logs WHERE month_year = ?",
+            [currentMonthYear]
+        );
+        const currentUsage = parseInt(usageRow.total || 0);
+
+        console.log(`[API USAGE] ${currentUsage} / ${MAX_MONTHLY_REQUESTS} requests used this month (${currentMonthYear}).`);
+
+        if (currentUsage >= MAX_MONTHLY_REQUESTS) {
+            console.log("Monthly request limit reached. Aborting scrape to prevent overages.");
+            return;
+        }
+
+        // Determine the rotating cities for today based on the day of the year
+        const start = new Date(new Date().getFullYear(), 0, 0);
+        const diff = new Date() - start;
+        const oneDay = 1000 * 60 * 60 * 24;
+        const dayOfYear = Math.floor(diff / oneDay);
+        
+        // Pick 5 cities from the rotation array based on day of year
+        const CITIES_PER_DAY = 5;
+        const rotationStartIndex = (dayOfYear * CITIES_PER_DAY) % targetCities.length;
+        
+        let rotatingCities = [];
+        for (let i = 0; i < CITIES_PER_DAY; i++) {
+            rotatingCities.push(targetCities[(rotationStartIndex + i) % targetCities.length]);
+        }
+        
+        // Always include Rawalpindi and Islamabad, then add the rotating ones
+        // Use a Set to ensure no duplicates if Rawalpindi happens to be in the rotating list
+        const citiesToScrapeToday = [...new Set(["Rawalpindi", "Islamabad", ...rotatingCities])];
+        
+        console.log(`[Day ${dayOfYear}] Target Cities for Today: ${citiesToScrapeToday.join(', ')}`);
+
+        let totalNewLeads = 0;
+
         for (const city of citiesToScrapeToday) {
+            if (currentUsage + apiRequestsMadeThisRun >= MAX_MONTHLY_REQUESTS) {
+                console.log("\n[LIMIT WARNING] Reached max monthly requests mid-scrape. Stopping early.");
+                break;
+            }
+
             const searchTerm = `School or Academy in ${city}`;
             console.log(`\n--- Starting scrape for: "${searchTerm}" ---`);
             
@@ -94,6 +132,10 @@ async function main() {
             
             // Loop through pages (Google allows up to 3 pages / 60 results max per query)
             do {
+                if (currentUsage + apiRequestsMadeThisRun >= MAX_MONTHLY_REQUESTS) {
+                    break;
+                }
+
                 const apiData = await fetchGooglePlaces(searchTerm, nextPageToken);
                 
                 if (apiData.results && apiData.results.length > 0) {
@@ -120,11 +162,7 @@ async function main() {
 
                 // If no formatted_address is available, fallback to city
                 const address = place.formatted_address || city;
-                
-                // Note: The basic Text Search doesn't always return a phone number. 
-                // We leave it empty for the sales rep to look up, or they can use the source URL.
-                const phone = ''; 
-                
+                const phone = ''; // Text Search doesn't return detailed phone numbers usually
                 const sourceUrl = `https://maps.google.com/?q=place_id:${place.place_id}`;
                 
                 validResultsCount++;
@@ -150,20 +188,28 @@ async function main() {
                     ]);
                     console.log(`[ADDED] ${place.name}`);
                     totalNewLeads++;
-                } else {
-                    // console.log(`[SKIPPED] ${place.name} (Already in database)`);
                 }
             }
             
             console.log(`Finished processing ${city}. Found ${validResultsCount} valid schools/academies.`);
         }
+
+        console.log(`\nScrape complete! Inserted ${totalNewLeads} new leads into the prescreening pool.`);
+        
+        if (apiRequestsMadeThisRun > 0) {
+            await connection.execute(
+                "INSERT INTO crm_scraper_logs (requests_made, month_year) VALUES (?, ?)",
+                [apiRequestsMadeThisRun, currentMonthYear]
+            );
+            console.log(`Logged ${apiRequestsMadeThisRun} API requests to the database.`);
+        }
+
     } catch (err) {
         console.error("Error during scraping process:", err);
     } finally {
         connection.release();
     }
 
-    console.log(`\nScrape complete! Inserted ${totalNewLeads} new leads into the prescreening pool.`);
     process.exit(0);
 }
 
