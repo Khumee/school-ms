@@ -149,11 +149,14 @@
                                     let waPhone = lead.phone.replace(/\D/g, '');
                                     if (waPhone.startsWith('0')) waPhone = '92' + waPhone.substring(1);
                                     
-                                    const baseMsg = `Hello from OmniSchool! 👋\n\nWe noticed ${lead.school_name} is doing fantastic work in the community. As education evolves, managing campus operations seamlessly is more critical than ever.\n\nOmniSchool is a complete, all-in-one School Management System designed to automate your fee collection, academics, and administration—saving you hours of administrative work every week.\n\n▶️ Watch our quick 2-minute product demo here to see it in action:\nhttps://omnischool.pk/videos/`;
-                                    const endMsg = `\n\nLearn more at our website: https://omnischool.pk\n\nWe would love to connect and show you how we can add value to your campus!`;
+                                    const baseMsgEn = `Hello from OmniSchool! 👋\n\nWe noticed ${lead.school_name} is doing fantastic work in the community. As education evolves, managing campus operations seamlessly is more critical than ever.\n\nOmniSchool is a complete, all-in-one School Management System designed to automate your fee collection, academics, and administration—saving you hours of administrative work every week.`;
+                                    const baseMsgUr = `\n\nالسلام علیکم! ہم نے دیکھا کہ آپ کا ادارہ زبردست کام کر رہا ہے۔ آج کے جدید دور میں سکول کے نظام کو بہتر اور ڈیجیٹل بنانا بہت ضروری ہو چکا ہے۔ OmniSchool ایک مکمل سکول مینجمنٹ سسٹم ہے جو آپ کی فیس کلیکشن، امتحانات، اور تمام انتظامی امور کو خودکار (Automate) کر دیتا ہے۔`;
                                     
-                                    const waMsgSchool = encodeURIComponent(baseMsg + 'demo_english_FULL.mp4' + endMsg);
-                                    const waMsgHifz = encodeURIComponent(baseMsg + 'demo_hifz_FULL.mp4' + endMsg);
+                                    const videoIntro = `\n\n▶️ Watch our quick 2-minute product demo here to see it in action:\nhttps://omnischoolapp.com/video/`;
+                                    const endMsg = `\n\nLearn more at our website: https://omnischoolapp.com\n\nWe would love to connect and show you how we can add value to your campus!`;
+                                    
+                                    const waMsgSchool = encodeURIComponent(baseMsgEn + baseMsgUr + videoIntro + 'demo-en.mp4' + endMsg);
+                                    const waMsgHifz = encodeURIComponent(baseMsgEn + baseMsgUr + videoIntro + 'hifz-demo.mp4' + endMsg);
                                 %>
                                     <div style="display: flex; gap: 0.25rem; margin-top: 0.5rem; flex-wrap: wrap;">
                                         <a href="https://wa.me/<%= waPhone %>?text=<%= waMsgSchool %>" target="_blank" class="btn btn-sm" style="background: #25D366; color: white; padding: 0.15rem 0.4rem; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 0.25rem;" title="Send School Video">
@@ -281,8 +284,8 @@
             <div class="form-group">
                 <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: #475569;">Select Video Version</label>
                 <select id="testWaVideo" class="form-control">
-                    <option value="demo_english_FULL.mp4">English Demo</option>
-                    <option value="demo_hifz_FULL.mp4">Hifz Demo</option>
+                    <option value="demo-en.mp4">English Demo</option>
+                    <option value="hifz-demo.mp4">Hifz Demo</option>
                 </select>
             </div>
             <div class="modal-footer">
@@ -347,7 +350,11 @@
             
             const video = document.getElementById('testWaVideo').value;
             
-            const rawMsg = `Hello from OmniSchool! 👋\n\nAs education evolves, managing campus operations seamlessly is more critical than ever.\n\nOmniSchool is a complete, all-in-one School Management System designed to automate your fee collection, academics, and administration—saving you hours of administrative work every week.\n\n▶️ Watch our quick 2-minute product demo here to see it in action:\nhttps://omnischool.pk/videos/${video}\n\nLearn more at our website: https://omnischool.pk\n\nWe would love to connect and show you how we can add value to your campus!`;
+            const baseMsgEn = `Hello from OmniSchool! 👋\n\nAs education evolves, managing campus operations seamlessly is more critical than ever.\n\nOmniSchool is a complete, all-in-one School Management System designed to automate your fee collection, academics, and administration—saving you hours of administrative work every week.`;
+            const baseMsgUr = `\n\nالسلام علیکم! آج کے جدید دور میں سکول کے نظام کو بہتر اور ڈیجیٹل بنانا بہت ضروری ہو چکا ہے۔ OmniSchool ایک مکمل سکول مینجمنٹ سسٹم ہے جو آپ کی فیس کلیکشن، امتحانات، اور تمام انتظامی امور کو خودکار (Automate) کر دیتا ہے۔`;
+            const endMsg = `\n\n▶️ Watch our quick 2-minute product demo here to see it in action:\nhttps://omnischoolapp.com/video/${video}\n\nLearn more at our website: https://omnischoolapp.com\n\nWe would love to connect and show you how we can add value to your campus!`;
+            
+            const rawMsg = baseMsgEn + baseMsgUr + endMsg;
             
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(rawMsg)}`, '_blank');
         }
