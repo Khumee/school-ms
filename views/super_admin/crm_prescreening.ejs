@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescreening Scraped Leads - OmniSchool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; margin: 0; }
+        .page-container { padding: 2rem; max-width: 1400px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; color: #0f172a; }
+        .card { background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        .table th, .table td { padding: 1rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        .table th { background: #f8fafc; font-weight: 600; color: #475569; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .table tbody tr:hover { background: #f1f5f9; }
+        .badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+        .badge-pending { background: #fef08a; color: #854d0e; }
+        .btn { padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; }
+        .btn-primary { background: #4f46e5; color: white; }
+        .btn-primary:hover { background: #4338ca; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); display: none; align-items: center; justify-content: center; z-index: 50; }
+        .modal { background: white; border-radius: 12px; width: 100%; max-width: 500px; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-title { font-size: 1.25rem; font-weight: 700; margin: 0; }
+        .close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #64748b; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: #334155; }
+        .form-control { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.875rem; font-family: inherit; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
+    </style>
+</head>
+<body>
+    <%- include('../super_admin/nav', { activeTab: 'prescreening', req: req }) %>
+
+    <div class="page-container">
+        <% if (success) { %>
+            <div style="background: #dcfce7; color: #166534; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;"><i class="bi bi-check-circle-fill"></i> <%= success %></div>
+        <% } %>
+        <% if (error) { %>
+            <div style="background: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;"><i class="bi bi-exclamation-triangle-fill"></i> <%= error %></div>
+        <% } %>
+
+        <div class="header">
+            <div>
+                <h1>Prescreening Scraped Leads</h1>
+                <p style="color: #64748b; margin-top: 0.5rem; font-size: 0.9rem;">Review auto-generated leads from the web scraper before adding them to the CRM.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>School Name</th>
+                        <th>City & Address</th>
+                        <th>Phone</th>
+                        <th>Search Term</th>
+                        <th>Date Scraped</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (scraped_leads.length === 0) { %>
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: #64748b; padding: 2rem;">No pending leads for prescreening.</td>
+                        </tr>
+                    <% } %>
+                    <% scraped_leads.forEach(lead => { %>
+                        <tr>
+                            <td>
+                                <strong><%= lead.school_name %></strong>
+                                <% if (lead.source_url) { %>
+                                    <br><a href="<%= lead.source_url %>" target="_blank" style="font-size: 0.75rem; color: #3b82f6;">View Source</a>
+                                <% } %>
+                            </td>
+                            <td>
+                                <div><%= lead.city || 'N/A' %></div>
+                                <div style="font-size: 0.8rem; color: #64748b;"><%= lead.address %></div>
+                            </td>
+                            <td><%= lead.phone || 'N/A' %></td>
+                            <td><span class="badge" style="background: #e2e8f0; color: #475569;"><%= lead.search_term_used || 'N/A' %></span></td>
+                            <td style="font-size: 0.85rem;"><%= new Date(lead.created_at).toLocaleDateString() %></td>
+                            <td style="text-align: right; white-space: nowrap;">
+                                <button type="button" class="btn btn-primary btn-sm" onclick="openConvertModal(<%= JSON.stringify(lead) %>)">
+                                    <i class="bi bi-person-plus"></i> Convert
+                                </button>
+                                <form action="/admin/crm/prescreening/<%= lead.id %>/reject" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to reject this lead?');">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="bi bi-x-lg"></i> Reject
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Convert Modal -->
+    <div id="convertModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Convert to Lead</h3>
+                <button type="button" class="close-btn" onclick="closeConvertModal()">&times;</button>
+            </div>
+            <form id="convertForm" method="POST" action="">
+                <div class="form-group">
+                    <label>School Name (Read-Only)</label>
+                    <input type="text" id="modalSchoolName" class="form-control" readonly style="background: #f1f5f9;">
+                </div>
+                
+                <div class="form-group">
+                    <label>Assign To Sales Rep</label>
+                    <select name="assigned_to" class="form-control">
+                        <option value="">-- Unassigned --</option>
+                        <% reps.forEach(rep => { %>
+                            <option value="<%= rep.id %>"><%= rep.name %> (<%= rep.username %>)</option>
+                        <% }) %>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Contact Person (if known)</label>
+                    <input type="text" name="contact_person" class="form-control" placeholder="e.g., Principal / Owner">
+                </div>
+
+                <div class="form-group">
+                    <label>Estimated Students (if known)</label>
+                    <input type="number" name="est_students" class="form-control" placeholder="0">
+                </div>
+
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea name="notes" class="form-control" rows="3" placeholder="Any context from prescreening..."></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn" style="background: #e2e8f0; color: #475569;" onclick="closeConvertModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Convert Lead</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openConvertModal(lead) {
+            document.getElementById('convertForm').action = `/admin/crm/prescreening/${lead.id}/convert`;
+            document.getElementById('modalSchoolName').value = lead.school_name;
+            document.getElementById('convertModal').style.display = 'flex';
+        }
+
+        function closeConvertModal() {
+            document.getElementById('convertModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

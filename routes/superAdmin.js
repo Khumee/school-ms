@@ -721,6 +721,82 @@ async function ensureCrmSchema() {
     }
 }
 
+// GET /admin/crm/prescreening — List all scraped pending leads
+router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
+    try {
+        await ensureCrmSchema();
+        const [scraped_leads] = await db.pool.execute("SELECT * FROM crm_scraped_leads WHERE status = 'pending' ORDER BY created_at DESC");
+        const [reps] = await db.pool.execute("SELECT id, username, name FROM master_admins WHERE is_active = 1 AND role = 'sales_rep' ORDER BY name");
+        
+        res.render('super_admin/crm_prescreening', {
+            scraped_leads,
+            reps,
+            activeTab: 'prescreening',
+            username: req.session.masterAdminUsername,
+            role: req.session.masterAdminRole || 'super_admin',
+            success: req.query.success,
+            error: req.query.error
+        });
+    } catch (err) {
+        console.error('Prescreening Leads Error:', err);
+        res.redirect('/admin?error=Error loading prescreening leads');
+    }
+});
+
+// POST /admin/crm/prescreening/:id/convert — Convert a scraped lead to actual lead
+router.post('/admin/crm/prescreening/:id/convert', isSuperAdmin, async (req, res) => {
+    const connection = await db.pool.getConnection();
+    try {
+        await connection.beginTransaction();
+        const leadId = req.params.id;
+        const { assigned_to, contact_person, est_students, notes } = req.body;
+        
+        const [[scraped_lead]] = await connection.execute("SELECT * FROM crm_scraped_leads WHERE id = ?", [leadId]);
+        if (!scraped_lead || scraped_lead.status !== 'pending') {
+            return res.redirect('/admin/crm/prescreening?error=Lead not found or already processed');
+        }
+
+        // Insert into crm_leads
+        await connection.execute(`
+            INSERT INTO crm_leads (school_name, phone, address, city, lead_source, status, assigned_to, contact_person, est_students, notes)
+            VALUES (?, ?, ?, ?, ?, 'new', ?, ?, ?, ?)
+        `, [
+            scraped_lead.school_name,
+            scraped_lead.phone || '',
+            scraped_lead.address || '',
+            scraped_lead.city || '',
+            'Automated Scraper',
+            assigned_to || null,
+            contact_person || 'Unknown',
+            est_students || 0,
+            notes || ''
+        ]);
+
+        // Update scraped lead status
+        await connection.execute("UPDATE crm_scraped_leads SET status = 'converted' WHERE id = ?", [leadId]);
+        
+        await connection.commit();
+        res.redirect('/admin/crm/prescreening?success=Lead successfully converted');
+    } catch (err) {
+        await connection.rollback();
+        console.error('Convert Scraped Lead Error:', err);
+        res.redirect('/admin/crm/prescreening?error=Failed to convert lead');
+    } finally {
+        connection.release();
+    }
+});
+
+// POST /admin/crm/prescreening/:id/reject — Reject a scraped lead
+router.post('/admin/crm/prescreening/:id/reject', isSuperAdmin, async (req, res) => {
+    try {
+        await db.pool.execute("UPDATE crm_scraped_leads SET status = 'rejected' WHERE id = ?", [req.params.id]);
+        res.redirect('/admin/crm/prescreening?success=Lead rejected successfully');
+    } catch (err) {
+        console.error('Reject Scraped Lead Error:', err);
+        res.redirect('/admin/crm/prescreening?error=Failed to reject lead');
+    }
+});
+
 // GET /admin/crm/leads — List all leads & pipeline overview
 router.get('/admin/crm/leads', isSuperAdmin, async (req, res) => {
     try {
