@@ -776,6 +776,22 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
     }
 });
 
+// GET /admin/crm/scraper-map — View Scraper Grid Coverage
+router.get('/admin/crm/scraper-map', isSuperAdmin, async (req, res) => {
+    try {
+        const [grid_states] = await db.pool.execute("SELECT * FROM crm_scraper_grid_state");
+        res.render('super_admin/crm_scraper_map', {
+            grid_states,
+            activeTab: 'prescreening',
+            username: req.session.masterAdminUsername,
+            role: req.session.masterAdminRole || 'super_admin'
+        });
+    } catch (err) {
+        console.error('Scraper Map Error:', err);
+        res.redirect('/admin/crm/prescreening?error=Error loading map data');
+    }
+});
+
 // POST /admin/crm/prescreening/:id/convert — Convert a scraped lead to actual lead
 router.post('/admin/crm/prescreening/:id/convert', isSuperAdmin, async (req, res) => {
     const connection = await db.pool.getConnection();

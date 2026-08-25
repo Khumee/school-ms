@@ -48,11 +48,14 @@
             <div style="background: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;"><i class="bi bi-exclamation-triangle-fill"></i> <%= error %></div>
         <% } %>
 
-        <div class="header">
+        <div class="header" style="display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <h1>Prescreening Scraped Leads</h1>
                 <p style="color: #64748b; margin-top: 0.5rem; font-size: 0.9rem;">Review auto-generated leads from the web scraper before adding them to the CRM.</p>
             </div>
+            <a href="/admin/crm/scraper-map" class="btn btn-primary" style="background: #10b981; border: none; padding: 0.5rem 1rem; border-radius: 6px; color: white; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                <i class="bi bi-map-fill"></i> View Coverage Map
+            </a>
         </div>
 
         <!-- Select2 CSS/JS for searchable dropdown -->
