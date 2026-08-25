@@ -85,11 +85,11 @@
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
         
         <form action="/admin/crm/prescreening" method="GET" class="filter-form" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1.5rem;">
-            <div class="form-group" style="flex: 1; min-width: 250px;">
+            <div class="form-group" style="flex: 1; min-width: 200px;">
                 <label style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 0.25rem; display: block;">Search Name/Address</label>
                 <input type="text" name="search" class="form-control" placeholder="e.g. Model Town..." value="<%= query.search || '' %>" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.5rem 0.75rem;">
             </div>
-            <div class="form-group" style="flex: 1; min-width: 200px;">
+            <div class="form-group" style="flex: 1; min-width: 180px;">
                 <label style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 0.25rem; display: block;">Filter by City</label>
                 <select name="city" id="cityFilter" class="form-control" onchange="this.form.submit()" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.5rem 0.75rem;">
                     <option value="">All Cities</option>
@@ -98,7 +98,14 @@
                     <% }) %>
                 </select>
             </div>
-            <div class="form-group" style="min-width: 160px;">
+            <div class="form-group" style="min-width: 140px;">
+                <label style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 0.25rem; display: block;">Status</label>
+                <select name="status" class="form-control" onchange="this.form.submit()" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.5rem 0.75rem;">
+                    <option value="pending" <%= (!query.status || query.status === 'pending') ? 'selected' : '' %>>Pending</option>
+                    <option value="archived" <%= query.status === 'archived' ? 'selected' : '' %>>Archived</option>
+                </select>
+            </div>
+            <div class="form-group" style="min-width: 140px;">
                 <label style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 0.25rem; display: block;">Phone Type</label>
                 <select name="phone_type" class="form-control" onchange="this.form.submit()" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.5rem 0.75rem;">
                     <option value="">All Phones</option>
@@ -106,12 +113,13 @@
                     <option value="landline" <%= query.phone_type === 'landline' ? 'selected' : '' %>>Landline Only</option>
                 </select>
             </div>
-            <div class="form-group">
-                <% if (query.search || query.city || query.phone_type) { %>
-                    <a href="/admin/crm/prescreening" class="btn btn-secondary" style="background: #e2e8f0; color: #475569; padding: 0.5rem 0.75rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; height: 38px;" title="Clear Filters">
-                        <i class="bi bi-x-circle" style="font-size: 1.1rem; margin-right: 0;"></i>
-                    </a>
-                <% } %>
+            <div class="form-group" style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn btn-primary" style="background: #4f46e5; border: none; padding: 0.5rem 1rem; border-radius: 6px; color: white; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; height: 38px;">
+                    <i class="bi bi-search" style="margin-right: 0.5rem;"></i> Filter
+                </button>
+                <a href="/admin/crm/prescreening" class="btn btn-secondary" style="background: #e2e8f0; color: #475569; padding: 0.5rem 0.75rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; height: 38px;" title="Clear Filters">
+                    <i class="bi bi-x-circle"></i>
+                </a>
             </div>
         </form>
 
@@ -203,12 +211,20 @@
                                         </div>
                                     <% } %>
                                     <div style="display: flex; gap: 0.25rem;">
-                                        <button type="button" class="btn btn-primary btn-sm" style="padding: 0.35rem 0.5rem; font-size: 0.75rem;" onclick="openConvertModal(<%= JSON.stringify(lead) %>)">
-                                            <i class="bi bi-person-plus"></i> Convert
-                                        </button>
-                                        <button type="button" class="btn btn-danger btn-sm" style="padding: 0.35rem 0.5rem; font-size: 0.75rem;" onclick="openRejectModal(<%= lead.id %>)">
-                                            <i class="bi bi-x-lg"></i> Reject
-                                        </button>
+                                        <% if (lead.status === 'archived') { %>
+                                            <form method="POST" action="/admin/crm/prescreening/<%= lead.id %>/restore" style="margin: 0;">
+                                                <button type="submit" class="btn btn-primary btn-sm" style="background: #3b82f6; border: none; padding: 0.35rem 0.5rem; font-size: 0.75rem;">
+                                                    <i class="bi bi-arrow-counterclockwise"></i> Restore
+                                                </button>
+                                            </form>
+                                        <% } else { %>
+                                            <button type="button" class="btn btn-primary btn-sm" style="padding: 0.35rem 0.5rem; font-size: 0.75rem;" onclick="openConvertModal(<%= JSON.stringify(lead) %>)">
+                                                <i class="bi bi-person-plus"></i> Convert
+                                            </button>
+                                            <button type="button" class="btn btn-danger btn-sm" style="background: #f59e0b; border: none; padding: 0.35rem 0.5rem; font-size: 0.75rem;" onclick="openArchiveModal(<%= lead.id %>)">
+                                                <i class="bi bi-archive"></i> Archive
+                                            </button>
+                                        <% } %>
                                     </div>
                                 </div>
                             </td>
@@ -329,18 +345,18 @@
         </div>
     </div>
 
-    <!-- Reject Modal -->
-    <div id="rejectModal" class="modal-overlay">
+    <!-- Archive Modal -->
+    <div id="archiveModal" class="modal-overlay">
         <div class="modal" style="max-width: 400px;">
             <div class="modal-header">
-                <h3 class="modal-title" style="color: #dc2626;"><i class="bi bi-exclamation-triangle"></i> Reject Lead</h3>
-                <button type="button" class="close-btn" onclick="closeRejectModal()">&times;</button>
+                <h3 class="modal-title" style="color: #d97706;"><i class="bi bi-archive"></i> Archive Lead</h3>
+                <button type="button" class="close-btn" onclick="closeArchiveModal()">&times;</button>
             </div>
-            <p style="color: #475569; margin-bottom: 1.5rem;">Are you sure you want to reject this lead? This action cannot be undone and it will be permanently removed from your prescreening pool.</p>
-            <form id="rejectForm" method="POST" action="">
+            <p style="color: #475569; margin-bottom: 1.5rem;">Are you sure you want to archive this lead? It will be removed from your pending list, but you can always restore it later.</p>
+            <form id="archiveForm" method="POST" action="">
                 <div class="modal-footer">
-                    <button type="button" class="btn" style="background: #e2e8f0; color: #475569;" onclick="closeRejectModal()">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Yes, Reject Lead</button>
+                    <button type="button" class="btn" style="background: #e2e8f0; color: #475569;" onclick="closeArchiveModal()">Cancel</button>
+                    <button type="submit" class="btn btn-danger" style="background: #f59e0b; border: none;">Yes, Archive Lead</button>
                 </div>
             </form>
         </div>
@@ -357,13 +373,13 @@
             document.getElementById('convertModal').style.display = 'none';
         }
 
-        function openRejectModal(leadId) {
-            document.getElementById('rejectForm').action = `/admin/crm/prescreening/${leadId}/reject`;
-            document.getElementById('rejectModal').style.display = 'flex';
+        function openArchiveModal(leadId) {
+            document.getElementById('archiveForm').action = `/admin/crm/prescreening/${leadId}/archive`;
+            document.getElementById('archiveModal').style.display = 'flex';
         }
 
-        function closeRejectModal() {
-            document.getElementById('rejectModal').style.display = 'none';
+        function closeArchiveModal() {
+            document.getElementById('archiveModal').style.display = 'none';
         }
 
         function openTestWhatsAppModal() {

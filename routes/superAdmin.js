@@ -730,9 +730,10 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
         const limit = 20;
         const offset = (page - 1) * limit;
 
-        const { city, search, phone_type } = req.query;
-        let baseCondition = "status = 'pending'";
-        const params = [];
+        const { city, search, phone_type, status } = req.query;
+        const currentStatus = status === 'archived' ? 'archived' : 'pending';
+        let baseCondition = "status = ?";
+        const params = [currentStatus];
 
         if (city) {
             baseCondition += " AND city = ?";
@@ -871,14 +872,25 @@ router.post('/admin/crm/prescreening/:id/convert', isSuperAdmin, async (req, res
     }
 });
 
-// POST /admin/crm/prescreening/:id/reject — Reject a scraped lead
-router.post('/admin/crm/prescreening/:id/reject', isSuperAdmin, async (req, res) => {
+// POST /admin/crm/prescreening/:id/archive — Archive a scraped lead so it doesn't show up in pending
+router.post('/admin/crm/prescreening/:id/archive', isSuperAdmin, async (req, res) => {
     try {
-        await db.pool.execute("UPDATE crm_scraped_leads SET status = 'rejected' WHERE id = ?", [req.params.id]);
-        res.redirect('/admin/crm/prescreening?success=Lead rejected successfully');
+        await db.pool.execute("UPDATE crm_scraped_leads SET status = 'archived' WHERE id = ?", [req.params.id]);
+        res.redirect('/admin/crm/prescreening?success=Lead archived successfully');
     } catch (err) {
-        console.error('Reject Scraped Lead Error:', err);
-        res.redirect('/admin/crm/prescreening?error=Failed to reject lead');
+        console.error('Archive Scraped Lead Error:', err);
+        res.redirect('/admin/crm/prescreening?error=Failed to archive lead');
+    }
+});
+
+// POST /admin/crm/prescreening/:id/restore — Restore an archived lead back to pending
+router.post('/admin/crm/prescreening/:id/restore', isSuperAdmin, async (req, res) => {
+    try {
+        await db.pool.execute("UPDATE crm_scraped_leads SET status = 'pending' WHERE id = ?", [req.params.id]);
+        res.redirect('/admin/crm/prescreening?status=archived&success=Lead restored successfully');
+    } catch (err) {
+        console.error('Restore Scraped Lead Error:', err);
+        res.redirect('/admin/crm/prescreening?status=archived&error=Failed to restore lead');
     }
 });
 
