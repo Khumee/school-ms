@@ -54,6 +54,7 @@
                 <p style="color: #64748b; margin-top: 0.5rem; font-size: 0.9rem;">Review auto-generated leads from the web scraper before adding them to the CRM.</p>
             </div>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <% if (role === 'super_admin') { %>
                 <% 
                     let usagePct = Math.min((apiUsage / apiLimit) * 100, 100);
                     let usageColor = usagePct >= 100 ? '#ef4444' : (usagePct >= 80 ? '#f59e0b' : '#3b82f6');
@@ -65,13 +66,17 @@
                         <div style="height: 100%; width: <%= usagePct %>%; background: <%= usageColor %>;"></div>
                     </div>
                 </div>
+                <% } %>
                 
                 <button type="button" class="btn btn-secondary" style="background: #25D366; border: none; padding: 0.5rem 1rem; border-radius: 6px; color: white; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; height: 38px; gap: 0.5rem;" onclick="openTestWhatsAppModal()">
                     <i class="bi bi-whatsapp"></i> Test WhatsApp Msg
                 </button>
+
+                <% if (role === 'super_admin') { %>
                 <a href="/admin/crm/scraper-map" class="btn btn-primary" style="background: #10b981; border: none; padding: 0.5rem 1rem; border-radius: 6px; color: white; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
                     <i class="bi bi-map-fill"></i> View Coverage Map
                 </a>
+                <% } %>
             </div>
         </div>
 
