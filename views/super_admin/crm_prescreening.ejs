@@ -82,9 +82,10 @@
                 </select>
             </div>
             <div class="form-group">
-                <button type="submit" class="btn btn-primary" style="background: #4f46e5; border: none; padding: 0.5rem 1rem; border-radius: 6px; color: white; font-weight: 600; height: 38px;">Filter</button>
                 <% if (query.search || query.city) { %>
-                    <a href="/admin/crm/prescreening" class="btn btn-secondary" style="background: #e2e8f0; color: #475569; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; margin-left: 0.5rem; display: inline-flex; align-items: center; height: 38px;">Clear</a>
+                    <a href="/admin/crm/prescreening" class="btn btn-secondary" style="background: #e2e8f0; color: #475569; padding: 0.5rem 0.75rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; height: 38px;" title="Clear Filters">
+                        <i class="bi bi-x-circle" style="font-size: 1.1rem; margin-right: 0;"></i>
+                    </a>
                 <% } %>
             </div>
         </form>
@@ -120,7 +121,6 @@
                         <th>School Name</th>
                         <th>City & Address</th>
                         <th>Phone</th>
-                        <th>Phone</th>
                         <th>Date Scraped</th>
                         <th style="text-align: right;">Actions</th>
                     </tr>
@@ -147,35 +147,39 @@
                                 <%= lead.phone || 'N/A' %>
                             </td>
                             <td style="font-size: 0.85rem;"><%= new Date(lead.created_at).toLocaleDateString() %></td>
-                            <td style="text-align: right; white-space: nowrap;">
-                                <% if (lead.phone) { 
-                                    let waPhone = lead.phone.replace(/\D/g, '');
-                                    if (waPhone.startsWith('0')) waPhone = '92' + waPhone.substring(1);
-                                    
-                                    const baseMsgEn = `Hello from OmniSchool! 👋\n\nWe noticed ${lead.school_name} is doing fantastic work in the community. As education evolves, managing campus operations seamlessly is more critical than ever.\n\nOmniSchool is a complete, all-in-one School Management System designed to automate your fee collection, academics, and administration—saving you hours of administrative work every week.`;
-                                    const baseMsgUr = `\n\nالسلام علیکم! ہم نے دیکھا کہ آپ کا ادارہ زبردست کام کر رہا ہے۔ آج کے جدید دور میں سکول کے نظام کو بہتر اور ڈیجیٹل بنانا بہت ضروری ہو چکا ہے۔ OmniSchool ایک مکمل سکول مینجمنٹ سسٹم ہے جو آپ کی فیس کلیکشن، امتحانات، اور تمام انتظامی امور کو خودکار (Automate) کر دیتا ہے۔`;
-                                    
-                                    const videoIntro = `\n\n▶️ Watch our quick 2-minute product demo here to see it in action:\nhttps://omnischoolapp.com/video/`;
-                                    const endMsg = `\n\nLearn more at our website: https://omnischoolapp.com`;
-                                    
-                                    const waMsgSchool = encodeURIComponent(baseMsgEn + baseMsgUr + videoIntro + 'demo-en.mp4' + endMsg);
-                                    const waMsgHifz = encodeURIComponent(baseMsgEn + baseMsgUr + videoIntro + 'hifz-demo.mp4' + endMsg);
-                                %>
-                                    <div style="display: inline-flex; gap: 0.25rem; margin-right: 0.5rem; vertical-align: top;">
-                                        <a href="https://wa.me/<%= waPhone %>?text=<%= waMsgSchool %>" target="_blank" class="btn btn-sm" style="background: #25D366; color: white; padding: 0.25rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;" title="Send School Video">
-                                            <i class="bi bi-whatsapp"></i> School
-                                        </a>
-                                        <a href="https://wa.me/<%= waPhone %>?text=<%= waMsgHifz %>" target="_blank" class="btn btn-sm" style="background: #25D366; color: white; padding: 0.25rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;" title="Send Hifz Video">
-                                            <i class="bi bi-whatsapp"></i> Hifz
-                                        </a>
+                            <td style="vertical-align: middle; min-width: 280px;">
+                                <div style="display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap;">
+                                    <% if (lead.phone) { 
+                                        let waPhone = lead.phone.replace(/\D/g, '');
+                                        if (waPhone.startsWith('0')) waPhone = '92' + waPhone.substring(1);
+                                        
+                                        const baseMsgEn = `Hello from OmniSchool! 👋\n\nWe noticed ${lead.school_name} is doing fantastic work in the community. As education evolves, managing campus operations seamlessly is more critical than ever.\n\nOmniSchool is a complete, all-in-one School Management System designed to automate your fee collection, academics, and administration—saving you hours of administrative work every week.`;
+                                        const baseMsgUr = `\n\nالسلام علیکم! ہم نے دیکھا کہ آپ کا ادارہ زبردست کام کر رہا ہے۔ آج کے جدید دور میں سکول کے نظام کو بہتر اور ڈیجیٹل بنانا بہت ضروری ہو چکا ہے۔ OmniSchool ایک مکمل سکول مینجمنٹ سسٹم ہے جو آپ کی فیس کلیکشن، امتحانات، اور تمام انتظامی امور کو خودکار (Automate) کر دیتا ہے۔`;
+                                        
+                                        const videoIntro = `\n\n▶️ Watch our quick 2-minute product demo here to see it in action:\nhttps://omnischoolapp.com/video/`;
+                                        const endMsg = `\n\nLearn more at our website: https://omnischoolapp.com`;
+                                        
+                                        const waMsgSchool = encodeURIComponent(baseMsgEn + baseMsgUr + videoIntro + 'demo-en.mp4' + endMsg);
+                                        const waMsgHifz = encodeURIComponent(baseMsgEn + baseMsgUr + videoIntro + 'hifz-demo.mp4' + endMsg);
+                                    %>
+                                        <div style="display: flex; gap: 0.25rem;">
+                                            <a href="https://wa.me/<%= waPhone %>?text=<%= waMsgSchool %>" target="_blank" class="btn btn-sm" style="background: #25D366; color: white; padding: 0.35rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;" title="Send School Video">
+                                                <i class="bi bi-whatsapp"></i> School
+                                            </a>
+                                            <a href="https://wa.me/<%= waPhone %>?text=<%= waMsgHifz %>" target="_blank" class="btn btn-sm" style="background: #25D366; color: white; padding: 0.35rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem;" title="Send Hifz Video">
+                                                <i class="bi bi-whatsapp"></i> Hifz
+                                            </a>
+                                        </div>
+                                    <% } %>
+                                    <div style="display: flex; gap: 0.25rem;">
+                                        <button type="button" class="btn btn-primary btn-sm" style="padding: 0.35rem 0.5rem; font-size: 0.75rem;" onclick="openConvertModal(<%= JSON.stringify(lead) %>)">
+                                            <i class="bi bi-person-plus"></i> Convert
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-sm" style="padding: 0.35rem 0.5rem; font-size: 0.75rem;" onclick="openRejectModal(<%= lead.id %>)">
+                                            <i class="bi bi-x-lg"></i> Reject
+                                        </button>
                                     </div>
-                                <% } %>
-                                <button type="button" class="btn btn-primary btn-sm" onclick="openConvertModal(<%= JSON.stringify(lead) %>)">
-                                    <i class="bi bi-person-plus"></i> Convert
-                                </button>
-                                <button type="button" class="btn btn-danger btn-sm" onclick="openRejectModal(<%= lead.id %>)">
-                                    <i class="bi bi-x-lg"></i> Reject
-                                </button>
+                                </div>
                             </td>
                         </tr>
                     <% }) %>
