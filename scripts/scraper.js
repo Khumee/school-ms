@@ -7,7 +7,7 @@ const db = require('../db');
  */
 
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
-const MAX_MONTHLY_REQUESTS = 500;
+const MAX_MONTHLY_REQUESTS = 2000;
 let apiRequestsMadeThisRun = 0;
 
 const targetCities = [
@@ -137,21 +137,11 @@ async function main() {
         const diff = new Date() - start;
         const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
         
-        const NUM_ROTATING = 3;
-        const rotationStartIndex = (dayOfYear * NUM_ROTATING) % targetCities.length;
+        // Select exactly 1 city per day based on the day of the year
+        const cityIndex = dayOfYear % targetCities.length;
+        const citiesToScrapeToday = [targetCities[cityIndex]];
         
-        let rotatingCities = [];
-        let i = 0;
-        while (rotatingCities.length < NUM_ROTATING) {
-            let city = targetCities[(rotationStartIndex + i) % targetCities.length];
-            if (city !== "Rawalpindi" && city !== "Islamabad") {
-                rotatingCities.push(city);
-            }
-            i++;
-        }
-        
-        const citiesToScrapeToday = ["Rawalpindi", "Islamabad", ...rotatingCities];
-        console.log(`[Day ${dayOfYear}] Target Cities: ${citiesToScrapeToday.join(', ')}`);
+        console.log(`[Day ${dayOfYear}] Target City: ${citiesToScrapeToday[0]}`);
 
         let totalNewLeads = 0;
 
@@ -234,15 +224,6 @@ async function main() {
 
                 if (!phone) {
                     console.log(`[SKIPPED] ${place.name} (No Phone Number)`);
-                    continue;
-                }
-
-                // Strictly require a Pakistani mobile number (starts with 03 or +923 / 923)
-                const digitsOnly = phone.replace(/\D/g, '');
-                const isMobile = digitsOnly.startsWith('03') || digitsOnly.startsWith('923');
-                
-                if (!isMobile) {
-                    console.log(`[SKIPPED] ${place.name} (Landline: ${phone})`);
                     continue;
                 }
 

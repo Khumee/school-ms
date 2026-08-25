@@ -775,7 +775,7 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
             [currentMonthYear]
         );
         const apiUsage = parseInt(usageRow.total || 0);
-        const apiLimit = 500;
+        const apiLimit = 2000;
 
         res.render('super_admin/crm_prescreening', {
             scraped_leads,
@@ -812,7 +812,7 @@ router.get('/admin/crm/scraper-map', isSuperAdmin, async (req, res) => {
             [currentMonthYear]
         );
         const apiUsage = parseInt(usageRow.total || 0);
-        const apiLimit = 500;
+        const apiLimit = 2000;
 
         res.render('super_admin/crm_scraper_map', {
             grid_states,
