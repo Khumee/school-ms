@@ -9,65 +9,69 @@ const db = require('../db');
  * or use Playwright/Puppeteer to scrape directories.
  */
 
+// Focused target cities as per new requirements
 const targetCities = [
-    "Mianwali", "Jhang", "Chiniot", "Dera Ghazi Khan", "Bhakkar", 
-    "Layyah", "Muzaffargarh", "Rajanpur", "Vehari", "Lodhran",
-    "Pakpattan", "Sahiwal", "Okara", "Kasur", "Sheikhupura",
-    "Hafizabad", "Mandi Bahauddin", "Jhelum", "Chakwal", "Attock",
-    "Swat", "Abbottabad", "Mansehra", "Haripur", "Kohat",
-    "Bannu", "Dera Ismail Khan", "Mardan", "Swabi", "Nowshera",
-    "Lahore", "Karachi", "Faisalabad", "Multan", "Peshawar", "Quetta"
+    "Rawalpindi", "Islamabad", "Lahore", "Karachi", "Peshawar"
 ];
 
 async function main() {
-    // Determine the rotating cities for today based on the day of the year
-    const start = new Date(new Date().getFullYear(), 0, 0);
-    const diff = new Date() - start;
-    const oneDay = 1000 * 60 * 60 * 24;
-    const dayOfYear = Math.floor(diff / oneDay);
-    
-    // Pick 2 cities from the rotation array
-    const rotationIndex = (dayOfYear * 2) % targetCities.length;
-    const rotatedCity1 = targetCities[rotationIndex];
-    const rotatedCity2 = targetCities[(rotationIndex + 1) % targetCities.length];
-    
-    // Always include Rawalpindi and Islamabad
-    const citiesToScrapeToday = ["Rawalpindi", "Islamabad", rotatedCity1, rotatedCity2];
-    
-    console.log(`[Day ${dayOfYear}] Target Cities for Today: ${citiesToScrapeToday.join(', ')}`);
+    console.log(`Target Cities: ${targetCities.join(', ')}`);
 
     const connection = await db.pool.getConnection();
     let newLeadsCount = 0;
 
     try {
-        for (const city of citiesToScrapeToday) {
-            const searchTerm = `Hifz School in ${city}`;
+        for (const city of targetCities) {
+            // We search broadly for schools and academies
+            const searchTerm = `School or Academy in ${city}`;
             console.log(`\n--- Starting scrape for: "${searchTerm}" ---`);
             
             // Simulate scraping process for this city
             await new Promise(resolve => setTimeout(resolve, 500));
             
-            // Simulated results for the specific city
+            // Simulated results for the specific city (includes generic schools/academies)
             const scrapedResults = [
                 {
-                    school_name: `Jamia Tahfeez ul Quran - ${city} Campus`,
+                    school_name: `The City School - ${city} Campus`,
                     phone: `0300-${Math.floor(1000000 + Math.random() * 9000000)}`,
-                    address: `Main Bazar, ${city}`,
+                    address: `Main Road, ${city}`,
                     city: city,
-                    source_url: `https://maps.google.com/?q=Jamia+Tahfeez+ul+Quran+${city}`
+                    source_url: `https://maps.google.com/?q=The+City+School+${city}`
                 },
                 {
-                    school_name: `Dar-e-Arqam School (Hifz Program) - ${city}`,
+                    school_name: `Roots Millennium Schools - ${city}`,
                     phone: `0333-${Math.floor(1000000 + Math.random() * 9000000)}`,
+                    address: `Block B, ${city}`,
+                    city: city,
+                    source_url: `https://maps.google.com/?q=Roots+Millennium+${city}`
+                },
+                {
+                    school_name: `Educators Academy ${city}`,
+                    phone: `0345-${Math.floor(1000000 + Math.random() * 9000000)}`,
+                    address: `Street 5, ${city}`,
+                    city: city,
+                    source_url: `https://maps.google.com/?q=Educators+Academy+${city}`
+                },
+                {
+                    school_name: `Jamia Tahfeez (Should be skipped)`, // Does not contain school/academy
+                    phone: `0311-${Math.floor(1000000 + Math.random() * 9000000)}`,
                     address: `Tehsil Road, ${city}`,
                     city: city,
-                    source_url: `https://maps.google.com/?q=Dar+e+Arqam+${city}`
+                    source_url: `https://maps.google.com/?q=Jamia+${city}`
                 }
             ];
 
-            console.log(`Found ${scrapedResults.length} potential leads for ${city}. Filtering duplicates...`);
+            let validResults = 0;
 
             for (const result of scrapedResults) {
+                // FILTER: Only allow those with "school" or "academy" in the title
+                const nameLower = result.school_name.toLowerCase();
+                if (!nameLower.includes('school') && !nameLower.includes('academy')) {
+                    console.log(`[FILTERED OUT] ${result.school_name} (Missing 'school' or 'academy' in title)`);
+                    continue;
+                }
+                validResults++;
+
                 // Check if it already exists in scraped leads
                 const [[existingScraped]] = await connection.execute(
                     "SELECT id FROM crm_scraped_leads WHERE phone = ? OR school_name = ?", 
@@ -93,6 +97,8 @@ async function main() {
                     console.log(`[SKIPPED] ${result.school_name} (Already in database)`);
                 }
             }
+            
+            console.log(`Found ${validResults} valid potential leads for ${city}.`);
         }
     } catch (err) {
         console.error("Error inserting scraped leads:", err);
