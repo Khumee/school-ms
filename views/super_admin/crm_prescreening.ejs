@@ -136,11 +136,20 @@
                 
                 <div class="form-group">
                     <label>Assign To Sales Rep</label>
-                    <select name="assigned_to" class="form-control">
-                        <option value="">-- Unassigned --</option>
-                        <% reps.forEach(rep => { %>
-                            <option value="<%= rep.id %>"><%= rep.name %> (<%= rep.username %>)</option>
-                        <% }) %>
+                    <select name="assigned_to" class="form-control" <%= role === 'sales_rep' ? 'style="pointer-events: none; background: #f1f5f9;" tabindex="-1"' : '' %>>
+                        <% if (role === 'sales_rep') { %>
+                            <% const me = reps.find(r => r.username === username); %>
+                            <% if (me) { %>
+                                <option value="<%= me.id %>" selected><%= me.name %> (You)</option>
+                            <% } else { %>
+                                <option value="">-- Unassigned --</option>
+                            <% } %>
+                        <% } else { %>
+                            <option value="">-- Unassigned --</option>
+                            <% reps.forEach(rep => { %>
+                                <option value="<%= rep.id %>"><%= rep.name %> (<%= rep.username %>)</option>
+                            <% }) %>
+                        <% } %>
                     </select>
                 </div>
 
