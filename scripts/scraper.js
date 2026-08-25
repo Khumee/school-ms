@@ -2,86 +2,143 @@ require('dotenv').config({ path: __dirname + '/../.env' });
 const db = require('../db');
 
 /**
- * Basic Web Scraper / Lead Generator
+ * Live Google Places API Web Scraper / Lead Generator
  * Usage: node scripts/scraper.js
  * 
- * Note: In a production environment, this should connect to the Google Places API
- * or use Playwright/Puppeteer to scrape directories.
+ * IMPORTANT: Requires GOOGLE_PLACES_API_KEY in the .env file.
  */
 
-// Focused target cities as per new requirements
+const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
+
+// Comprehensive list of notable Pakistani cities
 const targetCities = [
-    "Rawalpindi", "Islamabad", "Lahore", "Karachi", "Peshawar"
+    // Punjab
+    "Lahore", "Faisalabad", "Gujranwala", "Multan", "Bahawalpur", "Sargodha", "Sialkot", "Sheikhupura", 
+    "Rahim Yar Khan", "Jhang", "Dera Ghazi Khan", "Gujrat", "Sahiwal", "Wah Cantonment", "Kasur", "Okara", 
+    "Chiniot", "Kamoke", "Hafizabad", "Sadiqabad", "Burewala", "Vehari", "Muridke", "Jhelum", "Khanewal", 
+    "Muzaffargarh", "Mandi Bahauddin", "Khushab", "Attock", "Bhakkar", "Kharian", "Mianwali", "Kot Addu", 
+    "Layyah", "Rajanpur", "Pattoki", "Haroonabad", "Toba Tek Singh", "Shakargarh", "Samundri", "Gojra", "Murree", 
+    // Sindh
+    "Karachi", "Hyderabad", "Sukkur", "Larkana", "Nawabshah", "Mirpur Khas", "Jacobabad", "Shikarpur", 
+    "Khairpur", "Dadu", "Tando Adam", "Tando Allahyar", "Umerkot", "Badin", "Ghotki", "Kashmore", "Thatta", 
+    // KPK
+    "Peshawar", "Mardan", "Mingora", "Kohat", "Abbottabad", "Dera Ismail Khan", "Nowshera", "Charsadda", 
+    "Swabi", "Chitral", "Mansehra", "Bannu", "Timargara", "Karak", "Haripur", "Swat", 
+    // Balochistan
+    "Quetta", "Turbat", "Khuzdar", "Hub", "Chaman", "Gwadar", "Sibi", "Zhob", "Dera Murad Jamali", 
+    // AJK & Gilgit
+    "Muzaffarabad", "Mirpur", "Rawalakot", "Gilgit", "Skardu"
 ];
 
+async function fetchGooglePlaces(query, pageToken = null) {
+    if (!GOOGLE_API_KEY) {
+        throw new Error("GOOGLE_PLACES_API_KEY is not set in the .env file!");
+    }
+
+    let url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&key=${GOOGLE_API_KEY}`;
+    if (pageToken) {
+        url += `&pagetoken=${pageToken}`;
+        // Google requires a short delay before using a next_page_token
+        await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+        console.error(`Google API Error: ${data.status} - ${data.error_message || ''}`);
+    }
+
+    return data;
+}
+
 async function main() {
-    console.log(`Target Cities: ${targetCities.join(', ')}`);
+    console.log("Starting Live Google Places API Scraper...");
+    if (!GOOGLE_API_KEY) {
+        console.error("ERROR: GOOGLE_PLACES_API_KEY is missing from .env file!");
+        console.log("Please add it and try again.");
+        process.exit(1);
+    }
+
+    // Determine the rotating cities for today based on the day of the year
+    const start = new Date(new Date().getFullYear(), 0, 0);
+    const diff = new Date() - start;
+    const oneDay = 1000 * 60 * 60 * 24;
+    const dayOfYear = Math.floor(diff / oneDay);
+    
+    // Pick 5 cities from the rotation array based on day of year
+    const CITIES_PER_DAY = 5;
+    const rotationStartIndex = (dayOfYear * CITIES_PER_DAY) % targetCities.length;
+    
+    let rotatingCities = [];
+    for (let i = 0; i < CITIES_PER_DAY; i++) {
+        rotatingCities.push(targetCities[(rotationStartIndex + i) % targetCities.length]);
+    }
+    
+    // Always include Rawalpindi and Islamabad, then add the rotating ones
+    // Use a Set to ensure no duplicates if Rawalpindi happens to be in the rotating list
+    const citiesToScrapeToday = [...new Set(["Rawalpindi", "Islamabad", ...rotatingCities])];
+    
+    console.log(`[Day ${dayOfYear}] Target Cities for Today: ${citiesToScrapeToday.join(', ')}`);
 
     const connection = await db.pool.getConnection();
-    let newLeadsCount = 0;
+    let totalNewLeads = 0;
 
     try {
-        for (const city of targetCities) {
-            // We search broadly for schools and academies
+        for (const city of citiesToScrapeToday) {
             const searchTerm = `School or Academy in ${city}`;
             console.log(`\n--- Starting scrape for: "${searchTerm}" ---`);
             
-            // Simulate scraping process for this city
-            await new Promise(resolve => setTimeout(resolve, 500));
+            let nextPageToken = null;
+            let cityResults = [];
             
-            // Simulated results for the specific city (includes generic schools/academies)
-            const scrapedResults = [
-                {
-                    school_name: `The City School - ${city} Campus`,
-                    phone: `0300-${Math.floor(1000000 + Math.random() * 9000000)}`,
-                    address: `Main Road, ${city}`,
-                    city: city,
-                    source_url: `https://maps.google.com/?q=The+City+School+${city}`
-                },
-                {
-                    school_name: `Roots Millennium Schools - ${city}`,
-                    phone: `0333-${Math.floor(1000000 + Math.random() * 9000000)}`,
-                    address: `Block B, ${city}`,
-                    city: city,
-                    source_url: `https://maps.google.com/?q=Roots+Millennium+${city}`
-                },
-                {
-                    school_name: `Educators Academy ${city}`,
-                    phone: `0345-${Math.floor(1000000 + Math.random() * 9000000)}`,
-                    address: `Street 5, ${city}`,
-                    city: city,
-                    source_url: `https://maps.google.com/?q=Educators+Academy+${city}`
-                },
-                {
-                    school_name: `Jamia Tahfeez (Should be skipped)`, // Does not contain school/academy
-                    phone: `0311-${Math.floor(1000000 + Math.random() * 9000000)}`,
-                    address: `Tehsil Road, ${city}`,
-                    city: city,
-                    source_url: `https://maps.google.com/?q=Jamia+${city}`
+            // Loop through pages (Google allows up to 3 pages / 60 results max per query)
+            do {
+                const apiData = await fetchGooglePlaces(searchTerm, nextPageToken);
+                
+                if (apiData.results && apiData.results.length > 0) {
+                    cityResults.push(...apiData.results);
                 }
-            ];
+                
+                nextPageToken = apiData.next_page_token;
+                
+            } while (nextPageToken);
 
-            let validResults = 0;
+            console.log(`Found ${cityResults.length} total places from API for ${city}. Filtering...`);
 
-            for (const result of scrapedResults) {
+            let validResultsCount = 0;
+
+            for (const place of cityResults) {
+                // Ensure name exists
+                if (!place.name) continue;
+
                 // FILTER: Only allow those with "school" or "academy" in the title
-                const nameLower = result.school_name.toLowerCase();
+                const nameLower = place.name.toLowerCase();
                 if (!nameLower.includes('school') && !nameLower.includes('academy')) {
-                    console.log(`[FILTERED OUT] ${result.school_name} (Missing 'school' or 'academy' in title)`);
-                    continue;
+                    continue; // Skip silently to avoid spamming the console
                 }
-                validResults++;
 
-                // Check if it already exists in scraped leads
+                // If no formatted_address is available, fallback to city
+                const address = place.formatted_address || city;
+                
+                // Note: The basic Text Search doesn't always return a phone number. 
+                // We leave it empty for the sales rep to look up, or they can use the source URL.
+                const phone = ''; 
+                
+                const sourceUrl = `https://maps.google.com/?q=place_id:${place.place_id}`;
+                
+                validResultsCount++;
+
+                // Check if it already exists in scraped leads (by name and city to prevent duplicates)
                 const [[existingScraped]] = await connection.execute(
-                    "SELECT id FROM crm_scraped_leads WHERE phone = ? OR school_name = ?", 
-                    [result.phone, result.school_name]
+                    "SELECT id FROM crm_scraped_leads WHERE school_name = ? AND city = ?", 
+                    [place.name, city]
                 );
 
                 // Check if it already exists in actual leads
                 const [[existingLead]] = await connection.execute(
-                    "SELECT id FROM crm_leads WHERE phone = ? OR school_name = ?", 
-                    [result.phone, result.school_name]
+                    "SELECT id FROM crm_leads WHERE school_name = ? AND city = ?", 
+                    [place.name, city]
                 );
 
                 if (!existingScraped && !existingLead) {
@@ -89,24 +146,24 @@ async function main() {
                         INSERT INTO crm_scraped_leads (school_name, phone, address, city, source_url, search_term_used, status)
                         VALUES (?, ?, ?, ?, ?, ?, 'pending')
                     `, [
-                        result.school_name, result.phone, result.address, result.city, result.source_url, searchTerm
+                        place.name, phone, address, city, sourceUrl, searchTerm
                     ]);
-                    console.log(`[ADDED] ${result.school_name}`);
-                    newLeadsCount++;
+                    console.log(`[ADDED] ${place.name}`);
+                    totalNewLeads++;
                 } else {
-                    console.log(`[SKIPPED] ${result.school_name} (Already in database)`);
+                    // console.log(`[SKIPPED] ${place.name} (Already in database)`);
                 }
             }
             
-            console.log(`Found ${validResults} valid potential leads for ${city}.`);
+            console.log(`Finished processing ${city}. Found ${validResultsCount} valid schools/academies.`);
         }
     } catch (err) {
-        console.error("Error inserting scraped leads:", err);
+        console.error("Error during scraping process:", err);
     } finally {
         connection.release();
     }
 
-    console.log(`\nScrape complete! Inserted ${newLeadsCount} new leads into the prescreening pool.`);
+    console.log(`\nScrape complete! Inserted ${totalNewLeads} new leads into the prescreening pool.`);
     process.exit(0);
 }
 
