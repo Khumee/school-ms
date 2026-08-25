@@ -59,7 +59,20 @@
                 <h1 style="margin: 0; font-size: 1.5rem; color: #1e293b;">Scraper Coverage Map</h1>
                 <p style="margin: 0.25rem 0 0 0; color: #64748b; font-size: 0.9rem;">Visualizing all successfully scraped 3km blocks across Pakistan.</p>
             </div>
-            <a href="/admin/crm/prescreening" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Prescreening</a>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <% 
+                    let usagePct = Math.min((apiUsage / apiLimit) * 100, 100);
+                    let usageColor = usagePct >= 100 ? '#ef4444' : (usagePct >= 80 ? '#f59e0b' : '#3b82f6');
+                %>
+                <div style="display: flex; align-items: center; background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.25rem 0.75rem; font-size: 0.85rem; font-weight: 600; color: #475569; height: 38px;" title="Google Maps API Usage this month">
+                    <i class="bi bi-google" style="margin-right: 0.5rem; color: <%= usageColor %>;"></i>
+                    <span style="margin-right: 0.5rem;"><%= apiUsage %> / <%= apiLimit %></span>
+                    <div style="width: 40px; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-top: 1px;">
+                        <div style="height: 100%; width: <%= usagePct %>%; background: <%= usageColor %>;"></div>
+                    </div>
+                </div>
+                <a href="/admin/crm/prescreening" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Prescreening</a>
+            </div>
         </div>
 
         <div id="map"></div>

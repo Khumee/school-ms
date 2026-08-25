@@ -755,13 +755,28 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
         const [[{ total }]] = await db.pool.execute(countSql, params);
         const totalPages = Math.ceil(total / limit) || 1;
 
-        const querySql = `SELECT * FROM crm_scraped_leads WHERE ${baseCondition} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+        let orderByClause = "ORDER BY created_at DESC";
+        if (!city && !search && !phone_type) {
+            orderByClause = "ORDER BY CASE WHEN city IN ('Rawalpindi', 'Islamabad') THEN 0 ELSE 1 END ASC, created_at DESC";
+        }
+
+        const querySql = `SELECT * FROM crm_scraped_leads WHERE ${baseCondition} ${orderByClause} LIMIT ? OFFSET ?`;
         const queryParams = [...params, limit.toString(), offset.toString()];
 
         const [scraped_leads] = await db.pool.execute(querySql, queryParams);
         const [reps] = await db.pool.execute("SELECT id, username, name FROM master_admins WHERE is_active = 1 AND role = 'sales_rep' ORDER BY name");
         const [citiesRow] = await db.pool.execute("SELECT DISTINCT city FROM crm_scraped_leads WHERE city IS NOT NULL AND city != '' ORDER BY city");
         
+        // Fetch API Usage
+        const today = new Date();
+        const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        const [[usageRow]] = await db.pool.execute(
+            "SELECT SUM(requests_made) as total FROM crm_scraper_logs WHERE month_year = ?",
+            [currentMonthYear]
+        );
+        const apiUsage = parseInt(usageRow.total || 0);
+        const apiLimit = 500;
+
         res.render('super_admin/crm_prescreening', {
             scraped_leads,
             currentPage: page,
@@ -770,6 +785,8 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
             reps,
             cities: citiesRow.map(c => c.city),
             query: req.query,
+            apiUsage,
+            apiLimit,
             activeTab: 'prescreening',
             username: req.session.masterAdminUsername,
             role: req.session.masterAdminRole || 'super_admin',
@@ -786,8 +803,21 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
 router.get('/admin/crm/scraper-map', isSuperAdmin, async (req, res) => {
     try {
         const [grid_states] = await db.pool.execute("SELECT * FROM crm_scraper_grid_state");
+        
+        // Fetch API Usage
+        const today = new Date();
+        const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        const [[usageRow]] = await db.pool.execute(
+            "SELECT SUM(requests_made) as total FROM crm_scraper_logs WHERE month_year = ?",
+            [currentMonthYear]
+        );
+        const apiUsage = parseInt(usageRow.total || 0);
+        const apiLimit = 500;
+
         res.render('super_admin/crm_scraper_map', {
             grid_states,
+            apiUsage,
+            apiLimit,
             activeTab: 'prescreening',
             username: req.session.masterAdminUsername,
             role: req.session.masterAdminRole || 'super_admin'
