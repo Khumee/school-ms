@@ -170,6 +170,15 @@
                                                 <i class="bi bi-whatsapp"></i> Hifz
                                             </a>
                                         </div>
+                                    <% } else { %>
+                                        <div style="display: flex; gap: 0.25rem;">
+                                            <button type="button" class="btn btn-sm" style="background: #cbd5e1; color: white; padding: 0.35rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem; cursor: not-allowed;" disabled title="No phone number available">
+                                                <i class="bi bi-whatsapp"></i> School
+                                            </button>
+                                            <button type="button" class="btn btn-sm" style="background: #cbd5e1; color: white; padding: 0.35rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.25rem; cursor: not-allowed;" disabled title="No phone number available">
+                                                <i class="bi bi-whatsapp"></i> Hifz
+                                            </button>
+                                        </div>
                                     <% } %>
                                     <div style="display: flex; gap: 0.25rem;">
                                         <button type="button" class="btn btn-primary btn-sm" style="padding: 0.35rem 0.5rem; font-size: 0.75rem;" onclick="openConvertModal(<%= JSON.stringify(lead) %>)">
