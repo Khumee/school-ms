@@ -138,7 +138,19 @@
                                 <div><%= lead.city || 'N/A' %></div>
                                 <div style="font-size: 0.8rem; color: #64748b;"><%= lead.address %></div>
                             </td>
-                            <td><%= lead.phone || 'N/A' %></td>
+                            <td>
+                                <%= lead.phone || 'N/A' %>
+                                <% if (lead.phone) { 
+                                    let waPhone = lead.phone.replace(/\D/g, '');
+                                    if (waPhone.startsWith('0')) waPhone = '92' + waPhone.substring(1);
+                                    const waMsg = encodeURIComponent("Hi " + lead.school_name + ",\n\nWe would love to show you how OmniSchool CRM can help manage your campus.\nCheck out our product video here: [Link]");
+                                %>
+                                    <br>
+                                    <a href="https://wa.me/<%= waPhone %>?text=<%= waMsg %>" target="_blank" class="btn btn-sm" style="background: #25D366; color: white; padding: 0.2rem 0.5rem; font-size: 0.75rem; margin-top: 0.5rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i class="bi bi-whatsapp"></i> Message
+                                    </a>
+                                <% } %>
+                            </td>
                             <td><span class="badge" style="background: #e2e8f0; color: #475569;"><%= lead.search_term_used || 'N/A' %></span></td>
                             <td style="font-size: 0.85rem;"><%= new Date(lead.created_at).toLocaleDateString() %></td>
                             <td style="text-align: right; white-space: nowrap;">

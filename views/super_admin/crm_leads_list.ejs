@@ -144,6 +144,17 @@
                                 <td>
                                     <div style="font-weight: 600; color: #1e293b;"><%= l.contact_person %> <%= l.designation ? `(${l.designation})` : '' %></div>
                                     <div style="font-size: 0.8rem; color: #64748b;"><i class="bi bi-telephone"></i> <%= l.phone %></div>
+                                    <% if (l.phone) { 
+                                        let waPhone = l.phone.replace(/\D/g, '');
+                                        if (waPhone.startsWith('0')) waPhone = '92' + waPhone.substring(1);
+                                        const waMsg = encodeURIComponent("Hi " + l.contact_person + ",\n\nWe would love to show you how OmniSchool CRM can help manage " + l.school_name + ".\nCheck out our product video here: [Link]");
+                                    %>
+                                        <div style="margin-top: 0.25rem;">
+                                            <a href="https://wa.me/<%= waPhone %>?text=<%= waMsg %>" target="_blank" class="btn btn-sm" style="background: #25D366; color: white; padding: 0.15rem 0.4rem; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 0.25rem; text-decoration: none; border-radius: 4px;">
+                                                <i class="bi bi-whatsapp"></i> Message
+                                            </a>
+                                        </div>
+                                    <% } %>
                                 </td>
                                 <td style="font-weight: 600;"><%= l.est_students ? l.est_students.toLocaleString() : '-' %></td>
                                 <td>
