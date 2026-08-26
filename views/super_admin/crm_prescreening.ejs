@@ -73,6 +73,9 @@
                 </button>
 
                 <% if (role === 'super_admin') { %>
+                <button type="button" class="btn btn-secondary" style="background: #475569; border: none; padding: 0.5rem 1rem; border-radius: 6px; color: white; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; height: 38px; gap: 0.5rem;" onclick="openScraperSettingsModal()">
+                    <i class="bi bi-gear-fill"></i> Scraper Settings
+                </button>
                 <a href="/admin/crm/scraper-map" class="btn btn-primary" style="background: #10b981; border: none; padding: 0.5rem 1rem; border-radius: 6px; color: white; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
                     <i class="bi bi-map-fill"></i> View Coverage Map
                 </a>
@@ -114,11 +117,8 @@
                 </select>
             </div>
             <div class="form-group" style="display: flex; gap: 0.5rem;">
-                <button type="submit" class="btn btn-primary" style="background: #4f46e5; border: none; padding: 0.5rem 1rem; border-radius: 6px; color: white; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; height: 38px;">
-                    <i class="bi bi-search" style="margin-right: 0.5rem;"></i> Filter
-                </button>
                 <a href="/admin/crm/prescreening" class="btn btn-secondary" style="background: #e2e8f0; color: #475569; padding: 0.5rem 0.75rem; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; height: 38px;" title="Clear Filters">
-                    <i class="bi bi-x-circle"></i>
+                    <i class="bi bi-x-circle"></i> Clear
                 </a>
             </div>
         </form>
@@ -389,6 +389,18 @@
         function closeTestWhatsAppModal() {
             document.getElementById('testWaModal').style.display = 'none';
         }
+
+        function openScraperSettingsModal() {
+            document.getElementById('scraperSettingsModal').style.display = 'flex';
+        }
+
+        function closeScraperSettingsModal() {
+            document.getElementById('scraperSettingsModal').style.display = 'none';
+        }
+        
+        function closeTestWhatsAppModal() {
+            document.getElementById('testWaModal').style.display = 'none';
+        }
         
         function sendTestWhatsApp() {
             let phone = document.getElementById('testWaPhone').value.replace(/\D/g, '');
@@ -408,5 +420,46 @@
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(rawMsg)}`, '_blank');
         }
     </script>
+    <!-- Scraper Settings Modal -->
+    <div id="scraperSettingsModal" class="modal-overlay">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="bi bi-gear-fill"></i> Scraper Exclusion Settings</h3>
+                <button type="button" class="close-btn" onclick="closeScraperSettingsModal()">&times;</button>
+            </div>
+            
+            <form action="/admin/crm/scraper-settings/add" method="POST" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+                <input type="text" name="keyword" class="form-control" placeholder="Add new keyword (e.g. 'govt', 'beaconhouse')" required>
+                <button type="submit" class="btn btn-primary" style="background: #4f46e5; border: none; flex-shrink: 0;">Add</button>
+            </form>
+
+            <h4 style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #475569;">Active Exclusions</h4>
+            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <table class="table" style="margin-top: 0;">
+                    <tbody>
+                        <% if (exclusions && exclusions.length > 0) { %>
+                            <% exclusions.forEach(ex => { %>
+                                <tr>
+                                    <td style="font-weight: 500;"><%= ex.keyword %></td>
+                                    <td style="text-align: right; width: 80px;">
+                                        <form action="/admin/crm/scraper-settings/delete/<%= ex.id %>" method="POST" style="margin: 0;">
+                                            <button type="submit" class="btn btn-danger btn-sm" style="background: #ef4444; border: none;" onclick="return confirm('Remove this exclusion?');">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="2" style="text-align: center; color: #64748b; padding: 1rem;">No exclusions found.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

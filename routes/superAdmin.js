@@ -778,6 +778,9 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
         const apiUsage = parseInt(usageRow.total || 0);
         const apiLimit = 2000;
 
+        // Fetch Scraper Exclusions
+        const [exclusions] = await db.pool.execute("SELECT * FROM crm_scraper_exclusions ORDER BY keyword ASC");
+
         res.render('super_admin/crm_prescreening', {
             scraped_leads,
             currentPage: page,
@@ -788,6 +791,7 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
             query: req.query,
             apiUsage,
             apiLimit,
+            exclusions,
             activeTab: 'prescreening',
             username: req.session.masterAdminUsername,
             role: req.session.masterAdminRole || 'super_admin',
@@ -826,6 +830,33 @@ router.get('/admin/crm/scraper-map', isSuperAdmin, async (req, res) => {
     } catch (err) {
         console.error('Scraper Map Error:', err);
         res.redirect('/admin/crm/prescreening?error=Error loading map data');
+    }
+});
+
+// POST /admin/crm/scraper-settings/add — Add new exclusion keyword
+router.post('/admin/crm/scraper-settings/add', isSuperAdmin, async (req, res) => {
+    try {
+        const keyword = req.body.keyword?.trim().toLowerCase();
+        if (keyword) {
+            await db.pool.execute("INSERT IGNORE INTO crm_scraper_exclusions (keyword) VALUES (?)", [keyword]);
+            res.redirect('/admin/crm/prescreening?success=Exclusion added successfully');
+        } else {
+            res.redirect('/admin/crm/prescreening?error=Keyword is required');
+        }
+    } catch (err) {
+        console.error('Scraper Exclusion Add Error:', err);
+        res.redirect('/admin/crm/prescreening?error=Failed to add exclusion');
+    }
+});
+
+// POST /admin/crm/scraper-settings/delete/:id — Remove exclusion keyword
+router.post('/admin/crm/scraper-settings/delete/:id', isSuperAdmin, async (req, res) => {
+    try {
+        await db.pool.execute("DELETE FROM crm_scraper_exclusions WHERE id = ?", [req.params.id]);
+        res.redirect('/admin/crm/prescreening?success=Exclusion removed successfully');
+    } catch (err) {
+        console.error('Scraper Exclusion Delete Error:', err);
+        res.redirect('/admin/crm/prescreening?error=Failed to remove exclusion');
     }
 });
 

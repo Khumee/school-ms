@@ -180,6 +180,10 @@ async function main() {
 
     try {
         await ensureTables(connection);
+        
+        // Fetch dynamic exclusions from database
+        const [dbExclusionsRows] = await connection.execute("SELECT keyword FROM crm_scraper_exclusions");
+        const dbExclusions = dbExclusionsRows.map(row => row.keyword.toLowerCase());
 
         const today = new Date();
         const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -282,18 +286,14 @@ async function main() {
                 const nameLower = place.name.toLowerCase();
                 if (!nameLower.includes('school') && !nameLower.includes('academy')) continue;
 
-                // Exclusion List: Filter out Government schools and large franchises
-                const excludedKeywords = [
-                    'govt', 'government', 'municipal',
-                    'beaconhouse', 'city school', 'roots', 'lgs', 'lahore grammar',
-                    'aps', 'army public', 'educators', 'smart school', 'dar-e-arqam',
-                    'allied school', 'kips', 'divisional public', 'dps', 'lacas',
-                    'froebel', 'headstart', 'choueifat', 'aitchison'
-                ];
+                // Fetch dynamic exclusions at the start (done once outside or we can query it, but doing it outside loop is better)
+                // Actually, let's just use the exclusions array we can fetch at the start of `main()`
+
+
                 
-                const isExcluded = excludedKeywords.some(keyword => nameLower.includes(keyword));
+                const isExcluded = dbExclusions.some(keyword => nameLower.includes(keyword));
                 if (isExcluded) {
-                    console.log(`[FILTERED] Skipping high-profile/govt school: ${place.name}`);
+                    console.log(`[FILTERED] Skipping excluded school: ${place.name}`);
                     continue;
                 }
 
