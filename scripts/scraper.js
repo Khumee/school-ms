@@ -215,7 +215,13 @@ async function main() {
 
         // Focus on 1 city per day, with multiple grid steps
         const cityIndex = dayOfYear % targetCities.length;
-        const targetCity = targetCities[cityIndex];
+        let targetCity = targetCities[cityIndex];
+        
+        // Allow overriding the target city via CLI argument
+        if (process.argv[2]) {
+            targetCity = process.argv[2];
+        }
+
         const NUM_STEPS_PER_DAY = 15;
         
         console.log(`[Day ${dayOfYear}] Target City: ${targetCity} (${NUM_STEPS_PER_DAY} requests)`);
