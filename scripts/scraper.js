@@ -282,6 +282,21 @@ async function main() {
                 const nameLower = place.name.toLowerCase();
                 if (!nameLower.includes('school') && !nameLower.includes('academy')) continue;
 
+                // Exclusion List: Filter out Government schools and large franchises
+                const excludedKeywords = [
+                    'govt', 'government', 'municipal',
+                    'beaconhouse', 'city school', 'roots', 'lgs', 'lahore grammar',
+                    'aps', 'army public', 'educators', 'smart school', 'dar-e-arqam',
+                    'allied school', 'kips', 'divisional public', 'dps', 'lacas',
+                    'froebel', 'headstart', 'choueifat', 'aitchison'
+                ];
+                
+                const isExcluded = excludedKeywords.some(keyword => nameLower.includes(keyword));
+                if (isExcluded) {
+                    console.log(`[FILTERED] Skipping high-profile/govt school: ${place.name}`);
+                    continue;
+                }
+
                 // Fetch Phone Number using Puppeteer
                 let phone = "";
                 try {
