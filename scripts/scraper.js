@@ -55,6 +55,15 @@ async function ensureTables(connection) {
 async function apiRequest(url) {
     if (!GOOGLE_API_KEY) throw new Error("GOOGLE_PLACES_API_KEY is missing!");
     apiRequestsMadeThisRun++;
+    
+    // Instantly log hit to DB to prevent lost counts if script is cancelled early
+    const today = new Date();
+    const currentMonthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    await db.pool.execute(
+        "INSERT INTO crm_scraper_logs (requests_made, month_year) VALUES (1, ?)",
+        [currentMonthYear]
+    );
+
     const response = await fetch(url);
     const data = await response.json();
     if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
@@ -355,13 +364,6 @@ async function main() {
         }
 
         console.log(`\nScrape complete! Inserted ${totalNewLeads} new leads.`);
-
-        if (apiRequestsMadeThisRun > 0) {
-            await connection.execute(
-                "INSERT INTO crm_scraper_logs (requests_made, month_year) VALUES (?, ?)",
-                [apiRequestsMadeThisRun, currentMonthYear]
-            );
-        }
 
     } catch (err) {
         console.error("Error during scraping process:", err);
