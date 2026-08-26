@@ -731,7 +731,10 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
         const offset = (page - 1) * limit;
 
         const { city, search, phone_type, status } = req.query;
-        const currentStatus = status === 'archived' ? 'archived' : 'pending';
+        let currentStatus = 'pending';
+        if (status === 'archived') currentStatus = 'archived';
+        if (status === 'deleted') currentStatus = 'rejected';
+        
         let baseCondition = "status = ?";
         const params = [currentStatus];
 
@@ -911,6 +914,17 @@ router.post('/admin/crm/prescreening/:id/archive', isSuperAdmin, async (req, res
     } catch (err) {
         console.error('Archive Scraped Lead Error:', err);
         res.redirect('/admin/crm/prescreening?error=Failed to archive lead');
+    }
+});
+
+// POST /admin/crm/prescreening/:id/delete — Mark a scraped lead as rejected/deleted
+router.post('/admin/crm/prescreening/:id/delete', isSuperAdmin, async (req, res) => {
+    try {
+        await db.pool.execute("UPDATE crm_scraped_leads SET status = 'rejected' WHERE id = ?", [req.params.id]);
+        res.redirect('/admin/crm/prescreening?success=Lead deleted successfully');
+    } catch (err) {
+        console.error('Delete Scraped Lead Error:', err);
+        res.redirect('/admin/crm/prescreening?error=Failed to delete lead');
     }
 });
 
