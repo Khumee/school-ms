@@ -110,6 +110,16 @@
                 </select>
             </div>
             <div class="form-group" style="min-width: 140px;">
+                <label style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 0.25rem; display: block;">Date Scraped</label>
+                <select name="date_scraped" class="form-control" onchange="this.form.submit()" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.5rem 0.75rem;">
+                    <option value="">All Time</option>
+                    <option value="today" <%= query.date_scraped === 'today' ? 'selected' : '' %>>Today</option>
+                    <option value="yesterday" <%= query.date_scraped === 'yesterday' ? 'selected' : '' %>>Yesterday</option>
+                    <option value="last7" <%= query.date_scraped === 'last7' ? 'selected' : '' %>>Last 7 Days</option>
+                    <option value="last30" <%= query.date_scraped === 'last30' ? 'selected' : '' %>>Last 30 Days</option>
+                </select>
+            </div>
+            <div class="form-group" style="min-width: 140px;">
                 <label style="font-size: 0.85rem; color: #64748b; font-weight: 600; margin-bottom: 0.25rem; display: block;">Phone Type</label>
                 <select name="phone_type" class="form-control" onchange="this.form.submit()" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.5rem 0.75rem;">
                     <option value="">All Phones</option>

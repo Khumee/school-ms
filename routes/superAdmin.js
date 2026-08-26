@@ -730,7 +730,7 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
         const limit = 20;
         const offset = (page - 1) * limit;
 
-        const { city, search, phone_type, status } = req.query;
+        const { city, search, phone_type, status, date_scraped } = req.query;
         let currentStatus = 'pending';
         if (status === 'archived') currentStatus = 'archived';
         if (status === 'deleted') currentStatus = 'rejected';
@@ -755,14 +755,21 @@ router.get('/admin/crm/prescreening', isSuperAdmin, async (req, res) => {
             baseCondition += " AND phone IS NOT NULL AND phone != '' AND REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', '') NOT LIKE '03%' AND REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', '') NOT LIKE '923%'";
         }
 
+        if (date_scraped === 'today') {
+            baseCondition += " AND DATE(created_at) = CURDATE()";
+        } else if (date_scraped === 'yesterday') {
+            baseCondition += " AND DATE(created_at) = CURDATE() - INTERVAL 1 DAY";
+        } else if (date_scraped === 'last7') {
+            baseCondition += " AND created_at >= NOW() - INTERVAL 7 DAY";
+        } else if (date_scraped === 'last30') {
+            baseCondition += " AND created_at >= NOW() - INTERVAL 30 DAY";
+        }
+
         const countSql = `SELECT COUNT(*) as total FROM crm_scraped_leads WHERE ${baseCondition}`;
         const [[{ total }]] = await db.pool.execute(countSql, params);
         const totalPages = Math.ceil(total / limit) || 1;
 
-        let orderByClause = "ORDER BY created_at DESC";
-        if (!city && !search && !phone_type) {
-            orderByClause = "ORDER BY CASE WHEN city IN ('Rawalpindi', 'Islamabad') THEN 0 ELSE 1 END ASC, created_at DESC";
-        }
+        const orderByClause = "ORDER BY created_at DESC";
 
         const querySql = `SELECT * FROM crm_scraped_leads WHERE ${baseCondition} ${orderByClause} LIMIT ? OFFSET ?`;
         const queryParams = [...params, limit.toString(), offset.toString()];
