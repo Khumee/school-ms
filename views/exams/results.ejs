@@ -71,7 +71,7 @@
                 <% if (students.length > 0) { %>
                     <% students.forEach(s => { %>
                         <tr style="border-bottom: 1px solid var(--border);">
-                            <td style="padding: 0.75rem 1rem; font-weight: 700; color: var(--ink);"><%= s.roll_number || s.id %></td>
+                            <td style="padding: 0.75rem 1rem; font-weight: 700; color: var(--ink);"><%= s.reg_no || s.id %></td>
                             <td style="padding: 0.75rem 1rem; font-weight: 600; color: var(--primary-color);"><%= s.name %></td>
                             <td style="padding: 0.75rem 1rem; color: var(--muted);"><%= s.father_name || '—' %></td>
                             <td style="padding: 0.75rem 1rem; text-align: center; font-weight: 600;"><%= s.totalMax %></td>

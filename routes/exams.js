@@ -540,10 +540,10 @@ router.get('/exams/:id/results', async (req, res) => {
         if (selectedClassId) {
             // Get active students of the class
             const [students] = await db.query(`
-                SELECT id, name, father_name, roll_number, class_id 
+                SELECT id, name, father_name, reg_no, class_id 
                 FROM students 
                 WHERE class_id = ? AND tenant_id = ? AND status = 'active'
-                ORDER BY roll_number, name
+                ORDER BY reg_no, name
             `, [selectedClassId, req.tenant.id]);
 
             // Get papers and max marks of this class
@@ -606,7 +606,7 @@ router.get('/exams/:id/results', async (req, res) => {
         delete req.session.error;
     } catch (err) {
         console.error('Error loading exam results:', err);
-        res.status(500).send('Error loading exam results');
+        res.status(500).send("Error loading exam results: " + err.message);
     }
 });
 
@@ -678,7 +678,7 @@ router.get('/exams/:id/student/:student_id/report-card', async (req, res) => {
         delete req.session.error;
     } catch (err) {
         console.error('Error rendering report card:', err);
-        res.status(500).send('Error rendering report card');
+        res.status(500).send('Error rendering report card: ' + err.message);
     }
 });
 
@@ -697,7 +697,7 @@ router.get('/exams/:id/class/:class_id/report-cards', async (req, res) => {
             FROM students s 
             JOIN classes c ON s.class_id = c.id
             WHERE s.class_id = ? AND s.tenant_id = ? AND s.status = 'active'
-            ORDER BY s.roll_number, s.name
+            ORDER BY s.reg_no, s.name
         `, [classId, req.tenant.id]);
 
         const [papers] = await db.query(`
@@ -763,7 +763,7 @@ router.get('/exams/:id/class/:class_id/report-cards', async (req, res) => {
         delete req.session.error;
     } catch (err) {
         console.error('Error rendering batch report cards:', err);
-        res.status(500).send('Error rendering report cards');
+        res.status(500).send('Error rendering report cards: ' + err.message);
     }
 });
 
