@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Class Timetable</title>
+<style>
+    @page {
+        size: A4 landscape;
+        margin: 15mm 15mm 15mm 15mm;
+    }
+    * {
+        box-sizing: border-box;
+    }
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        color: #0f172a;
+        margin: 0;
+        padding: 0;
+        background: #fff;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .page-container {
+        page-break-after: always;
+        break-after: page;
+        min-height: 95vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .page-container:last-child {
+        page-break-after: avoid;
+        break-after: avoid;
+    }
+    .header-box {
+        border-bottom: 2px solid <%= tenant.primary_color || '#4f46e5' %>;
+        padding-bottom: 12px;
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .school-info {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .school-logo {
+        height: 52px;
+        max-width: 120px;
+        object-fit: contain;
+    }
+    .school-name {
+        font-size: 22px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+    }
+    .school-sub {
+        font-size: 11px;
+        color: #64748b;
+        margin: 2px 0 0;
+    }
+    .title-box {
+        text-align: right;
+    }
+    .title-box h2 {
+        margin: 0;
+        font-size: 18px;
+        color: <%= tenant.primary_color || '#4f46e5' %>;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .title-box p {
+        margin: 3px 0 0;
+        font-size: 11px;
+        color: #64748b;
+    }
+    .table-container {
+        flex: 1;
+    }
+    table.timetable {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+    table.timetable th {
+        background: #f1f5f9;
+        color: #0f172a;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 10px 8px;
+        border: 1px solid #cbd5e1;
+        text-align: center;
+        text-transform: uppercase;
+    }
+    table.timetable td {
+        border: 1px solid #cbd5e1;
+        padding: 8px;
+        vertical-align: top;
+        min-height: 85px;
+        height: 85px;
+        background: #ffffff;
+    }
+    .period-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-left: 3px solid <%= tenant.primary_color || '#4f46e5' %>;
+        padding: 6px 8px;
+        margin-bottom: 6px;
+        border-radius: 4px;
+    }
+    .period-subject {
+        font-size: 12px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 2px;
+    }
+    .period-time {
+        font-size: 10px;
+        color: #64748b;
+        margin-bottom: 2px;
+    }
+    .period-teacher {
+        font-size: 10px;
+        font-weight: 600;
+        color: <%= tenant.primary_color || '#4f46e5' %>;
+    }
+    .footer-bar {
+        border-top: 1px solid #e2e8f0;
+        padding-top: 8px;
+        margin-top: 12px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        color: #94a3b8;
+    }
+</style>
+</head>
+<body>
+
+<% 
+    const allWeekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']; 
+%>
+
+<% classSchedules.forEach(cs => { %>
+    <%
+        const activeDays = allWeekDays.filter(day => cs.periods.some(p => p.day_of_week === day));
+        const displayDays = activeDays.length > 0 ? activeDays : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        const colWidth = (100 / displayDays.length).toFixed(1);
+    %>
+    <div class="page-container">
+        <div>
+            <div class="header-box">
+                <div class="school-info">
+                    <% if (tenant.logo_url) { %>
+                        <img src="<%= tenant.logo_url %>" class="school-logo" alt="School Logo">
+                    <% } %>
+                    <div>
+                        <h1 class="school-name"><%= tenant.school_name %></h1>
+                        <p class="school-sub">Academic Timetable & Schedule</p>
+                    </div>
+                </div>
+                <div class="title-box">
+                    <h2>Class: <%= cs.className %></h2>
+                    <p>Generated: <%= new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) %></p>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="timetable">
+                    <thead>
+                        <tr>
+                            <% displayDays.forEach(day => { %>
+                                <th style="width: <%= colWidth %>%;">
+                                    <%= day %>
+                                </th>
+                            <% }) %>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <% displayDays.forEach(day => { %>
+                                <td>
+                                    <% const dayPeriods = cs.periods.filter(p => p.day_of_week === day).sort((a,b) => (a.start_time || '').localeCompare(b.start_time || '')); %>
+                                    <% if (dayPeriods.length === 0) { %>
+                                        <div style="color: #cbd5e1; font-size: 11px; text-align: center; padding-top: 20px;">—</div>
+                                    <% } %>
+                                    <% dayPeriods.forEach(p => { %>
+                                        <div class="period-card">
+                                            <div class="period-subject"><%= p.subject_name || p.subject || 'Unknown' %></div>
+                                            <div class="period-time"><%= (p.start_time || '').substring(0,5) %> - <%= (p.end_time || '').substring(0,5) %></div>
+                                            <div class="period-teacher"><%= p.teacher_name || 'Unassigned' %></div>
+                                        </div>
+                                    <% }) %>
+                                </td>
+                            <% }) %>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer-bar">
+            <span>OmniSchool System &bull; <%= tenant.school_name %></span>
+            <span>Page Schedule &bull; <%= cs.className %></span>
+        </div>
+    </div>
+<% }) %>
+
+</body>
+</html>

@@ -55,7 +55,7 @@ router.post('/exams/add', async (req, res) => {
 // Exam Papers View
 router.get('/exams/papers', async (req, res) => {
     try {
-        const isAdmin = req.session.role === 'admin' || req.session.role === 'master';
+        const isAdmin = req.session.roleName === 'Admin' || req.session.role === 'admin' || req.session.role === 'master' || req.session.userId === -1 || (req.session.permissions && req.session.permissions.includes('Exams'));
         const { exam_id, classId, search } = req.query;
         
         const [exams] = await db.query('SELECT id, name FROM exams WHERE tenant_id = ? ORDER BY id DESC', [req.tenant.id]);
