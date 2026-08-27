@@ -16,15 +16,45 @@ router.get('/timetable/manage', async (req, res) => {
     try {
         const { class_id, teacher_id } = req.query;
         const [classes] = await db.query('SELECT id, name FROM classes WHERE tenant_id = ? ORDER BY id', [req.tenant.id]);
-        const [teachers] = await db.query('SELECT id, name FROM employees WHERE role = "teacher" AND tenant_id = ?', [req.tenant.id]);
+        const [teachers] = await db.query('SELECT id, name FROM employees WHERE role = "teacher" AND tenant_id = ? ORDER BY name', [req.tenant.id]);
         
-        let selectedClassId = class_id || (classes.length > 0 ? classes[0].id : null);
+        let selectedClassId = class_id !== undefined ? class_id : (classes.length > 0 ? String(classes[0].id) : 'all');
         let selectedTeacherId = teacher_id || '';
         let subjects = [];
         let periods = [];
+        let classTimetables = [];
+        let selectedClassName = '';
 
-        if (selectedClassId) {
-            [subjects] = await db.query('SELECT id, name FROM subjects WHERE class_id = ? AND tenant_id = ?', [selectedClassId, req.tenant.id]);
+        if (selectedClassId === 'all') {
+            selectedClassName = 'All Classes';
+            let query = `
+                SELECT p.*, s.name as subject_name, e.name as teacher_name, c.name as class_name 
+                FROM periods p
+                LEFT JOIN subjects s ON p.subject_id = s.id
+                LEFT JOIN employees e ON p.employee_id = e.id
+                JOIN classes c ON p.class_id = c.id
+                WHERE p.tenant_id = ?
+            `;
+            const params = [req.tenant.id];
+            if (selectedTeacherId) {
+                query += ' AND p.employee_id = ?';
+                params.push(selectedTeacherId);
+            }
+            query += ' ORDER BY c.id, p.day_of_week, p.start_time';
+            const [allPeriods] = await db.query(query, params);
+
+            classes.forEach(c => {
+                const cPeriods = allPeriods.filter(p => p.class_id === c.id);
+                classTimetables.push({
+                    class: c,
+                    periods: cPeriods
+                });
+            });
+        } else if (selectedClassId) {
+            const foundClass = classes.find(c => String(c.id) === String(selectedClassId));
+            selectedClassName = foundClass ? foundClass.name : 'Selected Class';
+
+            [subjects] = await db.query('SELECT id, name FROM subjects WHERE class_id = ? AND tenant_id = ? ORDER BY name', [selectedClassId, req.tenant.id]);
             
             let query = `
                 SELECT p.*, s.name as subject_name, e.name as teacher_name 
@@ -49,7 +79,9 @@ router.get('/timetable/manage', async (req, res) => {
             teachers,
             subjects,
             periods,
+            classTimetables,
             selectedClassId,
+            selectedClassName,
             selectedTeacherId,
             success: req.session.success,
             error: req.session.error
