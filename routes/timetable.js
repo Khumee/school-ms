@@ -166,6 +166,9 @@ router.post('/timetable/delete/:id', async (req, res) => {
         console.error(err);
         req.session.error = 'Failed to delete slot.';
     }
+    res.redirect(`/timetable/manage?class_id=${class_id}`);
+});
+
 // GET /timetable/pdf - Download server-side compiled PDF
 router.get('/timetable/pdf', async (req, res) => {
     try {
