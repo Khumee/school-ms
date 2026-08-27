@@ -16,28 +16,27 @@
     </div>
 <% } %>
 
-<!-- Add Subject Form -->
-<div class="card" style="margin-bottom: 1.5rem;">
-    <h3 style="margin-bottom: 1rem; color: var(--primary-color); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
-        <i class="bi bi-plus-circle"></i> Add New Subject
-    </h3>
-    <form action="/subjects/add" method="POST">
-        <div class="form-grid" style="grid-template-columns: 1fr 2fr; gap: 1rem; align-items: end;">
-            <div class="form-group">
-                <label for="class_id">Class</label>
-                <select class="form-control" id="class_id" name="class_id" required>
-                    <option value="">Select a Class</option>
-                    <% classes.forEach(c => { %>
-                        <option value="<%= c.id %>"><%= c.name %></option>
-                    <% }) %>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="name">Subject Name</label>
-                <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Mathematics" required>
-            </div>
+<!-- Compact Add Subject Bar -->
+<div class="card" style="margin-bottom: 1.25rem; padding: 0.85rem 1.25rem; background: #ffffff; border: 1px solid var(--border);">
+    <form action="/subjects/add" method="POST" style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 180px;">
+            <label for="class_id" style="font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 0.25rem; display: block;">Class</label>
+            <select class="form-control" id="class_id" name="class_id" required style="height: 38px; padding: 0.35rem 0.65rem; font-size: 0.9rem;">
+                <option value="">Select a Class</option>
+                <% classes.forEach(c => { %>
+                    <option value="<%= c.id %>"><%= c.name %></option>
+                <% }) %>
+            </select>
         </div>
-        <button type="submit" class="btn-primary" style="margin-top: 1rem;">Add Subject</button>
+        <div style="flex: 2; min-width: 220px;">
+            <label for="name" style="font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 0.25rem; display: block;">Subject Name</label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Mathematics, English, Urdu..." required style="height: 38px; padding: 0.35rem 0.65rem; font-size: 0.9rem;">
+        </div>
+        <div>
+            <button type="submit" class="btn-primary" style="height: 38px; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0 1.25rem; font-size: 0.9rem; font-weight: 600;">
+                <i class="bi bi-plus-circle"></i> Add Subject
+            </button>
+        </div>
     </form>
 </div>
 

@@ -16,26 +16,26 @@
     </div>
 <% } %>
 
-<div class="card" style="margin-bottom: 2rem;">
-    <h3 style="margin-bottom: 1rem; color: var(--primary-color); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
-        <i class="bi bi-plus-circle"></i> Create New Exam Term
-    </h3>
-    <form action="/exams/add" method="POST">
-        <div class="form-group" style="margin-bottom: 1rem;">
-            <label for="name">Exam Name</label>
-            <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Midterm 2026" required>
+<!-- Compact Create Exam Bar -->
+<div class="card" style="margin-bottom: 1.25rem; padding: 0.85rem 1.25rem; background: #ffffff; border: 1px solid var(--border);">
+    <form action="/exams/add" method="POST" style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
+        <div style="flex: 2; min-width: 200px;">
+            <label for="name" style="font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 0.25rem; display: block;">Exam Term Name</label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="e.g. First Term Examination 2026" required style="height: 38px; padding: 0.35rem 0.65rem; font-size: 0.9rem;">
         </div>
-        <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; align-items: end;">
-            <div class="form-group">
-                <label for="start_date">Start Date</label>
-                <input type="date" class="form-control" id="start_date" name="start_date" required>
-            </div>
-            <div class="form-group">
-                <label for="end_date">End Date</label>
-                <input type="date" class="form-control" id="end_date" name="end_date" required>
-            </div>
+        <div style="flex: 1; min-width: 140px;">
+            <label for="start_date" style="font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 0.25rem; display: block;">Start Date</label>
+            <input type="date" class="form-control" id="start_date" name="start_date" required style="height: 38px; padding: 0.35rem 0.65rem; font-size: 0.9rem;">
         </div>
-        <button type="submit" class="btn-primary" style="margin-top: 1.5rem;">Create Exam</button>
+        <div style="flex: 1; min-width: 140px;">
+            <label for="end_date" style="font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 0.25rem; display: block;">End Date</label>
+            <input type="date" class="form-control" id="end_date" name="end_date" required style="height: 38px; padding: 0.35rem 0.65rem; font-size: 0.9rem;">
+        </div>
+        <div>
+            <button type="submit" class="btn-primary" style="height: 38px; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0 1.25rem; font-size: 0.9rem; font-weight: 600;">
+                <i class="bi bi-plus-circle"></i> Create Exam
+            </button>
+        </div>
     </form>
 </div>
 

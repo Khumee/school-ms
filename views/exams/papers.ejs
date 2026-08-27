@@ -79,33 +79,33 @@
                     <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Subject</th>
                     <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Assigned Teacher</th>
                     <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Total Marks</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600; width: 300px;">Actions</th>
+                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: right; color: var(--muted); font-weight: 600; width: 220px; white-space: nowrap;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <% if (papers.length > 0) { %>
                     <% papers.forEach(p => { %>
                         <tr style="border-bottom: 1px solid var(--border);">
-                            <td style="padding: 0.75rem;"><%= p.class_name %></td>
-                            <td style="padding: 0.75rem; font-weight: 600; color: var(--ink);"><%= p.subject_name %></td>
-                            <td style="padding: 0.75rem;"><%= p.teacher_name || 'Unassigned' %></td>
-                            <td style="padding: 0.75rem;">
+                            <td style="padding: 0.6rem 0.75rem;"><%= p.class_name %></td>
+                            <td style="padding: 0.6rem 0.75rem; font-weight: 600; color: var(--ink);"><%= p.subject_name %></td>
+                            <td style="padding: 0.6rem 0.75rem;"><%= p.teacher_name || 'Unassigned' %></td>
+                            <td style="padding: 0.6rem 0.75rem; white-space: nowrap;">
                                 <% if (p.total_marks) { %>
                                     <span style="font-weight: 600; color: var(--primary-color);"><%= p.total_marks %></span>
                                 <% } else { %>
                                     <span style="font-size: 0.8rem; background: #e2e8f0; color: #475569; padding: 0.2rem 0.5rem; border-radius: 4px;">Not Set</span>
                                 <% } %>
                             </td>
-                            <td style="padding: 0.75rem;">
-                                <div style="display: flex; gap: 0.4rem; align-items: center;">
-                                    <a href="/exams/papers/<%= p.id %>/build" class="btn-secondary" style="color: #0284c7; border-color: #bae6fd; background: #f0f9ff; padding: 0.35rem 0.65rem; text-decoration: none; font-size: 0.85rem;" title="View & Edit Paper Sheet">
-                                        <i class="bi bi-file-earmark-ruled"></i> Build Paper
+                            <td style="padding: 0.6rem 0.75rem; text-align: right; white-space: nowrap;">
+                                <div style="display: inline-flex; gap: 0.35rem; align-items: center;">
+                                    <a href="/exams/papers/<%= p.id %>/build" class="btn-secondary" style="color: #0284c7; border-color: #bae6fd; background: #f0f9ff; padding: 0.25rem 0.6rem; text-decoration: none; font-size: 0.85rem; font-weight: 600; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.25rem;" title="Build & View Paper Sheet">
+                                        <i class="bi bi-file-earmark-ruled"></i> Build
                                     </a>
-                                    <a href="/exams/marks/<%= p.id %>" class="btn-primary" style="padding: 0.35rem 0.65rem; text-decoration: none; font-size: 0.85rem;" title="Enter Marks">
-                                        <i class="bi bi-pencil-square"></i> Enter Marks
+                                    <a href="/exams/marks/<%= p.id %>" class="btn-primary" style="padding: 0.25rem 0.6rem; text-decoration: none; font-size: 0.85rem; font-weight: 600; white-space: nowrap; display: inline-flex; align-items: center; gap: 0.25rem;" title="Enter Marks">
+                                        <i class="bi bi-pencil-square"></i> Marks
                                     </a>
                                     <% if (isAdmin) { %>
-                                        <button type="button" class="btn-secondary" style="color: #ef4444; border-color: #fca5a5; background: #fff; padding: 0.35rem 0.55rem; font-size: 0.85rem;" onclick="openDeletePaperModal('<%= p.id %>', '<%= p.subject_name %>', '<%= p.class_name %>')" title="Delete Paper">
+                                        <button type="button" class="btn-secondary" style="color: #ef4444; border-color: #fca5a5; background: #fff; padding: 0.25rem 0.45rem; font-size: 0.85rem;" onclick="openDeletePaperModal('<%= p.id %>', '<%= p.subject_name %>', '<%= p.class_name %>')" title="Delete Paper">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     <% } %>
