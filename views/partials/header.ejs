@@ -34,20 +34,32 @@
                     
                     <% if (hasPerm('Students')) { %>
                     <li class="dropdown">
-                        <a href="#" class="dropbtn"><i class="bi bi-mortarboard-fill"></i> Students</a>
+                        <a href="#" class="dropbtn"><i class="bi bi-people-fill"></i> Students</a>
                         <div class="dropdown-content">
                             <a href="/students/add"><i class="bi bi-person-plus-fill"></i> Add New Student</a>
                             <a href="/students"><i class="bi bi-person-fill"></i> Student List</a>
-                            <a href="/classes"><i class="bi bi-building"></i> Class Management</a>
-                            <% if (tenant && tenant.enable_timetable_module) { %>
-                            <a href="/subjects"><i class="bi bi-journal-text"></i> Subjects</a>
-                            <% } %>
                         </div>
                     </li>
                     <% } %>
                     
-                    <% if (tenant && tenant.enable_timetable_module && (hasPerm('Timetable') || hasPerm('Dashboard'))) { %>
-                    <li><a href="/timetable/manage"><i class="bi bi-calendar3-week"></i> Timetable</a></li>
+                    <% const canViewAcademics = hasPerm('Students') || hasPerm('Timetable') || hasPerm('Exams') || hasPerm('Dashboard'); %>
+                    <% if (canViewAcademics) { %>
+                    <li class="dropdown">
+                        <a href="#" class="dropbtn"><i class="bi bi-mortarboard-fill"></i> Academics</a>
+                        <div class="dropdown-content">
+                            <% if (hasPerm('Students')) { %>
+                            <a href="/classes"><i class="bi bi-building"></i> Class Management</a>
+                            <% } %>
+                            <% if (tenant && tenant.enable_timetable_module) { %>
+                            <a href="/subjects"><i class="bi bi-journal-text"></i> Subjects</a>
+                            <a href="/timetable/manage"><i class="bi bi-calendar3-week"></i> Timetable</a>
+                            <% } %>
+                            <% if (tenant && tenant.enable_exams_module) { %>
+                            <a href="/exams/manage"><i class="bi bi-pencil-square"></i> Manage Exams</a>
+                            <a href="/exams/papers"><i class="bi bi-file-earmark-text"></i> Exam Papers</a>
+                            <% } %>
+                        </div>
+                    </li>
                     <% } %>
                     
                     <% if (hasPerm('Employees')) { %>
@@ -100,17 +112,6 @@
                     <%# Hifz Diary — optional module %>
                     <% if (tenant && tenant.enable_hifz_module && hasPerm('Hifz')) { %>
                     <li><a href="/hifz"><i class="bi bi-book-half"></i> Hifz Diary</a></li>
-                    <% } %>
-                    
-                    <%# Exams — optional module %>
-                    <% if (tenant && tenant.enable_exams_module && (hasPerm('Exams') || hasPerm('Dashboard'))) { %>
-                    <li class="dropdown">
-                        <a href="#" class="dropbtn"><i class="bi bi-journal-check"></i> Exams</a>
-                        <div class="dropdown-content">
-                            <a href="/exams/manage"><i class="bi bi-pencil-square"></i> Manage Exams</a>
-                            <a href="/exams/papers"><i class="bi bi-file-earmark-text"></i> Exam Papers</a>
-                        </div>
-                    </li>
                     <% } %>
                     
                     <% if (hasPerm('Support')) { %>
