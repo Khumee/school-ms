@@ -1,104 +1,107 @@
 <%- include('../partials/header') %>
-<div class="container mt-4">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Enter Marks</h1>
-                    <div>
-                        <a href="/exams/papers" class="btn btn-outline-secondary">Back to Papers</a>
-                        <a href="/exams/papers/<%= paper.id %>/build" class="btn btn-info text-white ms-2">Build Paper</a>
-                    </div>
-                </div>
 
-                <% if (locals.success) { %>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <%= success %>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                <% } %>
-                
-                <% if (locals.error) { %>
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <%= error %>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                <% } %>
+<div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <h1 class="section-title"><i class="bi bi-pencil-square"></i> Enter Marks</h1>
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="/exams/papers" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Papers</a>
+        <a href="/exams/papers/<%= paper.id %>/build" class="btn-secondary" style="color: #0284c7; border-color: #bae6fd; background: #f0f9ff;"><i class="bi bi-tools"></i> Build Paper</a>
+    </div>
+</div>
 
-                <div class="card shadow-sm mb-4">
-                    <div class="card-body bg-light">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <strong>Class:</strong> <%= paper.class_name %>
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Subject:</strong> <%= paper.subject_name %>
-                            </div>
-                            <div class="col-md-4 text-end">
-                                <strong>Paper Total Marks:</strong> <span class="badge bg-primary fs-6"><%= paper.total_marks %></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<% if (locals.success) { %>
+    <div style="background-color: #dcfce7; color: #166534; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #bbf7d0;">
+        <i class="bi bi-check-circle-fill"></i> <%= success %>
+    </div>
+<% } %>
 
-                <form action="/exams/marks/<%= paper.id %>" method="POST">
-                    <div class="card shadow-sm">
-                        <div class="card-header">
-                            <h5 class="mb-0">Student Marks (By Question)</h5>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-hover table-bordered mb-0 text-center align-middle">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th class="text-start">Roll / Reg No</th>
-                                            <th class="text-start">Student Name</th>
-                                            <% questions.forEach(q => { %>
-                                                <th style="width: 120px;">
-                                                    <div class="fw-bold"><%= q.question_text %></div>
-                                                    <div class="text-muted small">(<%= q.marks %> marks)</div>
-                                                </th>
-                                            <% }) %>
-                                            <th style="width: 120px;">Obtained Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <% if (questions.length === 0) { %>
-                                            <tr>
-                                                <td colspan="4" class="text-center text-muted py-4">No questions defined for this paper. <br><a href="/exams/papers/<%= paper.id %>/build" class="btn btn-sm btn-info text-white mt-2">Build Paper Now</a></td>
-                                            </tr>
-                                        <% } else if (students.length > 0) { %>
-                                            <% students.forEach(s => { %>
-                                                <tr>
-                                                    <td class="text-start"><%= s.reg_no %></td>
-                                                    <td class="text-start fw-bold"><%= s.name %></td>
-                                                    
-                                                    <% let studentTotal = 0; %>
-                                                    <% questions.forEach(q => { %>
-                                                        <% 
-                                                            let qMark = qMarksMap[s.id] && qMarksMap[s.id][q.id] !== undefined ? qMarksMap[s.id][q.id] : ''; 
-                                                            if (qMark !== '') studentTotal += parseFloat(qMark);
-                                                        %>
-                                                        <td>
-                                                            <input type="number" step="0.5" class="form-control text-center mx-auto" style="max-width: 90px;" name="student_marks[<%= s.id %>][<%= q.id %>]" value="<%= qMark %>" max="<%= q.marks %>" placeholder="-">
-                                                        </td>
-                                                    <% }) %>
-                                                    
-                                                    <td class="fw-bold bg-light"><%= studentTotal %></td>
-                                                </tr>
-                                            <% }) %>
-                                        <% } else { %>
-                                            <tr>
-                                                <td colspan="100%" class="text-center text-muted py-4">No active students found in this class.</td>
-                                            </tr>
-                                        <% } %>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <% if (questions.length > 0 && students.length > 0) { %>
-                        <div class="card-footer bg-white text-end">
-                            <button type="submit" class="btn btn-success btn-lg px-5">Save All Marks</button>
-                        </div>
-                        <% } %>
-                    </div>
-                </form>
-            </div>
+<% if (locals.error) { %>
+    <div style="background-color: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #fecaca;">
+        <i class="bi bi-exclamation-triangle-fill"></i> <%= error %>
+    </div>
+<% } %>
+
+<div class="card" style="margin-bottom: 2rem; background: #f8fafc; border: 1px solid #e2e8f0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="font-size: 1.1rem; color: var(--ink);">
+            <strong style="color: var(--muted); margin-right: 0.25rem;">Class:</strong> <%= paper.class_name %>
+        </div>
+        <div style="font-size: 1.1rem; color: var(--ink);">
+            <strong style="color: var(--muted); margin-right: 0.25rem;">Subject:</strong> <%= paper.subject_name %>
+        </div>
+        <div style="font-size: 1.1rem; color: var(--ink);">
+            <strong style="color: var(--muted); margin-right: 0.25rem;">Paper Total Marks:</strong> 
+            <span style="background: var(--primary-color); color: white; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 700; font-size: 1rem;"><%= paper.total_marks %></span>
+        </div>
+    </div>
+</div>
+
+<form action="/exams/marks/<%= paper.id %>" method="POST">
+    <div class="card" style="padding: 0; overflow: hidden;">
+        <h3 style="margin: 0; padding: 1rem 1.5rem; color: var(--primary-color); border-bottom: 1px solid var(--border); background: #f8fafc;">
+            <i class="bi bi-table"></i> Student Marks (By Question)
+        </h3>
+        
+        <div style="overflow-x: auto;">
+            <table class="table" style="width: 100%; margin: 0; border-collapse: collapse;">
+                <thead style="background: #f1f5f9;">
+                    <tr>
+                        <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Roll / Reg No</th>
+                        <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Student Name</th>
+                        <% questions.forEach(q => { %>
+                            <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: center; color: var(--muted); font-weight: 600; width: 120px;">
+                                <div style="color: var(--ink);"><%= q.question_text %></div>
+                                <div style="font-size: 0.8rem; font-weight: normal;">(<%= q.marks %> marks)</div>
+                            </th>
+                        <% }) %>
+                        <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: center; color: var(--muted); font-weight: 600; width: 120px;">Obtained Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (questions.length === 0) { %>
+                        <tr>
+                            <td colspan="4" style="padding: 2.5rem; text-align: center; color: var(--muted);">
+                                <i class="bi bi-inbox" style="font-size: 2rem; color: #cbd5e1; display: block; margin-bottom: 0.5rem;"></i>
+                                No questions defined for this paper. <br>
+                                <a href="/exams/papers/<%= paper.id %>/build" class="btn-primary" style="display: inline-block; margin-top: 1rem;">Build Paper Now</a>
+                            </td>
+                        </tr>
+                    <% } else if (students.length > 0) { %>
+                        <% students.forEach(s => { %>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 0.75rem;"><%= s.reg_no %></td>
+                                <td style="padding: 0.75rem; font-weight: 600; color: var(--ink);"><%= s.name %></td>
+                                
+                                <% let studentTotal = 0; %>
+                                <% questions.forEach(q => { %>
+                                    <% 
+                                        let qMark = qMarksMap[s.id] && qMarksMap[s.id][q.id] !== undefined ? qMarksMap[s.id][q.id] : ''; 
+                                        if (qMark !== '') studentTotal += parseFloat(qMark);
+                                    %>
+                                    <td style="padding: 0.75rem; text-align: center;">
+                                        <input type="number" step="0.5" class="form-control" style="width: 80px; margin: 0 auto; text-align: center; padding: 0.4rem;" name="student_marks[<%= s.id %>][<%= q.id %>]" value="<%= qMark %>" max="<%= q.marks %>" placeholder="-">
+                                    </td>
+                                <% }) %>
+                                
+                                <td style="padding: 0.75rem; text-align: center; font-weight: 700; background: #f8fafc; color: var(--ink); font-size: 1.1rem;"><%= studentTotal %></td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="100%" style="padding: 2rem; text-align: center; color: var(--muted);">No active students found in this class.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+        
+        <% if (questions.length > 0 && students.length > 0) { %>
+        <div style="padding: 1.5rem; border-top: 1px solid var(--border); background: var(--surface); text-align: right;">
+            <button type="submit" class="btn-primary" style="background-color: #16a34a; border-color: #16a34a; padding: 0.75rem 2rem; font-size: 1.05rem;">
+                <i class="bi bi-save"></i> Save All Marks
+            </button>
+        </div>
+        <% } %>
+    </div>
+</form>
+
 <%- include('../partials/footer') %>

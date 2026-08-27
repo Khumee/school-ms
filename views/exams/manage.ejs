@@ -1,88 +1,80 @@
 <%- include('../partials/header') %>
-<div class="container mt-4">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Manage Exams</h1>
-                </div>
 
-                <% if (locals.success) { %>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <%= success %>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                <% } %>
-                
-                <% if (locals.error) { %>
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <%= error %>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                <% } %>
+<div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <h1 class="section-title"><i class="bi bi-journal-check"></i> Manage Exams</h1>
+</div>
 
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-primary text-white">
-                                <h5 class="mb-0">Create New Exam Term</h5>
-                            </div>
-                            <div class="card-body">
-                                <form action="/exams/add" method="POST">
-                                    <div class="mb-3">
-                                        <label for="name" class="form-label">Exam Name</label>
-                                        <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Midterm 2026" required>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="start_date" class="form-label">Start Date</label>
-                                            <input type="date" class="form-control" id="start_date" name="start_date" required>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="end_date" class="form-label">End Date</label>
-                                            <input type="date" class="form-control" id="end_date" name="end_date" required>
-                                        </div>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">Create Exam</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<% if (locals.success) { %>
+    <div style="background-color: #dcfce7; color: #166534; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #bbf7d0;">
+        <i class="bi bi-check-circle-fill"></i> <%= success %>
+    </div>
+<% } %>
 
-                <div class="card shadow-sm">
-                    <div class="card-header">
-                        <h5 class="mb-0">Exam Terms</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-bordered mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Start Date</th>
-                                        <th>End Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <% if (exams.length > 0) { %>
-                                        <% exams.forEach(e => { %>
-                                            <tr>
-                                                <td class="fw-bold"><%= e.name %></td>
-                                                <td><%= new Date(e.start_date).toLocaleDateString() %></td>
-                                                <td><%= new Date(e.end_date).toLocaleDateString() %></td>
-                                                <td>
-                                                    <a href="/exams/papers?exam_id=<%= e.id %>" class="btn btn-sm btn-info text-white">Manage Papers</a>
-                                                </td>
-                                            </tr>
-                                        <% }) %>
-                                    <% } else { %>
-                                        <tr>
-                                            <td colspan="4" class="text-center text-muted py-4">No exams created yet.</td>
-                                        </tr>
-                                    <% } %>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+<% if (locals.error) { %>
+    <div style="background-color: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #fecaca;">
+        <i class="bi bi-exclamation-triangle-fill"></i> <%= error %>
+    </div>
+<% } %>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1rem; color: var(--primary-color); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+        <i class="bi bi-plus-circle"></i> Create New Exam Term
+    </h3>
+    <form action="/exams/add" method="POST">
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="name">Exam Name</label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Midterm 2026" required>
+        </div>
+        <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; align-items: end;">
+            <div class="form-group">
+                <label for="start_date">Start Date</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" required>
             </div>
+            <div class="form-group">
+                <label for="end_date">End Date</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" required>
+            </div>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top: 1.5rem;">Create Exam</button>
+    </form>
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden;">
+    <h3 style="margin: 0; padding: 1rem 1.5rem; color: var(--primary-color); border-bottom: 1px solid var(--border); background: #f8fafc;">
+        <i class="bi bi-card-list"></i> Exam Terms
+    </h3>
+    <div style="overflow-x: auto;">
+        <table class="table" style="width: 100%; margin: 0; border-collapse: collapse;">
+            <thead style="background: #f1f5f9;">
+                <tr>
+                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Name</th>
+                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Start Date</th>
+                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">End Date</th>
+                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600; width: 180px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (exams.length > 0) { %>
+                    <% exams.forEach(e => { %>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 0.75rem; font-weight: 600; color: var(--ink);"><%= e.name %></td>
+                            <td style="padding: 0.75rem;"><%= new Date(e.start_date).toLocaleDateString() %></td>
+                            <td style="padding: 0.75rem;"><%= new Date(e.end_date).toLocaleDateString() %></td>
+                            <td style="padding: 0.75rem;">
+                                <a href="/exams/papers?exam_id=<%= e.id %>" class="btn-secondary" style="color: #0284c7; border-color: #bae6fd; background: #f0f9ff; padding: 0.35rem 0.75rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                    <i class="bi bi-gear"></i> Manage Papers
+                                </a>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="4" style="padding: 2rem; text-align: center; color: var(--muted);">No exams created yet.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <%- include('../partials/footer') %>

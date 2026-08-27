@@ -1,87 +1,81 @@
 <%- include('../partials/header') %>
-<div class="container mt-4">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Manage Subjects</h1>
-                </div>
 
-                <% if (locals.success) { %>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <%= success %>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                <% } %>
-                
-                <% if (locals.error) { %>
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <%= error %>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                <% } %>
+<div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <h1 class="section-title"><i class="bi bi-journal-text"></i> Manage Subjects</h1>
+</div>
 
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="card shadow-sm">
-                            <div class="card-header bg-primary text-white">
-                                <h5 class="mb-0">Add New Subject</h5>
-                            </div>
-                            <div class="card-body">
-                                <form action="/subjects/add" method="POST">
-                                    <div class="mb-3">
-                                        <label for="class_id" class="form-label">Class</label>
-                                        <select class="form-select" id="class_id" name="class_id" required>
-                                            <option value="">Select a Class</option>
-                                            <% classes.forEach(c => { %>
-                                                <option value="<%= c.id %>"><%= c.name %></option>
-                                            <% }) %>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="name" class="form-label">Subject Name</label>
-                                        <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Mathematics" required>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">Add Subject</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<% if (locals.success) { %>
+    <div style="background-color: #dcfce7; color: #166534; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #bbf7d0;">
+        <i class="bi bi-check-circle-fill"></i> <%= success %>
+    </div>
+<% } %>
 
-                <div class="card shadow-sm">
-                    <div class="card-header">
-                        <h5 class="mb-0">Existing Subjects</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-bordered mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Subject Name</th>
-                                        <th>Class</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <% if (subjects.length > 0) { %>
-                                        <% subjects.forEach(s => { %>
-                                            <tr>
-                                                <td><%= s.name %></td>
-                                                <td><%= s.class_name %></td>
-                                                <td>
-                                                    <form action="/subjects/delete/<%= s.id %>" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this subject?');">
-                                                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                        <% }) %>
-                                    <% } else { %>
-                                        <tr>
-                                            <td colspan="3" class="text-center text-muted py-4">No subjects added yet.</td>
-                                        </tr>
-                                    <% } %>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+<% if (locals.error) { %>
+    <div style="background-color: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #fecaca;">
+        <i class="bi bi-exclamation-triangle-fill"></i> <%= error %>
+    </div>
+<% } %>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1rem; color: var(--primary-color); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
+        <i class="bi bi-plus-circle"></i> Add New Subject
+    </h3>
+    <form action="/subjects/add" method="POST">
+        <div class="form-grid" style="grid-template-columns: 1fr 2fr; gap: 1rem; align-items: end;">
+            <div class="form-group">
+                <label for="class_id">Class</label>
+                <select class="form-control" id="class_id" name="class_id" required>
+                    <option value="">Select a Class</option>
+                    <% classes.forEach(c => { %>
+                        <option value="<%= c.id %>"><%= c.name %></option>
+                    <% }) %>
+                </select>
             </div>
+            <div class="form-group">
+                <label for="name">Subject Name</label>
+                <input type="text" class="form-control" id="name" name="name" placeholder="e.g. Mathematics" required>
+            </div>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top: 1rem;">Add Subject</button>
+    </form>
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden;">
+    <h3 style="margin: 0; padding: 1rem 1.5rem; color: var(--primary-color); border-bottom: 1px solid var(--border); background: #f8fafc;">
+        <i class="bi bi-card-list"></i> Existing Subjects
+    </h3>
+    <div style="overflow-x: auto;">
+        <table class="table" style="width: 100%; margin: 0; border-collapse: collapse;">
+            <thead style="background: #f1f5f9;">
+                <tr>
+                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Subject Name</th>
+                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Class</th>
+                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600; width: 150px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (subjects.length > 0) { %>
+                    <% subjects.forEach(s => { %>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 0.75rem;"><%= s.name %></td>
+                            <td style="padding: 0.75rem;"><%= s.class_name %></td>
+                            <td style="padding: 0.75rem;">
+                                <form action="/subjects/delete/<%= s.id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this subject?');" style="margin: 0;">
+                                    <button type="submit" class="btn-secondary" style="color: #ef4444; border-color: #fca5a5; background: #fef2f2; padding: 0.35rem 0.75rem;">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="3" style="padding: 2rem; text-align: center; color: var(--muted);">No subjects added yet.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <%- include('../partials/footer') %>
