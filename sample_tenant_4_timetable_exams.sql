@@ -1,13 +1,20 @@
 -- =====================================================================
--- COMPREHENSIVE SAMPLE DATA FOR ALL CLASSES OF TENANT 4
+-- REALISTIC MULTI-TEACHER SAMPLE DATA FOR ALL CLASSES (TENANT 4)
 -- =====================================================================
 
 SET @tenant = 4;
 
--- 1. Grab a fallback teacher
-SET @teacher = (SELECT id FROM employees WHERE tenant_id = @tenant LIMIT 1);
+-- 1. Grab Actual Teachers for Tenant 4 (Dynamic Lookups)
+SET @t_eng = COALESCE((SELECT id FROM employees WHERE name = 'Sara Ali' AND tenant_id = @tenant LIMIT 1), (SELECT id FROM employees WHERE role = 'teacher' AND tenant_id = @tenant LIMIT 1));
+SET @t_urd = COALESCE((SELECT id FROM employees WHERE name = 'Khadija Qureshi' AND tenant_id = @tenant LIMIT 1), @t_eng);
+SET @t_mat = COALESCE((SELECT id FROM employees WHERE name = 'Maryam Shaikh' AND tenant_id = @tenant LIMIT 1), @t_eng);
+SET @t_sci = COALESCE((SELECT id FROM employees WHERE name = 'Zainab Malik' AND tenant_id = @tenant LIMIT 1), @t_eng);
+SET @t_isl = COALESCE((SELECT id FROM employees WHERE name = 'Ruqayyah Khan' AND tenant_id = @tenant LIMIT 1), @t_eng);
+SET @t_pak = COALESCE((SELECT id FROM employees WHERE name = 'Hafsa Shaikh' AND tenant_id = @tenant LIMIT 1), @t_eng);
+SET @t_csc = COALESCE((SELECT id FROM employees WHERE name = 'Fatima Raza' AND tenant_id = @tenant LIMIT 1), @t_eng);
+SET @t_ara = COALESCE((SELECT id FROM employees WHERE name = 'Talha Ali' AND tenant_id = @tenant LIMIT 1), @t_eng);
 
--- 2. Clean up previous exam & timetable data for tenant 4 to avoid duplicates
+-- 2. Clean up previous exam & timetable data for tenant 4
 DELETE FROM exam_question_marks WHERE tenant_id = @tenant;
 DELETE FROM exam_marks WHERE tenant_id = @tenant;
 DELETE FROM exam_questions WHERE tenant_id = @tenant;
@@ -39,72 +46,107 @@ INSERT INTO exams (name, start_date, end_date, tenant_id)
 VALUES ('First Term Examination 2026', '2026-10-01', '2026-10-15', @tenant);
 SET @exam = LAST_INSERT_ID();
 
--- 5. Auto-Generate Timetable Slots for Every Class (Monday to Friday)
--- Monday
+-- 5. Auto-Generate Timetable Slots with Specialized Subject Teachers
+-- MONDAY
 INSERT INTO periods (class_id, day_of_week, start_time, end_time, subject_id, employee_id, period_number, tenant_id)
-SELECT s.class_id, 'Monday', '08:00', '08:40', s.id, @teacher, 1, @tenant FROM subjects s WHERE s.name = 'English' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Monday', '08:00', '08:40', s.id, @t_eng, 1, @tenant FROM subjects s WHERE s.name = 'English' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Monday', '08:40', '09:20', s.id, @teacher, 2, @tenant FROM subjects s WHERE s.name = 'Urdu' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Monday', '08:40', '09:20', s.id, @t_urd, 2, @tenant FROM subjects s WHERE s.name = 'Urdu' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Monday', '09:20', '10:00', s.id, @teacher, 3, @tenant FROM subjects s WHERE s.name = 'Mathematics' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Monday', '09:20', '10:00', s.id, @t_mat, 3, @tenant FROM subjects s WHERE s.name = 'Mathematics' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Monday', '10:00', '10:40', s.id, @teacher, 4, @tenant FROM subjects s WHERE s.name = 'General Science' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Monday', '10:00', '10:40', s.id, @t_sci, 4, @tenant FROM subjects s WHERE s.name = 'General Science' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Monday', '11:10', '11:50', s.id, @teacher, 5, @tenant FROM subjects s WHERE s.name = 'Islamiyat' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Monday', '11:10', '11:50', s.id, @t_isl, 5, @tenant FROM subjects s WHERE s.name = 'Islamiyat' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Monday', '11:50', '12:30', s.id, @teacher, 6, @tenant FROM subjects s WHERE s.name = 'Pakistan Studies' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Monday', '11:50', '12:30', s.id, @t_pak, 6, @tenant FROM subjects s WHERE s.name = 'Pakistan Studies' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Monday', '12:30', '13:10', s.id, @teacher, 7, @tenant FROM subjects s WHERE s.name = 'Computer Science' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Monday', '12:30', '13:10', s.id, @t_csc, 7, @tenant FROM subjects s WHERE s.name = 'Computer Science' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Monday', '13:10', '13:50', s.id, @teacher, 8, @tenant FROM subjects s WHERE s.name = 'Arabic' AND s.tenant_id = @tenant;
+SELECT s.class_id, 'Monday', '13:10', '13:50', s.id, @t_ara, 8, @tenant FROM subjects s WHERE s.name = 'Arabic' AND s.tenant_id = @tenant;
 
--- Tuesday
+-- TUESDAY
 INSERT INTO periods (class_id, day_of_week, start_time, end_time, subject_id, employee_id, period_number, tenant_id)
-SELECT s.class_id, 'Tuesday', '08:00', '08:40', s.id, @teacher, 1, @tenant FROM subjects s WHERE s.name = 'Mathematics' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Tuesday', '08:00', '08:40', s.id, @t_mat, 1, @tenant FROM subjects s WHERE s.name = 'Mathematics' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Tuesday', '08:40', '09:20', s.id, @teacher, 2, @tenant FROM subjects s WHERE s.name = 'English' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Tuesday', '08:40', '09:20', s.id, @t_eng, 2, @tenant FROM subjects s WHERE s.name = 'English' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Tuesday', '09:20', '10:00', s.id, @teacher, 3, @tenant FROM subjects s WHERE s.name = 'General Science' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Tuesday', '09:20', '10:00', s.id, @t_sci, 3, @tenant FROM subjects s WHERE s.name = 'General Science' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Tuesday', '10:00', '10:40', s.id, @teacher, 4, @tenant FROM subjects s WHERE s.name = 'Urdu' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Tuesday', '10:00', '10:40', s.id, @t_urd, 4, @tenant FROM subjects s WHERE s.name = 'Urdu' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Tuesday', '11:10', '11:50', s.id, @teacher, 5, @tenant FROM subjects s WHERE s.name = 'Computer Science' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Tuesday', '11:10', '11:50', s.id, @t_csc, 5, @tenant FROM subjects s WHERE s.name = 'Computer Science' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Tuesday', '11:50', '12:30', s.id, @teacher, 6, @tenant FROM subjects s WHERE s.name = 'Islamiyat' AND s.tenant_id = @tenant;
+SELECT s.class_id, 'Tuesday', '11:50', '12:30', s.id, @t_isl, 6, @tenant FROM subjects s WHERE s.name = 'Islamiyat' AND s.tenant_id = @tenant
+UNION ALL
+SELECT s.class_id, 'Tuesday', '12:30', '13:10', s.id, @t_ara, 7, @tenant FROM subjects s WHERE s.name = 'Arabic' AND s.tenant_id = @tenant
+UNION ALL
+SELECT s.class_id, 'Tuesday', '13:10', '13:50', s.id, @t_pak, 8, @tenant FROM subjects s WHERE s.name = 'Pakistan Studies' AND s.tenant_id = @tenant;
 
--- Wednesday
+-- WEDNESDAY
 INSERT INTO periods (class_id, day_of_week, start_time, end_time, subject_id, employee_id, period_number, tenant_id)
-SELECT s.class_id, 'Wednesday', '08:00', '08:40', s.id, @teacher, 1, @tenant FROM subjects s WHERE s.name = 'General Science' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Wednesday', '08:00', '08:40', s.id, @t_sci, 1, @tenant FROM subjects s WHERE s.name = 'General Science' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Wednesday', '08:40', '09:20', s.id, @teacher, 2, @tenant FROM subjects s WHERE s.name = 'Mathematics' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Wednesday', '08:40', '09:20', s.id, @t_mat, 2, @tenant FROM subjects s WHERE s.name = 'Mathematics' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Wednesday', '09:20', '10:00', s.id, @teacher, 3, @tenant FROM subjects s WHERE s.name = 'Urdu' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Wednesday', '09:20', '10:00', s.id, @t_urd, 3, @tenant FROM subjects s WHERE s.name = 'Urdu' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Wednesday', '10:00', '10:40', s.id, @teacher, 4, @tenant FROM subjects s WHERE s.name = 'English' AND s.tenant_id = @tenant;
+SELECT s.class_id, 'Wednesday', '10:00', '10:40', s.id, @t_eng, 4, @tenant FROM subjects s WHERE s.name = 'English' AND s.tenant_id = @tenant
+UNION ALL
+SELECT s.class_id, 'Wednesday', '11:10', '11:50', s.id, @t_pak, 5, @tenant FROM subjects s WHERE s.name = 'Pakistan Studies' AND s.tenant_id = @tenant
+UNION ALL
+SELECT s.class_id, 'Wednesday', '11:50', '12:30', s.id, @t_csc, 6, @tenant FROM subjects s WHERE s.name = 'Computer Science' AND s.tenant_id = @tenant
+UNION ALL
+SELECT s.class_id, 'Wednesday', '12:30', '13:10', s.id, @t_isl, 7, @tenant FROM subjects s WHERE s.name = 'Islamiyat' AND s.tenant_id = @tenant
+UNION ALL
+SELECT s.class_id, 'Wednesday', '13:10', '13:50', s.id, @t_ara, 8, @tenant FROM subjects s WHERE s.name = 'Arabic' AND s.tenant_id = @tenant;
 
--- Thursday
+-- THURSDAY
 INSERT INTO periods (class_id, day_of_week, start_time, end_time, subject_id, employee_id, period_number, tenant_id)
-SELECT s.class_id, 'Thursday', '08:00', '08:40', s.id, @teacher, 1, @tenant FROM subjects s WHERE s.name = 'Urdu' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Thursday', '08:00', '08:40', s.id, @t_urd, 1, @tenant FROM subjects s WHERE s.name = 'Urdu' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Thursday', '08:40', '09:20', s.id, @teacher, 2, @tenant FROM subjects s WHERE s.name = 'General Science' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Thursday', '08:40', '09:20', s.id, @t_sci, 2, @tenant FROM subjects s WHERE s.name = 'General Science' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Thursday', '09:20', '10:00', s.id, @teacher, 3, @tenant FROM subjects s WHERE s.name = 'English' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Thursday', '09:20', '10:00', s.id, @t_eng, 3, @tenant FROM subjects s WHERE s.name = 'English' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Thursday', '10:00', '10:40', s.id, @teacher, 4, @tenant FROM subjects s WHERE s.name = 'Mathematics' AND s.tenant_id = @tenant;
+SELECT s.class_id, 'Thursday', '10:00', '10:40', s.id, @t_mat, 4, @tenant FROM subjects s WHERE s.name = 'Mathematics' AND s.tenant_id = @tenant
+UNION ALL
+SELECT s.class_id, 'Thursday', '11:10', '11:50', s.id, @t_ara, 5, @tenant FROM subjects s WHERE s.name = 'Arabic' AND s.tenant_id = @tenant
+UNION ALL
+SELECT s.class_id, 'Thursday', '11:50', '12:30', s.id, @t_pak, 6, @tenant FROM subjects s WHERE s.name = 'Pakistan Studies' AND s.tenant_id = @tenant
+UNION ALL
+SELECT s.class_id, 'Thursday', '12:30', '13:10', s.id, @t_csc, 7, @tenant FROM subjects s WHERE s.name = 'Computer Science' AND s.tenant_id = @tenant
+UNION ALL
+SELECT s.class_id, 'Thursday', '13:10', '13:50', s.id, @t_isl, 8, @tenant FROM subjects s WHERE s.name = 'Islamiyat' AND s.tenant_id = @tenant;
 
--- Friday
+-- FRIDAY
 INSERT INTO periods (class_id, day_of_week, start_time, end_time, subject_id, employee_id, period_number, tenant_id)
-SELECT s.class_id, 'Friday', '08:00', '08:40', s.id, @teacher, 1, @tenant FROM subjects s WHERE s.name = 'English' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Friday', '08:00', '08:40', s.id, @t_eng, 1, @tenant FROM subjects s WHERE s.name = 'English' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Friday', '08:40', '09:20', s.id, @teacher, 2, @tenant FROM subjects s WHERE s.name = 'Islamiyat' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Friday', '08:40', '09:20', s.id, @t_isl, 2, @tenant FROM subjects s WHERE s.name = 'Islamiyat' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Friday', '09:20', '10:00', s.id, @teacher, 3, @tenant FROM subjects s WHERE s.name = 'Mathematics' AND s.tenant_id = @tenant
+SELECT s.class_id, 'Friday', '09:20', '10:00', s.id, @t_mat, 3, @tenant FROM subjects s WHERE s.name = 'Mathematics' AND s.tenant_id = @tenant
 UNION ALL
-SELECT s.class_id, 'Friday', '10:00', '10:40', s.id, @teacher, 4, @tenant FROM subjects s WHERE s.name = 'General Science' AND s.tenant_id = @tenant;
+SELECT s.class_id, 'Friday', '10:00', '10:40', s.id, @t_sci, 4, @tenant FROM subjects s WHERE s.name = 'General Science' AND s.tenant_id = @tenant
+UNION ALL
+SELECT s.class_id, 'Friday', '10:40', '11:20', s.id, @t_urd, 5, @tenant FROM subjects s WHERE s.name = 'Urdu' AND s.tenant_id = @tenant;
 
--- 6. Generate Exam Papers for ALL Subjects Across ALL Classes
+-- 6. Generate Exam Papers Assigned to Respective Subject Teachers
 INSERT INTO exam_papers (exam_id, class_id, subject_id, teacher_id, total_marks, tenant_id)
-SELECT @exam, s.class_id, s.id, @teacher, 100, @tenant FROM subjects s WHERE s.tenant_id = @tenant;
+SELECT @exam, s.class_id, s.id, 
+  CASE s.name
+    WHEN 'English' THEN @t_eng
+    WHEN 'Urdu' THEN @t_urd
+    WHEN 'Mathematics' THEN @t_mat
+    WHEN 'General Science' THEN @t_sci
+    WHEN 'Islamiyat' THEN @t_isl
+    WHEN 'Pakistan Studies' THEN @t_pak
+    WHEN 'Computer Science' THEN @t_csc
+    WHEN 'Arabic' THEN @t_ara
+    ELSE @t_eng
+  END, 
+  100, @tenant 
+FROM subjects s WHERE s.tenant_id = @tenant;
 
 -- 7. Add Standard Questions for every English, Math, and Urdu paper created
 -- English Questions
