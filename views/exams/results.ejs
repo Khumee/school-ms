@@ -1,0 +1,114 @@
+<%- include('../partials/header') %>
+
+<div class="section-header no-print" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 class="section-title"><i class="bi bi-award"></i> Exam Results & Report Cards</h1>
+        <p style="margin: 0.25rem 0 0; color: var(--muted); font-size: 0.9rem;"><%= exam.name %> (<%= new Date(exam.start_date).toLocaleDateString() %> &ndash; <%= new Date(exam.end_date).toLocaleDateString() %>)</p>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="/exams/manage" class="btn-secondary"><i class="bi bi-arrow-left"></i> Manage Exams</a>
+        <% if (selectedClassId && selectedClassId !== 'all') { %>
+            <a href="/exams/<%= exam.id %>/class/<%= selectedClassId %>/report-cards" target="_blank" class="btn-primary" style="display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600;">
+                <i class="bi bi-printer"></i> Print All Report Cards
+            </a>
+        <% } %>
+    </div>
+</div>
+
+<% if (locals.success) { %>
+    <div class="no-print" style="background-color: #dcfce7; color: #166534; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #bbf7d0;">
+        <i class="bi bi-check-circle-fill"></i> <%= success %>
+    </div>
+<% } %>
+
+<% if (locals.error) { %>
+    <div class="no-print" style="background-color: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #fecaca;">
+        <i class="bi bi-exclamation-triangle-fill"></i> <%= error %>
+    </div>
+<% } %>
+
+<!-- Class Filter Bar -->
+<div class="card no-print" style="margin-bottom: 1.5rem; padding: 0.85rem 1.25rem;">
+    <form action="/exams/<%= exam.id %>/results" method="GET" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 220px;">
+            <label for="class_id" style="font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 0.25rem; display: block;">Select Class</label>
+            <select name="class_id" id="class_id" class="form-control" onchange="this.form.submit()" style="height: 38px; font-weight: 600;">
+                <% classes.forEach(c => { %>
+                    <option value="<%= c.id %>" <%= String(selectedClassId) === String(c.id) ? 'selected' : '' %>><%= c.name %></option>
+                <% }) %>
+            </select>
+        </div>
+        <div>
+            <a href="/exams/<%= exam.id %>/results?class_id=<%= classes.length > 0 ? classes[0].id : '' %>" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- Tabulation / Student Results Table -->
+<div class="card" style="padding: 0; overflow: hidden;">
+    <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; color: var(--primary-color); font-size: 1.15rem;">
+            <i class="bi bi-mortarboard-fill"></i> Results Tabulation &mdash; <%= selectedClassName %>
+        </h3>
+        <span style="font-size: 0.85rem; color: var(--muted);"><%= students.length %> Students</span>
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table class="table" style="width: 100%; margin: 0; border-collapse: collapse;">
+            <thead style="background: #f1f5f9;">
+                <tr>
+                    <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600; width: 80px;">Roll No</th>
+                    <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Student Name</th>
+                    <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Father Name</th>
+                    <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: center; color: var(--muted); font-weight: 600; width: 110px;">Total Marks</th>
+                    <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: center; color: var(--muted); font-weight: 600; width: 110px;">Obtained</th>
+                    <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: center; color: var(--muted); font-weight: 600; width: 100px;">Percentage</th>
+                    <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: center; color: var(--muted); font-weight: 600; width: 130px;">Grade</th>
+                    <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: right; color: var(--muted); font-weight: 600; width: 150px; white-space: nowrap;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (students.length > 0) { %>
+                    <% students.forEach(s => { %>
+                        <tr style="border-bottom: 1px solid var(--border);">
+                            <td style="padding: 0.75rem 1rem; font-weight: 700; color: var(--ink);"><%= s.roll_number || s.id %></td>
+                            <td style="padding: 0.75rem 1rem; font-weight: 600; color: var(--primary-color);"><%= s.name %></td>
+                            <td style="padding: 0.75rem 1rem; color: var(--muted);"><%= s.father_name || '—' %></td>
+                            <td style="padding: 0.75rem 1rem; text-align: center; font-weight: 600;"><%= s.totalMax %></td>
+                            <td style="padding: 0.75rem 1rem; text-align: center; font-weight: 700; color: var(--ink);">
+                                <%= s.hasMarks ? s.totalObtained : '—' %>
+                            </td>
+                            <td style="padding: 0.75rem 1rem; text-align: center; font-weight: 700;">
+                                <% if (s.hasMarks && s.totalMax > 0) { %>
+                                    <%= s.percentage.toFixed(1) %>%
+                                <% } else { %>
+                                    <span style="color: var(--muted); font-size: 0.85rem;">—</span>
+                                <% } %>
+                            </td>
+                            <td style="padding: 0.75rem 1rem; text-align: center;">
+                                <% if (s.hasMarks && s.totalMax > 0) { %>
+                                    <span style="display: inline-block; padding: 0.2rem 0.55rem; border-radius: 4px; font-size: 0.8rem; font-weight: 700; background: <%= s.gradeInfo.status === 'Passed' ? '#dcfce7' : '#fee2e2' %>; color: <%= s.gradeInfo.status === 'Passed' ? '#166534' : '#991b1b' %>;">
+                                        <%= s.gradeInfo.grade.split(' ')[0] %> (<%= s.gradeInfo.status %>)
+                                    </span>
+                                <% } else { %>
+                                    <span style="font-size: 0.75rem; background: #f1f5f9; color: #64748b; padding: 0.2rem 0.5rem; border-radius: 4px;">Unmarked</span>
+                                <% } %>
+                            </td>
+                            <td style="padding: 0.75rem 1rem; text-align: right; white-space: nowrap;">
+                                <a href="/exams/<%= exam.id %>/student/<%= s.id %>/report-card" target="_blank" class="btn-secondary" style="padding: 0.3rem 0.7rem; font-size: 0.85rem; font-weight: 600; color: #4f46e5; border-color: #c7d2fe; background: #eef2ff; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                    <i class="bi bi-card-text"></i> Report Card
+                                </a>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="8" style="padding: 2.5rem; text-align: center; color: var(--muted);">No active students found in this class.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

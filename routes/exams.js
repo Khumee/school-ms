@@ -509,4 +509,262 @@ router.post('/exams/papers/:id/quick-date', async (req, res) => {
     }
 });
 
+// Grade & Status helper
+function calculateGrade(percentage) {
+    if (percentage >= 90) return { grade: 'A+ (Outstanding)', gradeClass: 'success', status: 'Passed' };
+    if (percentage >= 80) return { grade: 'A (Excellent)', gradeClass: 'primary', status: 'Passed' };
+    if (percentage >= 70) return { grade: 'B+ (Very Good)', gradeClass: 'info', status: 'Passed' };
+    if (percentage >= 60) return { grade: 'B (Good)', gradeClass: 'info', status: 'Passed' };
+    if (percentage >= 50) return { grade: 'C (Satisfactory)', gradeClass: 'warning', status: 'Passed' };
+    if (percentage >= 40) return { grade: 'D (Pass)', gradeClass: 'warning', status: 'Passed' };
+    return { grade: 'F (Needs Improvement)', gradeClass: 'danger', status: 'Failed' };
+}
+
+// 1. Exam Results Tabulation View
+router.get('/exams/:id/results', async (req, res) => {
+    try {
+        const examId = req.params.id;
+        const { class_id } = req.query;
+
+        const [exams] = await db.query('SELECT * FROM exams WHERE id = ? AND tenant_id = ?', [examId, req.tenant.id]);
+        if (exams.length === 0) return res.status(404).send('Exam not found');
+        const exam = exams[0];
+
+        const [classes] = await db.query('SELECT id, name FROM classes WHERE tenant_id = ? ORDER BY id', [req.tenant.id]);
+        let selectedClassId = class_id !== undefined ? class_id : (classes.length > 0 ? String(classes[0].id) : '');
+        const selectedClass = classes.find(c => String(c.id) === String(selectedClassId));
+        const selectedClassName = selectedClass ? selectedClass.name : 'Class';
+
+        let studentsList = [];
+
+        if (selectedClassId) {
+            // Get active students of the class
+            const [students] = await db.query(`
+                SELECT id, name, father_name, roll_number, class_id 
+                FROM students 
+                WHERE class_id = ? AND tenant_id = ? AND status = 'active'
+                ORDER BY roll_number, name
+            `, [selectedClassId, req.tenant.id]);
+
+            // Get papers and max marks of this class
+            const [papers] = await db.query(`
+                SELECT ep.id as paper_id, ep.total_marks, s.name as subject_name 
+                FROM exam_papers ep
+                JOIN subjects s ON ep.subject_id = s.id
+                WHERE ep.exam_id = ? AND ep.class_id = ? AND ep.tenant_id = ?
+            `, [examId, selectedClassId, req.tenant.id]);
+
+            // Get obtained marks
+            const [marks] = await db.query(`
+                SELECT em.exam_paper_id, em.student_id, em.obtained_marks 
+                FROM exam_marks em
+                JOIN exam_papers ep ON em.exam_paper_id = ep.id
+                WHERE ep.exam_id = ? AND ep.class_id = ? AND em.tenant_id = ?
+            `, [examId, selectedClassId, req.tenant.id]);
+
+            let totalClassMax = 0;
+            papers.forEach(p => { totalClassMax += Number(p.total_marks) || 0; });
+
+            students.forEach(st => {
+                const stMarks = marks.filter(m => m.student_id === st.id);
+                let totalObtained = 0;
+                let hasMarks = false;
+
+                stMarks.forEach(m => {
+                    if (m.obtained_marks !== null && m.obtained_marks !== undefined) {
+                        totalObtained += Number(m.obtained_marks);
+                        hasMarks = true;
+                    }
+                });
+
+                const pct = (totalClassMax > 0 && hasMarks) ? (totalObtained / totalClassMax) * 100 : 0;
+                const gradeInfo = calculateGrade(pct);
+
+                studentsList.push({
+                    ...st,
+                    totalMax: totalClassMax,
+                    totalObtained: Math.round(totalObtained * 100) / 100,
+                    percentage: pct,
+                    gradeInfo: gradeInfo,
+                    hasMarks: hasMarks
+                });
+            });
+        }
+
+        res.render('exams/results', {
+            title: `Results - ${exam.name}`,
+            exam,
+            classes,
+            selectedClassId,
+            selectedClassName,
+            students: studentsList,
+            success: req.session.success,
+            error: req.session.error
+        });
+
+        delete req.session.success;
+        delete req.session.error;
+    } catch (err) {
+        console.error('Error loading exam results:', err);
+        res.status(500).send('Error loading exam results');
+    }
+});
+
+// 2. Single Student Report Card
+router.get('/exams/:id/student/:student_id/report-card', async (req, res) => {
+    try {
+        const examId = req.params.id;
+        const studentId = req.params.student_id;
+
+        const [exams] = await db.query('SELECT * FROM exams WHERE id = ? AND tenant_id = ?', [examId, req.tenant.id]);
+        if (exams.length === 0) return res.status(404).send('Exam not found');
+        const exam = exams[0];
+
+        const [students] = await db.query(`
+            SELECT s.*, c.name as class_name 
+            FROM students s 
+            JOIN classes c ON s.class_id = c.id
+            WHERE s.id = ? AND s.tenant_id = ?
+        `, [studentId, req.tenant.id]);
+        if (students.length === 0) return res.status(404).send('Student not found');
+        const student = students[0];
+
+        // Fetch all subject papers & marks for this student in this exam
+        const [papers] = await db.query(`
+            SELECT ep.id as paper_id, ep.total_marks as max_marks, s.name as subject_name,
+                   em.obtained_marks
+            FROM exam_papers ep
+            JOIN subjects s ON ep.subject_id = s.id
+            LEFT JOIN exam_marks em ON em.exam_paper_id = ep.id AND em.student_id = ? AND em.tenant_id = ep.tenant_id
+            WHERE ep.exam_id = ? AND ep.class_id = ? AND ep.tenant_id = ?
+            ORDER BY s.name ASC
+        `, [student.id, examId, student.class_id, req.tenant.id]);
+
+        let totalMax = 0;
+        let totalObtained = 0;
+        let hasAnyMarks = false;
+
+        papers.forEach(p => {
+            const maxM = Number(p.max_marks) || 0;
+            totalMax += maxM;
+            if (p.obtained_marks !== null && p.obtained_marks !== undefined) {
+                totalObtained += Number(p.obtained_marks);
+                hasAnyMarks = true;
+            }
+        });
+
+        const pct = totalMax > 0 && hasAnyMarks ? (totalObtained / totalMax) * 100 : 0;
+        const gradeInfo = calculateGrade(pct);
+
+        const card = {
+            student,
+            results: papers,
+            totalMax,
+            totalObtained: Math.round(totalObtained * 100) / 100,
+            percentage: pct,
+            gradeInfo,
+            hasAnyMarks
+        };
+
+        res.render('exams/report_card', {
+            title: `Report Card - ${student.name}`,
+            exam,
+            examCards: [card],
+            success: req.session.success,
+            error: req.session.error
+        });
+
+        delete req.session.success;
+        delete req.session.error;
+    } catch (err) {
+        console.error('Error rendering report card:', err);
+        res.status(500).send('Error rendering report card');
+    }
+});
+
+// 3. Batch Class Report Cards (for Whole Class Printing)
+router.get('/exams/:id/class/:class_id/report-cards', async (req, res) => {
+    try {
+        const examId = req.params.id;
+        const classId = req.params.class_id;
+
+        const [exams] = await db.query('SELECT * FROM exams WHERE id = ? AND tenant_id = ?', [examId, req.tenant.id]);
+        if (exams.length === 0) return res.status(404).send('Exam not found');
+        const exam = exams[0];
+
+        const [students] = await db.query(`
+            SELECT s.*, c.name as class_name 
+            FROM students s 
+            JOIN classes c ON s.class_id = c.id
+            WHERE s.class_id = ? AND s.tenant_id = ? AND s.status = 'active'
+            ORDER BY s.roll_number, s.name
+        `, [classId, req.tenant.id]);
+
+        const [papers] = await db.query(`
+            SELECT ep.id as paper_id, ep.total_marks as max_marks, s.name as subject_name 
+            FROM exam_papers ep
+            JOIN subjects s ON ep.subject_id = s.id
+            WHERE ep.exam_id = ? AND ep.class_id = ? AND ep.tenant_id = ?
+            ORDER BY s.name ASC
+        `, [examId, classId, req.tenant.id]);
+
+        const [marks] = await db.query(`
+            SELECT em.exam_paper_id, em.student_id, em.obtained_marks 
+            FROM exam_marks em
+            JOIN exam_papers ep ON em.exam_paper_id = ep.id
+            WHERE ep.exam_id = ? AND ep.class_id = ? AND em.tenant_id = ?
+        `, [examId, classId, req.tenant.id]);
+
+        let examCards = [];
+
+        students.forEach(st => {
+            let totalMax = 0;
+            let totalObtained = 0;
+            let hasAnyMarks = false;
+
+            const stResults = papers.map(p => {
+                const maxM = Number(p.max_marks) || 0;
+                totalMax += maxM;
+                const foundMark = marks.find(m => m.student_id === st.id && m.exam_paper_id === p.paper_id);
+                const obt = (foundMark && foundMark.obtained_marks !== null) ? Number(foundMark.obtained_marks) : null;
+                if (obt !== null) {
+                    totalObtained += obt;
+                    hasAnyMarks = true;
+                }
+                return {
+                    ...p,
+                    obtained_marks: obt
+                };
+            });
+
+            const pct = totalMax > 0 && hasAnyMarks ? (totalObtained / totalMax) * 100 : 0;
+            const gradeInfo = calculateGrade(pct);
+
+            examCards.push({
+                student: st,
+                results: stResults,
+                totalMax,
+                totalObtained: Math.round(totalObtained * 100) / 100,
+                percentage: pct,
+                gradeInfo,
+                hasAnyMarks
+            });
+        });
+
+        res.render('exams/report_card', {
+            title: `Batch Report Cards - Class`,
+            exam,
+            examCards,
+            success: req.session.success,
+            error: req.session.error
+        });
+
+        delete req.session.success;
+        delete req.session.error;
+    } catch (err) {
+        console.error('Error rendering batch report cards:', err);
+        res.status(500).send('Error rendering report cards');
+    }
+});
+
 module.exports = router;

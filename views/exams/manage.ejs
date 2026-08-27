@@ -68,6 +68,9 @@
                                     <a href="/exams/papers?exam_id=<%= e.id %>" class="btn-secondary" style="color: #0284c7; border-color: #bae6fd; background: #f0f9ff; padding: 0.3rem 0.65rem; text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
                                         <i class="bi bi-file-earmark-text"></i> Papers
                                     </a>
+                                    <a href="/exams/<%= e.id %>/results" class="btn-secondary" style="color: #4f46e5; border-color: #c7d2fe; background: #eef2ff; padding: 0.3rem 0.65rem; text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i class="bi bi-award"></i> Results
+                                    </a>
                                     <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
                                         <button type="button" class="btn-secondary" style="color: #ef4444; border-color: #fca5a5; background: #fff; padding: 0.3rem 0.5rem; font-size: 0.85rem;" onclick="openDeleteExamModal('<%= e.id %>', '<%= e.name %>')" title="Delete Exam">
                                             <i class="bi bi-trash"></i>
