@@ -222,20 +222,14 @@
                             </form>
                         </div>
 
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; padding-right: 35px;">
-                            <div style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">
-                                <span style="color: var(--primary-color); margin-right: 4px;">Q<%= idx + 1 %>.</span> 
-                                <%= q.question_text %>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; padding-right: 35px;">
+                            <div style="font-size: 1.05rem; font-weight: 600; color: #0f172a; line-height: 1.6; white-space: pre-wrap;">
+                                <strong style="color: var(--primary-color); margin-right: 4px;">Q<%= idx + 1 %>.</strong> <%= q.question_text %>
                             </div>
-                            <span style="font-weight: 700; color: #0f766e; font-size: 0.95rem; white-space: nowrap; margin-left: 1rem;">
+                            <span style="font-weight: 700; color: #0f766e; font-size: 0.95rem; white-space: nowrap; margin-left: 1.5rem;">
                                 (<%= q.marks %> Marks)
                             </span>
                         </div>
-
-                        <!-- Lined Answer Area -->
-                        <div class="answer-line"></div>
-                        <div class="answer-line"></div>
-                        <div class="answer-line"></div>
                     </div>
                 <% }) %>
             <% } else { %>
@@ -254,17 +248,17 @@
             </h4>
             
             <form action="/exams/papers/<%= paper.id %>/questions/add" method="POST">
-                <div class="form-group" style="margin-bottom: 10px;">
-                    <label for="question_text" style="font-weight: 600; font-size: 0.85rem; color: var(--ink);">Question Text</label>
-                    <textarea class="form-control" id="question_text" name="question_text" rows="2" placeholder="e.g. Q1: Define photosynthesis with a diagram." required style="font-size: 0.95rem;"></textarea>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="question_text" style="font-weight: 600; font-size: 0.85rem; color: var(--ink); margin-bottom: 0.35rem; display: block;">Question Text (multi-line supported)</label>
+                    <textarea class="form-control" id="question_text" name="question_text" rows="4" placeholder="Write question text here or copy-paste multi-line questions..." required style="font-size: 0.95rem; line-height: 1.5; padding: 0.6rem 0.8rem;"></textarea>
                 </div>
 
                 <div style="display: flex; gap: 1rem; align-items: flex-end;">
-                    <div class="form-group" style="margin: 0; width: 140px;">
-                        <label for="marks" style="font-weight: 600; font-size: 0.85rem; color: var(--ink);">Marks</label>
+                    <div class="form-group" style="margin: 0; width: 150px;">
+                        <label for="marks" style="font-weight: 600; font-size: 0.85rem; color: var(--ink); margin-bottom: 0.35rem; display: block;">Marks</label>
                         <input type="number" class="form-control" id="marks" name="marks" placeholder="e.g. 20" required min="1" style="height: 40px; font-weight: 600;">
                     </div>
-                    <button type="submit" class="btn-primary" style="height: 40px; padding: 0 1.5rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+                    <button type="submit" class="btn-primary" style="height: 40px; padding: 0 1.5rem; display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600;">
                         <i class="bi bi-plus-lg"></i> Add Question
                     </button>
                 </div>

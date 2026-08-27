@@ -1136,3 +1136,14 @@ SELECT eqm.exam_paper_id, eqm.student_id, SUM(eqm.obtained_marks), @tenant
 FROM exam_question_marks eqm
 WHERE eqm.tenant_id = @tenant
 GROUP BY eqm.exam_paper_id, eqm.student_id;
+
+-- 9. Assign Examination Dates & Times for Date Sheet (March 2026)
+UPDATE exam_papers ep JOIN subjects s ON ep.subject_id = s.id SET ep.paper_date = '2026-03-02', ep.start_time = '09:00:00', ep.end_time = '12:00:00' WHERE s.name = 'English' AND ep.tenant_id = @tenant;
+UPDATE exam_papers ep JOIN subjects s ON ep.subject_id = s.id SET ep.paper_date = '2026-03-03', ep.start_time = '09:00:00', ep.end_time = '12:00:00' WHERE s.name = 'Urdu' AND ep.tenant_id = @tenant;
+UPDATE exam_papers ep JOIN subjects s ON ep.subject_id = s.id SET ep.paper_date = '2026-03-04', ep.start_time = '09:00:00', ep.end_time = '12:00:00' WHERE s.name = 'Mathematics' AND ep.tenant_id = @tenant;
+UPDATE exam_papers ep JOIN subjects s ON ep.subject_id = s.id SET ep.paper_date = '2026-03-05', ep.start_time = '09:00:00', ep.end_time = '12:00:00' WHERE s.name = 'General Science' AND ep.tenant_id = @tenant;
+UPDATE exam_papers ep JOIN subjects s ON ep.subject_id = s.id SET ep.paper_date = '2026-03-06', ep.start_time = '09:00:00', ep.end_time = '12:00:00' WHERE s.name = 'Islamiyat' AND ep.tenant_id = @tenant;
+UPDATE exam_papers ep JOIN subjects s ON ep.subject_id = s.id SET ep.paper_date = '2026-03-07', ep.start_time = '09:00:00', ep.end_time = '12:00:00' WHERE s.name = 'Pakistan Studies' AND ep.tenant_id = @tenant;
+UPDATE exam_papers ep JOIN subjects s ON ep.subject_id = s.id SET ep.paper_date = '2026-03-09', ep.start_time = '09:00:00', ep.end_time = '12:00:00' WHERE s.name = 'Computer Science' AND ep.tenant_id = @tenant;
+UPDATE exam_papers ep JOIN subjects s ON ep.subject_id = s.id SET ep.paper_date = '2026-03-10', ep.start_time = '09:00:00', ep.end_time = '12:00:00' WHERE s.name = 'Arabic' AND ep.tenant_id = @tenant;
+

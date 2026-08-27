@@ -74,6 +74,17 @@ router.get('/timetable/manage', async (req, res) => {
             [periods] = await db.query(query, params);
         }
 
+        const [allTenantPeriods] = await db.query(`
+            SELECT p.id, p.day_of_week, p.start_time, p.end_time, p.period_number,
+                   s.name as subject_name, e.name as teacher_name, c.name as class_name, c.id as class_id
+            FROM periods p
+            JOIN classes c ON p.class_id = c.id
+            JOIN employees e ON p.employee_id = e.id
+            LEFT JOIN subjects s ON p.subject_id = s.id
+            WHERE p.tenant_id = ?
+            ORDER BY c.name, p.day_of_week, p.start_time
+        `, [req.tenant.id]);
+
         res.render('timetable/manage', {
             title: 'Manage Timetable',
             classes,
@@ -81,6 +92,7 @@ router.get('/timetable/manage', async (req, res) => {
             subjects,
             periods,
             classTimetables,
+            allTenantPeriods,
             selectedClassId,
             selectedClassName,
             selectedTeacherId,
@@ -94,6 +106,58 @@ router.get('/timetable/manage', async (req, res) => {
         console.error(err);
         res.status(500).send("Error loading timetable");
     }
+});
+
+// Swap Two Timetable Periods
+router.post('/timetable/swap', async (req, res) => {
+    const { period_a_id, period_b_id, class_id } = req.body;
+
+    if (!period_a_id || !period_b_id || period_a_id === period_b_id) {
+        req.session.error = 'Please select two different periods to swap.';
+        return res.redirect(`/timetable/manage?class_id=${class_id || 'all'}`);
+    }
+
+    try {
+        const [rowsA] = await db.query('SELECT * FROM periods WHERE id = ? AND tenant_id = ?', [period_a_id, req.tenant.id]);
+        const [rowsB] = await db.query('SELECT * FROM periods WHERE id = ? AND tenant_id = ?', [period_b_id, req.tenant.id]);
+
+        if (rowsA.length === 0 || rowsB.length === 0) {
+            req.session.error = 'One or both periods not found.';
+            return res.redirect(`/timetable/manage?class_id=${class_id || 'all'}`);
+        }
+
+        const A = rowsA[0];
+        const B = rowsB[0];
+
+        const connection = await db.pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            await connection.query(`
+                UPDATE periods 
+                SET day_of_week = ?, start_time = ?, end_time = ?, period_number = ?
+                WHERE id = ? AND tenant_id = ?
+            `, [B.day_of_week, B.start_time, B.end_time, B.period_number, A.id, req.tenant.id]);
+
+            await connection.query(`
+                UPDATE periods 
+                SET day_of_week = ?, start_time = ?, end_time = ?, period_number = ?
+                WHERE id = ? AND tenant_id = ?
+            `, [A.day_of_week, A.start_time, A.end_time, A.period_number, B.id, req.tenant.id]);
+
+            await connection.commit();
+            req.session.success = 'Timetable periods successfully swapped.';
+        } catch (err) {
+            await connection.rollback();
+            throw err;
+        } finally {
+            connection.release();
+        }
+    } catch (err) {
+        console.error('Error swapping periods:', err);
+        req.session.error = 'Failed to swap periods.';
+    }
+    res.redirect(`/timetable/manage?class_id=${class_id || 'all'}`);
 });
 
 // Add/Update Period

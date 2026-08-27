@@ -1,7 +1,7 @@
 <%- include('../partials/header') %>
 
-<div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
-    <h1 class="section-title"><i class="bi bi-journal-check"></i> Manage Exams</h1>
+<div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <h1 class="section-title"><i class="bi bi-journal-check"></i> Manage Examinations</h1>
 </div>
 
 <% if (locals.success) { %>
@@ -41,29 +41,39 @@
 
 <div class="card" style="padding: 0; overflow: hidden;">
     <h3 style="margin: 0; padding: 1rem 1.5rem; color: var(--primary-color); border-bottom: 1px solid var(--border); background: #f8fafc;">
-        <i class="bi bi-card-list"></i> Exam Terms
+        <i class="bi bi-card-list"></i> Examination Terms
     </h3>
     <div style="overflow-x: auto;">
         <table class="table" style="width: 100%; margin: 0; border-collapse: collapse;">
             <thead style="background: #f1f5f9;">
                 <tr>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Name</th>
+                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Exam Term Name</th>
                     <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Start Date</th>
                     <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">End Date</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600; width: 180px;">Actions</th>
+                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: right; color: var(--muted); font-weight: 600; width: 280px; white-space: nowrap;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 <% if (exams.length > 0) { %>
                     <% exams.forEach(e => { %>
                         <tr style="border-bottom: 1px solid var(--border);">
-                            <td style="padding: 0.75rem; font-weight: 600; color: var(--ink);"><%= e.name %></td>
+                            <td style="padding: 0.75rem; font-weight: 700; color: var(--ink);"><%= e.name %></td>
                             <td style="padding: 0.75rem;"><%= new Date(e.start_date).toLocaleDateString() %></td>
                             <td style="padding: 0.75rem;"><%= new Date(e.end_date).toLocaleDateString() %></td>
-                            <td style="padding: 0.75rem;">
-                                <a href="/exams/papers?exam_id=<%= e.id %>" class="btn-secondary" style="color: #0284c7; border-color: #bae6fd; background: #f0f9ff; padding: 0.35rem 0.75rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem;">
-                                    <i class="bi bi-gear"></i> Manage Papers
-                                </a>
+                            <td style="padding: 0.75rem; text-align: right; white-space: nowrap;">
+                                <div style="display: inline-flex; gap: 0.4rem; align-items: center;">
+                                    <a href="/exams/<%= e.id %>/datesheet" class="btn-secondary" style="color: #0d9488; border-color: #99f6e4; background: #f0fdfa; padding: 0.3rem 0.65rem; text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i class="bi bi-calendar-event"></i> Date Sheet
+                                    </a>
+                                    <a href="/exams/papers?exam_id=<%= e.id %>" class="btn-secondary" style="color: #0284c7; border-color: #bae6fd; background: #f0f9ff; padding: 0.3rem 0.65rem; text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                        <i class="bi bi-file-earmark-text"></i> Papers
+                                    </a>
+                                    <% if (typeof isAdmin !== 'undefined' && isAdmin) { %>
+                                        <button type="button" class="btn-secondary" style="color: #ef4444; border-color: #fca5a5; background: #fff; padding: 0.3rem 0.5rem; font-size: 0.85rem;" onclick="openDeleteExamModal('<%= e.id %>', '<%= e.name %>')" title="Delete Exam">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    <% } %>
+                                </div>
                             </td>
                         </tr>
                     <% }) %>
@@ -76,5 +86,53 @@
         </table>
     </div>
 </div>
+
+<!-- Delete Exam Confirmation Modal (Danger Zone Type-to-Confirm) -->
+<div id="deleteExamModal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="card" style="width: 100%; max-width: 480px; padding: 1.75rem;">
+        <h3 style="margin-top: 0; color: #dc2626; font-size: 1.25rem;">
+            <i class="bi bi-exclamation-triangle-fill"></i> Delete Examination Term
+        </h3>
+        <p style="color: #475569; font-size: 0.95rem; line-height: 1.5; margin: 1rem 0;">
+            This will permanently delete the examination term, all generated papers, questions, and all student marks associated with it. This action <strong>CANNOT</strong> be undone.
+        </p>
+        <p style="color: #0f172a; margin-bottom: 0.5rem; font-size: 0.9rem;">
+            Please type <strong id="deleteConfirmTarget" style="user-select: none; color: #dc2626; padding: 0.15rem 0.4rem; background: #fee2e2; border-radius: 4px;"></strong> to confirm:
+        </p>
+        <form id="deleteExamForm" method="POST" action="">
+            <input type="text" id="deleteConfirmInput" class="form-control" autocomplete="off" oninput="validateDeleteExam()" style="margin-bottom: 1.25rem; font-weight: 600;" required placeholder="Type exam name to confirm...">
+            
+            <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                <button type="button" class="btn-secondary" onclick="closeDeleteExamModal()">Cancel</button>
+                <button type="submit" id="deleteExamSubmitBtn" class="btn-danger" style="background-color: #dc2626; color: white; border: none; padding: 0.5rem 1.25rem; border-radius: 6px; font-weight: 600;" disabled>
+                    Delete Examination
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let targetExamName = '';
+
+    function openDeleteExamModal(examId, examName) {
+        targetExamName = examName;
+        document.getElementById('deleteConfirmTarget').textContent = examName;
+        document.getElementById('deleteExamForm').action = `/exams/delete/${examId}`;
+        document.getElementById('deleteConfirmInput').value = '';
+        document.getElementById('deleteExamSubmitBtn').disabled = true;
+        document.getElementById('deleteExamModal').style.display = 'flex';
+    }
+
+    function closeDeleteExamModal() {
+        document.getElementById('deleteExamModal').style.display = 'none';
+    }
+
+    function validateDeleteExam() {
+        const inputVal = document.getElementById('deleteConfirmInput').value.trim();
+        const submitBtn = document.getElementById('deleteExamSubmitBtn');
+        submitBtn.disabled = (inputVal !== targetExamName);
+    }
+</script>
 
 <%- include('../partials/footer') %>

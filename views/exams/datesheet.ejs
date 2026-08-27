@@ -1,0 +1,281 @@
+<%- include('../partials/header') %>
+
+<style>
+    .datesheet-card {
+        background: #ffffff;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 2rem;
+        page-break-after: always;
+        break-after: page;
+    }
+
+    .datesheet-card:last-child {
+        page-break-after: avoid;
+        break-after: avoid;
+    }
+
+    .datesheet-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 2px solid <%= tenant.primary_color || '#4f46e5' %>;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .school-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .school-logo {
+        height: 48px;
+        max-width: 90px;
+        object-fit: contain;
+    }
+
+    .school-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        margin: 0;
+        color: var(--ink);
+    }
+
+    .datesheet-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    @media print {
+        body {
+            background: #fff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .main-nav, .no-print, .section-header, .filter-panel {
+            display: none !important;
+        }
+        .datesheet-card {
+            border: 1px solid #000 !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            margin-bottom: 0 !important;
+            padding: 0 !important;
+        }
+        .datesheet-header {
+            border-bottom: 2px solid #000 !important;
+        }
+        .table th {
+            background: #f1f5f9 !important;
+            color: #000 !important;
+            border: 1px solid #000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .table td {
+            border: 1px solid #000 !important;
+        }
+        @page {
+            size: A4 portrait;
+            margin: 12mm;
+        }
+    }
+</style>
+
+<div class="section-header no-print" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h1 class="section-title"><i class="bi bi-calendar-event"></i> Exam Date Sheet</h1>
+        <p style="margin: 0.25rem 0 0; color: var(--muted); font-size: 0.9rem;"><%= exam.name %> (<%= new Date(exam.start_date).toLocaleDateString() %> &ndash; <%= new Date(exam.end_date).toLocaleDateString() %>)</p>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+        <a href="/exams/manage" class="btn-secondary"><i class="bi bi-arrow-left"></i> Manage Exams</a>
+        <button type="button" onclick="window.print()" class="btn-primary">
+            <i class="bi bi-printer"></i> Print Date Sheet
+        </button>
+    </div>
+</div>
+
+<% if (locals.success) { %>
+    <div class="no-print" style="background-color: #dcfce7; color: #166534; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #bbf7d0;">
+        <i class="bi bi-check-circle-fill"></i> <%= success %>
+    </div>
+<% } %>
+
+<% if (locals.error) { %>
+    <div class="no-print" style="background-color: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #fecaca;">
+        <i class="bi bi-exclamation-triangle-fill"></i> <%= error %>
+    </div>
+<% } %>
+
+<!-- Class Filter Bar -->
+<div class="card no-print" style="margin-bottom: 1.5rem; padding: 0.85rem 1.25rem;">
+    <form action="/exams/<%= exam.id %>/datesheet" method="GET" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 200px;">
+            <label for="class_id" style="font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 0.25rem; display: block;">Select Class</label>
+            <select name="class_id" id="class_id" class="form-control" onchange="this.form.submit()" style="height: 38px; font-weight: 600;">
+                <option value="all" <%= selectedClassId === 'all' ? 'selected' : '' %>>-- All Classes (Print All) --</option>
+                <% classes.forEach(c => { %>
+                    <option value="<%= c.id %>" <%= String(selectedClassId) === String(c.id) ? 'selected' : '' %>><%= c.name %></option>
+                <% }) %>
+            </select>
+        </div>
+        <div>
+            <a href="/exams/<%= exam.id %>/datesheet?class_id=<%= classes.length > 0 ? classes[0].id : '' %>" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- Date Sheet Render -->
+<% if (classDateSheets.length > 0) { %>
+    <% classDateSheets.forEach(cds => { %>
+        <div class="datesheet-card">
+            <div class="datesheet-header">
+                <div class="school-info">
+                    <% if (tenant && tenant.logo_url) { %>
+                        <img src="<%= tenant.logo_url %>" class="school-logo" alt="Logo">
+                    <% } %>
+                    <div>
+                        <h2 class="school-title"><%= tenant.school_name %></h2>
+                        <div class="datesheet-title"><%= exam.name %> &bull; Date Sheet</div>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 1.15rem; font-weight: 800; color: var(--primary-color);"><%= cds.className %></div>
+                    <div style="font-size: 0.8rem; color: var(--muted);">Academic Session 2026</div>
+                </div>
+            </div>
+
+            <div style="overflow-x: auto; padding: 0;">
+                <table class="table" style="width: 100%; margin: 0; border-collapse: collapse;">
+                    <thead style="background: #f8fafc;">
+                        <tr>
+                            <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 700; width: 140px;">Date</th>
+                            <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 700; width: 110px;">Day</th>
+                            <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 700; width: 150px;">Time</th>
+                            <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 700;">Subject</th>
+                            <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 700;">Teacher</th>
+                            <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: center; color: var(--muted); font-weight: 700; width: 100px;">Total Marks</th>
+                            <th style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); text-align: right; color: var(--muted); font-weight: 700; width: 110px;" class="no-print">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (cds.papers.length > 0) { %>
+                            <% cds.papers.forEach(p => { %>
+                                <tr style="border-bottom: 1px solid var(--border);">
+                                    <td style="padding: 0.75rem 1rem; font-weight: 600; color: var(--ink);">
+                                        <% if (p.paper_date) { %>
+                                            <%= new Date(p.paper_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                                        <% } else { %>
+                                            <span style="color: #94a3b8; font-style: italic;">Not set</span>
+                                        <% } %>
+                                    </td>
+                                    <td style="padding: 0.75rem 1rem; font-weight: 500; color: var(--muted);">
+                                        <% if (p.paper_date) { %>
+                                            <%= new Date(p.paper_date).toLocaleDateString('en-US', { weekday: 'long' }) %>
+                                        <% } else { %>
+                                            —
+                                        <% } %>
+                                    </td>
+                                    <td style="padding: 0.75rem 1rem; font-size: 0.85rem; color: #475569;">
+                                        <% if (p.start_time && p.end_time) { %>
+                                            <%= p.start_time.substring(0,5) %> - <%= p.end_time.substring(0,5) %>
+                                        <% } else { %>
+                                            09:00 - 12:00
+                                        <% } %>
+                                    </td>
+                                    <td style="padding: 0.75rem 1rem; font-weight: 700; color: var(--ink);"><%= p.subject_name %></td>
+                                    <td style="padding: 0.75rem 1rem; color: var(--muted);"><%= p.teacher_name || 'Unassigned' %></td>
+                                    <td style="padding: 0.75rem 1rem; text-align: center; font-weight: 700; color: var(--primary-color);">
+                                        <%= p.total_marks || 100 %>
+                                    </td>
+                                    <td style="padding: 0.75rem 1rem; text-align: right;" class="no-print">
+                                        <button type="button" class="btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="openSetDateModal('<%= p.id %>', '<%= p.subject_name %>', '<%= cds.className %>', '<%= p.paper_date ? new Date(p.paper_date).toISOString().split('T')[0] : '' %>', '<%= p.start_time || '09:00' %>', '<%= p.end_time || '12:00' %>')">
+                                            <i class="bi bi-pencil-square"></i> Set Date
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" style="padding: 2rem; text-align: center; color: var(--muted);">No papers registered for this class.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="padding: 0.75rem 1.5rem; background: #f8fafc; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--muted);">
+                <span>Instructions: Students must reach the examination hall 15 minutes before time.</span>
+                <span>Principal Signature: __________________</span>
+            </div>
+        </div>
+    <% }) %>
+<% } else { %>
+    <div class="card" style="padding: 3rem; text-align: center; color: var(--muted);">
+        <i class="bi bi-calendar-x" style="font-size: 2.5rem; color: #cbd5e1; display: block; margin-bottom: 0.5rem;"></i>
+        No classes or papers found for this examination term.
+    </div>
+<% } %>
+
+<!-- Set Paper Date Modal -->
+<div id="setDateModal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="card" style="width: 100%; max-width: 440px; padding: 1.5rem;">
+        <h3 style="margin-top: 0; color: var(--primary-color); font-size: 1.15rem;">
+            <i class="bi bi-calendar-check"></i> Set Exam Paper Date
+        </h3>
+        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            <strong id="modalSubjectName" style="color: var(--ink);"></strong> &bull; <span id="modalClassName"></span>
+        </p>
+
+        <form id="setDateForm" method="POST" action="">
+            <input type="hidden" name="exam_id" value="<%= exam.id %>">
+            <input type="hidden" name="class_id" value="<%= selectedClassId %>">
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="paper_date" style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 0.3rem;">Exam Date</label>
+                <input type="date" name="paper_date" id="modalPaperDate" class="form-control" required style="height: 40px;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.25rem;">
+                <div class="form-group" style="margin: 0;">
+                    <label for="start_time" style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 0.3rem;">Start Time</label>
+                    <input type="time" name="start_time" id="modalStartTime" class="form-control" value="09:00" style="height: 40px;">
+                </div>
+                <div class="form-group" style="margin: 0;">
+                    <label for="end_time" style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 0.3rem;">End Time</label>
+                    <input type="time" name="end_time" id="modalEndTime" class="form-control" value="12:00" style="height: 40px;">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                <button type="button" class="btn-secondary" onclick="closeSetDateModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Save Date</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openSetDateModal(paperId, subjectName, className, paperDate, startTime, endTime) {
+        document.getElementById('modalSubjectName').textContent = subjectName;
+        document.getElementById('modalClassName').textContent = className;
+        document.getElementById('modalPaperDate').value = paperDate || '';
+        document.getElementById('modalStartTime').value = startTime || '09:00';
+        document.getElementById('modalEndTime').value = endTime || '12:00';
+        document.getElementById('setDateForm').action = `/exams/papers/${paperId}/set-date`;
+        document.getElementById('setDateModal').style.display = 'flex';
+    }
+
+    function closeSetDateModal() {
+        document.getElementById('setDateModal').style.display = 'none';
+    }
+</script>
+
+<%- include('../partials/footer') %>
