@@ -1,99 +1,276 @@
 <%- include('../partials/header') %>
 
-<div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-    <h1 class="section-title"><i class="bi bi-tools"></i> Build Exam Paper</h1>
-    <div style="display: flex; gap: 0.5rem;">
-        <a href="/exams/papers" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Papers</a>
-        <a href="/exams/marks/<%= paper.id %>" class="btn-primary" style="background-color: #16a34a; border-color: #16a34a;"><i class="bi bi-pencil-square"></i> Enter Marks</a>
+<style>
+    .paper-wrapper {
+        background-color: #f1f5f9;
+        padding: 20px 0 40px;
+        min-height: calc(100vh - 120px);
+    }
+
+    .paper-sheet {
+        background: #ffffff;
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        padding: 15mm 20mm;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
+        position: relative;
+        color: #0f172a;
+        line-height: 1.6;
+        border-radius: 4px;
+    }
+
+    .thick-divider {
+        border-top: 3px solid #0f172a;
+        border-bottom: 1px solid #0f172a;
+        height: 6px;
+        margin: 12px 0 16px;
+    }
+
+    .paper-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .school-branding {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .school-branding img {
+        height: 48px;
+        max-width: 100px;
+        object-fit: contain;
+    }
+
+    .school-title {
+        font-size: 1.35rem;
+        font-weight: 800;
+        margin: 0;
+        color: #0f172a;
+    }
+
+    .exam-badge-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .paper-meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+
+    .question-item {
+        position: relative;
+        padding: 14px 16px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        border: 1px solid transparent;
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .question-item:hover {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+    }
+
+    .question-item .question-actions {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        opacity: 0.2;
+        transition: opacity 0.2s;
+    }
+
+    .question-item:hover .question-actions {
+        opacity: 1;
+    }
+
+    .answer-line {
+        border-bottom: 1px dashed #cbd5e1;
+        height: 24px;
+        margin-top: 8px;
+        width: 100%;
+    }
+
+    .add-question-box {
+        margin-top: 24px;
+        border: 2px dashed #cbd5e1;
+        border-radius: 8px;
+        padding: 18px 20px;
+        background: #f8fafc;
+    }
+
+    /* Print Formatting */
+    @media print {
+        body, .paper-wrapper {
+            background: #fff !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .main-nav, .no-print, .question-actions, .add-question-box, .section-header {
+            display: none !important;
+        }
+        .paper-sheet {
+            width: 100% !important;
+            min-height: auto !important;
+            margin: 0 !important;
+            padding: 10mm 15mm !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .paper-sheet {
+            width: 95%;
+            padding: 15px;
+        }
+        .question-item .question-actions {
+            opacity: 1;
+        }
+    }
+</style>
+
+<div class="no-print" style="max-width: 1200px; margin: 0 auto 1rem; padding: 0 1rem;">
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <h1 class="section-title"><i class="bi bi-file-earmark-ruled"></i> Exam Paper: <%= paper.subject_name %></h1>
+        <div style="display: flex; gap: 0.5rem;">
+            <a href="/exams/papers?exam_id=<%= paper.exam_id %>" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Papers</a>
+            <a href="/exams/marks/<%= paper.id %>" class="btn-primary" style="background-color: #16a34a; border-color: #16a34a;"><i class="bi bi-pencil-square"></i> Enter Marks</a>
+            <button type="button" onclick="window.print()" class="btn-secondary" style="font-weight: 600;"><i class="bi bi-printer"></i> Print Paper</button>
+        </div>
     </div>
+
+    <% if (locals.success) { %>
+        <div style="background-color: #dcfce7; color: #166534; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #bbf7d0;">
+            <i class="bi bi-check-circle-fill"></i> <%= success %>
+        </div>
+    <% } %>
+
+    <% if (locals.error) { %>
+        <div style="background-color: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #fecaca;">
+            <i class="bi bi-exclamation-triangle-fill"></i> <%= error %>
+        </div>
+    <% } %>
 </div>
 
-<% if (locals.success) { %>
-    <div style="background-color: #dcfce7; color: #166534; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #bbf7d0;">
-        <i class="bi bi-check-circle-fill"></i> <%= success %>
-    </div>
-<% } %>
-
-<% if (locals.error) { %>
-    <div style="background-color: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #fecaca;">
-        <i class="bi bi-exclamation-triangle-fill"></i> <%= error %>
-    </div>
-<% } %>
-
-<div class="card" style="margin-bottom: 2rem; background: #f8fafc; border: 1px solid #e2e8f0;">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-        <div style="font-size: 1.1rem; color: var(--ink);">
-            <strong style="color: var(--muted); margin-right: 0.25rem;">Class:</strong> <%= paper.class_name %>
-        </div>
-        <div style="font-size: 1.1rem; color: var(--ink);">
-            <strong style="color: var(--muted); margin-right: 0.25rem;">Subject:</strong> <%= paper.subject_name %>
-        </div>
-        <div style="font-size: 1.1rem; color: var(--ink);">
-            <strong style="color: var(--muted); margin-right: 0.25rem;">Total Marks:</strong> 
-            <span style="background: var(--primary-color); color: white; padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 700; font-size: 1rem;"><%= paper.total_marks %></span>
-        </div>
-    </div>
-</div>
-
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; align-items: start;">
-    <div class="card" style="padding: 0; overflow: hidden;">
-        <h3 style="margin: 0; padding: 1rem 1.5rem; color: var(--primary-color); border-bottom: 1px solid var(--border); background: #f8fafc;">
-            <i class="bi bi-list-ol"></i> Questions
-        </h3>
-        <div style="overflow-x: auto;">
-            <table class="table" style="width: 100%; margin: 0; border-collapse: collapse;">
-                <thead style="background: #f1f5f9;">
-                    <tr>
-                        <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600; width: 60px;">#</th>
-                        <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Question Text</th>
-                        <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600; width: 120px;">Marks</th>
-                        <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600; width: 100px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% if (questions.length > 0) { %>
-                        <% questions.forEach((q, idx) => { %>
-                            <tr style="border-bottom: 1px solid var(--border);">
-                                <td style="padding: 0.75rem; color: var(--muted);"><%= idx + 1 %></td>
-                                <td style="padding: 0.75rem; font-weight: 600; color: var(--ink);"><%= q.question_text %></td>
-                                <td style="padding: 0.75rem; font-weight: 600; color: #0f766e;"><%= q.marks %></td>
-                                <td style="padding: 0.75rem;">
-                                    <form action="/exams/papers/<%= paper.id %>/questions/delete/<%= q.id %>" method="POST" onsubmit="return confirm('Delete this question? Existing marks for this question will also be deleted.');" style="margin: 0;">
-                                        <button type="submit" class="btn-secondary" style="color: #ef4444; border-color: #fca5a5; background: #fef2f2; padding: 0.25rem 0.6rem; border-radius: 4px;">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        <% }) %>
-                    <% } else { %>
-                        <tr>
-                            <td colspan="4" style="padding: 2.5rem; text-align: center; color: var(--muted);">
-                                <i class="bi bi-inbox" style="font-size: 2rem; color: #cbd5e1; display: block; margin-bottom: 0.5rem;"></i>
-                                No questions added yet. Add some questions!
-                            </td>
-                        </tr>
-                    <% } %>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    
-    <div class="card">
-        <h3 style="margin-bottom: 1.5rem; color: var(--primary-color); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
-            <i class="bi bi-plus-circle"></i> Add Question
-        </h3>
-        <form action="/exams/papers/<%= paper.id %>/questions/add" method="POST">
-            <div class="form-group" style="margin-bottom: 1.25rem;">
-                <label for="question_text">Question Text (e.g. Q1, or full text)</label>
-                <input type="text" class="form-control" id="question_text" name="question_text" required>
+<div class="paper-wrapper">
+    <div class="paper-sheet">
+        <!-- Paper Top Header -->
+        <div class="paper-header">
+            <div class="school-branding">
+                <% if (tenant && tenant.logo_url) { %>
+                    <img src="<%= tenant.logo_url %>" alt="Logo">
+                <% } %>
+                <div>
+                    <h2 class="school-title"><%= tenant ? tenant.school_name : 'School' %></h2>
+                    <div class="exam-badge-title"><%= paper.exam_name || 'Examination' %></div>
+                </div>
             </div>
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label for="marks">Marks</label>
-                <input type="number" class="form-control" id="marks" name="marks" required min="1">
+            <div style="text-align: right;">
+                <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a;">
+                    Total Marks: <span style="background: #0f172a; color: white; padding: 2px 8px; border-radius: 4px;"><%= paper.total_marks || 100 %></span>
+                </div>
+                <div style="font-size: 0.8rem; color: #64748b; margin-top: 3px;">Time: 2.5 Hours</div>
             </div>
-            <button type="submit" class="btn-primary" style="width: 100%;">Add Question</button>
-        </form>
+        </div>
+
+        <!-- Meta Bar -->
+        <div class="paper-meta-row">
+            <div><strong>Class:</strong> <%= paper.class_name %></div>
+            <div><strong>Subject:</strong> <%= paper.subject_name %></div>
+            <div><strong>Roll / Name:</strong> ________________________</div>
+        </div>
+
+        <div class="thick-divider"></div>
+
+        <!-- General Note -->
+        <div style="text-align: center; font-size: 0.85rem; font-style: italic; color: #475569; margin-bottom: 16px;">
+            Note: Attempt all questions. Write neat and legible answers in the space provided.
+        </div>
+
+        <!-- Questions Section -->
+        <div id="questionsContainer">
+            <% if (questions.length > 0) { %>
+                <% questions.forEach((q, idx) => { %>
+                    <div class="question-item">
+                        <div class="question-actions no-print">
+                            <form action="/exams/papers/<%= paper.id %>/questions/delete/<%= q.id %>" method="POST" onsubmit="return confirm('Delete this question?');" style="margin: 0;">
+                                <button type="submit" class="btn-secondary" style="color: #ef4444; border-color: #fca5a5; background: #fff; padding: 0.2rem 0.5rem; font-size: 0.8rem;" title="Delete Question">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; padding-right: 35px;">
+                            <div style="font-size: 1.05rem; font-weight: 700; color: #0f172a;">
+                                <span style="color: var(--primary-color); margin-right: 4px;">Q<%= idx + 1 %>.</span> 
+                                <%= q.question_text %>
+                            </div>
+                            <span style="font-weight: 700; color: #0f766e; font-size: 0.95rem; white-space: nowrap; margin-left: 1rem;">
+                                (<%= q.marks %> Marks)
+                            </span>
+                        </div>
+
+                        <!-- Lined Answer Area -->
+                        <div class="answer-line"></div>
+                        <div class="answer-line"></div>
+                        <div class="answer-line"></div>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="no-print" style="text-align: center; padding: 30px 10px; color: #94a3b8;">
+                    <i class="bi bi-file-earmark-plus" style="font-size: 2.5rem; display: block; margin-bottom: 8px;"></i>
+                    <p style="margin: 0; font-size: 1rem; color: #64748b;">No questions added to this exam paper yet.</p>
+                    <p style="margin: 4px 0 0; font-size: 0.85rem;">Use the form below to add questions top to bottom.</p>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Inline Add Question Section (Top to Bottom order) -->
+        <div class="add-question-box no-print">
+            <h4 style="margin: 0 0 12px; font-size: 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.4rem;">
+                <i class="bi bi-plus-circle-fill"></i> Add Question to Paper
+            </h4>
+            
+            <form action="/exams/papers/<%= paper.id %>/questions/add" method="POST">
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label for="question_text" style="font-weight: 600; font-size: 0.85rem; color: var(--ink);">Question Text</label>
+                    <textarea class="form-control" id="question_text" name="question_text" rows="2" placeholder="e.g. Q1: Define photosynthesis with a diagram." required style="font-size: 0.95rem;"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem; align-items: flex-end;">
+                    <div class="form-group" style="margin: 0; width: 140px;">
+                        <label for="marks" style="font-weight: 600; font-size: 0.85rem; color: var(--ink);">Marks</label>
+                        <input type="number" class="form-control" id="marks" name="marks" placeholder="e.g. 20" required min="1" style="height: 40px; font-weight: 600;">
+                    </div>
+                    <button type="submit" class="btn-primary" style="height: 40px; padding: 0 1.5rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+                        <i class="bi bi-plus-lg"></i> Add Question
+                    </button>
+                </div>
+            </form>
+        </div>
+
     </div>
 </div>
 

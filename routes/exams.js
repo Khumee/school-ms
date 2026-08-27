@@ -42,9 +42,40 @@ router.get('/exams/manage', async (req, res) => {
 router.post('/exams/add', async (req, res) => {
     const { name, start_date, end_date } = req.body;
     try {
-        await db.query('INSERT INTO exams (name, start_date, end_date, tenant_id) VALUES (?, ?, ?, ?)', 
+        const [insertRes] = await db.query('INSERT INTO exams (name, start_date, end_date, tenant_id) VALUES (?, ?, ?, ?)', 
             [name, start_date, end_date, req.tenant.id]);
-        req.session.success = 'Exam added successfully.';
+        const newExamId = insertRes.insertId;
+
+        // Auto-generate papers for all subjects defined in classes
+        const [subjects] = await db.query(`
+            SELECT s.id as subject_id, s.class_id,
+                   (SELECT p.employee_id FROM periods p WHERE p.subject_id = s.id AND p.tenant_id = s.tenant_id LIMIT 1) as teacher_id
+            FROM subjects s
+            WHERE s.tenant_id = ?
+        `, [req.tenant.id]);
+
+        const [teachers] = await db.query('SELECT id FROM employees WHERE role = "teacher" AND tenant_id = ? LIMIT 1', [req.tenant.id]);
+        const defaultTeacherId = teachers.length > 0 ? teachers[0].id : null;
+
+        for (const sub of subjects) {
+            const assignedTeacher = sub.teacher_id || defaultTeacherId;
+            if (assignedTeacher) {
+                const [pRes] = await db.query(`
+                    INSERT INTO exam_papers (exam_id, class_id, subject_id, teacher_id, total_marks, tenant_id)
+                    VALUES (?, ?, ?, ?, 100, ?)
+                `, [newExamId, sub.class_id, sub.subject_id, assignedTeacher, req.tenant.id]);
+
+                const paperId = pRes.insertId;
+                await db.query(`
+                    INSERT INTO exam_questions (exam_paper_id, question_text, marks, tenant_id)
+                    VALUES (?, 'Q1: Objective / Concepts', 30, ?),
+                           (?, 'Q2: Short Questions', 30, ?),
+                           (?, 'Q3: Long Questions / Practical', 40, ?)
+                `, [paperId, req.tenant.id, paperId, req.tenant.id, paperId, req.tenant.id]);
+            }
+        }
+
+        req.session.success = `Exam "${name}" created with papers automatically initialized for all subjects.`;
     } catch (err) {
         console.error(err);
         req.session.error = 'Failed to add exam.';
@@ -60,6 +91,8 @@ router.get('/exams/papers', async (req, res) => {
         
         const [exams] = await db.query('SELECT id, name FROM exams WHERE tenant_id = ? ORDER BY id DESC', [req.tenant.id]);
         const [classes] = await db.query('SELECT id, name FROM classes WHERE tenant_id = ? ORDER BY id', [req.tenant.id]);
+        const [teachers] = await db.query('SELECT id, name FROM employees WHERE role = "teacher" AND tenant_id = ? ORDER BY name', [req.tenant.id]);
+        const [allSubjects] = await db.query('SELECT id, name, class_id FROM subjects WHERE tenant_id = ? ORDER BY name', [req.tenant.id]);
         
         let selectedExamId = exam_id || (exams.length > 0 ? exams[0].id : null);
         let papers = [];
@@ -70,7 +103,7 @@ router.get('/exams/papers', async (req, res) => {
                 FROM exam_papers ep
                 JOIN subjects s ON ep.subject_id = s.id
                 JOIN classes c ON ep.class_id = c.id
-                JOIN employees e ON ep.teacher_id = e.id
+                LEFT JOIN employees e ON ep.teacher_id = e.id
                 WHERE ep.exam_id = ? AND ep.tenant_id = ?
             `;
             const params = [selectedExamId, req.tenant.id];
@@ -104,6 +137,8 @@ router.get('/exams/papers', async (req, res) => {
             title: 'Exam Papers',
             exams,
             classes,
+            teachers,
+            allSubjects,
             papers,
             selectedExamId,
             classId: classId || '',
@@ -121,45 +156,54 @@ router.get('/exams/papers', async (req, res) => {
     }
 });
 
-// Auto Generate Papers
-router.post('/exams/generate_papers', async (req, res) => {
-    const { exam_id } = req.body;
+// Add Single Exam Paper manually
+router.post('/exams/papers/add', async (req, res) => {
+    const { exam_id, class_id, subject_id, teacher_id, total_marks } = req.body;
     try {
-        const [assignments] = await db.query(`
-            SELECT DISTINCT p.class_id, p.subject_id, p.employee_id
-            FROM periods p
-            WHERE p.subject_id IS NOT NULL AND p.employee_id IS NOT NULL AND p.tenant_id = ?
-        `, [req.tenant.id]);
+        const [existing] = await db.query(
+            'SELECT id FROM exam_papers WHERE exam_id = ? AND class_id = ? AND subject_id = ? AND tenant_id = ?',
+            [exam_id, class_id, subject_id, req.tenant.id]
+        );
 
-        let createdCount = 0;
-        for (const assignment of assignments) {
-            const [existing] = await db.query(`
-                SELECT id FROM exam_papers 
-                WHERE exam_id = ? AND class_id = ? AND subject_id = ? AND tenant_id = ?
-            `, [exam_id, assignment.class_id, assignment.subject_id, req.tenant.id]);
-
-            if (existing.length === 0) {
-                const [insertRes] = await db.query(`
-                    INSERT INTO exam_papers (exam_id, class_id, subject_id, teacher_id, total_marks, tenant_id)
-                    VALUES (?, ?, ?, ?, 100, ?)
-                `, [exam_id, assignment.class_id, assignment.subject_id, assignment.employee_id, req.tenant.id]);
-                
-                const paperId = insertRes.insertId;
-                
-                // Add default questions (Q1: 34, Q2: 33, Q3: 33)
-                await db.query(`
-                    INSERT INTO exam_questions (exam_paper_id, question_text, marks, tenant_id)
-                    VALUES (?, 'Q1', 34, ?), (?, 'Q2', 33, ?), (?, 'Q3', 33, ?)
-                `, [paperId, req.tenant.id, paperId, req.tenant.id, paperId, req.tenant.id]);
-
-                createdCount++;
-            }
+        if (existing.length > 0) {
+            req.session.error = 'A paper for this subject and class already exists in this examination.';
+            return res.redirect(`/exams/papers?exam_id=${exam_id}`);
         }
-        
-        req.session.success = `Successfully generated ${createdCount} new papers based on timetable.`;
+
+        const [insertRes] = await db.query(`
+            INSERT INTO exam_papers (exam_id, class_id, subject_id, teacher_id, total_marks, tenant_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `, [exam_id, class_id, subject_id, teacher_id, total_marks || 100, req.tenant.id]);
+
+        const paperId = insertRes.insertId;
+        // Add default questions
+        await db.query(`
+            INSERT INTO exam_questions (exam_paper_id, question_text, marks, tenant_id)
+            VALUES (?, 'Q1: Objective / Concepts', 30, ?),
+                   (?, 'Q2: Short Questions', 30, ?),
+                   (?, 'Q3: Long Questions / Practical', 40, ?)
+        `, [paperId, req.tenant.id, paperId, req.tenant.id, paperId, req.tenant.id]);
+
+        req.session.success = 'Exam paper added successfully.';
     } catch (err) {
         console.error(err);
-        req.session.error = 'Failed to generate papers.';
+        req.session.error = 'Failed to add exam paper.';
+    }
+    res.redirect(`/exams/papers?exam_id=${exam_id}`);
+});
+
+// Delete Exam Paper
+router.post('/exams/papers/delete/:id', async (req, res) => {
+    const { exam_id } = req.body;
+    try {
+        await db.query('DELETE FROM exam_question_marks WHERE exam_paper_id = ? AND tenant_id = ?', [req.params.id, req.tenant.id]);
+        await db.query('DELETE FROM exam_marks WHERE exam_paper_id = ? AND tenant_id = ?', [req.params.id, req.tenant.id]);
+        await db.query('DELETE FROM exam_questions WHERE exam_paper_id = ? AND tenant_id = ?', [req.params.id, req.tenant.id]);
+        await db.query('DELETE FROM exam_papers WHERE id = ? AND tenant_id = ?', [req.params.id, req.tenant.id]);
+        req.session.success = 'Exam paper deleted successfully.';
+    } catch (err) {
+        console.error(err);
+        req.session.error = 'Failed to delete exam paper.';
     }
     res.redirect(`/exams/papers?exam_id=${exam_id}`);
 });
@@ -169,10 +213,11 @@ router.get('/exams/papers/:id/build', async (req, res) => {
     try {
         const paperId = req.params.id;
         const [paperRows] = await db.query(`
-            SELECT ep.*, s.name as subject_name, c.name as class_name 
+            SELECT ep.*, s.name as subject_name, c.name as class_name, ex.name as exam_name 
             FROM exam_papers ep
             JOIN subjects s ON ep.subject_id = s.id
             JOIN classes c ON ep.class_id = c.id
+            JOIN exams ex ON ep.exam_id = ex.id
             WHERE ep.id = ? AND ep.tenant_id = ?
         `, [paperId, req.tenant.id]);
 
