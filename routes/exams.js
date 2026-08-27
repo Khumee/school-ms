@@ -491,4 +491,22 @@ router.post('/exams/papers/:id/set-date', async (req, res) => {
     res.redirect(`/exams/${exam_id}/datesheet?class_id=${class_id || ''}`);
 });
 
+// Quick Update Paper Date via AJAX from Papers View
+router.post('/exams/papers/:id/quick-date', async (req, res) => {
+    const paperId = req.params.id;
+    const { paper_date } = req.body;
+    try {
+        await db.query(`
+            UPDATE exam_papers 
+            SET paper_date = ?
+            WHERE id = ? AND tenant_id = ?
+        `, [paper_date || null, paperId, req.tenant.id]);
+
+        res.json({ success: true, message: 'Exam date saved' });
+    } catch (err) {
+        console.error('Error in quick-date:', err);
+        res.status(500).json({ success: false, error: 'Failed to update date' });
+    }
+});
+
 module.exports = router;

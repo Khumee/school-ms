@@ -79,7 +79,8 @@
                     <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Subject</th>
                     <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Assigned Teacher</th>
                     <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600;">Total Marks</th>
-                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: right; color: var(--muted); font-weight: 600; width: 220px; white-space: nowrap;">Actions</th>
+                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: left; color: var(--muted); font-weight: 600; width: 170px;">Paper Date</th>
+                    <th style="padding: 0.75rem; border-bottom: 1px solid var(--border); text-align: right; color: var(--muted); font-weight: 600; width: 200px; white-space: nowrap;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -97,6 +98,12 @@
                                         <i class="bi bi-clock-history"></i> Not Started
                                     </span>
                                 <% } %>
+                            </td>
+                            <td style="padding: 0.6rem 0.75rem; white-space: nowrap;">
+                                <div style="display: flex; align-items: center; gap: 0.35rem;">
+                                    <input type="date" class="form-control" value="<%= p.paper_date ? new Date(p.paper_date).toISOString().split('T')[0] : '' %>" onchange="updatePaperDate(this, '<%= p.id %>')" style="height: 32px; font-size: 0.82rem; padding: 0.15rem 0.4rem; max-width: 140px; border-radius: 5px;">
+                                    <span id="dateSavedIcon_<%= p.id %>" style="display: none; color: #16a34a; font-size: 0.9rem;"><i class="bi bi-check-circle-fill"></i></span>
+                                </div>
                             </td>
                             <td style="padding: 0.6rem 0.75rem; text-align: right; white-space: nowrap;">
                                 <div style="display: inline-flex; gap: 0.35rem; align-items: center;">
@@ -117,7 +124,7 @@
                     <% }) %>
                 <% } else { %>
                     <tr>
-                        <td colspan="5" style="padding: 2.5rem; text-align: center; color: var(--muted);">
+                        <td colspan="6" style="padding: 2.5rem; text-align: center; color: var(--muted);">
                             <i class="bi bi-inbox" style="font-size: 2rem; color: #cbd5e1; display: block; margin-bottom: 0.5rem;"></i>
                             No papers found matching the filter criteria.
                         </td>
@@ -238,6 +245,26 @@
 
     function closeDeletePaperModal() {
         document.getElementById('deletePaperModal').style.display = 'none';
+    }
+
+    async function updatePaperDate(inputElem, paperId) {
+        const newDate = inputElem.value;
+        const icon = document.getElementById(`dateSavedIcon_${paperId}`);
+        try {
+            const resp = await fetch(`/exams/papers/${paperId}/quick-date`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paper_date: newDate })
+            });
+            const data = await resp.json();
+            if (data.success && icon) {
+                icon.style.display = 'inline';
+                setTimeout(() => { icon.style.display = 'none'; }, 2000);
+            }
+        } catch (err) {
+            console.error('Failed to update date:', err);
+            alert('Failed to save paper date.');
+        }
     }
 </script>
 
