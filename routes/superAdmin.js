@@ -143,6 +143,8 @@ router.post('/admin/tenants/new', isSuperAdmin, (req, res) => {
         const { name, school_name, subdomain, custom_domain, status, primary_color, secondary_color, admin_username, admin_password, address, contact_phone, contact_email } = req.body;
         const enable_donations_module = req.body.enable_donations_module === 'on' ? 1 : 0;
         const enable_hifz_module      = req.body.enable_hifz_module === 'on' ? 1 : 0;
+        const enable_timetable_module = req.body.enable_timetable_module === 'on' ? 1 : 0;
+        const enable_exams_module     = req.body.enable_exams_module === 'on' ? 1 : 0;
         const feature_ocr_student     = req.body.feature_ocr_student === 'on' ? 1 : 0;
         const feature_ocr_hifz        = req.body.feature_ocr_hifz === 'on' ? 1 : 0;
         const logo_url = req.file ? `/images/logos/${req.file.filename}` : '/images/default_logo.png';
@@ -153,9 +155,9 @@ router.post('/admin/tenants/new', isSuperAdmin, (req, res) => {
                 await connection.beginTransaction();
 
                 const [result] = await connection.execute(
-                    `INSERT INTO tenants (name, school_name, subdomain, custom_domain, status, primary_color, secondary_color, enable_donations_module, enable_hifz_module, feature_ocr_student, feature_ocr_hifz, logo_url, address, contact_phone, contact_email) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                    [name, school_name, subdomain, custom_domain || null, status, primary_color, secondary_color, enable_donations_module, enable_hifz_module, feature_ocr_student, feature_ocr_hifz, logo_url, address || null, contact_phone || null, contact_email || null]
+                    `INSERT INTO tenants (name, school_name, subdomain, custom_domain, status, primary_color, secondary_color, enable_donations_module, enable_hifz_module, enable_timetable_module, enable_exams_module, feature_ocr_student, feature_ocr_hifz, logo_url, address, contact_phone, contact_email) 
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [name, school_name, subdomain, custom_domain || null, status, primary_color, secondary_color, enable_donations_module, enable_hifz_module, enable_timetable_module, enable_exams_module, feature_ocr_student, feature_ocr_hifz, logo_url, address || null, contact_phone || null, contact_email || null]
                 );
                 const tenantId = result.insertId;
 
@@ -218,14 +220,16 @@ router.post('/admin/tenants/:id', isSuperAdmin, (req, res) => {
         const { school_name, subdomain, custom_domain, status, primary_color, secondary_color, address, contact_phone, contact_email } = req.body;
         const enable_donations_module = req.body.enable_donations_module === 'on' ? 1 : 0;
         const enable_hifz_module      = req.body.enable_hifz_module === 'on' ? 1 : 0;
+        const enable_timetable_module = req.body.enable_timetable_module === 'on' ? 1 : 0;
+        const enable_exams_module     = req.body.enable_exams_module === 'on' ? 1 : 0;
         const feature_ocr_student     = req.body.feature_ocr_student === 'on' ? 1 : 0;
         const feature_ocr_hifz        = req.body.feature_ocr_hifz === 'on' ? 1 : 0;
 
         const fields = [school_name, subdomain, custom_domain || null, status, primary_color, secondary_color,
-                        enable_donations_module, enable_hifz_module, feature_ocr_student, feature_ocr_hifz, address || null, contact_phone || null, contact_email || null];
+                        enable_donations_module, enable_hifz_module, enable_timetable_module, enable_exams_module, feature_ocr_student, feature_ocr_hifz, address || null, contact_phone || null, contact_email || null];
         let sql = `UPDATE tenants SET school_name = ?, subdomain = ?, custom_domain = ?, status = ?, 
                    primary_color = ?, secondary_color = ?,
-                   enable_donations_module = ?, enable_hifz_module = ?,
+                   enable_donations_module = ?, enable_hifz_module = ?, enable_timetable_module = ?, enable_exams_module = ?,
                    feature_ocr_student = ?, feature_ocr_hifz = ?,
                    address = ?, contact_phone = ?, contact_email = ?`;
 
