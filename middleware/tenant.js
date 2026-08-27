@@ -42,8 +42,16 @@ module.exports = async (req, res, next) => {
         }
 
         // 4. Status Check
+        if (process.env.MAINTENANCE_MODE === 'true' && !req.isSuperAdminSite) {
+            return res.status(503).send('<h1>System Upgrade in Progress</h1><p>Our server is currently undergoing a scheduled upgrade. Please check back shortly.</p>');
+        }
+        
         if (tenant.status === 'suspended') {
             return res.status(403).send('This school portal has been suspended. Please contact admin.');
+        }
+
+        if (tenant.status === 'maintenance') {
+            return res.status(503).send('<h1>Maintenance Mode</h1><p>This school portal is currently undergoing maintenance. Please check back shortly.</p>');
         }
 
         // 5. Inject

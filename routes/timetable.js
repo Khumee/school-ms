@@ -14,22 +14,22 @@ router.use(requireLogin);
 // Manage Timetable View
 router.get('/timetable/manage', async (req, res) => {
     try {
-        const [classes] = await db.query('SELECT id, name FROM classes WHERE tenant_id = ? ORDER BY id', [req.tenantId]);
-        const [teachers] = await db.query('SELECT id, name FROM employees WHERE role = "teacher" AND tenant_id = ?', [req.tenantId]);
+        const [classes] = await db.query('SELECT id, name FROM classes WHERE tenant_id = ? ORDER BY id', [req.tenant.id]);
+        const [teachers] = await db.query('SELECT id, name FROM employees WHERE role = "teacher" AND tenant_id = ?', [req.tenant.id]);
         
         let selectedClassId = req.query.class_id || (classes.length > 0 ? classes[0].id : null);
         let subjects = [];
         let periods = [];
 
         if (selectedClassId) {
-            [subjects] = await db.query('SELECT id, name FROM subjects WHERE class_id = ? AND tenant_id = ?', [selectedClassId, req.tenantId]);
+            [subjects] = await db.query('SELECT id, name FROM subjects WHERE class_id = ? AND tenant_id = ?', [selectedClassId, req.tenant.id]);
             [periods] = await db.query(`
                 SELECT p.*, s.name as subject_name, e.name as teacher_name 
                 FROM periods p
                 LEFT JOIN subjects s ON p.subject_id = s.id
                 LEFT JOIN employees e ON p.employee_id = e.id
                 WHERE p.class_id = ? AND p.tenant_id = ?
-            `, [selectedClassId, req.tenantId]);
+            `, [selectedClassId, req.tenant.id]);
         }
 
         res.render('timetable/manage', {
@@ -66,7 +66,7 @@ router.post('/timetable/add', async (req, res) => {
             AND (
                 (p.start_time < ? AND p.end_time > ?)
             )
-        `, [employee_id, day_of_week, req.tenantId, end_time, start_time]);
+        `, [employee_id, day_of_week, req.tenant.id, end_time, start_time]);
 
         if (teacherCollisions.length > 0) {
             req.session.error = `Collision Detected: Teacher is already assigned to ${teacherCollisions[0].class_name} during this time slot.`;
@@ -76,7 +76,7 @@ router.post('/timetable/add', async (req, res) => {
         await db.query(`
             INSERT INTO periods (class_id, day_of_week, start_time, end_time, subject_id, employee_id, period_number, tenant_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `, [class_id, day_of_week, start_time, end_time, subject_id, employee_id, period_number, req.tenantId]);
+        `, [class_id, day_of_week, start_time, end_time, subject_id, employee_id, period_number, req.tenant.id]);
         
         req.session.success = 'Timetable slot added successfully.';
     } catch (err) {
@@ -90,7 +90,7 @@ router.post('/timetable/add', async (req, res) => {
 router.post('/timetable/delete/:id', async (req, res) => {
     const { class_id } = req.body;
     try {
-        await db.query('DELETE FROM periods WHERE id = ? AND tenant_id = ?', [req.params.id, req.tenantId]);
+        await db.query('DELETE FROM periods WHERE id = ? AND tenant_id = ?', [req.params.id, req.tenant.id]);
         req.session.success = 'Slot deleted successfully.';
     } catch (err) {
         console.error(err);

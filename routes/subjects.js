@@ -16,7 +16,7 @@ router.use(requireLogin);
 // Get all subjects
 router.get('/subjects', async (req, res) => {
     try {
-        const [classes] = await db.query('SELECT id, name FROM classes WHERE tenant_id = ? ORDER BY id', [req.tenantId]);
+        const [classes] = await db.query('SELECT id, name FROM classes WHERE tenant_id = ? ORDER BY id', [req.tenant.id]);
         
         const [subjects] = await db.query(`
             SELECT s.id, s.name, c.name as class_name 
@@ -24,7 +24,7 @@ router.get('/subjects', async (req, res) => {
             JOIN classes c ON s.class_id = c.id
             WHERE s.tenant_id = ?
             ORDER BY c.id, s.name
-        `, [req.tenantId]);
+        `, [req.tenant.id]);
 
         res.render('subjects/index', {
             title: 'Manage Subjects',
@@ -46,7 +46,7 @@ router.get('/subjects', async (req, res) => {
 router.post('/subjects/add', async (req, res) => {
     const { class_id, name } = req.body;
     try {
-        await db.query('INSERT INTO subjects (class_id, name, tenant_id) VALUES (?, ?, ?)', [class_id, name, req.tenantId]);
+        await db.query('INSERT INTO subjects (class_id, name, tenant_id) VALUES (?, ?, ?)', [class_id, name, req.tenant.id]);
         req.session.success = 'Subject added successfully.';
     } catch (err) {
         console.error(err);
@@ -58,7 +58,7 @@ router.post('/subjects/add', async (req, res) => {
 // Delete subject
 router.post('/subjects/delete/:id', async (req, res) => {
     try {
-        await db.query('DELETE FROM subjects WHERE id = ? AND tenant_id = ?', [req.params.id, req.tenantId]);
+        await db.query('DELETE FROM subjects WHERE id = ? AND tenant_id = ?', [req.params.id, req.tenant.id]);
         req.session.success = 'Subject deleted successfully.';
     } catch (err) {
         console.error(err);

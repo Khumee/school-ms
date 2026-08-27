@@ -77,6 +77,7 @@
                                                 <td><%= p.teacher_name %></td>
                                                 <td><%= p.total_marks ? p.total_marks : '<span class="badge bg-secondary">Not Set</span>' %></td>
                                                 <td>
+                                                    <a href="/exams/papers/<%= p.id %>/build" class="btn btn-sm btn-info text-white me-1">Build Paper</a>
                                                     <a href="/exams/marks/<%= p.id %>" class="btn btn-sm btn-primary">Enter Marks</a>
                                                 </td>
                                             </tr>
