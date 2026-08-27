@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { renderPdf, resolvePublicAsset } = require('../utils/pdfGenerator');
 
 const requireLogin = (req, res, next) => {
     if (!req.session.userId) {
@@ -764,6 +765,240 @@ router.get('/exams/:id/class/:class_id/report-cards', async (req, res) => {
     } catch (err) {
         console.error('Error rendering batch report cards:', err);
         res.status(500).send('Error rendering report cards: ' + err.message);
+    }
+});
+
+// PDF: Date Sheet
+router.get('/exams/:id/datesheet/pdf', async (req, res) => {
+    try {
+        const examId = req.params.id;
+        const { class_id } = req.query;
+
+        const [exams] = await db.query('SELECT * FROM exams WHERE id = ? AND tenant_id = ?', [examId, req.tenant.id]);
+        if (exams.length === 0) return res.status(404).send('Exam not found');
+        const exam = exams[0];
+
+        const [classes] = await db.query('SELECT id, name FROM classes WHERE tenant_id = ? ORDER BY id', [req.tenant.id]);
+        let selectedClassId = class_id !== undefined ? class_id : (classes.length > 0 ? String(classes[0].id) : 'all');
+
+        let query = `
+            SELECT ep.*, s.name as subject_name, c.name as class_name, e.name as teacher_name 
+            FROM exam_papers ep
+            JOIN subjects s ON ep.subject_id = s.id
+            JOIN classes c ON ep.class_id = c.id
+            LEFT JOIN employees e ON ep.teacher_id = e.id
+            WHERE ep.exam_id = ? AND ep.tenant_id = ?
+        `;
+        const params = [examId, req.tenant.id];
+
+        if (selectedClassId !== 'all') {
+            query += ' AND ep.class_id = ?';
+            params.push(selectedClassId);
+        }
+
+        query += ' ORDER BY c.id, ep.paper_date ASC, s.name ASC';
+        const [papers] = await db.query(query, params);
+
+        let classDateSheets = [];
+        if (selectedClassId === 'all') {
+            classes.forEach(c => {
+                const cPapers = papers.filter(p => p.class_id === c.id);
+                if (cPapers.length > 0) {
+                    classDateSheets.push({
+                        classId: c.id,
+                        className: c.name,
+                        papers: cPapers
+                    });
+                }
+            });
+        } else {
+            const foundClass = classes.find(c => String(c.id) === String(selectedClassId));
+            classDateSheets.push({
+                classId: selectedClassId,
+                className: foundClass ? foundClass.name : 'Class',
+                papers: papers
+            });
+        }
+
+        const tenantLogo = resolvePublicAsset(req.tenant.logo_url);
+
+        renderPdf(res, {
+            templateName: 'datesheet_pdf',
+            data: {
+                tenant: req.tenant,
+                tenantLogo,
+                exam,
+                classDateSheets
+            },
+            fileBaseName: `DateSheet_${exam.name.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            downloadName: `DateSheet_${exam.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+        });
+    } catch (err) {
+        console.error('Error generating datesheet PDF:', err);
+        res.status(500).send('Error generating datesheet PDF: ' + err.message);
+    }
+});
+
+// PDF: Single Student Report Card
+router.get('/exams/:id/student/:student_id/report-card/pdf', async (req, res) => {
+    try {
+        const examId = req.params.id;
+        const studentId = req.params.student_id;
+
+        const [exams] = await db.query('SELECT * FROM exams WHERE id = ? AND tenant_id = ?', [examId, req.tenant.id]);
+        if (exams.length === 0) return res.status(404).send('Exam not found');
+        const exam = exams[0];
+
+        const [students] = await db.query(`
+            SELECT s.*, c.name as class_name 
+            FROM students s 
+            JOIN classes c ON s.class_id = c.id
+            WHERE s.id = ? AND s.tenant_id = ?
+        `, [studentId, req.tenant.id]);
+        if (students.length === 0) return res.status(404).send('Student not found');
+        const student = students[0];
+
+        const [papers] = await db.query(`
+            SELECT ep.id as paper_id, ep.total_marks as max_marks, s.name as subject_name,
+                   em.obtained_marks
+            FROM exam_papers ep
+            JOIN subjects s ON ep.subject_id = s.id
+            LEFT JOIN exam_marks em ON em.exam_paper_id = ep.id AND em.student_id = ? AND em.tenant_id = ep.tenant_id
+            WHERE ep.exam_id = ? AND ep.class_id = ? AND ep.tenant_id = ?
+            ORDER BY s.name ASC
+        `, [student.id, examId, student.class_id, req.tenant.id]);
+
+        let totalMax = 0;
+        let totalObtained = 0;
+        let hasAnyMarks = false;
+
+        papers.forEach(p => {
+            const maxM = Number(p.max_marks) || 0;
+            totalMax += maxM;
+            if (p.obtained_marks !== null && p.obtained_marks !== undefined) {
+                totalObtained += Number(p.obtained_marks);
+                hasAnyMarks = true;
+            }
+        });
+
+        const pct = totalMax > 0 && hasAnyMarks ? (totalObtained / totalMax) * 100 : 0;
+        const gradeInfo = calculateGrade(pct);
+
+        const card = {
+            student,
+            results: papers,
+            totalMax,
+            totalObtained: Math.round(totalObtained * 100) / 100,
+            percentage: pct,
+            gradeInfo,
+            hasAnyMarks
+        };
+
+        const tenantLogo = resolvePublicAsset(req.tenant.logo_url);
+
+        renderPdf(res, {
+            templateName: 'report_card_pdf',
+            data: {
+                tenant: req.tenant,
+                tenantLogo,
+                exam,
+                examCards: [card]
+            },
+            fileBaseName: `ReportCard_${student.name.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            downloadName: `ReportCard_${student.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+        });
+    } catch (err) {
+        console.error('Error generating student report card PDF:', err);
+        res.status(500).send('Error generating student report card PDF: ' + err.message);
+    }
+});
+
+// PDF: Batch Class Report Cards
+router.get('/exams/:id/class/:class_id/report-cards/pdf', async (req, res) => {
+    try {
+        const examId = req.params.id;
+        const classId = req.params.class_id;
+
+        const [exams] = await db.query('SELECT * FROM exams WHERE id = ? AND tenant_id = ?', [examId, req.tenant.id]);
+        if (exams.length === 0) return res.status(404).send('Exam not found');
+        const exam = exams[0];
+
+        const [students] = await db.query(`
+            SELECT s.*, c.name as class_name 
+            FROM students s 
+            JOIN classes c ON s.class_id = c.id
+            WHERE s.class_id = ? AND s.tenant_id = ? AND s.status = 'active'
+            ORDER BY s.reg_no, s.name
+        `, [classId, req.tenant.id]);
+
+        const [papers] = await db.query(`
+            SELECT ep.id as paper_id, ep.total_marks as max_marks, s.name as subject_name 
+            FROM exam_papers ep
+            JOIN subjects s ON ep.subject_id = s.id
+            WHERE ep.exam_id = ? AND ep.class_id = ? AND ep.tenant_id = ?
+            ORDER BY s.name ASC
+        `, [examId, classId, req.tenant.id]);
+
+        const [marks] = await db.query(`
+            SELECT em.exam_paper_id, em.student_id, em.obtained_marks 
+            FROM exam_marks em
+            JOIN exam_papers ep ON em.exam_paper_id = ep.id
+            WHERE ep.exam_id = ? AND ep.class_id = ? AND em.tenant_id = ?
+        `, [examId, classId, req.tenant.id]);
+
+        let examCards = [];
+
+        students.forEach(st => {
+            let totalMax = 0;
+            let totalObtained = 0;
+            let hasAnyMarks = false;
+
+            const stResults = papers.map(p => {
+                const maxM = Number(p.max_marks) || 0;
+                totalMax += maxM;
+                const foundMark = marks.find(m => m.student_id === st.id && m.exam_paper_id === p.paper_id);
+                const obt = (foundMark && foundMark.obtained_marks !== null) ? Number(foundMark.obtained_marks) : null;
+                if (obt !== null) {
+                    totalObtained += obt;
+                    hasAnyMarks = true;
+                }
+                return {
+                    ...p,
+                    obtained_marks: obt
+                };
+            });
+
+            const pct = totalMax > 0 && hasAnyMarks ? (totalObtained / totalMax) * 100 : 0;
+            const gradeInfo = calculateGrade(pct);
+
+            examCards.push({
+                student: st,
+                results: stResults,
+                totalMax,
+                totalObtained: Math.round(totalObtained * 100) / 100,
+                percentage: pct,
+                gradeInfo,
+                hasAnyMarks
+            });
+        });
+
+        const tenantLogo = resolvePublicAsset(req.tenant.logo_url);
+        const className = students.length > 0 ? students[0].class_name : 'Class';
+
+        renderPdf(res, {
+            templateName: 'report_card_pdf',
+            data: {
+                tenant: req.tenant,
+                tenantLogo,
+                exam,
+                examCards
+            },
+            fileBaseName: `ReportCards_${className.replace(/[^a-zA-Z0-9]/g, '_')}_${exam.name.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            downloadName: `ReportCards_${className.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+        });
+    } catch (err) {
+        console.error('Error generating class report cards PDF:', err);
+        res.status(500).send('Error generating class report cards PDF: ' + err.message);
     }
 });
 

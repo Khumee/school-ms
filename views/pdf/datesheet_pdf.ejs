@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Examination Date Sheet</title>
+<style>
+    @page {
+        size: A4 portrait;
+        margin: 12mm 15mm 15mm 15mm;
+    }
+    * {
+        box-sizing: border-box;
+    }
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        color: #0f172a;
+        margin: 0;
+        padding: 0;
+        background: #fff;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .page-container {
+        page-break-after: always;
+        break-after: page;
+        min-height: 96vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .page-container:last-child {
+        page-break-after: avoid;
+        break-after: avoid;
+    }
+    .header-box {
+        border-bottom: 2.5px solid <%= tenant.primary_color || '#4f46e5' %>;
+        padding-bottom: 12px;
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .school-info {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .school-logo {
+        height: 52px;
+        max-width: 120px;
+        object-fit: contain;
+    }
+    .school-name {
+        font-size: 22px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 2px 0;
+    }
+    .datesheet-badge {
+        font-size: 13px;
+        font-weight: 700;
+        color: <%= tenant.primary_color || '#4f46e5' %>;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .meta-box {
+        text-align: right;
+    }
+    .class-pill {
+        font-size: 18px;
+        font-weight: 800;
+        color: <%= tenant.primary_color || '#4f46e5' %>;
+    }
+    .session-text {
+        font-size: 11px;
+        color: #64748b;
+    }
+    .datesheet-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    .datesheet-table th, .datesheet-table td {
+        border: 1px solid #cbd5e1;
+        padding: 9px 12px;
+        font-size: 12px;
+    }
+    .datesheet-table th {
+        background-color: #f1f5f9;
+        color: #0f172a;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .datesheet-table tr:nth-child(even) td {
+        background-color: #f8fafc;
+    }
+    .subject-name {
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 13px;
+    }
+    .footer-box {
+        border-top: 1px solid #cbd5e1;
+        padding-top: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        font-size: 11px;
+        color: #64748b;
+    }
+    .signature-area {
+        text-align: center;
+        width: 200px;
+    }
+    .signature-line {
+        border-top: 1.5px dashed #64748b;
+        margin-bottom: 4px;
+    }
+</style>
+</head>
+<body>
+
+<% classDateSheets.forEach(cds => { %>
+    <div class="page-container">
+        <div>
+            <!-- Header Section -->
+            <div class="header-box">
+                <div class="school-info">
+                    <% if (tenantLogo) { %>
+                        <img src="<%= tenantLogo %>" class="school-logo" alt="Logo">
+                    <% } %>
+                    <div>
+                        <h1 class="school-name"><%= tenant.school_name %></h1>
+                        <div class="datesheet-badge"><%= exam.name %> &bull; Date Sheet</div>
+                    </div>
+                </div>
+                <div class="meta-box">
+                    <div class="class-pill"><%= cds.className %></div>
+                    <div class="session-text">Session 2026</div>
+                </div>
+            </div>
+
+            <!-- Table of Papers -->
+            <table class="datesheet-table">
+                <thead>
+                    <tr>
+                        <th style="width: 130px; text-align: left;">Date</th>
+                        <th style="width: 100px; text-align: left;">Day</th>
+                        <th style="width: 130px; text-align: left;">Time</th>
+                        <th style="text-align: left;">Subject</th>
+                        <th style="width: 160px; text-align: left;">Teacher</th>
+                        <th style="width: 90px; text-align: center;">Total Marks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (cds.papers.length > 0) { %>
+                        <% cds.papers.forEach(p => { %>
+                            <tr>
+                                <td style="font-weight: 600;">
+                                    <% if (p.paper_date) { %>
+                                        <%= new Date(p.paper_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %>
+                                    <% } else { %>
+                                        <span style="color: #94a3b8; font-style: italic;">To be announced</span>
+                                    <% } %>
+                                </td>
+                                <td style="color: #475569;">
+                                    <% if (p.paper_date) { %>
+                                        <%= new Date(p.paper_date).toLocaleDateString('en-US', { weekday: 'long' }) %>
+                                    <% } else { %>
+                                        —
+                                    <% } %>
+                                </td>
+                                <td style="color: #334155;">
+                                    <% if (p.start_time && p.end_time) { %>
+                                        <%= p.start_time.substring(0,5) %> - <%= p.end_time.substring(0,5) %>
+                                    <% } else { %>
+                                        09:00 - 12:00
+                                    <% } %>
+                                </td>
+                                <td class="subject-name"><%= p.subject_name %></td>
+                                <td style="color: #475569;"><%= p.teacher_name || 'Unassigned' %></td>
+                                <td style="text-align: center; font-weight: 700; color: <%= tenant.primary_color || '#4f46e5' %>;">
+                                    <%= p.total_marks || 100 %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 20px; color: #64748b;">No examination papers registered for this class.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer / Signature Block -->
+        <div class="footer-box">
+            <div>
+                <strong>Instructions:</strong>
+                <div>1. Students must bring their own stationery and admit card.</div>
+                <div>2. Examination starts promptly at scheduled time. Late entry is not permitted.</div>
+            </div>
+            <div class="signature-area">
+                <div class="signature-line"></div>
+                <strong>Principal / Exam Incharge</strong>
+            </div>
+        </div>
+    </div>
+<% }) %>
+
+</body>
+</html>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Student Progress Report Card</title>
+<style>
+    @page {
+        size: A4 portrait;
+        margin: 12mm 15mm 15mm 15mm;
+    }
+    * {
+        box-sizing: border-box;
+    }
+    body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        color: #0f172a;
+        margin: 0;
+        padding: 0;
+        background: #fff;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .page-container {
+        page-break-after: always;
+        break-after: page;
+        min-height: 96vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border: 2px solid #0f172a;
+        border-radius: 8px;
+        padding: 20px 24px;
+        position: relative;
+    }
+    .page-container:last-child {
+        page-break-after: avoid;
+        break-after: avoid;
+    }
+    .watermark-img {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        opacity: 0.04;
+        max-width: 350px;
+        max-height: 350px;
+        pointer-events: none;
+        z-index: 0;
+    }
+    .header-box {
+        border-bottom: 2px solid #0f172a;
+        padding-bottom: 12px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+    }
+    .school-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .school-logo {
+        height: 60px;
+        max-width: 100px;
+        object-fit: contain;
+    }
+    .school-name {
+        font-size: 22px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 2px 0;
+    }
+    .school-sub {
+        font-size: 11px;
+        color: #64748b;
+    }
+    .exam-badge {
+        background: #0f172a;
+        color: #ffffff;
+        padding: 4px 12px;
+        border-radius: 14px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-block;
+        margin-bottom: 4px;
+    }
+    .title-banner {
+        text-align: center;
+        margin-bottom: 12px;
+        position: relative;
+        z-index: 1;
+    }
+    .title-text {
+        border-bottom: 2px solid <%= tenant.primary_color || '#4f46e5' %>;
+        padding-bottom: 2px;
+        font-size: 14px;
+        font-weight: 800;
+        color: #0f172a;
+        text-transform: uppercase;
+        letter-spacing: 0.75px;
+    }
+    .student-meta-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px 20px;
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        position: relative;
+        z-index: 1;
+    }
+    .meta-item {
+        font-size: 12px;
+        display: flex;
+    }
+    .meta-label {
+        font-weight: 600;
+        color: #475569;
+        width: 110px;
+        flex-shrink: 0;
+    }
+    .meta-value {
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .marks-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 14px;
+        position: relative;
+        z-index: 1;
+    }
+    .marks-table th, .marks-table td {
+        border: 1px solid #cbd5e1;
+        padding: 7px 10px;
+        font-size: 12px;
+    }
+    .marks-table th {
+        background: #0f172a;
+        color: #ffffff;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .marks-table tr.total-row {
+        background: #f1f5f9;
+        font-weight: 800;
+        border-top: 2px solid #0f172a;
+    }
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 16px;
+        position: relative;
+        z-index: 1;
+    }
+    .kpi-box {
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 8px;
+        text-align: center;
+        background: #f8fafc;
+    }
+    .kpi-title {
+        font-size: 10px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+    }
+    .kpi-val {
+        font-size: 18px;
+        font-weight: 800;
+    }
+    .signatures-row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+        padding-top: 8px;
+        position: relative;
+        z-index: 1;
+    }
+    .sign-col {
+        text-align: center;
+        width: 160px;
+    }
+    .sign-line {
+        border-top: 1.5px dashed #64748b;
+        margin-bottom: 4px;
+    }
+    .sign-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: #475569;
+    }
+</style>
+</head>
+<body>
+
+<% examCards.forEach(card => { %>
+    <div class="page-container">
+        <% if (tenantLogo) { %>
+            <img src="<%= tenantLogo %>" class="watermark-img" alt="Watermark">
+        <% } %>
+
+        <div>
+            <!-- Header Section -->
+            <div class="header-box">
+                <div class="school-info">
+                    <% if (tenantLogo) { %>
+                        <img src="<%= tenantLogo %>" class="school-logo" alt="Logo">
+                    <% } %>
+                    <div>
+                        <h1 class="school-name"><%= tenant.school_name %></h1>
+                        <div class="school-sub">Academic Progress Report &bull; Session 2026</div>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="exam-badge"><%= exam.name %></div>
+                    <div style="font-size: 11px; color: #64748b;">Dated: <%= new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %></div>
+                </div>
+            </div>
+
+            <div class="title-banner">
+                <span class="title-text">Student Progress Report Card</span>
+            </div>
+
+            <!-- Student Metadata -->
+            <div class="student-meta-grid">
+                <div class="meta-item">
+                    <span class="meta-label">Student Name:</span>
+                    <span class="meta-value"><%= card.student.name %></span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Roll Number:</span>
+                    <span class="meta-value"><%= card.student.reg_no || card.student.id %></span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Father's Name:</span>
+                    <span class="meta-value"><%= card.student.father_name || '—' %></span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Class:</span>
+                    <span class="meta-value"><%= card.student.class_name %></span>
+                </div>
+            </div>
+
+            <!-- Marks Table -->
+            <table class="marks-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px; text-align: center;">Sr.</th>
+                        <th style="text-align: left;">Subject</th>
+                        <th style="width: 100px; text-align: center;">Max Marks</th>
+                        <th style="width: 120px; text-align: center;">Obtained</th>
+                        <th style="width: 90px; text-align: center;">Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% card.results.forEach((r, idx) => { %>
+                        <tr>
+                            <td style="text-align: center; color: #64748b; font-weight: 600;"><%= idx + 1 %></td>
+                            <td style="font-weight: 700; color: #0f172a;"><%= r.subject_name %></td>
+                            <td style="text-align: center; font-weight: 600;"><%= r.max_marks %></td>
+                            <td style="text-align: center; font-weight: 700; color: <%= r.obtained_marks !== null && r.obtained_marks < (r.max_marks * 0.4) ? '#dc2626' : '#0f172a' %>;">
+                                <%= r.obtained_marks !== null ? r.obtained_marks : '—' %>
+                            </td>
+                            <td style="text-align: center; font-weight: 700;">
+                                <% if (r.obtained_marks !== null && r.max_marks > 0) { %>
+                                    <% const subjPct = (r.obtained_marks / r.max_marks) * 100; %>
+                                    <% if (subjPct >= 80) { %>
+                                        <span style="color: #16a34a;">A</span>
+                                    <% } else if (subjPct >= 60) { %>
+                                        <span style="color: #2563eb;">B</span>
+                                    <% } else if (subjPct >= 50) { %>
+                                        <span style="color: #0284c7;">C</span>
+                                    <% } else if (subjPct >= 40) { %>
+                                        <span style="color: #d97706;">D</span>
+                                    <% } else { %>
+                                        <span style="color: #dc2626;">F</span>
+                                    <% } %>
+                                <% } else { %>
+                                    <span style="color: #94a3b8;">—</span>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                    <tr class="total-row">
+                        <td colspan="2" style="text-align: right; text-transform: uppercase;">Total Marks:</td>
+                        <td style="text-align: center;"><%= card.totalMax %></td>
+                        <td style="text-align: center; color: <%= tenant.primary_color || '#4f46e5' %>; font-size: 14px;"><%= card.totalObtained %></td>
+                        <td style="text-align: center;">
+                            <%= card.totalMax > 0 ? ((card.totalObtained / card.totalMax) * 100).toFixed(1) + '%' : '—' %>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Summary KPI Block -->
+            <div class="summary-grid">
+                <div class="kpi-box">
+                    <div class="kpi-title">Percentage</div>
+                    <div class="kpi-val" style="color: <%= tenant.primary_color || '#4f46e5' %>;">
+                        <%= card.percentage.toFixed(1) %>%
+                    </div>
+                </div>
+
+                <div class="kpi-box">
+                    <div class="kpi-title">Overall Grade</div>
+                    <div class="kpi-val" style="color: <%= card.gradeInfo.status === 'Passed' ? '#16a34a' : '#dc2626' %>;">
+                        <%= card.gradeInfo.grade.split(' ')[0] %>
+                    </div>
+                </div>
+
+                <div class="kpi-box">
+                    <div class="kpi-title">Final Result</div>
+                    <div class="kpi-val" style="color: <%= card.gradeInfo.status === 'Passed' ? '#16a34a' : '#dc2626' %>;">
+                        <%= card.gradeInfo.status.toUpperCase() %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signatures Section -->
+        <div class="signatures-row">
+            <div class="sign-col">
+                <div class="sign-line"></div>
+                <div class="sign-title">Class Teacher</div>
+            </div>
+            <div class="sign-col">
+                <div class="sign-line"></div>
+                <div class="sign-title">Examination Incharge</div>
+            </div>
+            <div class="sign-col">
+                <div class="sign-line"></div>
+                <div class="sign-title">Principal & Seal</div>
+            </div>
+        </div>
+    </div>
+<% }) %>
+
+</body>
+</html>

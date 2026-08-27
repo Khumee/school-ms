@@ -96,9 +96,9 @@
     </div>
     <div style="display: flex; gap: 0.5rem;">
         <a href="/exams/manage" class="btn-secondary"><i class="bi bi-arrow-left"></i> Manage Exams</a>
-        <button type="button" onclick="window.print()" class="btn-primary">
-            <i class="bi bi-printer"></i> Print Date Sheet
-        </button>
+        <a href="/exams/<%= exam.id %>/datesheet/pdf?class_id=<%= selectedClassId %>" target="_blank" class="btn-primary" style="display: inline-flex; align-items: center; gap: 0.4rem; font-weight: 600; text-decoration: none; padding: 0.45rem 1rem;">
+            <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF
+        </a>
     </div>
 </div>
 
