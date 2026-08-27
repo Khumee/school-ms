@@ -1,38 +1,48 @@
 <%- include('../partials/header') %>
 <style>
     .timetable-cell {
-        min-height: 80px;
+        min-height: 120px;
         border: 1px solid var(--border);
-        padding: 10px;
+        padding: 8px;
         background: var(--surface);
+        vertical-align: top;
+        min-width: 150px;
     }
     .period-card {
-        background: var(--bg);
-        border-left: 3px solid var(--primary-color);
-        padding: 8px;
-        margin-bottom: 5px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-left: 4px solid var(--primary-color);
+        padding: 8px 10px;
+        margin-bottom: 8px;
         font-size: 0.85rem;
         position: relative;
-        border-radius: 4px;
-        box-shadow: var(--shadow-sm);
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .period-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
     .period-card .delete-btn {
         position: absolute;
-        top: 2px;
-        right: 4px;
-        color: #ef4444;
+        top: 4px;
+        right: 6px;
+        color: #94a3b8;
         background: none;
         border: none;
         padding: 0;
         cursor: pointer;
-        font-size: 1rem;
+        font-size: 0.95rem;
+        line-height: 1;
+        transition: color 0.15s ease;
     }
     .period-card .delete-btn:hover {
-        color: #b91c1c;
+        color: #ef4444;
     }
 </style>
 
-<div class="section-header" style="display: flex; justify-content: space-between; align-items: center;">
+<div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <h1 class="section-title"><i class="bi bi-calendar3-week"></i> Manage Timetable</h1>
 </div>
 
@@ -48,31 +58,52 @@
     </div>
 <% } %>
 
-<div class="card" style="margin-bottom: 1.5rem;">
-    <form action="/timetable/manage" method="GET" style="display: flex; align-items: center; gap: 1rem;">
-        <label for="class_id" style="font-weight: 600; margin: 0;">Select Class:</label>
-        <select name="class_id" id="class_id" class="form-control" style="width: auto; min-width: 250px;" onchange="this.form.submit()">
-            <% classes.forEach(c => { %>
-                <option value="<%= c.id %>" <%= selectedClassId == c.id ? 'selected' : '' %>><%= c.name %></option>
-            <% }) %>
-        </select>
+<!-- Filter & Selection Bar -->
+<div class="card" style="margin-bottom: 1.5rem; background: var(--surface);">
+    <form action="/timetable/manage" method="GET" style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+        <div class="form-group" style="margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+            <label for="class_id" style="font-weight: 700; color: var(--ink); margin: 0; white-space: nowrap;">
+                <i class="bi bi-building"></i> Select Class:
+            </label>
+            <select name="class_id" id="class_id" class="form-control" style="width: auto; min-width: 220px; font-weight: 600;" onchange="this.form.submit()">
+                <% classes.forEach(c => { %>
+                    <option value="<%= c.id %>" <%= selectedClassId == c.id ? 'selected' : '' %>><%= c.name %></option>
+                <% }) %>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin: 0; display: flex; align-items: center; gap: 0.75rem;">
+            <label for="teacher_id" style="font-weight: 600; color: var(--muted); margin: 0; white-space: nowrap;">
+                <i class="bi bi-person-badge"></i> Filter Teacher:
+            </label>
+            <select name="teacher_id" id="teacher_id" class="form-control" style="width: auto; min-width: 200px;" onchange="this.form.submit()">
+                <option value="">-- All Teachers --</option>
+                <% teachers.forEach(t => { %>
+                    <option value="<%= t.id %>" <%= (typeof selectedTeacherId !== 'undefined' && selectedTeacherId == t.id) ? 'selected' : '' %>><%= t.name %></option>
+                <% }) %>
+            </select>
+        </div>
+
+        <% if (typeof selectedTeacherId !== 'undefined' && selectedTeacherId) { %>
+            <a href="/timetable/manage?class_id=<%= selectedClassId %>" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Clear Teacher Filter</a>
+        <% } %>
     </form>
 </div>
 
 <% if (selectedClassId) { %>
-<div style="display: grid; grid-template-columns: 350px 1fr; gap: 1.5rem;">
+
+<!-- Add Time Slot Collapsible/Compact Form -->
+<div class="card" style="margin-bottom: 1.5rem;">
+    <h3 style="margin-bottom: 1rem; color: var(--primary-color); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; font-size: 1.1rem;">
+        <i class="bi bi-plus-circle-fill"></i> Add Period / Time Slot
+    </h3>
     
-    <!-- Add Slot Form -->
-    <div class="card">
-        <h3 style="margin-bottom: 1rem; color: var(--primary-color); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
-            <i class="bi bi-plus-circle"></i> Add Time Slot
-        </h3>
+    <form action="/timetable/add" method="POST">
+        <input type="hidden" name="class_id" value="<%= selectedClassId %>">
         
-        <form action="/timetable/add" method="POST">
-            <input type="hidden" name="class_id" value="<%= selectedClassId %>">
-            
-            <div class="form-group">
-                <label for="day_of_week">Day</label>
+        <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; align-items: flex-end;">
+            <div class="form-group" style="margin: 0;">
+                <label for="day_of_week" style="font-weight: 600; font-size: 0.85rem;">Day</label>
                 <select name="day_of_week" id="day_of_week" class="form-control" required>
                     <option value="Monday">Monday</option>
                     <option value="Tuesday">Tuesday</option>
@@ -84,32 +115,28 @@
                 </select>
             </div>
             
-            <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
-                <div class="form-group">
-                    <label for="start_time">Start Time</label>
-                    <input type="time" name="start_time" id="start_time" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label for="end_time">End Time</label>
-                    <input type="time" name="end_time" id="end_time" class="form-control" required>
-                </div>
+            <div class="form-group" style="margin: 0;">
+                <label for="start_time" style="font-weight: 600; font-size: 0.85rem;">Start Time</label>
+                <input type="time" name="start_time" id="start_time" class="form-control" required>
             </div>
 
-            <div class="form-group">
-                <label for="subject_id">Subject</label>
+            <div class="form-group" style="margin: 0;">
+                <label for="end_time" style="font-weight: 600; font-size: 0.85rem;">End Time</label>
+                <input type="time" name="end_time" id="end_time" class="form-control" required>
+            </div>
+
+            <div class="form-group" style="margin: 0;">
+                <label for="subject_id" style="font-weight: 600; font-size: 0.85rem;">Subject</label>
                 <select name="subject_id" id="subject_id" class="form-control" required>
                     <option value="">-- Select Subject --</option>
                     <% subjects.forEach(s => { %>
                         <option value="<%= s.id %>"><%= s.name %></option>
                     <% }) %>
                 </select>
-                <% if (subjects.length === 0) { %>
-                    <small style="color: #dc3545; display: block; margin-top: 0.25rem;">No subjects found for this class. Add subjects first.</small>
-                <% } %>
             </div>
 
-            <div class="form-group">
-                <label for="employee_id">Teacher</label>
+            <div class="form-group" style="margin: 0;">
+                <label for="employee_id" style="font-weight: 600; font-size: 0.85rem;">Teacher</label>
                 <select name="employee_id" id="employee_id" class="form-control" required>
                     <option value="">-- Select Teacher --</option>
                     <% teachers.forEach(t => { %>
@@ -118,57 +145,68 @@
                 </select>
             </div>
 
-            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;" <%= subjects.length === 0 ? 'disabled' : '' %>>
-                Add to Timetable
-            </button>
-        </form>
-    </div>
-
-    <!-- Timetable View -->
-    <div class="card" style="padding: 0; overflow: hidden;">
-        <h3 style="margin: 0; padding: 1rem 1.5rem; color: var(--primary-color); border-bottom: 1px solid var(--border); background: #f8fafc;">
-            <i class="bi bi-table"></i> Class Timetable
-        </h3>
-        
-        <div style="overflow-x: auto;">
-            <table class="table" style="width: 100%; margin: 0; border-collapse: collapse; min-width: 800px;">
-                <thead style="background: #f1f5f9;">
-                    <tr>
-                        <th style="width: 14%; border: 1px solid var(--border); padding: 0.75rem; text-align: center; color: var(--muted); font-weight: 600;">Mon</th>
-                        <th style="width: 14%; border: 1px solid var(--border); padding: 0.75rem; text-align: center; color: var(--muted); font-weight: 600;">Tue</th>
-                        <th style="width: 14%; border: 1px solid var(--border); padding: 0.75rem; text-align: center; color: var(--muted); font-weight: 600;">Wed</th>
-                        <th style="width: 14%; border: 1px solid var(--border); padding: 0.75rem; text-align: center; color: var(--muted); font-weight: 600;">Thu</th>
-                        <th style="width: 14%; border: 1px solid var(--border); padding: 0.75rem; text-align: center; color: var(--muted); font-weight: 600;">Fri</th>
-                        <th style="width: 14%; border: 1px solid var(--border); padding: 0.75rem; text-align: center; color: var(--muted); font-weight: 600;">Sat</th>
-                        <th style="width: 14%; border: 1px solid var(--border); padding: 0.75rem; text-align: center; color: var(--muted); font-weight: 600;">Sun</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <% ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].forEach(day => { %>
-                            <td class="timetable-cell" style="vertical-align: top;">
-                                <% const dayPeriods = periods.filter(p => p.day_of_week === day).sort((a,b) => (a.start_time || '').localeCompare(b.start_time || '')); %>
-                                <% dayPeriods.forEach(p => { %>
-                                    <div class="period-card">
-                                        <form action="/timetable/delete/<%= p.id %>" method="POST" onsubmit="return confirm('Delete this slot?');">
-                                            <input type="hidden" name="class_id" value="<%= selectedClassId %>">
-                                            <button type="submit" class="delete-btn" title="Delete"><i class="bi bi-x-circle-fill"></i></button>
-                                        </form>
-                                        <div style="font-weight: 600; color: var(--ink); margin-bottom: 2px;"><%= p.subject_name || p.subject || 'Unknown' %></div>
-                                        <div style="color: var(--muted); font-size: 0.75rem; margin-bottom: 4px;">
-                                            <i class="bi bi-clock"></i> <%= (p.start_time || '').substring(0,5) %> - <%= (p.end_time || '').substring(0,5) %>
-                                        </div>
-                                        <div style="font-size: 0.75rem; color: var(--primary-color); font-weight: 500;">
-                                            <i class="bi bi-person-badge"></i> <%= p.teacher_name || 'Unassigned' %>
-                                        </div>
-                                    </div>
-                                <% }) %>
-                            </td>
-                        <% }) %>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="form-group" style="margin: 0;">
+                <button type="submit" class="btn-primary" style="width: 100%; height: 42px; display: flex; align-items: center; justify-content: center; gap: 0.4rem;" <%= subjects.length === 0 ? 'disabled' : '' %>>
+                    <i class="bi bi-plus-lg"></i> Add Slot
+                </button>
+            </div>
         </div>
+        <% if (subjects.length === 0) { %>
+            <small style="color: #dc3545; display: block; margin-top: 0.5rem;"><i class="bi bi-exclamation-circle"></i> No subjects registered for this class yet. Please add subjects first.</small>
+        <% } %>
+    </form>
+</div>
+
+<!-- Full-Width Timetable Grid -->
+<div class="card" style="padding: 0; overflow: hidden;">
+    <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); background: #f8fafc; display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; color: var(--primary-color); font-size: 1.15rem;">
+            <i class="bi bi-calendar-week"></i> Weekly Schedule
+        </h3>
+        <span style="font-size: 0.85rem; color: var(--muted);">Showing timetable for selected class</span>
+    </div>
+    
+    <div style="overflow-x: auto;">
+        <table class="table" style="width: 100%; margin: 0; border-collapse: collapse; min-width: 950px;">
+            <thead style="background: #f1f5f9;">
+                <tr>
+                    <th style="width: 16%; border: 1px solid var(--border); padding: 0.75rem; text-align: center; color: var(--ink); font-weight: 700;">Monday</th>
+                    <th style="width: 16%; border: 1px solid var(--border); padding: 0.75rem; text-align: center; color: var(--ink); font-weight: 700;">Tuesday</th>
+                    <th style="width: 16%; border: 1px solid var(--border); padding: 0.75rem; text-align: center; color: var(--ink); font-weight: 700;">Wednesday</th>
+                    <th style="width: 16%; border: 1px solid var(--border); padding: 0.75rem; text-align: center; color: var(--ink); font-weight: 700;">Thursday</th>
+                    <th style="width: 16%; border: 1px solid var(--border); padding: 0.75rem; text-align: center; color: var(--ink); font-weight: 700;">Friday</th>
+                    <th style="width: 10%; border: 1px solid var(--border); padding: 0.75rem; text-align: center; color: var(--muted); font-weight: 600;">Saturday</th>
+                    <th style="width: 10%; border: 1px solid var(--border); padding: 0.75rem; text-align: center; color: var(--muted); font-weight: 600;">Sunday</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <% ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].forEach(day => { %>
+                        <td class="timetable-cell">
+                            <% const dayPeriods = periods.filter(p => p.day_of_week === day).sort((a,b) => (a.start_time || '').localeCompare(b.start_time || '')); %>
+                            <% if (dayPeriods.length === 0) { %>
+                                <div style="color: #cbd5e1; font-size: 0.8rem; text-align: center; padding-top: 1.5rem;">—</div>
+                            <% } %>
+                            <% dayPeriods.forEach(p => { %>
+                                <div class="period-card">
+                                    <form action="/timetable/delete/<%= p.id %>" method="POST" onsubmit="return confirm('Delete this slot?');">
+                                        <input type="hidden" name="class_id" value="<%= selectedClassId %>">
+                                        <button type="submit" class="delete-btn" title="Delete Slot"><i class="bi bi-x-circle-fill"></i></button>
+                                    </form>
+                                    <div style="font-weight: 700; color: var(--ink); margin-bottom: 3px; padding-right: 15px;"><%= p.subject_name || p.subject || 'Unknown' %></div>
+                                    <div style="color: var(--muted); font-size: 0.78rem; margin-bottom: 4px; display: flex; align-items: center; gap: 0.25rem;">
+                                        <i class="bi bi-clock"></i> <%= (p.start_time || '').substring(0,5) %> - <%= (p.end_time || '').substring(0,5) %>
+                                    </div>
+                                    <div style="font-size: 0.78rem; color: var(--primary-color); font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
+                                        <i class="bi bi-person-fill"></i> <%= p.teacher_name || 'Unassigned' %>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        </td>
+                    <% }) %>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 <% } %>

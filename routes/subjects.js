@@ -16,20 +16,37 @@ router.use(requireLogin);
 // Get all subjects
 router.get('/subjects', async (req, res) => {
     try {
+        const { classId, search } = req.query;
         const [classes] = await db.query('SELECT id, name FROM classes WHERE tenant_id = ? ORDER BY id', [req.tenant.id]);
         
-        const [subjects] = await db.query(`
+        let query = `
             SELECT s.id, s.name, c.name as class_name 
             FROM subjects s
             JOIN classes c ON s.class_id = c.id
             WHERE s.tenant_id = ?
-            ORDER BY c.id, s.name
-        `, [req.tenant.id]);
+        `;
+        const params = [req.tenant.id];
+
+        if (classId) {
+            query += ' AND s.class_id = ?';
+            params.push(classId);
+        }
+
+        if (search && search.trim()) {
+            query += ' AND (s.name LIKE ? OR c.name LIKE ?)';
+            params.push(`%${search.trim()}%`, `%${search.trim()}%`);
+        }
+
+        query += ' ORDER BY c.id, s.name';
+
+        const [subjects] = await db.query(query, params);
 
         res.render('subjects/index', {
             title: 'Manage Subjects',
             classes,
             subjects,
+            classId: classId || '',
+            search: search || '',
             success: req.session.success,
             error: req.session.error
         });

@@ -56,9 +56,12 @@ router.post('/exams/add', async (req, res) => {
 router.get('/exams/papers', async (req, res) => {
     try {
         const isAdmin = req.session.role === 'admin' || req.session.role === 'master';
-        const [exams] = await db.query('SELECT id, name FROM exams WHERE tenant_id = ?', [req.tenant.id]);
+        const { exam_id, classId, search } = req.query;
         
-        let selectedExamId = req.query.exam_id || (exams.length > 0 ? exams[0].id : null);
+        const [exams] = await db.query('SELECT id, name FROM exams WHERE tenant_id = ? ORDER BY id DESC', [req.tenant.id]);
+        const [classes] = await db.query('SELECT id, name FROM classes WHERE tenant_id = ? ORDER BY id', [req.tenant.id]);
+        
+        let selectedExamId = exam_id || (exams.length > 0 ? exams[0].id : null);
         let papers = [];
 
         if (selectedExamId) {
@@ -72,6 +75,16 @@ router.get('/exams/papers', async (req, res) => {
             `;
             const params = [selectedExamId, req.tenant.id];
 
+            if (classId) {
+                query += ' AND ep.class_id = ?';
+                params.push(classId);
+            }
+
+            if (search && search.trim()) {
+                query += ' AND (s.name LIKE ? OR e.name LIKE ? OR c.name LIKE ?)';
+                params.push(`%${search.trim()}%`, `%${search.trim()}%`, `%${search.trim()}%`);
+            }
+
             if (!isAdmin) {
                 const [employee] = await db.query('SELECT id FROM employees WHERE user_id = ? AND tenant_id = ?', [req.session.userId, req.tenant.id]);
                 if (employee.length > 0) {
@@ -82,14 +95,19 @@ router.get('/exams/papers', async (req, res) => {
                 }
             }
 
+            query += ' ORDER BY c.id, s.name';
+
             [papers] = await db.query(query, params);
         }
 
         res.render('exams/papers', {
             title: 'Exam Papers',
             exams,
+            classes,
             papers,
             selectedExamId,
+            classId: classId || '',
+            search: search || '',
             isAdmin,
             success: req.session.success,
             error: req.session.error

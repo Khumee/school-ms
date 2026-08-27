@@ -14,22 +14,33 @@ router.use(requireLogin);
 // Manage Timetable View
 router.get('/timetable/manage', async (req, res) => {
     try {
+        const { class_id, teacher_id } = req.query;
         const [classes] = await db.query('SELECT id, name FROM classes WHERE tenant_id = ? ORDER BY id', [req.tenant.id]);
         const [teachers] = await db.query('SELECT id, name FROM employees WHERE role = "teacher" AND tenant_id = ?', [req.tenant.id]);
         
-        let selectedClassId = req.query.class_id || (classes.length > 0 ? classes[0].id : null);
+        let selectedClassId = class_id || (classes.length > 0 ? classes[0].id : null);
+        let selectedTeacherId = teacher_id || '';
         let subjects = [];
         let periods = [];
 
         if (selectedClassId) {
             [subjects] = await db.query('SELECT id, name FROM subjects WHERE class_id = ? AND tenant_id = ?', [selectedClassId, req.tenant.id]);
-            [periods] = await db.query(`
+            
+            let query = `
                 SELECT p.*, s.name as subject_name, e.name as teacher_name 
                 FROM periods p
                 LEFT JOIN subjects s ON p.subject_id = s.id
                 LEFT JOIN employees e ON p.employee_id = e.id
                 WHERE p.class_id = ? AND p.tenant_id = ?
-            `, [selectedClassId, req.tenant.id]);
+            `;
+            const params = [selectedClassId, req.tenant.id];
+
+            if (selectedTeacherId) {
+                query += ' AND p.employee_id = ?';
+                params.push(selectedTeacherId);
+            }
+
+            [periods] = await db.query(query, params);
         }
 
         res.render('timetable/manage', {
@@ -39,6 +50,7 @@ router.get('/timetable/manage', async (req, res) => {
             subjects,
             periods,
             selectedClassId,
+            selectedTeacherId,
             success: req.session.success,
             error: req.session.error
         });
