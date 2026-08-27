@@ -1102,19 +1102,25 @@ SELECT @exam, 210, s.id, 276, 100, @tenant FROM subjects s WHERE s.class_id = 21
 UNION ALL
 SELECT @exam, 210, s.id, 282, 100, @tenant FROM subjects s WHERE s.class_id = 210 AND s.name = "Arabic" AND s.tenant_id = @tenant;
 
--- 6. Add Questions for English, Urdu, Math, Science papers
+-- 6. Add Questions for ALL subjects across all papers
 INSERT INTO exam_questions (exam_paper_id, question_text, marks, tenant_id)
-SELECT ep.id, "Q1: Comprehension / Theory", 30, @tenant FROM exam_papers ep JOIN subjects s ON ep.subject_id = s.id WHERE s.name IN ("English", "Urdu", "General Science") AND ep.tenant_id = @tenant
+SELECT ep.id, "Q1: Reading Comprehension / Theory", 30, @tenant FROM exam_papers ep JOIN subjects s ON ep.subject_id = s.id WHERE s.name IN ("English", "Urdu", "Arabic", "Islamiyat") AND ep.tenant_id = @tenant
 UNION ALL
-SELECT ep.id, "Q2: Grammar / Objective", 30, @tenant FROM exam_papers ep JOIN subjects s ON ep.subject_id = s.id WHERE s.name IN ("English", "Urdu", "General Science") AND ep.tenant_id = @tenant
+SELECT ep.id, "Q2: Grammar & Vocabulary", 30, @tenant FROM exam_papers ep JOIN subjects s ON ep.subject_id = s.id WHERE s.name IN ("English", "Urdu", "Arabic", "Islamiyat") AND ep.tenant_id = @tenant
 UNION ALL
-SELECT ep.id, "Q3: Long Essay / Practical", 40, @tenant FROM exam_papers ep JOIN subjects s ON ep.subject_id = s.id WHERE s.name IN ("English", "Urdu", "General Science") AND ep.tenant_id = @tenant
+SELECT ep.id, "Q3: Writing / Subjective", 40, @tenant FROM exam_papers ep JOIN subjects s ON ep.subject_id = s.id WHERE s.name IN ("English", "Urdu", "Arabic", "Islamiyat") AND ep.tenant_id = @tenant
 UNION ALL
 SELECT ep.id, "Q1: Arithmetic & Algebra", 40, @tenant FROM exam_papers ep JOIN subjects s ON ep.subject_id = s.id WHERE s.name = "Mathematics" AND ep.tenant_id = @tenant
 UNION ALL
 SELECT ep.id, "Q2: Geometry & Concepts", 30, @tenant FROM exam_papers ep JOIN subjects s ON ep.subject_id = s.id WHERE s.name = "Mathematics" AND ep.tenant_id = @tenant
 UNION ALL
-SELECT ep.id, "Q3: Problem Solving", 30, @tenant FROM exam_papers ep JOIN subjects s ON ep.subject_id = s.id WHERE s.name = "Mathematics" AND ep.tenant_id = @tenant;
+SELECT ep.id, "Q3: Problem Solving", 30, @tenant FROM exam_papers ep JOIN subjects s ON ep.subject_id = s.id WHERE s.name = "Mathematics" AND ep.tenant_id = @tenant
+UNION ALL
+SELECT ep.id, "Q1: Objective & MCQs", 30, @tenant FROM exam_papers ep JOIN subjects s ON ep.subject_id = s.id WHERE s.name IN ("General Science", "Pakistan Studies", "Computer Science") AND ep.tenant_id = @tenant
+UNION ALL
+SELECT ep.id, "Q2: Short Questions", 30, @tenant FROM exam_papers ep JOIN subjects s ON ep.subject_id = s.id WHERE s.name IN ("General Science", "Pakistan Studies", "Computer Science") AND ep.tenant_id = @tenant
+UNION ALL
+SELECT ep.id, "Q3: Long Answers / Practical", 40, @tenant FROM exam_papers ep JOIN subjects s ON ep.subject_id = s.id WHERE s.name IN ("General Science", "Pakistan Studies", "Computer Science") AND ep.tenant_id = @tenant;
 
 -- 7. Add Question-level marks for all active students
 INSERT INTO exam_question_marks (exam_paper_id, question_id, student_id, obtained_marks, tenant_id)
