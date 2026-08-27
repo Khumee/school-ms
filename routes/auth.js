@@ -74,6 +74,14 @@ router.post('/login', async (req, res) => {
                 req.session.roleName = user.role_name;
                 req.session.username = user.username;
                 req.session.permissions = perms.map(p => p.function_name);
+
+                // Update last_login_at for tenant and user
+                try {
+                    await db.pool.execute('UPDATE users SET last_login_at = NOW() WHERE id = ?', [user.id]);
+                    await db.pool.execute('UPDATE tenants SET last_login_at = NOW() WHERE id = ?', [req.tenant.id]);
+                } catch (updateErr) {
+                    console.error('Warning: could not update last_login_at:', updateErr.message);
+                }
                 
                 let redirectUrl = '/';
                 if (user.role_name !== 'Admin' && !req.session.permissions.includes('Dashboard')) {

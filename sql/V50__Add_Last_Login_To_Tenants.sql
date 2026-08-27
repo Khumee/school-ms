@@ -1,0 +1,2 @@
+ALTER TABLE `tenants` ADD COLUMN `last_login_at` DATETIME DEFAULT NULL;
+ALTER TABLE `users` ADD COLUMN `last_login_at` DATETIME DEFAULT NULL;

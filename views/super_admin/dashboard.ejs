@@ -39,6 +39,7 @@
                         <th>Subdomain</th>
                         <th>Custom Domain</th>
                         <th>Status</th>
+                        <th>Last Login</th>
                         <th>Created</th>
                         <th></th>
                     </tr>
@@ -55,6 +56,13 @@
                                     <i class="bi <%= t.status === 'active' ? 'bi-check-circle-fill' : 'bi-pause-circle-fill' %>"></i>
                                     <%= t.status.toUpperCase() %>
                                 </span>
+                            </td>
+                            <td>
+                                <% if (t.last_login_at) { %>
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: #166534;"><%= new Date(t.last_login_at).toLocaleString() %></span>
+                                <% } else { %>
+                                    <span style="font-size: 0.85rem; color: #94a3b8;">Never</span>
+                                <% } %>
                             </td>
                             <td><%= new Date(t.created_at).toLocaleDateString() %></td>
                             <td style="display: flex; gap: 0.5rem; justify-content: flex-end;">
