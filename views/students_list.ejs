@@ -65,12 +65,14 @@
         <span class="kpi-value" style="font-size: 1.4rem;"><%= fullWaiverCount %></span>
         <span class="kpi-subtitle">Click to view 100% concession only</span>
     </div>
+    <% if (hifzCount > 0) { %>
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="filterStudents('hifz')" id="kpi-hifz">
         <span class="kpi-icon pink"><i class="bi bi-book-fill"></i></span>
         <span class="kpi-label">Hifz Students</span>
         <span class="kpi-value" style="font-size: 1.4rem;"><%= hifzCount %></span>
         <span class="kpi-subtitle">Click to view Hifz only</span>
     </div>
+    <% } %>
 </div>
 <% } %>
 

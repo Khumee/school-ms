@@ -1410,8 +1410,8 @@ router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
 
             // Insert new tenant
             const [tenantResult] = await connection.execute(
-                `INSERT INTO tenants (name, school_name, subdomain, status) VALUES (?, ?, ?, 'active')`,
-                [school_name, school_name, cleanSubdomain]
+                `INSERT INTO tenants (name, school_name, subdomain, status, enable_donations_module, enable_hifz_module, enable_timetable_module, enable_exams_module, feature_ocr_student, feature_ocr_hifz, contact_email) VALUES (?, ?, ?, 'active', 0, 0, 0, 0, 0, 0, ?)`,
+                [school_name, school_name, cleanSubdomain, admin_email]
             );
             const tenantId = tenantResult.insertId;
 
@@ -1425,7 +1425,7 @@ router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
             // Add default permissions for the Admin role
             const permissions = [
                 'Dashboard', 'Students', 'Employees', 'Fees', 
-                'Donations', 'Attendance', 'Ledgers', 'Hifz', 'Settings'
+                'Attendance', 'Ledgers', 'Settings'
             ];
             for (const perm of permissions) {
                 await connection.execute(
@@ -1437,8 +1437,8 @@ router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
             // Create default admin user
             const hashedPassword = await bcrypt.hash(admin_password, 10);
             await connection.execute(
-                `INSERT INTO users (tenant_id, username, password, role_id) VALUES (?, ?, ?, ?)`,
-                [tenantId, admin_email, hashedPassword, roleId]
+                `INSERT INTO users (tenant_id, username, password, role_id) VALUES (?, 'admin', ?, ?)`,
+                [tenantId, hashedPassword, roleId]
             );
 
             // Insert default contract with negotiated tiered rates
@@ -1799,6 +1799,25 @@ router.post('/admin/crm/finances/disburse', isOnlySuperAdmin, async (req, res) =
     } catch (err) {
         console.error(err);
         res.status(500).send('Error recording disbursement.');
+    }
+});
+
+// POST /admin/crm/finances/add_expense — Add Generic Expense (Sales Rep or Admin)
+router.post('/admin/crm/finances/add_expense', isSuperAdmin, async (req, res) => {
+    try {
+        const creatorId = req.session.masterAdminId;
+        const { amount, transaction_date, description } = req.body;
+
+        await db.pool.execute(
+            `INSERT INTO crm_rep_finances (rep_id, transaction_type, amount, transaction_date, description, created_by)
+             VALUES (?, 'expense_claim', ?, ?, ?, ?)`,
+            [creatorId, parseFloat(amount) || 0, transaction_date || new Date().toISOString().split('T')[0], description, creatorId]
+        );
+
+        res.redirect('/admin/crm/finances?success=Generic expense logged successfully');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error logging expense.');
     }
 });
 
