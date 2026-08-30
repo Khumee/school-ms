@@ -32,9 +32,7 @@ router.get('/', isAuthenticated, async (req, res) => {
 
         const [[{ expected_fee_current_month }]] = await db.execute(
             `SELECT COALESCE(SUM(
-                IF(s.has_concession = 1 AND s.custom_monthly_fee IS NOT NULL, 
-                   s.custom_monthly_fee, 
-                   c.default_monthly_fee)
+                GREATEST(0, c.default_monthly_fee - IF(s.has_concession = 1, COALESCE(s.custom_monthly_fee, 0), 0))
              ), 0) as expected_fee_current_month
              FROM students s 
              JOIN classes c ON s.class_id = c.id 
