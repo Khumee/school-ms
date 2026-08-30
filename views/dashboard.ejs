@@ -102,12 +102,20 @@
     <% } %>
 
     <% if (hasPerm('Fees') || hasPerm('Ledgers')) { %>
+    <!-- Expected Fee for Current Month -->
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/fees/ledger'">
+        <span class="kpi-icon blue" style="background-color: #dbeafe; color: #3b82f6;"><i class="bi bi-receipt-cutoff"></i></span>
+        <span class="kpi-label">Expected Fee (<%= currentMonthName %>)</span>
+        <span class="kpi-value">PKR <%= expected_fee_current_month.toLocaleString() %></span>
+        <span class="kpi-subtitle">Total fee expected from active students</span>
+    </div>
+
     <!-- Monthly Fees Received (Cash Basis) -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/fees/ledger?month=<%= currentMonthNum %>&view=class'">
         <span class="kpi-icon amber"><i class="bi bi-cash-coin"></i></span>
-        <span class="kpi-label">Fees Received (<%= currentMonthName %>)</span>
+        <span class="kpi-label">Total Cash Inflow (<%= currentMonthName %>)</span>
         <span class="kpi-value">PKR <%= currentMonthData.fees.toLocaleString() %></span>
-        <span class="kpi-subtitle">Cash received this month</span>
+        <span class="kpi-subtitle">Cash collected this month (incl. arrears/advance)</span>
     </div>
     <% } %>
 </div>

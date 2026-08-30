@@ -24,9 +24,21 @@ router.get('/', isAuthenticated, async (req, res) => {
         const [[{ paying_students }]] = await db.execute('SELECT COUNT(*) as paying_students FROM students WHERE tenant_id = ? AND (has_concession = 0 OR custom_monthly_fee <= 0 OR custom_monthly_fee IS NULL) AND status = "active"', [tenantId]);
         const [[{ full_waiver_students }]] = await db.execute('SELECT COUNT(*) as full_waiver_students FROM students s JOIN classes c ON s.class_id = c.id WHERE s.tenant_id = ? AND s.has_concession = 1 AND s.custom_monthly_fee >= c.default_monthly_fee AND s.status = "active"', [tenantId]);
 
-        // 2. Fetch New Admissions and Hifz Students Metrics
+        // 2. Fetch New Admissions and Expected Fee
         const [[{ new_admissions }]] = await db.execute(
             'SELECT COUNT(*) as new_admissions FROM students WHERE tenant_id = ? AND status = "active" AND (YEAR(date_of_admission) = 2026 OR date_of_admission IS NULL)',
+            [tenantId]
+        );
+
+        const [[{ expected_fee_current_month }]] = await db.execute(
+            `SELECT COALESCE(SUM(
+                IF(s.has_concession = 1 AND s.custom_monthly_fee IS NOT NULL, 
+                   s.custom_monthly_fee, 
+                   c.default_monthly_fee)
+             ), 0) as expected_fee_current_month
+             FROM students s 
+             JOIN classes c ON s.class_id = c.id 
+             WHERE s.tenant_id = ? AND s.status = 'active'`,
             [tenantId]
         );
         // 2b. Fetch Employee and Donor metrics
@@ -149,7 +161,8 @@ router.get('/', isAuthenticated, async (req, res) => {
             totalExpenseAllTime,
             currentBalance,
             total_employees,
-            total_donors
+            total_donors,
+            expected_fee_current_month
         });
     } catch (err) {
         console.error('Dashboard Error:', err);
