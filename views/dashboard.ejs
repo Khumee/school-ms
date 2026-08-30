@@ -108,12 +108,18 @@
     <% } %>
 
     <% if (hasPerm('Fees') || hasPerm('Ledgers')) { %>
-    <!-- Expected Fee for Current Month -->
+    <!-- Collection Progress for Current Month -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/fees/ledger'">
-        <span class="kpi-icon blue" style="background-color: #dbeafe; color: #3b82f6;"><i class="bi bi-receipt-cutoff"></i></span>
-        <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Expected Fee</span>
-        <span class="kpi-value">PKR <%= expected_fee_current_month.toLocaleString() %></span>
-        <span class="kpi-subtitle" style="min-height: 40px;">Total fee expected from active students</span>
+        <span class="kpi-icon blue" style="background-color: #dbeafe; color: #3b82f6;"><i class="bi bi-pie-chart-fill"></i></span>
+        <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Collection Progress</span>
+        <span class="kpi-value" style="font-size: 1.15rem;">PKR <%= currentMonthData.fees_accrual.toLocaleString() %> / <%= expected_fee_current_month.toLocaleString() %></span>
+        <div style="min-height: 40px; display: flex; flex-direction: column; justify-content: center; gap: 4px; margin-top: 5px;">
+            <% const progressPct = expected_fee_current_month > 0 ? Math.round((currentMonthData.fees_accrual / expected_fee_current_month) * 100) : 0; %>
+            <div style="width: 100%; background-color: #e2e8f0; height: 6px; border-radius: 3px;">
+                <div style="width: <%= Math.min(progressPct, 100) %>%; background-color: <%= progressPct >= 100 ? '#16a34a' : '#3b82f6' %>; height: 100%; border-radius: 3px;"></div>
+            </div>
+            <span class="kpi-subtitle" style="min-height: auto; margin-top: 0;"><%= progressPct %>% collected for <%= currentMonthName %></span>
+        </div>
     </div>
 
     <!-- Monthly Fees Received (Cash Basis) -->
