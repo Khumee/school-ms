@@ -62,6 +62,7 @@ const supportAdminRoutes = require('./routes/supportAdmin');
 
 // Register Routers
 app.use(superAdminRoutes);
+app.use(supportAdminRoutes);
 app.use(authRoutes);
 app.use(dashboardRoutes);
 app.use(studentRoutes);
@@ -79,7 +80,6 @@ app.use(settingsRoutes);
 app.use(rolesRoutes);
 app.use(usersRoutes);
 app.use(supportRoutes);
-app.use(supportAdminRoutes);
 
 const migrate = require('./migrate');
 

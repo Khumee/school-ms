@@ -59,8 +59,9 @@
                             </td>
                             <td>
                                 <% if (t.last_login_at) { %>
-                                    <span style="font-size: 0.85rem; font-weight: 600; color: #166534;"><%= new Date(t.last_login_at).toLocaleString() %></span>
+                                    <span style="font-size: 0.85rem; font-weight: 600; color: #166534;"><%= new Date(t.last_login_at).toLocaleString('en-US', { timeZone: 'Asia/Karachi' }) %></span>
                                 <% } else { %>
+
                                     <span style="font-size: 0.85rem; color: #94a3b8;">Never</span>
                                 <% } %>
                             </td>
