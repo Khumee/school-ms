@@ -235,16 +235,29 @@ router.post('/fees/pay', isAuthenticated, async (req, res) => {
         const addFeeVal = additional_fee ? parseFloat(additional_fee) : 0.00;
         const payDate = payment_date ? new Date(payment_date) : new Date();
         
-        // Delete any existing payment first to allow updates
-        await db.execute(
-            'DELETE FROM fee_payments WHERE student_id = ? AND month = ? AND year = ? AND tenant_id = ?',
-            [student_id, month, activeYear, tenantId]
-        );
-        
-        if (amount && parseFloat(amount) > 0) {
+        if (amount === '' || amount === null) {
+            // If completely empty, do nothing
+        } else if (parseFloat(amount) === 0) {
+            // If they explicitly send 0, they want to clear the main fee.
+            // We should keep the record if there's an additional fee, otherwise delete.
+            await db.execute(
+                `DELETE FROM fee_payments WHERE student_id = ? AND month = ? AND year = ? AND tenant_id = ? AND (additional_fee IS NULL OR additional_fee = 0)`,
+                [student_id, month, activeYear, tenantId]
+            );
+            await db.execute(
+                `UPDATE fee_payments SET amount_paid = additional_fee, fine_amount = 0 WHERE student_id = ? AND month = ? AND year = ? AND tenant_id = ?`,
+                [student_id, month, activeYear, tenantId]
+            );
+        } else {
             await db.execute(
                 `INSERT INTO fee_payments (tenant_id, student_id, month, year, amount_paid, payment_date, recorded_by, fine_amount, fine_waived, additional_fee, additional_fee_description)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 ON DUPLICATE KEY UPDATE
+                     amount_paid = VALUES(amount_paid),
+                     payment_date = VALUES(payment_date),
+                     recorded_by = VALUES(recorded_by),
+                     fine_amount = VALUES(fine_amount),
+                     fine_waived = VALUES(fine_waived)`,
                 [tenantId, student_id, month, activeYear, parseFloat(amount), payDate, req.session.userId, fineVal, waived, addFeeVal, additional_fee_description || null]
             );
         }
@@ -262,7 +275,6 @@ router.post('/fees/pay-other', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
         const activeYear = year ? parseInt(year) : new Date().getFullYear();
-        const activeMonth = month ? parseInt(month) : 13;
         const payDate = payment_date ? new Date(payment_date) : new Date();
         const feeAmt = parseFloat(amount) || 0.00;
 
@@ -273,9 +285,15 @@ router.post('/fees/pay-other', isAuthenticated, async (req, res) => {
             desc = `${fee_type} - ${additional_fee_description}`;
         }
 
+        const activeMonth = month ? parseInt(month) : (new Date().getMonth() + 1);
+
         await db.execute(
             `INSERT INTO fee_payments (tenant_id, student_id, month, year, amount_paid, payment_date, recorded_by, fine_amount, fine_waived, additional_fee, additional_fee_description)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)
+             ON DUPLICATE KEY UPDATE
+                 amount_paid = amount_paid + VALUES(amount_paid),
+                 additional_fee = additional_fee + VALUES(additional_fee),
+                 additional_fee_description = IF(additional_fee_description IS NULL OR additional_fee_description = '', VALUES(additional_fee_description), CONCAT_WS(' | ', additional_fee_description, VALUES(additional_fee_description)))`,
             [tenantId, student_id, activeMonth, activeYear, feeAmt, payDate, req.session.userId, feeAmt, desc]
         );
 
