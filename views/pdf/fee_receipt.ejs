@@ -122,17 +122,17 @@
             </tr>
             <tr>
                 <td class="label">Full Fee (Standard)</td>
-                <td>PKR <%= Number(standardFee).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
+                <td>PKR <%= Number(standardFee).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></td>
             </tr>
             <tr>
                 <td class="label">Concession (Discount)</td>
-                <td>PKR <%= Number(concession).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
+                <td>PKR <%= Number(concession).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></td>
             </tr>
             <tr>
                 <td class="label">Late Fee Fine</td>
                 <td>
                     <% if (fineAmount > 0) { %>
-                        PKR <%= Number(fineAmount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %> <%= fineWaived ? '(Waived)' : '' %>
+                        PKR <%= Number(fineAmount).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %> <%= fineWaived ? '(Waived)' : '' %>
                     <% } else { %>
                         PKR 0.00
                     <% } %>
@@ -142,7 +142,7 @@
 
         <div class="amount-box">
             <span class="label">Fee Paid (Amount Received)</span>
-            <span class="value">PKR <%= Number(amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+            <span class="value">PKR <%= Number(amount).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></span>
         </div>
 
         <% if (lastFivePayments && lastFivePayments.length > 0) { %>

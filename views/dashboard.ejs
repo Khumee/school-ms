@@ -310,7 +310,7 @@
                         <td style="text-align: right; font-weight: 700; color: <%= month.balance >= 0 ? '#16a34a' : '#dc2626' %>">
                             <%= month.balance !== 0 ? (month.balance > 0 ? '+' : '') + month.balance.toLocaleString() : '-' %>
                         </td>
-                        <td style="text-align: right; background-color: #f0fdf4; font-weight: 700;"><%= cumulativeBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
+                        <td style="text-align: right; background-color: #f0fdf4; font-weight: 700;"><%= cumulativeBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></td>
                     </tr>
                 <% }) %>
                 
@@ -331,7 +331,7 @@
                     <td style="text-align: right; color: <%= (sumIncome - sumExpense) >= 0 ? '#16a34a' : '#dc2626' %>">
                         <%= (sumIncome - sumExpense).toLocaleString() %>
                     </td>
-                    <td style="text-align: right; background-color: #dcfce7;"><%= currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
+                    <td style="text-align: right; background-color: #dcfce7;"><%= currentBalance.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></td>
                 </tr>
             </tbody>
         </table>

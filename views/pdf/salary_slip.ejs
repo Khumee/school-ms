@@ -139,12 +139,12 @@
             <tbody>
                 <tr>
                     <td>Basic Salary</td>
-                    <td class="amount"><%= Number(salary.basic_salary).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
+                    <td class="amount"><%= Number(salary.basic_salary).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></td>
                 </tr>
                 <% if (salary.bonus > 0) { %>
                 <tr>
                     <td>Bonus<%= salary.bonus_description ? ' (' + salary.bonus_description + ')' : '' %></td>
-                    <td class="amount"><%= Number(salary.bonus).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
+                    <td class="amount"><%= Number(salary.bonus).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></td>
                 </tr>
                 <% } %>
             </tbody>
@@ -152,7 +152,7 @@
 
         <div class="amount-box">
             <span class="label">Net Amount Paid</span>
-            <span class="value">PKR <%= Number(totalPaid).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+            <span class="value">PKR <%= Number(totalPaid).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></span>
         </div>
 
         <div class="signatures">

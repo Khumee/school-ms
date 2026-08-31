@@ -1389,7 +1389,18 @@ router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
         const leadId = req.params.id;
         const userRole = req.session.masterAdminRole || 'super_admin';
         const userId = req.session.masterAdminId;
-        const { school_name, subdomain, admin_email, admin_password } = req.body;
+        const { 
+            school_name, 
+            subdomain, 
+            admin_email, 
+            admin_password,
+            enable_donations_module,
+            enable_hifz_module,
+            enable_timetable_module,
+            enable_exams_module,
+            feature_ocr_student,
+            feature_ocr_hifz
+        } = req.body;
 
         const [[lead]] = await db.pool.execute('SELECT * FROM crm_leads WHERE id = ?', [leadId]);
         if (!lead) return res.status(404).send('Lead not found.');
@@ -1409,9 +1420,16 @@ router.post('/admin/crm/leads/:id/convert', isSuperAdmin, async (req, res) => {
             await connection.beginTransaction();
 
             // Insert new tenant
+            const donationsEnabled = enable_donations_module ? 1 : 0;
+            const hifzEnabled = enable_hifz_module ? 1 : 0;
+            const timetableEnabled = enable_timetable_module ? 1 : 0;
+            const examsEnabled = enable_exams_module ? 1 : 0;
+            const ocrStudentEnabled = feature_ocr_student ? 1 : 0;
+            const ocrHifzEnabled = feature_ocr_hifz ? 1 : 0;
+
             const [tenantResult] = await connection.execute(
-                `INSERT INTO tenants (name, school_name, subdomain, status, enable_donations_module, enable_hifz_module, enable_timetable_module, enable_exams_module, feature_ocr_student, feature_ocr_hifz, contact_email) VALUES (?, ?, ?, 'active', 0, 0, 0, 0, 0, 0, ?)`,
-                [school_name, school_name, cleanSubdomain, admin_email]
+                `INSERT INTO tenants (name, school_name, subdomain, status, enable_donations_module, enable_hifz_module, enable_timetable_module, enable_exams_module, feature_ocr_student, feature_ocr_hifz, contact_email) VALUES (?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?)`,
+                [school_name, school_name, cleanSubdomain, donationsEnabled, hifzEnabled, timetableEnabled, examsEnabled, ocrStudentEnabled, ocrHifzEnabled, admin_email]
             );
             const tenantId = tenantResult.insertId;
 

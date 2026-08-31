@@ -398,6 +398,36 @@
                     <input type="password" name="admin_password" class="form-control" placeholder="Set default password" required>
                 </div>
 
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="font-weight: 600;">Enable Modules</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="enable_donations_module" value="1" checked> Donations Module
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="enable_hifz_module" value="1"> Hifz Module
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="enable_timetable_module" value="1"> Timetable Module
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="enable_exams_module" value="1"> Exams Module
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="font-weight: 600;">Enable Sub-Module Functions</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="feature_ocr_student" value="1"> AI Scan (Students)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" name="feature_ocr_hifz" value="1"> AI Scan (Hifz)
+                        </label>
+                    </div>
+                </div>
+
                 <div style="display: flex; gap: 1rem; justify-content: flex-end;">
                     <button type="button" class="btn-secondary" onclick="closeConvertModal()">Cancel</button>
                     <button type="submit" class="btn-primary" style="background-color: #2563eb;"><i class="bi bi-check-circle"></i> Create Tenant</button>
