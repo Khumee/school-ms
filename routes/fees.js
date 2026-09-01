@@ -192,17 +192,6 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
             [tenantId]
         );
 
-        // Fetch recent other fees (Exam, Paper, Event, etc.)
-        const [otherPayments] = await db.execute(
-            `SELECT fp.*, s.name as student_name, s.reg_no, c.name as class_name
-             FROM fee_payments fp
-             JOIN students s ON fp.student_id = s.id
-             LEFT JOIN classes c ON s.class_id = c.id
-             WHERE fp.tenant_id = ? AND (fp.additional_fee > 0 OR fp.additional_fee_description IS NOT NULL OR fp.month = 13)
-             ORDER BY fp.payment_date DESC, fp.id DESC LIMIT 50`,
-            [tenantId]
-        );
-
         // Fetch initial top defaulters
         const topDefaulters = await getTopDefaulters(tenantId, activeYear, 10, 0);
 
@@ -215,12 +204,74 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
             activeMonthNum: activeMonth, 
             activeYear: activeYear,
             recentPayments,
-            otherPayments,
             topDefaulters
         });
     } catch (err) {
         console.error(err);
         res.status(500).send('Error loading fee ledger.');
+    }
+});
+
+// GET /fees/other - Manage other fees
+router.get('/fees/other', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        let { classId, search, year } = req.query;
+        
+        const activeYear = year ? parseInt(year) : new Date().getFullYear();
+        
+        // Fetch classes for dropdown
+        const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
+
+        let queryStr = `
+            SELECT s.id, s.class_id, s.reg_no, s.name, c.name as class_name
+            FROM students s
+            LEFT JOIN classes c ON s.class_id = c.id
+            WHERE s.tenant_id = ?
+        `;
+        const params = [tenantId];
+        
+        if (classId) {
+            queryStr += ' AND s.class_id = ?';
+            params.push(classId);
+        }
+        if (search) {
+            queryStr += ' AND (s.name LIKE ? OR s.reg_no LIKE ?)';
+            params.push(`%${search}%`, `%${search}%`);
+        }
+        queryStr += ' ORDER BY s.reg_no ASC';
+        
+        const [students] = await db.execute(queryStr, params);
+        
+        // Fetch other fees (Exam, Paper, Event, etc.) for the active year
+        let otherPaymentsQuery = `
+             SELECT fp.*, s.name as student_name, s.reg_no, c.name as class_name
+             FROM fee_payments fp
+             JOIN students s ON fp.student_id = s.id
+             LEFT JOIN classes c ON s.class_id = c.id
+             WHERE fp.tenant_id = ? AND fp.year = ? AND (fp.additional_fee > 0 OR fp.additional_fee_description IS NOT NULL OR fp.month = 13)
+        `;
+        let otherPaymentsParams = [tenantId, activeYear];
+        
+        if (classId) {
+            otherPaymentsQuery += ' AND s.class_id = ?';
+            otherPaymentsParams.push(classId);
+        }
+        otherPaymentsQuery += ' ORDER BY fp.payment_date DESC, fp.id DESC';
+
+        const [otherPayments] = await db.execute(otherPaymentsQuery, otherPaymentsParams);
+
+        res.render('fees_other', { 
+            students, 
+            classes, 
+            classId, 
+            search, 
+            activeYear: activeYear,
+            otherPayments
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading other fees.');
     }
 });
 
@@ -297,7 +348,7 @@ router.post('/fees/pay-other', isAuthenticated, async (req, res) => {
             [tenantId, student_id, activeMonth, activeYear, feeAmt, payDate, req.session.userId, feeAmt, desc]
         );
 
-        res.redirect(redirect_url || '/fees/ledger?view=other');
+        res.redirect(redirect_url || '/fees/other');
     } catch (err) {
         console.error(err);
         res.status(500).send('Error recording other fee payment.');
