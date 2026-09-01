@@ -388,11 +388,11 @@
                                         <div style="display: flex; gap: 0.4rem; justify-content: center;">
                                             <% if (s.madePayment) { %>
                                                 <a href="/fees/receipt/<%= s.payObj.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
-                                                <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, <%= s.payObj.amount_paid %>, <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-pencil-fill"></i> Edit</button>
+                                                <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name.replace(/'/g, "\\'") %>', <%= activeMonthNum %>, <%= s.payObj.amount_paid %>, <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-pencil-fill"></i> Edit</button>
                                             <% } else if (s.isFullWaiver) { %>
-                                                <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-plus-circle"></i> Add Fee</button>
+                                                <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name.replace(/'/g, "\\'") %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-plus-circle"></i> Add Fee</button>
                                             <% } else { %>
-                                                <button type="button" class="btn-primary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-credit-card-fill"></i> Collect</button>
+                                                <button type="button" class="btn-primary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name.replace(/'/g, "\\'") %>', <%= activeMonthNum %>, '', <%= s.expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-credit-card-fill"></i> Collect</button>
                                             <% } %>
                                         </div>
                                     </td>
@@ -486,9 +486,9 @@
                                 <div style="display: flex; gap: 0.4rem; justify-content: center;">
                                     <% if (isPaid) { %>
                                         <a href="/fees/receipt/<%= payObj.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
-                                        <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, <%= payObj.amount_paid %>, <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-pencil-fill"></i> Edit</button>
+                                        <button type="button" class="btn-secondary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name.replace(/'/g, "\\'") %>', <%= activeMonthNum %>, <%= payObj.amount_paid %>, <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-pencil-fill"></i> Edit</button>
                                     <% } else { %>
-                                        <button type="button" class="btn-primary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= activeMonthNum %>, '', <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-credit-card-fill"></i> Collect</button>
+                                        <button type="button" class="btn-primary nav-btn" onclick="openPaymentModal('<%= s.id %>', '<%= s.name.replace(/'/g, "\\'") %>', <%= activeMonthNum %>, '', <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)"><i class="bi bi-credit-card-fill"></i> Collect</button>
                                     <% } %>
                                 </div>
                             </td>
@@ -551,11 +551,11 @@
                                         Waiver
                                     </td>
                                 <% } else if (amtPaid !== undefined && amtPaid > 0) { %>
-                                    <td class="status-cell status-paid cell-amount" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= m %>, <%= amtPaid %>, <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)">
+                                    <td class="status-cell status-paid cell-amount" onclick="openPaymentModal('<%= s.id %>', '<%= s.name.replace(/'/g, "\\'") %>', <%= m %>, <%= amtPaid %>, <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)">
                                         <%= amtPaid %>
                                     </td>
                                   <% } else { %>
-                                    <td class="status-cell status-unpaid" onclick="openPaymentModal('<%= s.id %>', '<%= s.name %>', <%= m %>, '', <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)">
+                                    <td class="status-cell status-unpaid" onclick="openPaymentModal('<%= s.id %>', '<%= s.name.replace(/'/g, "\\'") %>', <%= m %>, '', <%= expectedFee %>, <%= s.default_monthly_fee || 0 %>, <%= s.custom_monthly_fee || 0 %>)">
                                         -
                                     </td>
                                   <% } %>
@@ -669,6 +669,11 @@
             </div>
         </div>
         
+        <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label for="modalFine">Late Fee Fine (PKR)</label>
+            <input type="number" step="0.01" id="modalFine" name="fine_amount" class="form-control" value="0">
+        </div>
+        
         <div class="form-checkbox" style="margin-bottom: 1.25rem; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 0.5rem;">
             <input type="checkbox" id="modalFineWaived" name="fine_waived" value="1" onchange="toggleWaive(this.checked)" style="width: 18px; height: 18px; cursor: pointer; margin: 0;">
             <label for="modalFineWaived" style="margin-bottom: 0; cursor: pointer; font-weight: 500;">Waive Late Fee Fine</label>
@@ -757,7 +762,7 @@
                             <td style="text-align: left;">${s.class_name}</td>
                             <td style="text-align: right; font-weight: 600; color: #dc2626;">PKR ${s.due.toLocaleString()}</td>
                             <td style="text-align: center;">
-                                <button type="button" class="btn-primary nav-btn" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="openPaymentModal('${s.id}', '${safeName}', clientActiveMonthNum, '', ${s.expectedFee}, ${s.default_monthly_fee || 0}, ${s.custom_monthly_fee || 0})"><i class="bi bi-credit-card-fill"></i> Collect</button>
+                                <button type="button" class="btn-primary nav-btn" style="padding: 0.3rem 0.5rem; font-size: 0.8rem;" onclick="openPaymentModal('${s.id}', '${safeName}', <%= activeMonthNum %>, '', ${s.expectedFee}, ${s.default_monthly_fee || 0}, ${s.custom_monthly_fee || 0})"><i class="bi bi-credit-card-fill"></i> Collect</button>
                             </td>
                         </tr>
                     `;
