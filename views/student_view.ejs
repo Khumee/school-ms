@@ -183,7 +183,18 @@
                 <% payments.forEach(p => { %>
                     <tr>
                         <td style="font-weight: 600;">
-                            <%= p.month === 0 ? 'Admission Fee' : monthNames[p.month - 1] %>
+                            <% if (p.month === 0) { %>
+                                <span style="color: #0284c7;">Admission Fee</span>
+                            <% } else if (p.month === 13 || (p.month >= 1 && p.month <= 12 && p.amount_paid > 0 && parseFloat(p.monthly_fee || 0) === 0)) { %>
+                                <span style="color: #059669;"><%= p.additional_fee_description || 'Other Fee' %></span>
+                            <% } else { %>
+                                <%= monthNames[p.month - 1] %>
+                                <% if (p.additional_fee > 0 || p.additional_fee_description) { %>
+                                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.2rem; font-weight: 500;">
+                                        + <%= p.additional_fee_description || 'Other Fee' %>
+                                    </div>
+                                <% } %>
+                            <% } %>
                         </td>
                         <td><%= p.year %></td>
                         <td style="text-align: right; font-weight: 600; color: #15803d;">PKR <%= parseFloat(p.amount_paid).toLocaleString() %></td>
