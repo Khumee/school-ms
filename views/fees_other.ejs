@@ -3,9 +3,11 @@
 <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <h1 class="section-title" style="margin: 0;"><i class="bi bi-receipt-cutoff"></i> Other Fees Management</h1>
     <div style="display: flex; gap: 0.75rem;">
+        <% if (activeView === 'activity') { %>
         <button type="button" class="btn-primary" onclick="openOtherFeeModal()" style="display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #0284c7, #0369a1); border: none; padding: 0.5rem 1rem; border-radius: 6px; color: white; font-weight: 600; cursor: pointer;">
             <i class="bi bi-plus-square-fill" style="font-size: 1.1rem;"></i> Collect Other Fees
         </button>
+        <% } %>
     </div>
 </div>
 
@@ -289,8 +291,33 @@
     <p style="color: var(--muted); margin: 0.5rem 0 0;">Default Amount: PKR <%= parseFloat(activeCampaign.default_amount).toLocaleString() %></p>
 </div>
 
+<div style="margin-bottom: 1rem; padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+        <div style="display: flex; gap: 1.5rem; align-items: center;">
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--ink);">
+                <input type="radio" name="trackerFilter" value="all" checked onchange="filterCampaignTracker()" style="cursor: pointer;"> All Students
+            </label>
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--ink);">
+                <input type="radio" name="trackerFilter" value="paid" onchange="filterCampaignTracker()" style="cursor: pointer;"> Paid
+            </label>
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--ink);">
+                <input type="radio" name="trackerFilter" value="unpaid" onchange="filterCampaignTracker()" style="cursor: pointer;"> Unpaid
+            </label>
+        </div>
+        <div style="display: flex; gap: 1rem; flex: 1; max-width: 500px;">
+            <select id="trackerClassFilter" class="form-control" onchange="filterCampaignTracker()">
+                <option value="">All Classes</option>
+                <% classes.forEach(c => { %>
+                    <option value="<%= c.name %>"><%= c.name %></option>
+                <% }) %>
+            </select>
+            <input type="text" id="trackerSearch" class="form-control" placeholder="Search name or reg no..." onkeyup="filterCampaignTracker()">
+        </div>
+    </div>
+</div>
+
 <div class="table-container">
-    <table class="simple-ledger-table">
+    <table class="simple-ledger-table" id="tracker-table">
         <thead>
             <tr>
                 <th style="text-align: left;">Reg No</th>
