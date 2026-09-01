@@ -1,0 +1,1 @@
+ALTER TABLE fee_campaigns ADD COLUMN is_active BOOLEAN DEFAULT TRUE;

@@ -195,6 +195,12 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
         // Fetch initial top defaulters
         const topDefaulters = await getTopDefaulters(tenantId, activeYear, 10, 0);
 
+        // Fetch active campaigns for the dropdown
+        const [activeCampaigns] = await db.execute(
+            'SELECT * FROM fee_campaigns WHERE tenant_id = ? AND year = ? AND is_active = TRUE ORDER BY created_at DESC',
+            [tenantId, activeYear]
+        );
+
         res.render('fees_ledger', { 
             students, 
             classes, 
@@ -204,7 +210,8 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
             activeMonthNum: activeMonth, 
             activeYear: activeYear,
             recentPayments,
-            topDefaulters
+            topDefaulters,
+            activeCampaigns
         });
     } catch (err) {
         console.error(err);
@@ -216,9 +223,10 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
 router.get('/fees/other', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        let { classId, search, year } = req.query;
+        let { classId, search, year, view, campaign_id } = req.query;
         
         const activeYear = year ? parseInt(year) : new Date().getFullYear();
+        const activeView = view || 'activity';
         
         // Fetch classes for dropdown
         const [classes] = await db.execute('SELECT * FROM classes WHERE tenant_id = ? ORDER BY id ASC', [tenantId]);
@@ -261,13 +269,41 @@ router.get('/fees/other', isAuthenticated, async (req, res) => {
 
         const [otherPayments] = await db.execute(otherPaymentsQuery, otherPaymentsParams);
 
+        // Fetch campaigns for the year
+        const [campaigns] = await db.execute(
+            'SELECT * FROM fee_campaigns WHERE tenant_id = ? AND year = ? ORDER BY created_at DESC', 
+            [tenantId, activeYear]
+        );
+
+        let activeCampaign = null;
+        if (campaign_id) {
+            activeCampaign = campaigns.find(c => c.id == campaign_id);
+            if (activeCampaign && !activeCampaign.applicable_to_all) {
+                // filter students by campaign rules
+                // if it applies to specific class
+                if (activeCampaign.class_id) {
+                    students.splice(0, students.length, ...students.filter(s => s.class_id === activeCampaign.class_id));
+                }
+                
+                // if not applicable_to_class_all, we'd check fee_campaign_students table
+                if (!activeCampaign.applicable_to_class_all) {
+                    const [campStudents] = await db.execute('SELECT student_id FROM fee_campaign_students WHERE campaign_id = ?', [activeCampaign.id]);
+                    const validIds = new Set(campStudents.map(cs => cs.student_id));
+                    students.splice(0, students.length, ...students.filter(s => validIds.has(s.id)));
+                }
+            }
+        }
+
         res.render('fees_other', { 
             students, 
             classes, 
             classId, 
             search, 
             activeYear: activeYear,
-            otherPayments
+            otherPayments,
+            campaigns,
+            activeView,
+            activeCampaign
         });
     } catch (err) {
         console.error(err);
@@ -300,16 +336,20 @@ router.post('/fees/pay', isAuthenticated, async (req, res) => {
                 [student_id, month, activeYear, tenantId]
             );
         } else {
+            const campaignId = req.body.campaign_id ? parseInt(req.body.campaign_id) : null;
             await db.execute(
-                `INSERT INTO fee_payments (tenant_id, student_id, month, year, amount_paid, payment_date, recorded_by, fine_amount, fine_waived, additional_fee, additional_fee_description)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `INSERT INTO fee_payments (tenant_id, student_id, month, year, amount_paid, payment_date, recorded_by, fine_amount, fine_waived, additional_fee, additional_fee_description, campaign_id)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                  ON DUPLICATE KEY UPDATE
                      amount_paid = VALUES(amount_paid),
                      payment_date = VALUES(payment_date),
                      recorded_by = VALUES(recorded_by),
                      fine_amount = VALUES(fine_amount),
-                     fine_waived = VALUES(fine_waived)`,
-                [tenantId, student_id, month, activeYear, parseFloat(amount), payDate, req.session.userId, fineVal, waived, addFeeVal, additional_fee_description || null]
+                     fine_waived = VALUES(fine_waived),
+                     additional_fee = VALUES(additional_fee),
+                     additional_fee_description = VALUES(additional_fee_description),
+                     campaign_id = VALUES(campaign_id)`,
+                [tenantId, student_id, month, activeYear, parseFloat(amount), payDate, req.session.userId, fineVal, waived, addFeeVal, additional_fee_description || null, campaignId]
             );
         }
         
@@ -326,8 +366,11 @@ router.post('/fees/pay-other', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
         const activeYear = year ? parseInt(year) : new Date().getFullYear();
-        const payDate = payment_date ? new Date(payment_date) : new Date();
-        const feeAmt = parseFloat(amount) || 0.00;
+        let month_val = month ? parseInt(month) : 13;
+        let year_val = parseInt(year) || new Date().getFullYear();
+        let feeAmt = parseFloat(amount) || 0;
+        let campaign_id = req.body.campaign_id ? parseInt(req.body.campaign_id) : null;
+        let payDate = payment_date ? new Date(payment_date) : new Date();
 
         let desc = fee_type || 'Other Fee';
         if (fee_type === 'Custom' && additional_fee_description) {
@@ -336,22 +379,85 @@ router.post('/fees/pay-other', isAuthenticated, async (req, res) => {
             desc = `${fee_type} - ${additional_fee_description}`;
         }
 
-        const activeMonth = month ? parseInt(month) : (new Date().getMonth() + 1);
-
         await db.execute(
-            `INSERT INTO fee_payments (tenant_id, student_id, month, year, amount_paid, payment_date, recorded_by, fine_amount, fine_waived, additional_fee, additional_fee_description)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)
+            `INSERT INTO fee_payments (tenant_id, student_id, month, year, amount_paid, payment_date, recorded_by, fine_amount, fine_waived, additional_fee, additional_fee_description, campaign_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?)
              ON DUPLICATE KEY UPDATE
                  amount_paid = amount_paid + VALUES(amount_paid),
                  additional_fee = additional_fee + VALUES(additional_fee),
                  additional_fee_description = IF(additional_fee_description IS NULL OR additional_fee_description = '', VALUES(additional_fee_description), CONCAT_WS(' | ', additional_fee_description, VALUES(additional_fee_description)))`,
-            [tenantId, student_id, activeMonth, activeYear, feeAmt, payDate, req.session.userId, feeAmt, desc]
+            [tenantId, student_id, month_val, year_val, feeAmt, payDate, req.session.userId, feeAmt, desc, campaign_id]
         );
 
         res.redirect(redirect_url || '/fees/other');
     } catch (err) {
         console.error(err);
         res.status(500).send('Error recording other fee payment.');
+    }
+});
+
+// POST /fees/pay-other/edit/:id - Edit an existing other fee
+router.post('/fees/pay-other/edit/:id', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const paymentId = req.params.id;
+        const { fee_type, additional_fee_description, amount, payment_date } = req.body;
+        
+        const desc = fee_type === 'Custom' ? additional_fee_description : fee_type;
+        const feeAmt = parseFloat(amount) || 0;
+        
+        await db.execute(
+            `UPDATE fee_payments SET amount_paid = ?, additional_fee_description = ?, payment_date = ? 
+             WHERE id = ? AND tenant_id = ?`,
+            [feeAmt, desc, payment_date, paymentId, tenantId]
+        );
+        
+        res.redirect('/fees/other');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error editing other fee payment.');
+    }
+});
+
+// POST /fees/campaigns - Create a fee campaign
+router.post('/fees/campaigns', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        let { title, fee_type, default_amount, applicable_to_all, class_id, applicable_to_class_all, year, month } = req.body;
+        
+        const isAll = applicable_to_all === 'true' || applicable_to_all === '1' || applicable_to_all === 'on';
+        const isClassAll = applicable_to_class_all === 'true' || applicable_to_class_all === '1' || applicable_to_class_all === 'on';
+        const cid = (!isAll && class_id) ? parseInt(class_id) : null;
+        
+        await db.execute(
+            `INSERT INTO fee_campaigns 
+             (tenant_id, title, fee_type, default_amount, applicable_to_all, class_id, applicable_to_class_all, year, month)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [tenantId, title, fee_type || title, parseFloat(default_amount) || 0, isAll, cid, isClassAll, parseInt(year), parseInt(month) || 13]
+        );
+        
+        res.redirect('/fees/other');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error creating fee campaign.');
+    }
+});
+
+// POST /fees/campaigns/:id/toggle - Toggle active status of a fee campaign
+router.post('/fees/campaigns/:id/toggle', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const campaignId = req.params.id;
+        
+        await db.execute(
+            `UPDATE fee_campaigns SET is_active = NOT is_active WHERE id = ? AND tenant_id = ?`,
+            [campaignId, tenantId]
+        );
+        
+        res.redirect('/fees/other?view=campaigns');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error toggling campaign status.');
     }
 });
 

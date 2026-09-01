@@ -9,6 +9,13 @@
     </div>
 </div>
 
+<div class="nav-tabs" style="margin-bottom: 1rem;">
+    <a href="/fees/other?view=activity&year=<%= activeYear %>" class="nav-tab <%= activeView === 'activity' ? 'active' : '' %>"><i class="bi bi-clock-history"></i> Recent Activity</a>
+    <a href="/fees/other?view=campaigns&year=<%= activeYear %>" class="nav-tab <%= activeView === 'campaigns' ? 'active' : '' %>"><i class="bi bi-bullseye"></i> Fee Campaigns (Exams, Events)</a>
+</div>
+
+<% if (activeView === 'activity') { %>
+
 <form action="/fees/other" method="GET" class="filter-bar">
     <div class="form-group">
         <label for="classId">Filter by Class</label>
@@ -186,7 +193,7 @@
         </div>
     </form>
 </div>
-<div id="modalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeOtherFeeModal(); closeDetailsModal();"></div>
+<div id="modalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeOtherFeeModal(); closeDetailsModal(); closeEditOtherFeeModal(); closeCampaignModal();"></div>
 
 <!-- Details Modal -->
 <div id="detailsModal" class="card" style="display: none; max-width: 500px; margin: 0; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); box-sizing: border-box; width: 90%; max-height: 90vh; overflow-y: auto;">
@@ -198,6 +205,204 @@
         <!-- Content injected via JS -->
     </div>
 </div>
+
+<!-- Edit Other Fee Modal -->
+<div id="editOtherFeeModal" class="card" style="display: none; max-width: 440px; margin: 0; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; box-shadow: 0 10px 25px rgba(0,0,0,0.2); box-sizing: border-box; width: 90%; max-height: 90vh; overflow-y: auto;">
+    <h3 style="margin-bottom: 0.5rem; color: #0284c7;"><i class="bi bi-pencil-square"></i> Edit Fee</h3>
+    <form id="editOtherFeeForm" method="POST">
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label>Amount (PKR)</label>
+            <input type="number" step="0.01" id="editModalAmount" name="amount" class="form-control" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label>Description</label>
+            <input type="text" id="editModalDesc" name="additional_fee_description" class="form-control" required>
+            <input type="hidden" name="fee_type" value="Custom">
+        </div>
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label>Payment Date</label>
+            <input type="date" id="editModalPaymentDate" name="payment_date" class="form-control" required>
+        </div>
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button type="button" class="btn-secondary" onclick="closeEditOtherFeeModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Update Fee</button>
+        </div>
+    </form>
+</div>
+<% } else if (activeView === 'campaigns') { %>
+
+<% if (!locals.activeCampaign) { %>
+<!-- Campaigns List -->
+<div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h2 style="margin: 0;"><i class="bi bi-bullseye"></i> Manage Fee Campaigns</h2>
+    <button class="btn-primary" onclick="openCampaignModal()"><i class="bi bi-plus-circle"></i> Create Campaign</button>
+</div>
+
+<div class="table-container">
+    <table class="simple-ledger-table">
+        <thead>
+            <tr>
+                <th style="text-align: left;">Campaign Title</th>
+                <th style="text-align: left;">Fee Type</th>
+                <th>Default Amount</th>
+                <th>Applicable To</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (campaigns && campaigns.length > 0) { %>
+                <% campaigns.forEach(c => { %>
+                    <tr style="<%= c.is_active ? '' : 'opacity: 0.6;' %>">
+                        <td style="font-weight: 600; text-align: left;">
+                            <%= c.title %>
+                            <% if (!c.is_active) { %>
+                                <span style="font-size: 0.75rem; background: #cbd5e1; color: #334155; padding: 2px 6px; border-radius: 4px; margin-left: 0.5rem;">Closed</span>
+                            <% } %>
+                        </td>
+                        <td style="text-align: left;"><span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem;"><%= c.fee_type %></span></td>
+                        <td>PKR <%= parseFloat(c.default_amount).toLocaleString() %></td>
+                        <td>
+                            <% if (c.applicable_to_all) { %>
+                                <span class="status-cell status-paid">All Students</span>
+                            <% } else if (c.applicable_to_class_all) { %>
+                                <span class="status-cell" style="background: #fef08a; color: #854d0e;">Class ID: <%= c.class_id %> (All)</span>
+                            <% } else { %>
+                                <span class="status-cell" style="background: #e2e8f0; color: #475569;">Specific Students</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <a href="/fees/other?view=campaigns&campaign_id=<%= c.id %>" class="btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.85rem; display: inline-block; text-decoration: none;"><i class="bi bi-eye"></i> Track Payments</a>
+                                <form action="/fees/campaigns/<%= c.id %>/toggle" method="POST" style="margin: 0;">
+                                    <button type="submit" class="btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.85rem;">
+                                        <% if (c.is_active) { %>
+                                            <i class="bi bi-lock-fill"></i> Close
+                                        <% } else { %>
+                                            <i class="bi bi-unlock-fill"></i> Re-open
+                                        <% } %>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #64748b; padding: 2rem;">No campaigns found for <%= activeYear %>.</td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+</div>
+
+<% } else { %>
+<!-- Campaign Tracker -->
+<div class="section-header" style="margin-bottom: 1.5rem;">
+    <a href="/fees/other?view=campaigns&year=<%= activeYear %>" style="text-decoration: none; color: var(--primary-color); margin-bottom: 0.5rem; display: inline-block;"><i class="bi bi-arrow-left"></i> Back to Campaigns</a>
+    <h2 style="margin: 0;"><i class="bi bi-bullseye"></i> Tracking: <%= activeCampaign.title %></h2>
+    <p style="color: var(--muted); margin: 0.5rem 0 0;">Default Amount: PKR <%= parseFloat(activeCampaign.default_amount).toLocaleString() %></p>
+</div>
+
+<div class="table-container">
+    <table class="simple-ledger-table">
+        <thead>
+            <tr>
+                <th style="text-align: left;">Reg No</th>
+                <th style="text-align: left;">Student Name</th>
+                <th style="text-align: left;">Class</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (students.length > 0) { %>
+                <% students.forEach(s => { 
+                    const sCampaignPayments = otherPayments.filter(op => op.student_id === s.id && op.campaign_id === activeCampaign.id);
+                    const hasPaid = sCampaignPayments.length > 0;
+                %>
+                    <tr>
+                        <td style="font-weight: 600; text-align: left;"><%= s.reg_no %></td>
+                        <td style="text-align: left; font-weight: 500;"><a href="/students/view/<%= s.id %>"><%= s.name %></a></td>
+                        <td style="text-align: left;"><%= s.class_name || 'Unassigned' %></td>
+                        <td>
+                            <% if (hasPaid) { %>
+                                <span class="status-cell status-paid"><i class="bi bi-check-circle-fill"></i> PAID</span>
+                            <% } else { %>
+                                <span class="status-cell status-unpaid" style="background-color: #fee2e2; color: #991b1b;"><i class="bi bi-x-circle-fill"></i> UNPAID</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <% if (hasPaid) { %>
+                                <span style="color: #64748b; font-size: 0.85rem;">-</span>
+                            <% } else { %>
+                                <button class="btn-primary" onclick="openCampaignCollectModal('<%= s.id %>', '<%= activeCampaign.id %>', <%= activeCampaign.default_amount %>, '<%= activeCampaign.fee_type %>')" style="padding: 0.3rem 0.6rem; font-size: 0.85rem;"><i class="bi bi-cash"></i> Collect</button>
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }) %>
+            <% } else { %>
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #64748b; padding: 2rem;">No students targeted by this campaign.</td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+</div>
+
+<% } %>
+
+<!-- Create Campaign Modal -->
+<div id="createCampaignModal" class="card" style="display: none; max-width: 500px; margin: 0; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); box-sizing: border-box; width: 90%; max-height: 90vh; overflow-y: auto;">
+    <h3 style="margin-bottom: 0.5rem; color: #0284c7;"><i class="bi bi-bullseye"></i> Create Fee Campaign</h3>
+    <form action="/fees/campaigns" method="POST">
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label>Campaign Title</label>
+            <input type="text" name="title" class="form-control" placeholder="e.g. Midterm Exams 2026" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label>Fee Type</label>
+            <select name="fee_type" class="form-control">
+                <option value="Exam Fee">Exam Fee</option>
+                <option value="Paper Fund">Paper Fund</option>
+                <option value="Sports Fee">Sports Fee</option>
+                <option value="Event Fee">Event Fee</option>
+            </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label>Default Amount (PKR)</label>
+            <input type="number" step="0.01" name="default_amount" class="form-control" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.25rem; background: #f8fafc; padding: 1rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer;">
+                <input type="checkbox" name="applicable_to_all" id="campaignAllCheckbox" checked onchange="toggleCampaignClassSelect()"> Applicable to All Students
+            </label>
+            
+            <div id="campaignClassSelection" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #cbd5e1;">
+                <div class="form-group">
+                    <label>Select Target Class</label>
+                    <select name="class_id" class="form-control">
+                        <% classes.forEach(c => { %>
+                            <option value="<%= c.id %>"><%= c.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer; margin-top: 0.5rem;">
+                    <input type="checkbox" name="applicable_to_class_all" checked> Applicable to All Students in Class
+                </label>
+                <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">(Uncheck to select specific students later)</p>
+            </div>
+        </div>
+        <input type="hidden" name="year" value="<%= activeYear %>">
+        <input type="hidden" name="month" value="13">
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button type="button" class="btn-secondary" onclick="closeCampaignModal()">Cancel</button>
+            <button type="submit" class="btn-primary">Create Campaign</button>
+        </div>
+    </form>
+</div>
+<div id="modalOverlay" style="display: none; position: fixed; top: 0; left: 0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999;" onclick="closeOtherFeeModal(); closeDetailsModal(); closeEditOtherFeeModal(); closeCampaignModal();"></div>
+
+<% } %>
 
 <script>
     function openOtherFeeModalForStudent(studentId) {
@@ -273,9 +478,12 @@
                             <div style="color: #0f172a; font-weight: 600; margin-bottom: 0.25rem;">${desc}</div>
                             <div style="color: #64748b; font-size: 0.85rem;"><i class="bi bi-calendar3"></i> ${date}</div>
                         </div>
-                        <div style="text-align: right;">
-                            <div style="color: #059669; font-weight: 700; margin-bottom: 0.25rem;">PKR ${amount}</div>
-                            <a href="/fees/receipt/${op.id}" target="_blank" style="color: #0284c7; text-decoration: none; font-size: 0.85rem;"><i class="bi bi-printer"></i> Receipt</a>
+                        <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
+                            <div style="color: #059669; font-weight: 700;">PKR ${amount}</div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn-secondary" onclick="openEditOtherFeeModal('${op.id}', ${op.amount_paid > 0 ? op.amount_paid : op.additional_fee}, '${desc}', '${op.payment_date.substring(0, 10)}')" style="padding: 0.1rem 0.3rem; font-size: 0.75rem;"><i class="bi bi-pencil"></i></button>
+                                <a href="/fees/receipt/${op.id}" target="_blank" style="color: #0284c7; text-decoration: none; font-size: 0.85rem;"><i class="bi bi-printer"></i> Receipt</a>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -291,6 +499,63 @@
     function closeDetailsModal() {
         document.getElementById('detailsModal').style.display = 'none';
         document.getElementById('modalOverlay').style.display = 'none';
+    }
+
+    function openEditOtherFeeModal(paymentId, amount, desc, date) {
+        document.getElementById('editOtherFeeForm').action = '/fees/pay-other/edit/' + paymentId;
+        document.getElementById('editModalAmount').value = amount;
+        document.getElementById('editModalDesc').value = desc;
+        document.getElementById('editModalPaymentDate').value = date;
+        
+        closeDetailsModal();
+        document.getElementById('editOtherFeeModal').style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
+    }
+
+    function closeEditOtherFeeModal() {
+        document.getElementById('editOtherFeeModal').style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+    
+    function toggleCampaignClassSelect() {
+        const isAll = document.getElementById('campaignAllCheckbox').checked;
+        const panel = document.getElementById('campaignClassSelection');
+        panel.style.display = isAll ? 'none' : 'block';
+    }
+
+    function openCampaignModal() {
+        document.getElementById('createCampaignModal').style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
+    }
+
+    function closeCampaignModal() {
+        document.getElementById('createCampaignModal').style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+    
+    function openCampaignCollectModal(studentId, campaignId, defaultAmount, feeType) {
+        document.getElementById('otherModalStudentId').value = studentId;
+        // Find existing campaign hidden input or create it
+        let campaignInput = document.getElementById('otherModalCampaignId');
+        if (!campaignInput) {
+            campaignInput = document.createElement('input');
+            campaignInput.type = 'hidden';
+            campaignInput.id = 'otherModalCampaignId';
+            campaignInput.name = 'campaign_id';
+            document.querySelector('#otherFeeModal form').appendChild(campaignInput);
+        }
+        campaignInput.value = campaignId;
+        
+        // Auto-fill redirect
+        let redirectInput = document.querySelector('#otherFeeModal form input[name="redirect_url"]');
+        redirectInput.value = `/fees/other?view=campaigns&campaign_id=${campaignId}&year=<%= activeYear %>`;
+
+        document.getElementById('otherModalFeeType').value = 'Custom';
+        toggleOtherFeeDesc();
+        document.getElementById('otherModalDesc').value = feeType;
+        document.getElementById('otherModalAmount').value = defaultAmount;
+        document.getElementById('otherFeeModal').style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
     }
 </script>
 
