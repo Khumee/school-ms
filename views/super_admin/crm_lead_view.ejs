@@ -59,6 +59,7 @@
                 <% if (lead.converted_tenant_id) { %>
                     <span class="status-cell status-paid" style="padding: 0.5rem 1rem; font-size: 0.9rem;"><i class="bi bi-check-circle-fill"></i> Converted Tenant (#<%= lead.converted_tenant_id %>)</span>
                     <a href="/admin/crm/leads/<%= lead.id %>/thanks-letter" class="btn-primary" target="_blank" style="background-color: #8b5cf6;"><i class="bi bi-envelope-paper"></i> Print Thanks Letter</a>
+                    <a href="/admin/tenants/<%= lead.converted_tenant_id %>/contract" class="btn-secondary" target="_blank"><i class="bi bi-pencil-square"></i> Manage Contract</a>
                     <a href="/admin/tenants/<%= lead.converted_tenant_id %>/contract/view" class="btn-primary" target="_blank" style="background-color: #0284c7;"><i class="bi bi-file-earmark-text"></i> View Contract</a>
                 <% } else { %>
                     <button type="button" class="btn-primary" onclick="openConvertModal()" style="background-color: #2563eb;">

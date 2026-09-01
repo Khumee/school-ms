@@ -443,6 +443,27 @@ router.post('/fees/campaigns', isAuthenticated, async (req, res) => {
     }
 });
 
+// POST /fees/campaigns/:id/edit - Edit campaign details
+router.post('/fees/campaigns/:id/edit', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const campaignId = req.params.id;
+        const { title, fee_type, default_amount } = req.body;
+        
+        await db.execute(
+            `UPDATE fee_campaigns 
+             SET title = ?, fee_type = ?, default_amount = ? 
+             WHERE id = ? AND tenant_id = ?`,
+            [title, fee_type, parseFloat(default_amount) || 0, campaignId, tenantId]
+        );
+        
+        res.redirect('/fees/other?view=campaigns');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error updating campaign.');
+    }
+});
+
 // POST /fees/campaigns/:id/toggle - Toggle active status of a fee campaign
 router.post('/fees/campaigns/:id/toggle', isAuthenticated, async (req, res) => {
     try {
@@ -458,6 +479,51 @@ router.post('/fees/campaigns/:id/toggle', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send('Error toggling campaign status.');
+    }
+});
+
+// POST /fees/campaigns/:id/pay/:studentId - Quick pay campaign fee
+router.post('/fees/campaigns/:id/pay/:studentId', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const campaignId = req.params.id;
+        const studentId = req.params.studentId;
+        
+        // Fetch campaign details
+        const [[campaign]] = await db.execute('SELECT * FROM fee_campaigns WHERE id = ? AND tenant_id = ?', [campaignId, tenantId]);
+        if (!campaign) return res.status(404).send('Campaign not found.');
+        
+        // Insert payment
+        await db.execute(
+            `INSERT INTO fee_payments 
+             (tenant_id, student_id, month, year, amount_paid, additional_fee_description, payment_date, recorded_by, campaign_id)
+             VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?, ?)`,
+            [tenantId, studentId, campaign.month, campaign.year, campaign.default_amount, campaign.fee_type, req.session.userId, campaignId]
+        );
+        
+        res.redirect(`/fees/other?view=campaigns&campaign_id=${campaignId}`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error recording campaign payment.');
+    }
+});
+
+// POST /fees/campaigns/:id/unpay/:studentId - Quick unpay campaign fee (delete payment)
+router.post('/fees/campaigns/:id/unpay/:studentId', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const campaignId = req.params.id;
+        const studentId = req.params.studentId;
+        
+        await db.execute(
+            'DELETE FROM fee_payments WHERE tenant_id = ? AND campaign_id = ? AND student_id = ?',
+            [tenantId, campaignId, studentId]
+        );
+        
+        res.redirect(`/fees/other?view=campaigns&campaign_id=${campaignId}`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error deleting campaign payment.');
     }
 });
 
