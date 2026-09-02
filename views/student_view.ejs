@@ -185,7 +185,7 @@
                         <td style="font-weight: 600;">
                             <% if (p.month === 0) { %>
                                 <span style="color: #0284c7;">Admission Fee</span>
-                            <% } else if (p.month === 13 || (p.month >= 1 && p.month <= 12 && p.amount_paid > 0 && parseFloat(p.monthly_fee || 0) === 0)) { %>
+                            <% } else if (p.month === 13) { %>
                                 <span style="color: #059669;"><%= p.additional_fee_description || 'Other Fee' %></span>
                             <% } else { %>
                                 <%= monthNames[p.month - 1] %>
@@ -198,7 +198,7 @@
                         </td>
                         <td><%= p.year %></td>
                         <td style="text-align: right; font-weight: 600; color: #15803d;">PKR <%= parseFloat(p.amount_paid).toLocaleString() %></td>
-                        <td><%= new Date(p.payment_date).toLocaleDateString() %></td>
+                        <td><%= new Date(p.payment_date).toLocaleDateString('en-GB') %></td>
                         <td>
                             <div style="display: flex; gap: 0.4rem; justify-content: flex-end;">
                                 <a href="/fees/receipt/<%= p.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
