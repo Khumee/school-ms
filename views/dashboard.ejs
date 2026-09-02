@@ -9,8 +9,8 @@
 %>
 
 <div class="section-header">
-    <h1 class="section-title"><i class="bi bi-speedometer2"></i> Dashboard</h1>
-    <span class="user-greeting"><i class="bi bi-calendar3"></i> Academic Year: 2026</span>
+    <h1 class="section-title"><i class="bi bi-grid-1x2-fill"></i> Dashboard</h1>
+    <span class="user-greeting"><i class="bi bi-calendar-event-fill"></i> Academic Year: 2026</span>
 </div>
 
 <!-- KPI Cards Grid -->
@@ -28,7 +28,7 @@
     <% if (hasPerm('Fees') || hasPerm('Ledgers')) { %>
     <!-- Regular Fee Students -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students?filter=standard'">
-        <span class="kpi-icon green" style="background-color: #dcfce7; color: #16a34a;"><i class="bi bi-cash"></i></span>
+        <span class="kpi-icon green" style="background-color: #dcfce7; color: #16a34a;"><i class="bi bi-cash-coin"></i></span>
         <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Regular Fee</span>
         <span class="kpi-value"><%= paying_students %></span>
         <span class="kpi-subtitle" style="min-height: 40px;">Students paying full fee</span>
@@ -36,7 +36,7 @@
 
     <!-- Full Fee Waiver Students -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students?filter=full_waiver'">
-        <span class="kpi-icon red" style="background-color: #fef2f2; color: #ef4444;"><i class="bi bi-gift-fill"></i></span>
+        <span class="kpi-icon red" style="background-color: #fef2f2; color: #ef4444;"><i class="bi bi-award-fill"></i></span>
         <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Full Fee Waiver</span>
         <span class="kpi-value"><%= full_waiver_students %></span>
         <span class="kpi-subtitle" style="min-height: 40px;">Students with 100% concession</span>
@@ -64,7 +64,7 @@
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0 1rem 0; flex-wrap: wrap; gap: 1rem;">
     <h2 style="font-size: 1rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">
-        <i class="bi bi-cash-stack"></i> Monthly Financials
+        <i class="bi bi-bank2"></i> Monthly Financials
     </h2>
     <div style="display: flex; align-items: center; gap: 0.5rem;">
         <label for="monthSelector" style="font-size: 0.85rem; font-weight: 600; color: #64748b; text-transform: uppercase;">Select Month:</label>
@@ -81,7 +81,7 @@
     <!-- Net Monthly Balance -->
     <% if (hasPerm('Ledgers') || hasPerm('Fees')) { %>
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/transactions?month=<%= currentMonthNum %>&kpi=net'">
-        <span class="kpi-icon purple" style="background-color: #f3e8ff; color: #a855f7;"><i class="bi bi-wallet2"></i></span>
+        <span class="kpi-icon purple" style="background-color: #f3e8ff; color: #a855f7;"><i class="bi bi-safe2-fill"></i></span>
         <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Net Balance</span>
         <span class="kpi-value" style="color: <%= currentMonthData.balance >= 0 ? '#16a34a' : '#dc2626' %>;">
             <%= currentMonthData.balance >= 0 ? '+' : '' %>PKR <%= currentMonthData.balance.toLocaleString() %>
@@ -121,7 +121,7 @@
     <% if (hasPerm('Fees') || hasPerm('Ledgers')) { %>
     <!-- Collection Progress for Current Month -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/transactions?month=<%= currentMonthNum %>&kpi=accrual'">
-        <span class="kpi-icon blue" style="background-color: #dbeafe; color: #3b82f6;"><i class="bi bi-pie-chart-fill"></i></span>
+        <span class="kpi-icon blue" style="background-color: #dbeafe; color: #3b82f6;"><i class="bi bi-bar-chart-fill"></i></span>
         <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Collection Progress</span>
         <span class="kpi-value" style="font-size: 1.15rem;">PKR <%= currentMonthData.fees_accrual.toLocaleString() %> / <%= expected_fee_current_month.toLocaleString() %></span>
         <div style="min-height: 40px; display: flex; flex-direction: column; justify-content: center; gap: 4px; margin-top: 5px;">
@@ -177,7 +177,7 @@
 
         <!-- Closing Balance -->
         <div class="card kpi-card" style="border-left: 4px solid #b91c1c; cursor: default;">
-            <span class="kpi-icon" style="background-color: #fee2e2; color: #b91c1c;"><i class="bi bi-wallet2"></i></span>
+            <span class="kpi-icon" style="background-color: #fee2e2; color: #b91c1c;"><i class="bi bi-safe2-fill"></i></span>
             <span class="kpi-label">Closing Balance (YTD)</span>
             <span class="kpi-value" style="color: #b91c1c; font-size: 1.4rem;">PKR <%= currentBalance.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></span>
             <span class="kpi-subtitle">Income + Carry Fwd − Expense</span>
@@ -214,7 +214,7 @@
     <!-- Chart 3: YTD Expense Distribution -->
     <% if (hasPerm('Ledgers')) { %>
     <div class="card chart-card" style="margin-bottom: 0;">
-        <h3 class="chart-title"><i class="bi bi-pie-chart-fill"></i> YTD Expense Breakdown</h3>
+        <h3 class="chart-title"><i class="bi bi-bar-chart-fill"></i> YTD Expense Breakdown</h3>
         <div class="chart-container" style="height: 300px; position: relative;">
             <canvas id="expenseBreakdownChart"></canvas>
         </div>
