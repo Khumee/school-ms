@@ -2,7 +2,7 @@
 
 <%
     // Resolve current month dynamically (Default to June/Month 6 as per local context)
-    const currentMonthNum = new Date().getMonth() + 1;
+    const currentMonthNum = typeof activeMonth !== 'undefined' ? activeMonth : (new Date().getMonth() + 1);
     const currentMonthData = monthsData[currentMonthNum - 1] || monthsData[5] || monthsData[0];
     const currentMonthName = currentMonthData ? currentMonthData.name : 'This Month';
     const hasPerm = (p) => session.roleName === 'Admin' || (session.permissions && session.permissions.includes(p));
@@ -62,9 +62,20 @@
     <% } %>
 </div>
 
-<h2 style="font-size: 1rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin: 1.5rem 0 1rem 0;">
-    <i class="bi bi-cash-stack"></i> Monthly Financials (<%= currentMonthName %>)
-</h2>
+<div style="display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0 1rem 0; flex-wrap: wrap; gap: 1rem;">
+    <h2 style="font-size: 1rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">
+        <i class="bi bi-cash-stack"></i> Monthly Financials
+    </h2>
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <label for="monthSelector" style="font-size: 0.85rem; font-weight: 600; color: #64748b; text-transform: uppercase;">Select Month:</label>
+        <select id="monthSelector" class="form-control" style="width: auto; padding: 0.35rem 2rem 0.35rem 0.75rem; font-size: 0.9rem; font-weight: 600; color: #334155; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);" onchange="window.location.href='/?month=' + this.value">
+            <% const mNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']; %>
+            <% for(let i=1; i<=12; i++) { %>
+                <option value="<%= i %>" <%= currentMonthNum === i ? 'selected' : '' %>><%= mNames[i-1] %></option>
+            <% } %>
+        </select>
+    </div>
+</div>
 
 <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
     <!-- Net Monthly Balance -->

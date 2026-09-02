@@ -143,6 +143,7 @@ router.get('/', isAuthenticated, async (req, res) => {
         }
 
         const currentBalance = carryForward + totalIncomeAllTime - totalExpenseAllTime;
+        const activeMonth = req.query.month ? parseInt(req.query.month) : (new Date().getMonth() + 1);
 
         res.render('dashboard', {
             username: req.session.username,
@@ -160,7 +161,8 @@ router.get('/', isAuthenticated, async (req, res) => {
             currentBalance,
             total_employees,
             total_donors,
-            expected_fee_current_month
+            expected_fee_current_month,
+            activeMonth
         });
     } catch (err) {
         console.error('Dashboard Error:', err);
