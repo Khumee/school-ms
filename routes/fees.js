@@ -201,6 +201,17 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
             [tenantId, activeYear]
         );
 
+        // Fetch all transactions that actually occurred in the active month (Cash Basis)
+        const [cashflowTransactions] = await db.execute(
+            `SELECT fp.*, s.name as student_name, s.reg_no, c.name as class_name
+             FROM fee_payments fp
+             JOIN students s ON fp.student_id = s.id
+             LEFT JOIN classes c ON s.class_id = c.id
+             WHERE fp.tenant_id = ? AND MONTH(fp.payment_date) = ? AND YEAR(fp.payment_date) = ?
+             ORDER BY fp.payment_date DESC, fp.id DESC`,
+            [tenantId, activeMonth, activeYear]
+        );
+
         res.render('fees_ledger', { 
             students, 
             classes, 
@@ -211,7 +222,8 @@ router.get('/fees/ledger', isAuthenticated, async (req, res) => {
             activeYear: activeYear,
             recentPayments,
             topDefaulters,
-            activeCampaigns
+            activeCampaigns,
+            cashflowTransactions
         });
     } catch (err) {
         console.error(err);

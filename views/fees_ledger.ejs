@@ -160,6 +160,7 @@
     <button class="nav-tab active" id="tab-recent-btn" onclick="switchTab('recent')"><i class="bi bi-clock-history"></i> Monthly Fee Recent Activity</button>
     <button class="nav-tab" id="tab-class-btn" onclick="switchTab('class')"><i class="bi bi-diagram-3-fill"></i> Monthly Class Summary (<%= activeMonthName %>)</button>
     <button class="nav-tab" id="tab-matrix-btn" onclick="switchTab('matrix')"><i class="bi bi-grid-3x3-gap-fill"></i> Full Year Matrix</button>
+    <button class="nav-tab" id="tab-cashflow-btn" onclick="switchTab('cashflow')"><i class="bi bi-cash-coin"></i> Cash Inflow (<%= activeMonthName %>)</button>
 </div>
 
 <!-- Tab: Recent Activity Pane -->
@@ -259,6 +260,71 @@
                     </div>
                 <% } %>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tab: Cash Inflow Pane -->
+<div id="pane-cashflow" style="display: none;">
+    <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="color: var(--ink); margin: 0;"><i class="bi bi-cash-coin" style="color: #16a34a;"></i> Cash Inflow Transactions (<%= activeMonthName %>)</h3>
+            <% 
+                let totalCashflow = 0;
+                if (locals.cashflowTransactions) {
+                    locals.cashflowTransactions.forEach(t => totalCashflow += parseFloat(t.amount_paid));
+                }
+            %>
+            <div style="background-color: #dcfce7; color: #16a34a; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 700; font-size: 1.1rem;">
+                Total: PKR <%= totalCashflow.toLocaleString() %>
+            </div>
+        </div>
+        <div style="margin-bottom: 1rem; color: var(--muted); font-weight: 500;">
+            All payments physically collected in <%= activeMonthName %> <%= activeYear %>, including arrears, advances, and custom fees.
+        </div>
+        <div class="table-container">
+            <table class="simple-ledger-table">
+                <thead>
+                    <tr>
+                        <th style="text-align: left;">Date</th>
+                        <th style="text-align: left;">Reg No</th>
+                        <th style="text-align: left;">Student Name</th>
+                        <th style="text-align: left;">Class</th>
+                        <th style="text-align: left;">Fee Type</th>
+                        <th style="text-align: right;">Amount Paid</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (locals.cashflowTransactions && cashflowTransactions.length > 0) { %>
+                        <% cashflowTransactions.forEach(t => { %>
+                            <tr class="student-row status-row-paid">
+                                <td style="font-weight: 500; text-align: left;"><%= new Date(t.payment_date).toLocaleDateString('en-GB') %></td>
+                                <td style="font-weight: 600; text-align: left;"><%= t.reg_no %></td>
+                                <td style="text-align: left; font-weight: 500;"><a href="/students/view/<%= t.student_id %>" style="color: var(--primary-color); text-decoration: underline;"><%= t.student_name %></a></td>
+                                <td style="text-align: left;"><%= t.class_name || 'Unassigned' %></td>
+                                <td style="text-align: left;">
+                                    <% if (t.month === 0) { %>
+                                        <span style="color: #0284c7; font-weight: 500;">Admission Fee</span>
+                                    <% } else if (t.month >= 13) { %>
+                                        <span style="color: #059669; font-weight: 500;"><%= t.additional_fee_description || 'Other Fee' %></span>
+                                    <% } else { %>
+                                        <span style="font-weight: 500;">Monthly Fee (<%= monthsList[t.month - 1] %> <%= t.year %>)</span>
+                                    <% } %>
+                                </td>
+                                <td style="text-align: right; font-weight: 600; color: #16a34a;">PKR <%= parseFloat(t.amount_paid).toLocaleString() %></td>
+                                <td style="text-align: center;">
+                                    <a href="/fees/receipt/<%= t.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: #64748b; padding: 2rem;">No cash inflow transactions for <%= activeMonthName %>.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -948,17 +1014,19 @@
         const classBtn = document.getElementById('tab-class-btn');
         const simpleBtn = document.getElementById('tab-simple-btn');
         const matrixBtn = document.getElementById('tab-matrix-btn');
+        const cashflowBtn = document.getElementById('tab-cashflow-btn');
         
         const recentPane = document.getElementById('pane-recent');
         const classPane = document.getElementById('pane-class');
         const simplePane = document.getElementById('pane-simple');
         const matrixPane = document.getElementById('pane-matrix');
+        const cashflowPane = document.getElementById('pane-cashflow');
         
         const filterViewInput = document.getElementById('filter-view-input');
 
         // Reset all
-        [recentBtn, classBtn, simpleBtn, matrixBtn].forEach(b => { if(b) b.classList.remove('active'); });
-        [recentPane, classPane, simplePane, matrixPane].forEach(p => { if(p) p.style.display = 'none'; });
+        [recentBtn, classBtn, simpleBtn, matrixBtn, cashflowBtn].forEach(b => { if(b) b.classList.remove('active'); });
+        [recentPane, classPane, simplePane, matrixPane, cashflowPane].forEach(p => { if(p) p.style.display = 'none'; });
 
         if (tabType === 'recent' && recentBtn) {
             recentBtn.classList.add('active');
@@ -969,6 +1037,9 @@
         } else if (tabType === 'matrix' && matrixBtn) {
             matrixBtn.classList.add('active');
             if (matrixPane) matrixPane.style.display = 'block';
+        } else if (tabType === 'cashflow' && cashflowBtn) {
+            cashflowBtn.classList.add('active');
+            if (cashflowPane) cashflowPane.style.display = 'block';
         } else {
             if (recentBtn) recentBtn.classList.add('active');
             if (recentPane) recentPane.style.display = 'block';
