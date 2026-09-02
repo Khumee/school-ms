@@ -10,7 +10,7 @@
 
 <div class="section-header">
     <h1 class="section-title"><i class="bi bi-grid-1x2-fill"></i> Dashboard</h1>
-    <span class="user-greeting"><i class="bi bi-calendar-event-fill"></i> Academic Year: 2026</span>
+    <span style="font-size: 0.95rem; font-weight: 600; color: #64748b; display: inline-flex; align-items: center; gap: 0.4rem;"><i class="bi bi-calendar-event-fill"></i> Academic Year: 2026</span>
 </div>
 
 <!-- KPI Cards Grid -->
@@ -28,7 +28,7 @@
     <% if (hasPerm('Fees') || hasPerm('Ledgers')) { %>
     <!-- Regular Fee Students -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students?filter=standard'">
-        <span class="kpi-icon green" style="background-color: #dcfce7; color: #16a34a;"><i class="bi bi-cash-coin"></i></span>
+        <span class="kpi-icon green"><i class="bi bi-cash-coin"></i></span>
         <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Regular Fee</span>
         <span class="kpi-value"><%= paying_students %></span>
         <span class="kpi-subtitle" style="min-height: 40px;">Students paying full fee</span>
@@ -36,7 +36,7 @@
 
     <!-- Full Fee Waiver Students -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/students?filter=full_waiver'">
-        <span class="kpi-icon red" style="background-color: #fef2f2; color: #ef4444;"><i class="bi bi-award-fill"></i></span>
+        <span class="kpi-icon red"><i class="bi bi-award-fill"></i></span>
         <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Full Fee Waiver</span>
         <span class="kpi-value"><%= full_waiver_students %></span>
         <span class="kpi-subtitle" style="min-height: 40px;">Students with 100% concession</span>
@@ -81,7 +81,7 @@
     <!-- Net Monthly Balance -->
     <% if (hasPerm('Ledgers') || hasPerm('Fees')) { %>
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/transactions?month=<%= currentMonthNum %>&kpi=net'">
-        <span class="kpi-icon purple" style="background-color: #f3e8ff; color: #a855f7;"><i class="bi bi-safe2-fill"></i></span>
+        <span class="kpi-icon purple"><i class="bi bi-safe2-fill"></i></span>
         <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Net Balance</span>
         <span class="kpi-value" style="color: <%= currentMonthData.balance >= 0 ? '#16a34a' : '#dc2626' %>;">
             <%= currentMonthData.balance >= 0 ? '+' : '' %>PKR <%= currentMonthData.balance.toLocaleString() %>
@@ -121,7 +121,7 @@
     <% if (hasPerm('Fees') || hasPerm('Ledgers')) { %>
     <!-- Collection Progress for Current Month -->
     <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/transactions?month=<%= currentMonthNum %>&kpi=accrual'">
-        <span class="kpi-icon blue" style="background-color: #dbeafe; color: #3b82f6;"><i class="bi bi-bar-chart-fill"></i></span>
+        <span class="kpi-icon blue"><i class="bi bi-bar-chart-fill"></i></span>
         <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Collection Progress</span>
         <span class="kpi-value" style="font-size: 1.15rem;">PKR <%= currentMonthData.fees_accrual.toLocaleString() %> / <%= expected_fee_current_month.toLocaleString() %></span>
         <div style="min-height: 40px; display: flex; flex-direction: column; justify-content: center; gap: 4px; margin-top: 5px;">
