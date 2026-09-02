@@ -501,7 +501,7 @@ router.post('/fees/campaigns/:id/pay/:studentId', isAuthenticated, async (req, r
             [tenantId, studentId, campaign.month, campaign.year, campaign.default_amount, campaign.fee_type, req.session.userId, campaignId]
         );
         
-        res.redirect('back');
+        res.redirect(req.get('Referrer') || `/fees/other?view=campaigns&campaign_id=${campaignId}`);
     } catch (err) {
         console.error(err);
         res.status(500).send('Error recording campaign payment: ' + err.message);
