@@ -187,7 +187,7 @@
                         <td style="font-weight: 600;">
                             <% if (p.month === 0) { %>
                                 -
-                            <% } else if (p.month === 13) { %>
+                            <% } else if (p.month >= 13) { %>
                                 -
                             <% } else { %>
                                 <%= monthNames[p.month - 1] %>
@@ -196,7 +196,7 @@
                         <td>
                             <% if (p.month === 0) { %>
                                 <span style="color: #0284c7; font-weight: 500;">Admission Fee</span>
-                            <% } else if (p.month === 13) { %>
+                            <% } else if (p.month >= 13) { %>
                                 <span style="color: #059669; font-weight: 500;"><%= p.additional_fee_description || 'Other Fee' %></span>
                             <% } else { %>
                                 <span style="font-weight: 500;">Monthly Fee</span>
@@ -213,7 +213,7 @@
                         </td>
                     </tr>
                     <% } %>
-                    <% if (p.additional_fee > 0 && p.month !== 13) { %>
+                    <% if (p.additional_fee > 0 && p.month < 13) { %>
                     <tr>
                         <td style="font-weight: 600;">-</td>
                         <td>

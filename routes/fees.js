@@ -493,12 +493,13 @@ router.post('/fees/campaigns/:id/pay/:studentId', isAuthenticated, async (req, r
         const [[campaign]] = await db.execute('SELECT * FROM fee_campaigns WHERE id = ? AND tenant_id = ?', [campaignId, tenantId]);
         if (!campaign) return res.status(404).send('Campaign not found.');
         
-        // Insert payment
+        // Insert payment using a distinct pseudo-month to bypass unique constraint across different campaigns
+        const pseudoMonth = 13 + parseInt(campaignId);
         await db.execute(
             `INSERT IGNORE INTO fee_payments 
              (tenant_id, student_id, month, year, amount_paid, additional_fee_description, payment_date, recorded_by, campaign_id)
              VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?, ?)`,
-            [tenantId, studentId, campaign.month, campaign.year, campaign.default_amount, campaign.fee_type, req.session.userId, campaignId]
+            [tenantId, studentId, pseudoMonth, campaign.year, campaign.default_amount, campaign.fee_type, req.session.userId, campaignId]
         );
         
         res.redirect(req.get('Referrer') || `/fees/other?view=campaigns&campaign_id=${campaignId}`);
