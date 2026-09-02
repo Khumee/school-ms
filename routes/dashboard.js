@@ -221,7 +221,7 @@ router.get('/transactions', isAuthenticated, async (req, res) => {
         const fetchDonations = async () => {
             if (!req.tenant.enable_donations_module) return [];
             const [dn] = await db.execute(
-                `SELECT d.id, d.date, d.amount, d.fund_type, d.payment_method,
+                `SELECT d.id, d.date, d.amount, d.fund_category, d.payment_method,
                         dr.name as donor_name, dr.phone
                  FROM donations d
                  JOIN donors dr ON d.donor_id = dr.id
@@ -232,9 +232,9 @@ router.get('/transactions', isAuthenticated, async (req, res) => {
                 id: d.id,
                 date: new Date(d.date),
                 amount: parseFloat(d.amount),
-                type: d.fund_type === 'general' ? 'general_fund' : 'trust_fund',
+                type: d.fund_category === 'general' ? 'general_fund' : 'trust_fund',
                 typeLabel: 'Donation',
-                description: `${d.donor_name} - ${d.fund_type} via ${d.payment_method}`,
+                description: `${d.donor_name} - ${d.fund_category} via ${d.payment_method}`,
                 source: 'Donation',
                 sourceClass: 'source-donation',
                 receiptUrl: `/donations/receipt/${d.id}`,
@@ -250,18 +250,21 @@ router.get('/transactions', isAuthenticated, async (req, res) => {
                  WHERE tenant_id = ? AND MONTH(date) = ? AND YEAR(date) = ?`,
                 [tenantId, activeMonth, activeYear]
             );
-            return ex.map(e => ({
-                id: e.id,
-                date: new Date(e.date),
-                amount: parseFloat(e.amount),
-                type: e.category,
-                typeLabel: e.category.charAt(0).toUpperCase() + e.category.slice(1),
-                description: `${e.item} ${e.description ? '(' + e.description + ')' : ''}`,
-                source: 'Expense',
-                sourceClass: 'source-expense',
-                receiptUrl: null,
-                isPositive: false
-            }));
+            return ex.map(e => {
+                const category = e.category || 'other';
+                return {
+                    id: e.id,
+                    date: new Date(e.date),
+                    amount: parseFloat(e.amount),
+                    type: category,
+                    typeLabel: category.charAt(0).toUpperCase() + category.slice(1),
+                    description: `${e.item} ${e.description ? '(' + e.description + ')' : ''}`,
+                    source: 'Expense',
+                    sourceClass: 'source-expense',
+                    receiptUrl: null,
+                    isPositive: false
+                };
+            });
         };
 
         // Helper to fetch salaries (as expenses)
