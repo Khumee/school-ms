@@ -1,0 +1,78 @@
+<%- include('partials/header') %>
+
+<div class="section-header">
+    <h1 class="section-title"><i class="bi bi-cash-coin"></i> Income Transactions (<%= activeMonthName %> <%= activeYear %>)</h1>
+    <a href="/" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; background-color: <%= kpiConfig.bg %>; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+        <div>
+            <h4 style="margin: 0; color: <%= kpiConfig.color %>; display: flex; align-items: center; gap: 10px;">
+                <i class="bi <%= kpiConfig.icon %>"></i> <%= kpiConfig.title %> (<%= activeMonthName %>)
+            </h4>
+            <p style="margin: 0.5rem 0 0 0; color: #475569; font-size: 0.9rem;">
+                Detailed transaction list for the selected month.
+            </p>
+        </div>
+        <div style="text-align: right;">
+            <h2 style="margin: 0; color: <%= kpiConfig.color %>;">Total: PKR <%= totalAmount.toLocaleString() %></h2>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div style="background-color: white; padding: 1rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem;">
+        <form method="GET" action="/transactions" class="d-flex gap-3 align-items-end flex-wrap">
+            <input type="hidden" name="month" value="<%= activeMonth %>">
+            <input type="hidden" name="year" value="<%= activeYear %>">
+            <input type="hidden" name="kpi" value="<%= kpi %>">
+            
+            <select name="filter" class="form-control" onchange="this.form.submit()" style="width: auto;">
+                <% kpiConfig.filters.forEach(f => { %>
+                    <option value="<%= f.value %>" <%= selectedFilter === f.value ? 'selected' : '' %>><%= f.label %></option>
+                <% }) %>
+            </select>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <table class="simple-ledger-table">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Date</th>
+                    <th style="text-align: left;">Type</th>
+                    <th style="text-align: left;">Description</th>
+                    <th style="text-align: right;">Amount (PKR)</th>
+                    <th style="text-align: center;">Receipt</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (transactions.length > 0) { %>
+                    <% transactions.forEach(t => { %>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="font-weight: 500; text-align: left;"><%= t.date.toLocaleDateString('en-GB') %></td>
+                            <td style="text-align: left; font-weight: 500; color: #475569;"><%= t.typeLabel %></td>
+                            <td style="text-align: left;"><%= t.description %></td>
+                            <td style="text-align: right; font-weight: 600; color: <%= kpi === 'net' ? (t.isPositive ? '#16a34a' : '#dc2626') : '#475569' %>;">
+                                <%= kpi === 'net' ? (t.isPositive ? '+' : '-') : '' %> PKR <%= t.amount.toLocaleString() %>
+                            </td>
+                            <td style="text-align: center;">
+                                <% if (t.receiptUrl) { %>
+                                    <a href="<%= t.receiptUrl %>" class="btn-secondary" target="_blank" style="padding: 0.3rem 0.5rem; font-size: 0.85rem;"><i class="bi bi-printer"></i> Receipt</a>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #64748b; padding: 3rem;">No transactions found for this filter.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

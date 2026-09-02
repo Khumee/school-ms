@@ -398,7 +398,7 @@ router.post('/fees/pay-other', isAuthenticated, async (req, res) => {
                  amount_paid = amount_paid + VALUES(amount_paid),
                  additional_fee = additional_fee + VALUES(additional_fee),
                  additional_fee_description = IF(additional_fee_description IS NULL OR additional_fee_description = '', VALUES(additional_fee_description), CONCAT_WS(' | ', additional_fee_description, VALUES(additional_fee_description)))`,
-            [tenantId, student_id, month_val, year_val, feeAmt, payDate, req.session.userId, feeAmt, desc, campaign_id]
+            [tenantId, student_id, month_val, year_val, 0, payDate, req.session.userId, feeAmt, desc, campaign_id]
         );
 
         res.redirect(redirect_url || '/fees/other');

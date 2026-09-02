@@ -170,102 +170,295 @@ router.get('/', isAuthenticated, async (req, res) => {
     }
 });
 
-router.get('/income-transactions', isAuthenticated, async (req, res) => {
+router.get('/transactions', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        let { month, year, type } = req.query; // type: 'all', 'all_fees', 'regular_fees', 'other_fees', 'donations'
+        let { kpi, month, year, filter } = req.query; // kpi: net, income, expense, donations, accrual, cash_inflow
+
+        if (!kpi) kpi = 'cash_inflow';
 
         const activeYear = year ? parseInt(year) : new Date().getFullYear();
         const activeMonth = month ? parseInt(month) : (new Date().getMonth() + 1);
 
-        // Fetch fee transactions for the month (Cash Basis)
-        const [fees] = await db.execute(
-            `SELECT fp.id, fp.payment_date, fp.amount_paid, fp.additional_fee_description, fp.month as fee_month, fp.year as fee_year,
-                    s.name as student_name, s.reg_no, c.name as class_name
-             FROM fee_payments fp
-             JOIN students s ON fp.student_id = s.id
-             LEFT JOIN classes c ON s.class_id = c.id
-             WHERE fp.tenant_id = ? AND MONTH(fp.payment_date) = ? AND YEAR(fp.payment_date) = ?`,
-            [tenantId, activeMonth, activeYear]
-        );
+        let transactions = [];
+        let kpiConfig = {
+            title: 'Transactions',
+            icon: 'bi-list-ul',
+            color: '#475569',
+            bg: '#f1f5f9',
+            filters: []
+        };
 
-        // Fetch donations for the month
-        let donations = [];
-        if (req.tenant.enable_donations_module) {
+        // Helper to fetch fees (cash basis)
+        const fetchFeesCash = async () => {
+            const [fees] = await db.execute(
+                `SELECT fp.id, fp.payment_date as date, fp.amount_paid, fp.additional_fee, fp.additional_fee_description, fp.month as fee_month, fp.year as fee_year,
+                        s.name as student_name, s.reg_no, c.name as class_name
+                 FROM fee_payments fp
+                 JOIN students s ON fp.student_id = s.id
+                 LEFT JOIN classes c ON s.class_id = c.id
+                 WHERE fp.tenant_id = ? AND MONTH(fp.payment_date) = ? AND YEAR(fp.payment_date) = ?`,
+                [tenantId, activeMonth, activeYear]
+            );
+            return fees.map(f => {
+                const isRegular = (f.fee_month >= 1 && f.fee_month <= 12) || f.fee_month === 0;
+                return {
+                    id: f.id,
+                    date: new Date(f.date),
+                    amount: parseFloat(f.amount_paid || 0) + parseFloat(f.additional_fee || 0),
+                    type: isRegular ? 'regular_fees' : 'other_fees',
+                    typeLabel: f.fee_month === 0 ? 'Admission Fee' : (isRegular ? 'Monthly Fee' : (f.additional_fee_description || 'Other Fee')),
+                    description: `${f.student_name} (${f.reg_no}) - ${f.class_name || 'Unassigned'}`,
+                    source: 'Fee',
+                    sourceClass: 'source-fee',
+                    receiptUrl: `/fees/receipt/${f.id}`,
+                    isPositive: true
+                };
+            });
+        };
+
+        // Helper to fetch donations
+        const fetchDonations = async () => {
+            if (!req.tenant.enable_donations_module) return [];
             const [dn] = await db.execute(
-                `SELECT d.id, d.date as payment_date, d.amount, d.fund_type, d.payment_method,
+                `SELECT d.id, d.date, d.amount, d.fund_type, d.payment_method,
                         dr.name as donor_name, dr.phone
                  FROM donations d
                  JOIN donors dr ON d.donor_id = dr.id
                  WHERE d.tenant_id = ? AND MONTH(d.date) = ? AND YEAR(d.date) = ?`,
                 [tenantId, activeMonth, activeYear]
             );
-            donations = dn;
-        }
-
-        // Format data
-        let transactions = [];
-        
-        fees.forEach(f => {
-            const isRegular = (f.fee_month >= 1 && f.fee_month <= 12) || f.fee_month === 0;
-            const feeTypeStr = f.fee_month === 0 ? 'Admission Fee' : (isRegular ? `Monthly Fee` : (f.additional_fee_description || 'Other Fee'));
-            
-            transactions.push({
-                id: f.id,
-                date: new Date(f.payment_date),
-                amount: parseFloat(f.amount_paid),
-                type: isRegular ? 'regular_fees' : 'other_fees',
-                typeLabel: feeTypeStr,
-                description: `${f.student_name} (${f.reg_no}) - ${f.class_name || 'Unassigned'}`,
-                source: 'Fee',
-                receiptUrl: `/fees/receipt/${f.id}`
-            });
-        });
-
-        donations.forEach(d => {
-            transactions.push({
+            return dn.map(d => ({
                 id: d.id,
-                date: new Date(d.payment_date),
+                date: new Date(d.date),
                 amount: parseFloat(d.amount),
-                type: 'donations',
+                type: d.fund_type === 'general' ? 'general_fund' : 'trust_fund',
                 typeLabel: 'Donation',
                 description: `${d.donor_name} - ${d.fund_type} via ${d.payment_method}`,
                 source: 'Donation',
-                receiptUrl: `/donations/receipt/${d.id}`
-            });
-        });
+                sourceClass: 'source-donation',
+                receiptUrl: `/donations/receipt/${d.id}`,
+                isPositive: true
+            }));
+        };
 
-        // Filter
-        if (type && type !== 'all') {
-            if (type === 'all_fees') {
-                transactions = transactions.filter(t => t.source === 'Fee');
+        // Helper to fetch expenses
+        const fetchExpenses = async () => {
+            const [ex] = await db.execute(
+                `SELECT id, date, amount, category, item, description
+                 FROM expenses
+                 WHERE tenant_id = ? AND MONTH(date) = ? AND YEAR(date) = ?`,
+                [tenantId, activeMonth, activeYear]
+            );
+            return ex.map(e => ({
+                id: e.id,
+                date: new Date(e.date),
+                amount: parseFloat(e.amount),
+                type: e.category,
+                typeLabel: e.category.charAt(0).toUpperCase() + e.category.slice(1),
+                description: `${e.item} ${e.description ? '(' + e.description + ')' : ''}`,
+                source: 'Expense',
+                sourceClass: 'source-expense',
+                receiptUrl: null,
+                isPositive: false
+            }));
+        };
+
+        // Helper to fetch salaries (as expenses)
+        const fetchSalaries = async () => {
+            const [sl] = await db.execute(
+                `SELECT s.id, s.month, s.year, s.basic_salary, s.bonus, s.deductions, s.payment_date,
+                        e.name as emp_name, e.designation
+                 FROM salaries s
+                 JOIN employees e ON s.employee_id = e.id
+                 WHERE s.tenant_id = ? AND s.month = ? AND s.year = ?`,
+                [tenantId, activeMonth, activeYear]
+            );
+            return sl.map(s => {
+                const totalSalary = parseFloat(s.basic_salary || 0) + parseFloat(s.bonus || 0) - parseFloat(s.deductions || 0);
+                return {
+                    id: s.id,
+                    date: s.payment_date ? new Date(s.payment_date) : new Date(activeYear, activeMonth - 1, 1),
+                    amount: totalSalary,
+                    type: 'salaries',
+                    typeLabel: 'Salary',
+                    description: `${s.emp_name} (${s.designation})`,
+                    source: 'Expense',
+                    sourceClass: 'source-expense',
+                    receiptUrl: `/expenses/salaries/payslip/${s.id}`,
+                    isPositive: false
+                };
+            });
+        };
+
+        // Helper to fetch fees (accrual basis)
+        const fetchFeesAccrual = async () => {
+            const [fees] = await db.execute(
+                `SELECT fp.id, fp.payment_date as date, fp.amount_paid, fp.additional_fee, fp.additional_fee_description, fp.month as fee_month, fp.year as fee_year,
+                        s.name as student_name, s.reg_no, c.name as class_name
+                 FROM fee_payments fp
+                 JOIN students s ON fp.student_id = s.id
+                 LEFT JOIN classes c ON s.class_id = c.id
+                 WHERE fp.tenant_id = ? AND fp.month = ? AND fp.year = ?`,
+                [tenantId, activeMonth, activeYear]
+            );
+            return fees.map(f => {
+                const payDate = new Date(f.date);
+                const isLate = payDate.getMonth() + 1 > activeMonth && payDate.getFullYear() >= activeYear;
+                const isAdvance = payDate.getMonth() + 1 < activeMonth && payDate.getFullYear() <= activeYear;
+                let timingType = 'on_time';
+                if (isLate) timingType = 'late';
+                if (isAdvance) timingType = 'advance';
+
+                return {
+                    id: f.id,
+                    date: payDate,
+                    amount: parseFloat(f.amount_paid || 0) + parseFloat(f.additional_fee || 0),
+                    type: timingType,
+                    typeLabel: 'Monthly Fee',
+                    description: `${f.student_name} (${f.reg_no}) - ${f.class_name || 'Unassigned'}`,
+                    source: 'Fee',
+                    sourceClass: 'source-fee',
+                    receiptUrl: `/fees/receipt/${f.id}`,
+                    isPositive: true
+                };
+            });
+        };
+
+        switch(kpi) {
+            case 'cash_inflow':
+                transactions = await fetchFeesCash();
+                kpiConfig.title = 'Total Cash Inflow (Fees)';
+                kpiConfig.icon = 'bi-cash-coin';
+                kpiConfig.color = '#d97706';
+                kpiConfig.bg = '#fef3c7';
+                kpiConfig.filters = [
+                    { value: 'all', label: 'All Fees' },
+                    { value: 'regular_fees', label: 'Regular Fees' },
+                    { value: 'other_fees', label: 'Other/Campaign Fees' }
+                ];
+                break;
+            case 'income':
+                const feesIncome = await fetchFeesCash();
+                const donationsIncome = await fetchDonations();
+                transactions = [...feesIncome, ...donationsIncome];
+                kpiConfig.title = 'Total Income';
+                kpiConfig.icon = 'bi-graph-up-arrow';
+                kpiConfig.color = '#16a34a';
+                kpiConfig.bg = '#dcfce7';
+                kpiConfig.filters = [
+                    { value: 'all', label: 'All Income' },
+                    { value: 'fee', label: 'Fees Only' },
+                    { value: 'donation', label: 'Donations Only' }
+                ];
+                break;
+            case 'expense':
+                const exp = await fetchExpenses();
+                const sal = await fetchSalaries();
+                transactions = [...exp, ...sal];
+                kpiConfig.title = 'Total Expense';
+                kpiConfig.icon = 'bi-graph-down-arrow';
+                kpiConfig.color = '#dc2626';
+                kpiConfig.bg = '#fee2e2';
+                kpiConfig.filters = [
+                    { value: 'all', label: 'All Expenses' },
+                    { value: 'salaries', label: 'Salaries' },
+                    { value: 'rent', label: 'Rent' },
+                    { value: 'utility', label: 'Utilities' },
+                    { value: 'office', label: 'Office' },
+                    { value: 'other', label: 'Other' }
+                ];
+                break;
+            case 'donations':
+                transactions = await fetchDonations();
+                kpiConfig.title = 'Donations';
+                kpiConfig.icon = 'bi-heart-fill';
+                kpiConfig.color = '#4f46e5';
+                kpiConfig.bg = '#e0e7ff';
+                kpiConfig.filters = [
+                    { value: 'all', label: 'All Funds' },
+                    { value: 'general_fund', label: 'General Fund' },
+                    { value: 'trust_fund', label: 'Trust Fund' }
+                ];
+                break;
+            case 'accrual':
+                transactions = await fetchFeesAccrual();
+                kpiConfig.title = 'Collection Progress (Accrual)';
+                kpiConfig.icon = 'bi-pie-chart-fill';
+                kpiConfig.color = '#2563eb';
+                kpiConfig.bg = '#dbeafe';
+                kpiConfig.filters = [
+                    { value: 'all', label: 'All Fees' },
+                    { value: 'on_time', label: 'Paid On-Time' },
+                    { value: 'advance', label: 'Paid in Advance' },
+                    { value: 'late', label: 'Paid Late' }
+                ];
+                break;
+            case 'net':
+                const incFees = await fetchFeesCash();
+                const incDons = await fetchDonations();
+                const outExp = await fetchExpenses();
+                const outSal = await fetchSalaries();
+                transactions = [...incFees, ...incDons, ...outExp, ...outSal];
+                kpiConfig.title = 'Net Balance Ledger';
+                kpiConfig.icon = 'bi-wallet2';
+                kpiConfig.color = '#9333ea';
+                kpiConfig.bg = '#f3e8ff';
+                kpiConfig.filters = [
+                    { value: 'all', label: 'All Transactions' },
+                    { value: 'income', label: 'Money In (Income)' },
+                    { value: 'expense', label: 'Money Out (Expense)' }
+                ];
+                break;
+            default:
+                throw new Error("Invalid KPI type");
+        }
+
+        // Apply filters
+        if (filter && filter !== 'all') {
+            if (kpi === 'income') {
+                if (filter === 'fee') transactions = transactions.filter(t => t.source === 'Fee');
+                if (filter === 'donation') transactions = transactions.filter(t => t.source === 'Donation');
+            } else if (kpi === 'net') {
+                if (filter === 'income') transactions = transactions.filter(t => t.isPositive);
+                if (filter === 'expense') transactions = transactions.filter(t => !t.isPositive);
             } else {
-                transactions = transactions.filter(t => t.type === type);
+                transactions = transactions.filter(t => t.type === filter);
             }
         }
 
         // Sort by date DESC
         transactions.sort((a, b) => b.date - a.date);
 
-        const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
+        // Calculate Total
+        let totalAmount = 0;
+        transactions.forEach(t => {
+            if (kpi === 'net') {
+                totalAmount += (t.isPositive ? t.amount : -t.amount);
+            } else {
+                totalAmount += t.amount;
+            }
+        });
 
         const monthsList = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         const activeMonthName = monthsList[activeMonth - 1];
 
-        res.render('income_transactions', {
+        res.render('transactions_view', {
             transactions,
             totalAmount,
             activeMonth,
             activeYear,
             activeMonthName,
             monthsList,
-            selectedType: type || 'all',
+            kpi,
+            kpiConfig,
+            selectedFilter: filter || 'all',
             tenant: req.tenant
         });
 
     } catch (err) {
         console.error(err);
-        res.status(500).send('Error loading income transactions');
+        res.status(500).send('Error loading transactions');
     }
 });
 

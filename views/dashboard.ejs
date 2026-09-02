@@ -80,7 +80,7 @@
 <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
     <!-- Net Monthly Balance -->
     <% if (hasPerm('Ledgers') || hasPerm('Fees')) { %>
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/fees/ledger'">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/transactions?month=<%= currentMonthNum %>&kpi=net'">
         <span class="kpi-icon purple" style="background-color: #f3e8ff; color: #a855f7;"><i class="bi bi-wallet2"></i></span>
         <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Net Balance</span>
         <span class="kpi-value" style="color: <%= currentMonthData.balance >= 0 ? '#16a34a' : '#dc2626' %>;">
@@ -91,7 +91,7 @@
 
     <!-- Monthly Income -->
     <% if (req.tenant && req.tenant.enable_donations_module) { %>
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/income-transactions?month=<%= currentMonthNum %>&type=all'">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/transactions?month=<%= currentMonthNum %>&kpi=income'">
         <span class="kpi-icon green"><i class="bi bi-graph-up-arrow"></i></span>
         <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Total Income</span>
         <span class="kpi-value">PKR <%= currentMonthData.income.toLocaleString() %></span>
@@ -100,7 +100,7 @@
     <% } %>
 
     <!-- Monthly Expense -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/expenses'">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/transactions?month=<%= currentMonthNum %>&kpi=expense'">
         <span class="kpi-icon red"><i class="bi bi-graph-down-arrow"></i></span>
         <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Total Expense</span>
         <span class="kpi-value">PKR <%= currentMonthData.expense.toLocaleString() %></span>
@@ -110,7 +110,7 @@
 
     <% if (req.tenant && req.tenant.enable_donations_module && hasPerm('Donations')) { %>
     <!-- Monthly Donations -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/donations'">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/transactions?month=<%= currentMonthNum %>&kpi=donations'">
         <span class="kpi-icon indigo"><i class="bi bi-heart-fill"></i></span>
         <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Donations</span>
         <span class="kpi-value">PKR <%= currentMonthData.donations.toLocaleString() %></span>
@@ -120,7 +120,7 @@
 
     <% if (hasPerm('Fees') || hasPerm('Ledgers')) { %>
     <!-- Collection Progress for Current Month -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/fees/ledger'">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/transactions?month=<%= currentMonthNum %>&kpi=accrual'">
         <span class="kpi-icon blue" style="background-color: #dbeafe; color: #3b82f6;"><i class="bi bi-pie-chart-fill"></i></span>
         <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Collection Progress</span>
         <span class="kpi-value" style="font-size: 1.15rem;">PKR <%= currentMonthData.fees_accrual.toLocaleString() %> / <%= expected_fee_current_month.toLocaleString() %></span>
@@ -134,7 +134,7 @@
     </div>
 
     <!-- Monthly Fees Received (Cash Basis) -->
-    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/income-transactions?month=<%= currentMonthNum %>&type=all_fees'">
+    <div class="card kpi-card" style="cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 15px -3px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';" onclick="window.location.href='/transactions?month=<%= currentMonthNum %>&kpi=cash_inflow'">
         <span class="kpi-icon amber"><i class="bi bi-cash-coin"></i></span>
         <span class="kpi-label" style="min-height: 40px; display: flex; align-items: flex-end;">Total Cash Inflow</span>
         <span class="kpi-value">PKR <%= currentMonthData.fees.toLocaleString() %></span>
