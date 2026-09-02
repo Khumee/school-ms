@@ -222,7 +222,7 @@ router.get('/transactions', isAuthenticated, async (req, res) => {
             if (!req.tenant.enable_donations_module) return [];
             const [dn] = await db.execute(
                 `SELECT d.id, d.date, d.amount, d.fund_category, d.payment_method,
-                        dr.name as donor_name, dr.phone
+                        dr.name as donor_name, dr.contact_no as phone
                  FROM donations d
                  JOIN donors dr ON d.donor_id = dr.id
                  WHERE d.tenant_id = ? AND MONTH(d.date) = ? AND YEAR(d.date) = ?`,
