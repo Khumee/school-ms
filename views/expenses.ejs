@@ -91,7 +91,7 @@
                     <% if (expenses.length > 0) { %>
                         <% expenses.forEach(e => { %>
                             <tr>
-                                <td><%= new Date(e.date).toLocaleDateString() %></td>
+                                <td><%= new Date(e.date).toLocaleDateString('en-GB') %></td>
                                 <td style="font-weight: 500;"><%= e.item %></td>
                                 <td><span class="status-cell status-paid"><%= e.category.toUpperCase() %></span></td>
                                 <td style="text-align: right; font-weight: 600;"><%= e.amount.toLocaleString() %></td>

@@ -104,10 +104,10 @@
                             <% invoices.forEach(inv => { %>
                                 <tr>
                                     <td><strong><%= inv.invoice_number %></strong></td>
-                                    <td><%= new Date(inv.issue_date).toLocaleDateString() %></td>
+                                    <td><%= new Date(inv.issue_date).toLocaleDateString('en-GB') %></td>
                                     <td>
                                         <small class="text-muted">
-                                            <%= new Date(inv.billing_period_start).toLocaleDateString() %> - <%= new Date(inv.billing_period_end).toLocaleDateString() %>
+                                            <%= new Date(inv.billing_period_start).toLocaleDateString('en-GB') %> - <%= new Date(inv.billing_period_end).toLocaleDateString('en-GB') %>
                                         </small>
                                     </td>
                                     <td><%= inv.total_students_billed %></td>
@@ -155,7 +155,7 @@
                             <% } %>
                             <% payments.forEach(pay => { %>
                                 <tr>
-                                    <td><%= new Date(pay.payment_date).toLocaleDateString() %></td>
+                                    <td><%= new Date(pay.payment_date).toLocaleDateString('en-GB') %></td>
                                     <td><span class="text-primary"><%= pay.invoice_number %></span></td>
                                     <td><strong class="text-success">Rs <%= parseFloat(pay.amount_paid).toLocaleString() %></strong></td>
                                     <td><%= pay.payment_method %></td>
@@ -254,7 +254,7 @@
                             <label class="form-label">Select Invoice</label>
                             <select name="invoice_id" class="form-select" required>
                                 <% invoices.filter(i => i.status !== 'Paid' && i.status !== 'Cancelled').forEach(inv => { %>
-                                    <option value="<%= inv.id %>"><%= inv.invoice_number %> - Rs <%= parseFloat(inv.total_amount_pkr).toLocaleString() %> (Due: <%= new Date(inv.due_date).toLocaleDateString() %>)</option>
+                                    <option value="<%= inv.id %>"><%= inv.invoice_number %> - Rs <%= parseFloat(inv.total_amount_pkr).toLocaleString() %> (Due: <%= new Date(inv.due_date).toLocaleDateString('en-GB') %>)</option>
                                 <% }) %>
                             </select>
                         </div>

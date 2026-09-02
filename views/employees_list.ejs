@@ -106,7 +106,7 @@
                             </span>
                         </td>
                         <td style="text-align: right; font-weight: 600;"><%= e.default_salary > 0 ? e.default_salary.toLocaleString() : '-' %></td>
-                        <td><%= e.date_of_joining ? new Date(e.date_of_joining).toLocaleDateString() : '-' %></td>
+                        <td><%= e.date_of_joining ? new Date(e.date_of_joining).toLocaleDateString('en-GB') : '-' %></td>
                         <td>
                             <div style="display: flex; gap: 0.5rem;">
                                 <a href="/employees/view/<%= e.id %>" class="btn-secondary nav-btn"><i class="bi bi-person-vcard-fill"></i> View</a>

@@ -122,7 +122,7 @@
                     <% if (transactions.length > 0) { %>
                         <% transactions.forEach(t => { %>
                             <tr>
-                                <td><%= new Date(t.transaction_date).toLocaleDateString() %></td>
+                                <td><%= new Date(t.transaction_date).toLocaleDateString('en-GB') %></td>
                                 <td style="font-weight: 600;"><%= t.rep_name %></td>
                                 <td>
                                     <span class="status-cell" style="font-size: 0.75rem; text-transform: uppercase; background-color: <%= t.transaction_type === 'disbursement' ? '#dbeafe' : (t.transaction_type === 'expense_claim' ? '#fef3c7' : '#f3e8ff') %>; color: <%= t.transaction_type === 'disbursement' ? '#1e40af' : (t.transaction_type === 'expense_claim' ? '#92400e' : '#6b21a8') %>;">

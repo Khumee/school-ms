@@ -190,7 +190,7 @@
                             <td>
                                 <%= lead.phone || 'N/A' %>
                             </td>
-                            <td style="font-size: 0.85rem;"><%= new Date(lead.created_at).toLocaleDateString() %></td>
+                            <td style="font-size: 0.85rem;"><%= new Date(lead.created_at).toLocaleDateString('en-GB') %></td>
                             <td style="vertical-align: middle; min-width: 280px;">
                                 <div style="display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap;">
                                     <% if (lead.phone) { 

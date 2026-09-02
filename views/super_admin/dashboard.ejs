@@ -65,7 +65,7 @@
                                     <span style="font-size: 0.85rem; color: #94a3b8;">Never</span>
                                 <% } %>
                             </td>
-                            <td><%= new Date(t.created_at).toLocaleDateString() %></td>
+                            <td><%= new Date(t.created_at).toLocaleDateString('en-GB') %></td>
                             <td style="display: flex; gap: 0.5rem; justify-content: flex-end;">
                                 <a href="/admin/impersonate/<%= t.id %>" class="btn-primary nav-btn" style="background-color: #8b5cf6; color: white;" target="_blank"><i class="bi bi-person-fill-lock"></i> Impersonate</a>
                                 <a href="/admin/tenants/<%= t.id %>/contract" class="btn-primary nav-btn" style="background-color: #2563eb; color: white;"><i class="bi bi-file-earmark-text"></i> Contract</a>

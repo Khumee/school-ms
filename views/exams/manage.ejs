@@ -58,8 +58,8 @@
                     <% exams.forEach(e => { %>
                         <tr style="border-bottom: 1px solid var(--border);">
                             <td style="padding: 0.75rem; font-weight: 700; color: var(--ink);"><%= e.name %></td>
-                            <td style="padding: 0.75rem;"><%= new Date(e.start_date).toLocaleDateString() %></td>
-                            <td style="padding: 0.75rem;"><%= new Date(e.end_date).toLocaleDateString() %></td>
+                            <td style="padding: 0.75rem;"><%= new Date(e.start_date).toLocaleDateString('en-GB') %></td>
+                            <td style="padding: 0.75rem;"><%= new Date(e.end_date).toLocaleDateString('en-GB') %></td>
                             <td style="padding: 0.75rem; text-align: right; white-space: nowrap;">
                                 <div style="display: inline-flex; gap: 0.4rem; align-items: center;">
                                     <a href="/exams/<%= e.id %>/datesheet" class="btn-secondary" style="color: #0d9488; border-color: #99f6e4; background: #f0fdfa; padding: 0.3rem 0.65rem; text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem;">

@@ -60,8 +60,8 @@
     <div class="card">
         <h3 style="margin-bottom: 1rem; color: var(--primary-color);"><i class="bi bi-person-lines-fill"></i> Admission & Demographic Details</h3>
         <table class="details-table" style="width: 100%; font-size: 0.875rem;">
-            <tr><td style="font-weight: 600; padding: 6px 0; width: 45%;">Date of Admission</td><td style="padding: 6px 0;"><%= student.date_of_admission ? new Date(student.date_of_admission).toLocaleDateString() : '-' %></td></tr>
-            <tr><td style="font-weight: 600; padding: 6px 0;">Date of Birth</td><td style="padding: 6px 0;"><%= student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString() : '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0; width: 45%;">Date of Admission</td><td style="padding: 6px 0;"><%= student.date_of_admission ? new Date(student.date_of_admission).toLocaleDateString('en-GB') : '-' %></td></tr>
+            <tr><td style="font-weight: 600; padding: 6px 0;">Date of Birth</td><td style="padding: 6px 0;"><%= student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString('en-GB') : '-' %></td></tr>
             <tr><td style="font-weight: 600; padding: 6px 0;">Gender</td><td style="padding: 6px 0; text-transform: capitalize;"><%= student.gender || '-' %></td></tr>
             <tr><td style="font-weight: 600; padding: 6px 0;">Status</td><td style="padding: 6px 0; text-transform: capitalize;"><%= student.status %></td></tr>
             <tr><td style="font-weight: 600; padding: 6px 0;">Father's Name</td><td style="padding: 6px 0;"><%= student.father_name || '-' %></td></tr>
@@ -113,7 +113,7 @@
             <% if (student.admission_fee_status === 'paid' && student.admission_fee_payment_date) { %>
                 <tr>
                     <td style="font-weight: 600; padding: 6px 0;">Payment Date</td>
-                    <td style="padding: 6px 0;"><%= new Date(student.admission_fee_payment_date).toLocaleDateString() %></td>
+                    <td style="padding: 6px 0;"><%= new Date(student.admission_fee_payment_date).toLocaleDateString('en-GB') %></td>
                 </tr>
             <% } %>
         </table>
@@ -282,7 +282,7 @@
                             </td>
                             <td style="font-weight: 600;"><%= doc.document_type %></td>
                             <td><%= doc.description || '-' %></td>
-                            <td><%= new Date(doc.uploaded_at).toLocaleDateString() %></td>
+                            <td><%= new Date(doc.uploaded_at).toLocaleDateString('en-GB') %></td>
                             <td>
                                 <div style="display: flex; gap: 0.5rem;">
                                     <a href="<%= doc.file_path %>" target="_blank" class="btn-secondary nav-btn"><i class="bi bi-eye"></i> View</a>
@@ -576,7 +576,7 @@
                         statusHtml = `<span style="color: #2563eb; font-weight: 600;"><i class="bi bi-info-circle-fill"></i> ${record.status}</span>`;
                     }
                     
-                    const dateStr = new Date(record.date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                    const dateStr = new Date(record.date).toLocaleDateString('en-GB', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
                     
                     html += `<tr>
                         <td style="font-weight: 500;">${dateStr}</td>

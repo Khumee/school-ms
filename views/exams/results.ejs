@@ -3,7 +3,7 @@
 <div class="section-header no-print" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <div>
         <h1 class="section-title"><i class="bi bi-award"></i> Exam Results & Report Cards</h1>
-        <p style="margin: 0.25rem 0 0; color: var(--muted); font-size: 0.9rem;"><%= exam.name %> (<%= new Date(exam.start_date).toLocaleDateString() %> &ndash; <%= new Date(exam.end_date).toLocaleDateString() %>)</p>
+        <p style="margin: 0.25rem 0 0; color: var(--muted); font-size: 0.9rem;"><%= exam.name %> (<%= new Date(exam.start_date).toLocaleDateString('en-GB') %> &ndash; <%= new Date(exam.end_date).toLocaleDateString('en-GB') %>)</p>
     </div>
     <div style="display: flex; gap: 0.5rem;">
         <a href="/exams/manage" class="btn-secondary"><i class="bi bi-arrow-left"></i> Manage Exams</a>

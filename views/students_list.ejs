@@ -148,7 +148,7 @@
                                 <span>PKR <%= parseFloat(s.default_monthly_fee || 0).toLocaleString() %></span>
                             <% } %>
                         </td>
-                        <td><%= s.date_of_admission ? new Date(s.date_of_admission).toLocaleDateString() : '-' %></td>
+                        <td><%= s.date_of_admission ? new Date(s.date_of_admission).toLocaleDateString('en-GB') : '-' %></td>
                         <td>
                             <div style="display: flex; gap: 0.5rem;">
                                 <a href="/students/edit/<%= s.id %><%= typeof qString !== 'undefined' ? qString : '' %>" class="btn-secondary nav-btn"><i class="bi bi-pencil-square"></i> Edit</a>

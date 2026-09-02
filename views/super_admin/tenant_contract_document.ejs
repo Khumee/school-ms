@@ -146,7 +146,7 @@
                         <%= tenant.contact_phone %><%= tenant.contact_phone && tenant.contact_email ? ' | ' : '' %><%= tenant.contact_email %>
                     </p>
                 <% } %>
-                <p style="margin: 5px 0 0 0; color: #64748b; font-size: 12px;">Generated: <%= new Date().toLocaleDateString() %></p>
+                <p style="margin: 5px 0 0 0; color: #64748b; font-size: 12px;">Generated: <%= new Date().toLocaleDateString('en-GB') %></p>
             </div>
         </div>
 
@@ -158,17 +158,17 @@
         <table class="meta-table">
             <tr>
                 <th>Contract Start Date</th>
-                <td><%= new Date(contract.contract_start_date).toLocaleDateString() %></td>
+                <td><%= new Date(contract.contract_start_date).toLocaleDateString('en-GB') %></td>
             </tr>
             <% if (contract.free_trial_start && contract.free_trial_end) { %>
             <tr>
                 <th>Free Trial Period</th>
-                <td><%= new Date(contract.free_trial_start).toLocaleDateString() %> to <%= new Date(contract.free_trial_end).toLocaleDateString() %></td>
+                <td><%= new Date(contract.free_trial_start).toLocaleDateString('en-GB') %> to <%= new Date(contract.free_trial_end).toLocaleDateString('en-GB') %></td>
             </tr>
             <% } %>
             <tr>
                 <th>Billing Start Date</th>
-                <td><%= new Date(contract.billing_start_date).toLocaleDateString() %></td>
+                <td><%= new Date(contract.billing_start_date).toLocaleDateString('en-GB') %></td>
             </tr>
             <tr>
                 <th>Base Students Threshold</th>

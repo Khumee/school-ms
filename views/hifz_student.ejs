@@ -110,7 +110,7 @@
             <span class="khatam-title">Estimated Completion Date</span>
             <div class="khatam-date">
                 <% if (enrollment.predicted_khatam_date) { %>
-                    <%= new Date(enrollment.predicted_khatam_date).toLocaleDateString(undefined, {month: 'long', year: 'numeric'}) %>
+                    <%= new Date(enrollment.predicted_khatam_date).toLocaleDateString('en-GB', {month: 'long', year: 'numeric'}) %>
                 <% } else { %>
                     Calculating...
                 <% } %>
@@ -143,7 +143,7 @@
                 </tr>
                 <tr style="height: 2.2rem;">
                     <td style="color: #64748b;">Enrolled On</td>
-                    <td style="text-align: right; font-weight: 600;"><%= new Date(enrollment.enrolled_date).toLocaleDateString() %></td>
+                    <td style="text-align: right; font-weight: 600;"><%= new Date(enrollment.enrolled_date).toLocaleDateString('en-GB') %></td>
                 </tr>
                 <tr style="height: 2.2rem;">
                     <td style="color: #64748b;">Total Memorized</td>
@@ -162,7 +162,7 @@
                 <i class="bi bi-calendar-check"></i> Weekly Progress Report
             </h3>
             <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.75rem;">
-                Week Starting: <%= new Date(weeklyStats.startDate).toLocaleDateString() %>
+                Week Starting: <%= new Date(weeklyStats.startDate).toLocaleDateString('en-GB') %>
             </div>
             <table style="width: 100%; font-size: 0.9rem;">
                 <tr style="height: 2.2rem;">
@@ -228,7 +228,7 @@
         <div style="margin-bottom: 1.5rem;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
                 <span style="font-weight: 600; color: #334155; font-size: 0.9rem;">Target Completion (2 Years)</span>
-                <span style="font-weight: 600; color: #10b981; font-size: 0.9rem;"><%= targetDate.toLocaleDateString(undefined, {month: 'short', year: 'numeric', day: 'numeric'}) %></span>
+                <span style="font-weight: 600; color: #10b981; font-size: 0.9rem;"><%= targetDate.toLocaleDateString('en-GB', {month: 'short', year: 'numeric', day: 'numeric'}) %></span>
             </div>
             <div style="background-color: #f1f5f9; border-radius: 99px; height: 24px; width: 100%; position: relative;">
                 <div style="background: linear-gradient(90deg, #10b981, #34d399); border-radius: 99px; height: 100%; width: <%= targetWidth %>%; position: relative; display: flex; align-items: center; padding: 0 10px; color: white; font-size: 0.75rem; font-weight: bold; justify-content: flex-end;">
@@ -241,7 +241,7 @@
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
                 <span style="font-weight: 600; color: #334155; font-size: 0.9rem;">Predicted Completion (Current Pace)</span>
                 <span style="font-weight: 600; color: <%= isLate ? '#ef4444' : '#3b82f6' %>; font-size: 0.9rem;">
-                    <%= predictedDate ? predictedDate.toLocaleDateString(undefined, {month: 'short', year: 'numeric', day: 'numeric'}) : 'Calculating...' %>
+                    <%= predictedDate ? predictedDate.toLocaleDateString('en-GB', {month: 'short', year: 'numeric', day: 'numeric'}) : 'Calculating...' %>
                 </span>
             </div>
             <div style="background-color: #f1f5f9; border-radius: 99px; height: 24px; width: 100%; position: relative;">
@@ -272,7 +272,7 @@
                     if (p.test.test_result === 'prior_memorization') {
                         cellTitle = `Para ${p.para}: Prior Memorization (Test Not Given)`;
                     } else {
-                        const passDate = p.test.completed_date ? new Date(p.test.completed_date).toLocaleDateString() : 'N/A';
+                        const passDate = p.test.completed_date ? new Date(p.test.completed_date).toLocaleDateString('en-GB') : 'N/A';
                         cellTitle = `Para ${p.para}: Passed on ${passDate}`;
                     }
                 } else if (p.status === 'in_progress') {
@@ -298,7 +298,7 @@
                     <span style="font-size: 1.1rem;"><%= p.para %></span>
                     <% if (p.status === 'completed' && p.test && p.test.completed_date) { %>
                         <span style="font-size: 0.55rem; opacity: 0.9; margin-top: 0.1rem; display: block; font-weight: 500;">
-                            <%= new Date(p.test.completed_date).toLocaleDateString(undefined, {month: 'short', day: 'numeric'}) %>
+                            <%= new Date(p.test.completed_date).toLocaleDateString('en-GB', {month: 'short', day: 'numeric'}) %>
                         </span>
                     <% } %>
                 </div>
@@ -348,7 +348,7 @@
                         <div style="font-size: 0.8rem; margin-top: 0.25rem; color: #475569;">
                             <% if (record && record.test && record.test.completed_date) { %>
                                 <span class="status-cell status-paid" style="font-size: 0.75rem; padding: 0.15rem 0.4rem;"><i class="bi bi-check-circle-fill"></i> PASSED</span>
-                                <div style="margin-top: 0.35rem; font-weight: 600; font-size: 0.8rem;"><%= new Date(record.test.completed_date).toLocaleDateString() %></div>
+                                <div style="margin-top: 0.35rem; font-weight: 600; font-size: 0.8rem;"><%= new Date(record.test.completed_date).toLocaleDateString('en-GB') %></div>
                             <% } else { %>
                                 <span class="status-cell" style="background-color: #e2e8f0; color: #64748b; font-size: 0.75rem; padding: 0.15rem 0.4rem;">PENDING</span>
                             <% } %>
@@ -383,7 +383,7 @@
                     <% if (entries.length > 0) { %>
                         <% entries.slice(0, 7).forEach(e => { %>
                             <tr>
-                                <td style="font-weight: 600;"><%= new Date(e.entry_date).toLocaleDateString() %></td>
+                                <td style="font-weight: 600;"><%= new Date(e.entry_date).toLocaleDateString('en-GB') %></td>
                                 <td>
                                     <% if (e.is_absent) { %>
                                         <span class="status-cell status-unpaid" style="font-size: 0.75rem;">ABSENT</span>
@@ -531,8 +531,8 @@ function closeProgressModal() {
     function showParaModal(testData) {
         document.getElementById('modalParaTitle').innerText = 'Para ' + testData.para_no + ' Test Details';
         
-        const completedDate = testData.completed_date ? new Date(testData.completed_date).toLocaleDateString() : 'N/A';
-        const testDate = testData.test_date ? new Date(testData.test_date).toLocaleDateString() : 'Pending';
+        const completedDate = testData.completed_date ? new Date(testData.completed_date).toLocaleDateString('en-GB') : 'N/A';
+        const testDate = testData.test_date ? new Date(testData.test_date).toLocaleDateString('en-GB') : 'Pending';
         const result = (testData.test_result || '').toUpperCase();
         
         let resultBadge = '';

@@ -560,7 +560,7 @@
             studentPayments.forEach(op => {
                 const amount = (parseFloat(op.amount_paid) > 0 ? parseFloat(op.amount_paid) : parseFloat(op.additional_fee || 0)).toLocaleString();
                 const desc = op.additional_fee_description || 'Other Fee';
-                const date = new Date(op.payment_date).toLocaleDateString();
+                const date = new Date(op.payment_date).toLocaleDateString('en-GB');
                 html += `
                     <div style="display: flex; align-items: center; justify-content: space-between; background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px;">
                         <div>

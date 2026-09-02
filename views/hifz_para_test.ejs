@@ -111,8 +111,8 @@
                     <% completions.forEach(c => { %>
                         <tr>
                             <td style="font-weight: 700; color: #1e3a8a;">Para <%= c.para_no %></td>
-                            <td><%= new Date(c.completed_date).toLocaleDateString() %></td>
-                            <td><%= c.test_date ? new Date(c.test_date).toLocaleDateString() : '-' %></td>
+                            <td><%= new Date(c.completed_date).toLocaleDateString('en-GB') %></td>
+                            <td><%= c.test_date ? new Date(c.test_date).toLocaleDateString('en-GB') : '-' %></td>
                             <td>
                                 <% if (c.test_result === 'pass' || c.test_result === 'passed') { %>
                                     <span class="status-cell status-paid"><i class="bi bi-check-circle-fill"></i> PASSED</span>

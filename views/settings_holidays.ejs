@@ -165,8 +165,8 @@
                                 <% if (schoolHolidays.length > 0) { %>
                                     <% schoolHolidays.forEach(h => { %>
                                         <tr>
-                                            <td style="font-weight: 600;"><%= new Date(h.date).toLocaleDateString() %></td>
-                                            <td><%= new Date(h.date).toLocaleDateString(undefined, {weekday: 'long'}) %></td>
+                                            <td style="font-weight: 600;"><%= new Date(h.date).toLocaleDateString('en-GB') %></td>
+                                            <td><%= new Date(h.date).toLocaleDateString('en-GB', {weekday: 'long'}) %></td>
                                             <td><%= h.description || '-' %></td>
                                             <td>
                                                 <form action="/settings/holidays/school/delete/<%= h.id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this holiday?')">
@@ -256,8 +256,8 @@
                                 <% if (hifzHolidays.length > 0) { %>
                                     <% hifzHolidays.forEach(h => { %>
                                         <tr>
-                                            <td style="font-weight: 600;"><%= new Date(h.holiday_date).toLocaleDateString() %></td>
-                                            <td><%= new Date(h.holiday_date).toLocaleDateString(undefined, {weekday: 'long'}) %></td>
+                                            <td style="font-weight: 600;"><%= new Date(h.holiday_date).toLocaleDateString('en-GB') %></td>
+                                            <td><%= new Date(h.holiday_date).toLocaleDateString('en-GB', {weekday: 'long'}) %></td>
                                             <td><%= h.description || '-' %></td>
                                             <td>
                                                 <form action="/settings/holidays/hifz/delete/<%= h.id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this holiday?')">

@@ -13,7 +13,7 @@
         <label for="date">Select Date</label>
         <input type="date" name="date" id="date" class="form-control" value="<%= dateStr %>" onchange="this.form.submit()">
     </div>
-    <span style="font-weight: 500; color: #64748b; margin-top: 1rem;">Marking attendance for: <%= new Date(dateStr).toLocaleDateString(undefined, {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'}) %></span>
+    <span style="font-weight: 500; color: #64748b; margin-top: 1rem;">Marking attendance for: <%= new Date(dateStr).toLocaleDateString('en-GB', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'}) %></span>
 </form>
 
 <!-- Warning banner if Sunday or Holiday -->
@@ -208,7 +208,7 @@
                             <% holidaysList.forEach(h => { %>
                                 <tr style="border-bottom: 1px solid #f1f5f9; font-size: 0.9rem;">
                                     <td style="padding: 0.5rem 0.75rem; color: #334155;">
-                                        <%= new Date(h.date).toLocaleDateString(undefined, {year: 'numeric', month: 'short', day: 'numeric'}) %>
+                                        <%= new Date(h.date).toLocaleDateString('en-GB', {year: 'numeric', month: 'short', day: 'numeric'}) %>
                                     </td>
                                     <td style="padding: 0.5rem 0.75rem; color: #334155; font-weight: 500;"><%= h.name %></td>
                                     <td style="padding: 0.5rem 0.75rem; text-align: right;">
@@ -319,7 +319,7 @@ function showHistory(employeeId) {
             `;
 
             data.history.forEach(item => {
-                const formattedDate = new Date(item.date).toLocaleDateString(undefined, {
+                const formattedDate = new Date(item.date).toLocaleDateString('en-GB', {
                     weekday: 'short',
                     year: 'numeric',
                     month: 'short',

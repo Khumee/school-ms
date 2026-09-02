@@ -122,7 +122,7 @@
                         <% if (c.strengths) { %><span class="field-label" style="color: #166534;"><i class="bi bi-plus-square"></i> Strengths</span><div class="field-value"><%= c.strengths %></div><% } %>
                         <% if (c.weaknesses) { %><span class="field-label" style="color: #991b1b;"><i class="bi bi-dash-square"></i> Weaknesses</span><div class="field-value"><%= c.weaknesses %></div><% } %>
                         <% if (c.notes) { %><span class="field-label" style="color: #475569;"><i class="bi bi-journal-text"></i> Notes</span><div class="field-value"><%= c.notes %></div><% } %>
-                        <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 0.75rem; border-top: 1px solid #f1f5f9; padding-top: 0.5rem;">Added by <%= c.admin_name || c.admin_username %> · <%= new Date(c.created_at).toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'}) %></div>
+                        <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 0.75rem; border-top: 1px solid #f1f5f9; padding-top: 0.5rem;">Added by <%= c.admin_name || c.admin_username %> · <%= new Date(c.created_at).toLocaleDateString('en-GB', {month:'short', day:'numeric', year:'numeric'}) %></div>
                     </div>
                 <% }) %>
             </div>

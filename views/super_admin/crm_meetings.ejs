@@ -63,7 +63,7 @@
                             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                 <strong style="font-size: 1rem; color: #701a75;"><%= u.school_name %></strong>
                                 <span style="font-size: 0.75rem; font-weight: 700; background: #86198f; color: white; padding: 0.15rem 0.4rem; border-radius: 4px;">
-                                    <%= new Date(u.next_meeting_date).toLocaleDateString([], {month:'short', day:'numeric'}) %>
+                                    <%= new Date(u.next_meeting_date).toLocaleDateString('en-GB', {month:'short', day:'numeric'}) %>
                                 </span>
                             </div>
                             <div style="font-size: 0.85rem; color: #4a044e; margin-top: 0.25rem;">

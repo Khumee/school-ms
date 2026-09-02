@@ -85,8 +85,8 @@
                             </td>
                             <td>
                                 Invoice #: <strong><%= invoice.invoice_number %></strong><br />
-                                Issue Date: <%= new Date(invoice.issue_date).toLocaleDateString() %><br />
-                                Due Date: <strong><%= new Date(invoice.due_date).toLocaleDateString() %></strong><br />
+                                Issue Date: <%= new Date(invoice.issue_date).toLocaleDateString('en-GB') %><br />
+                                Due Date: <strong><%= new Date(invoice.due_date).toLocaleDateString('en-GB') %></strong><br />
                                 Status: <span class="status-badge status-<%= invoice.status %>"><%= invoice.status %></span>
                             </td>
                         </tr>
@@ -134,7 +134,7 @@
             <tr class="item">
                 <td>
                     <strong>Monthly SaaS Subscription</strong><br>
-                    Billing Period: <%= new Date(invoice.billing_period_start).toLocaleDateString() %> to <%= new Date(invoice.billing_period_end).toLocaleDateString() %><br>
+                    Billing Period: <%= new Date(invoice.billing_period_start).toLocaleDateString('en-GB') %> to <%= new Date(invoice.billing_period_end).toLocaleDateString('en-GB') %><br>
                     Students Billed: <%= invoice.total_students_billed %> @ Rs <%= contract ? contract.rate_per_student : 0 %> per student
                 </td>
                 <td>Rs <%= parseFloat(invoice.subtotal).toLocaleString() %></td>

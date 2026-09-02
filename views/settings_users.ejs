@@ -29,7 +29,7 @@
                         <tr>
                             <td style="font-weight: 600;"><%= u.username %></td>
                             <td><span class="status-cell" style="background-color: #f1f5f9; color: #334155; font-weight: 600;"><%= u.role_name || 'No Role' %></span></td>
-                            <td><%= new Date(u.created_at).toLocaleDateString() %></td>
+                            <td><%= new Date(u.created_at).toLocaleDateString('en-GB') %></td>
                             <td>
                                 <div style="display: flex; gap: 0.5rem;">
                                     <button class="btn-secondary nav-btn" onclick="openEditModal(<%= u.id %>, '<%= u.username %>', <%= u.role_id || 'null' %>)"><i class="bi bi-pencil"></i> Edit</button>

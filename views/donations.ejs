@@ -84,7 +84,7 @@
                         <td style="font-weight: 600;"><%= ld.donor.name %></td>
                         <td><%= ld.donor.contact_no || '-' %></td>
                         <td><%= ld.donor.referred_by || '-' %></td>
-                        <td><%= ld.lastDonationDate ? new Date(ld.lastDonationDate).toLocaleDateString() : '-' %></td>
+                        <td><%= ld.lastDonationDate ? new Date(ld.lastDonationDate).toLocaleDateString('en-GB') : '-' %></td>
                         <td style="text-align: right;"><%= ld.lastDonationAmount ? parseFloat(ld.lastDonationAmount).toLocaleString() : '-' %></td>
                         <td><a href="/donations/donor/<%= ld.donor.id %>" class="btn-secondary nav-btn"><i class="bi bi-person-vcard-fill"></i> View</a></td>
                     </tr>
@@ -122,8 +122,8 @@
                 <% recentThisMonth.forEach((d, idx) => { %>
                     <tr class="recent-donation-row <%= idx >= 10 ? 'recent-donation-hidden' : '' %>" style="<%= idx >= 10 ? 'display: none;' : '' %>">
                         <td class="recent-donor-name" style="font-weight: 600;"><a href="/donations/donor/<%= d.donor_id %>" style="color: var(--primary-color); text-decoration: none;"><%= d.donor_name %></a></td>
-                        <td><%= new Date(d.date).toLocaleDateString() %></td>
-                        <td><%= d.for_month ? new Date(d.for_month + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '-' %></td>
+                        <td><%= new Date(d.date).toLocaleDateString('en-GB') %></td>
+                        <td><%= d.for_month ? new Date(d.for_month + '-01').toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '-' %></td>
                         <td style="text-align: right; font-weight: 600; color: #15803d;"><%= parseFloat(d.amount).toLocaleString() %></td>
                         <td><%= fundLabels[d.fund_category] || d.fund_category %></td>
                         <td><%= d.donation_type || 'Sadqa' %></td>

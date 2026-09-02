@@ -158,7 +158,7 @@
                                 </form>
                             </div>
                             <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.4rem;">
-                                <%= f.admin_name || f.admin_username %> · <%= new Date(f.created_at).toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'}) %>
+                                <%= f.admin_name || f.admin_username %> · <%= new Date(f.created_at).toLocaleDateString('en-GB', {month:'short', day:'numeric', year:'numeric'}) %>
                             </div>
                         </div>
                     <% }) %>
