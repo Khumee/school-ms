@@ -501,7 +501,7 @@ router.post('/fees/campaigns/:id/pay/:studentId', isAuthenticated, async (req, r
             [tenantId, studentId, campaign.month, campaign.year, campaign.default_amount, campaign.fee_type, req.session.userId, campaignId]
         );
         
-        res.redirect(`/fees/other?view=campaigns&campaign_id=${campaignId}`);
+        res.redirect(req.get('Referrer') || `/fees/other?view=campaigns&campaign_id=${campaignId}`);
     } catch (err) {
         console.error(err);
         res.status(500).send('Error recording campaign payment.');
@@ -520,7 +520,7 @@ router.post('/fees/campaigns/:id/unpay/:studentId', isAuthenticated, async (req,
             [tenantId, campaignId, studentId]
         );
         
-        res.redirect(`/fees/other?view=campaigns&campaign_id=${campaignId}`);
+        res.redirect(req.get('Referrer') || `/fees/other?view=campaigns&campaign_id=${campaignId}`);
     } catch (err) {
         console.error(err);
         res.status(500).send('Error deleting campaign payment.');
