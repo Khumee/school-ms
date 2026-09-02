@@ -3,6 +3,21 @@ const session = require('express-session');
 const path = require('path');
 require('dotenv').config();
 
+// Global override to remove decimals (.00) from all numeric formatting across the system
+const originalNumToLocaleString = Number.prototype.toLocaleString;
+Number.prototype.toLocaleString = function(locales, options) {
+    const opts = { ...options, maximumFractionDigits: 0 };
+    return originalNumToLocaleString.call(this, locales, opts);
+};
+
+const originalStrToLocaleString = String.prototype.toLocaleString;
+String.prototype.toLocaleString = function(locales, options) {
+    if (!isNaN(Number(this)) && this.trim() !== '') {
+        return Number(this).toLocaleString(locales, options);
+    }
+    return originalStrToLocaleString.call(this, locales, options);
+};
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
