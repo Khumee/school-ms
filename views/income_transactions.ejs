@@ -1,0 +1,77 @@
+<%- include('partials/header') %>
+
+<div class="section-header">
+    <h1 class="section-title"><i class="bi bi-cash-coin"></i> Income Transactions (<%= activeMonthName %> <%= activeYear %>)</h1>
+    <a href="/" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+        <div style="background-color: #dcfce7; color: #16a34a; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 700; font-size: 1.25rem; display: flex; align-items: center; gap: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <i class="bi bi-wallet2"></i> Total: PKR <%= totalAmount.toLocaleString() %>
+        </div>
+        
+        <form action="/income-transactions" method="GET" style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="hidden" name="year" value="<%= activeYear %>">
+            
+            <select name="month" class="form-control" onchange="this.form.submit()" style="width: auto;">
+                <% monthsList.forEach((mName, idx) => { %>
+                    <option value="<%= idx + 1 %>" <%= activeMonth == (idx + 1) ? 'selected' : '' %>><%= mName %></option>
+                <% }) %>
+            </select>
+            
+            <select name="type" class="form-control" onchange="this.form.submit()" style="width: auto;">
+                <option value="all" <%= selectedType === 'all' ? 'selected' : '' %>>All Transactions</option>
+                <option value="all_fees" <%= selectedType === 'all_fees' ? 'selected' : '' %>>All Fees Only</option>
+                <option value="regular_fees" <%= selectedType === 'regular_fees' ? 'selected' : '' %>>Regular Fees Only</option>
+                <option value="other_fees" <%= selectedType === 'other_fees' ? 'selected' : '' %>>Other Fees & Campaigns</option>
+                <% if (tenant.enable_donations_module) { %>
+                <option value="donations" <%= selectedType === 'donations' ? 'selected' : '' %>>Donations Only</option>
+                <% } %>
+            </select>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <table class="simple-ledger-table">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Date</th>
+                    <th style="text-align: left;">Source</th>
+                    <th style="text-align: left;">Type</th>
+                    <th style="text-align: left;">Description</th>
+                    <th style="text-align: right;">Amount (PKR)</th>
+                    <th style="text-align: center;">Receipt</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (transactions.length > 0) { %>
+                    <% transactions.forEach(t => { %>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="font-weight: 500; text-align: left;"><%= t.date.toLocaleDateString('en-GB') %></td>
+                            <td style="text-align: left;">
+                                <% if (t.source === 'Fee') { %>
+                                    <span style="background-color: #dbeafe; color: #2563eb; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">Fee</span>
+                                <% } else { %>
+                                    <span style="background-color: #fce7f3; color: #db2777; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600;">Donation</span>
+                                <% } %>
+                            </td>
+                            <td style="text-align: left; font-weight: 500; color: #475569;"><%= t.typeLabel %></td>
+                            <td style="text-align: left;"><%= t.description %></td>
+                            <td style="text-align: right; font-weight: 600; color: #16a34a;"><%= t.amount.toLocaleString() %></td>
+                            <td style="text-align: center;">
+                                <a href="<%= t.receiptUrl %>" class="btn-secondary" target="_blank" style="padding: 0.3rem 0.5rem; font-size: 0.85rem;"><i class="bi bi-printer"></i></a>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #64748b; padding: 3rem;">No transactions found for this filter.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<%- include('partials/footer') %>

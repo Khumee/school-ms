@@ -170,6 +170,105 @@ router.get('/', isAuthenticated, async (req, res) => {
     }
 });
 
+router.get('/income-transactions', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        let { month, year, type } = req.query; // type: 'all', 'all_fees', 'regular_fees', 'other_fees', 'donations'
+
+        const activeYear = year ? parseInt(year) : new Date().getFullYear();
+        const activeMonth = month ? parseInt(month) : (new Date().getMonth() + 1);
+
+        // Fetch fee transactions for the month (Cash Basis)
+        const [fees] = await db.execute(
+            `SELECT fp.id, fp.payment_date, fp.amount_paid, fp.additional_fee_description, fp.month as fee_month, fp.year as fee_year,
+                    s.name as student_name, s.reg_no, c.name as class_name
+             FROM fee_payments fp
+             JOIN students s ON fp.student_id = s.id
+             LEFT JOIN classes c ON s.class_id = c.id
+             WHERE fp.tenant_id = ? AND MONTH(fp.payment_date) = ? AND YEAR(fp.payment_date) = ?`,
+            [tenantId, activeMonth, activeYear]
+        );
+
+        // Fetch donations for the month
+        let donations = [];
+        if (req.tenant.enable_donations_module) {
+            const [dn] = await db.execute(
+                `SELECT d.id, d.date as payment_date, d.amount, d.fund_type, d.payment_method,
+                        dr.name as donor_name, dr.phone
+                 FROM donations d
+                 JOIN donors dr ON d.donor_id = dr.id
+                 WHERE d.tenant_id = ? AND MONTH(d.date) = ? AND YEAR(d.date) = ?`,
+                [tenantId, activeMonth, activeYear]
+            );
+            donations = dn;
+        }
+
+        // Format data
+        let transactions = [];
+        
+        fees.forEach(f => {
+            const isRegular = (f.fee_month >= 1 && f.fee_month <= 12) || f.fee_month === 0;
+            const feeTypeStr = f.fee_month === 0 ? 'Admission Fee' : (isRegular ? `Monthly Fee` : (f.additional_fee_description || 'Other Fee'));
+            
+            transactions.push({
+                id: f.id,
+                date: new Date(f.payment_date),
+                amount: parseFloat(f.amount_paid),
+                type: isRegular ? 'regular_fees' : 'other_fees',
+                typeLabel: feeTypeStr,
+                description: `${f.student_name} (${f.reg_no}) - ${f.class_name || 'Unassigned'}`,
+                source: 'Fee',
+                receiptUrl: `/fees/receipt/${f.id}`
+            });
+        });
+
+        donations.forEach(d => {
+            transactions.push({
+                id: d.id,
+                date: new Date(d.payment_date),
+                amount: parseFloat(d.amount),
+                type: 'donations',
+                typeLabel: 'Donation',
+                description: `${d.donor_name} - ${d.fund_type} via ${d.payment_method}`,
+                source: 'Donation',
+                receiptUrl: `/donations/receipt/${d.id}`
+            });
+        });
+
+        // Filter
+        if (type && type !== 'all') {
+            if (type === 'all_fees') {
+                transactions = transactions.filter(t => t.source === 'Fee');
+            } else {
+                transactions = transactions.filter(t => t.type === type);
+            }
+        }
+
+        // Sort by date DESC
+        transactions.sort((a, b) => b.date - a.date);
+
+        const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
+
+        const monthsList = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const activeMonthName = monthsList[activeMonth - 1];
+
+        res.render('income_transactions', {
+            transactions,
+            totalAmount,
+            activeMonth,
+            activeYear,
+            activeMonthName,
+            monthsList,
+            selectedType: type || 'all',
+            tenant: req.tenant
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error loading income transactions');
+    }
+});
+
 router.get('/debug-db', async (req, res) => {
     try {
         const [payments] = await db.execute('SELECT id, student_id, month, year, amount_paid, payment_date FROM fee_payments WHERE tenant_id = ?', [req.tenant.id]);
