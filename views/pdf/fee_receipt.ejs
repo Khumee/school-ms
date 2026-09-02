@@ -120,6 +120,7 @@
                 <td class="label">Class</td>
                 <td><%= className || '-' %></td>
             </tr>
+            <% if (isRegularFee) { %>
             <tr>
                 <td class="label">Full Fee (Standard)</td>
                 <td>PKR <%= Number(standardFee).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></td>
@@ -128,6 +129,7 @@
                 <td class="label">Concession (Discount)</td>
                 <td>PKR <%= Number(concession).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></td>
             </tr>
+            <% } %>
             <tr>
                 <td class="label">Late Fee Fine</td>
                 <td>
@@ -145,7 +147,7 @@
             <span class="value">PKR <%= Number(amount).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}) %></span>
         </div>
 
-        <% if (lastFivePayments && lastFivePayments.length > 0) { %>
+        <% if (isRegularFee && lastFivePayments && lastFivePayments.length > 0) { %>
         <h4 style="margin-top: 30px; margin-bottom: 10px; font-size: 14px; text-transform: uppercase; color: <%= tenant.primary_color || '#4f46e5' %>; letter-spacing: 0.02em;">Recent Fee Payments History</h4>
         <table class="details" style="margin-bottom: 20px;">
             <thead>

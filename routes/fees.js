@@ -495,16 +495,16 @@ router.post('/fees/campaigns/:id/pay/:studentId', isAuthenticated, async (req, r
         
         // Insert payment
         await db.execute(
-            `INSERT INTO fee_payments 
+            `INSERT IGNORE INTO fee_payments 
              (tenant_id, student_id, month, year, amount_paid, additional_fee_description, payment_date, recorded_by, campaign_id)
              VALUES (?, ?, ?, ?, ?, ?, CURDATE(), ?, ?)`,
             [tenantId, studentId, campaign.month, campaign.year, campaign.default_amount, campaign.fee_type, req.session.userId, campaignId]
         );
         
-        res.redirect(req.get('Referrer') || `/fees/other?view=campaigns&campaign_id=${campaignId}`);
+        res.redirect('back');
     } catch (err) {
         console.error(err);
-        res.status(500).send('Error recording campaign payment.');
+        res.status(500).send('Error recording campaign payment: ' + err.message);
     }
 });
 
@@ -588,6 +588,8 @@ router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
 
         const totalAmtPaid = parseFloat(payment.amount_paid) > 0 ? parseFloat(payment.amount_paid) : parseFloat(payment.additional_fee || 0);
 
+        let isRegularFee = (payment.month >= 1 && payment.month <= 12);
+
         renderPdf(res, {
             templateName: 'fee_receipt',
             data: {
@@ -605,7 +607,8 @@ router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
                 receiptId: payment.id,
                 paymentDate: new Date(payment.payment_date).toLocaleDateString('en-GB'),
                 lastFivePayments,
-                MONTH_NAMES
+                MONTH_NAMES,
+                isRegularFee
             },
             fileBaseName: `fee_receipt_${payment.id}`,
             downloadName: `fee-receipt-${payment.reg_no}-${payment.month === 0 ? 'AdmissionFee' : (payment.additional_fee_description || MONTH_NAMES[payment.month - 1] || 'OtherFee')}-${payment.year}.pdf`
