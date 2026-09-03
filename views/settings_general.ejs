@@ -171,7 +171,7 @@
             <h3 style="margin: 0;">Fee Tracking & Arrears Start Period</h3>
         </div>
 
-        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
             <div class="form-group">
                 <label for="fee_start_month" style="font-weight: 600;">System Billing Start Month</label>
                 <select id="fee_start_month" name="fee_start_month" class="form-control">
@@ -187,6 +187,15 @@
                 <input type="number" id="fee_start_year" name="fee_start_year" class="form-control" value="<%= currentTenant.fee_start_year || 2026 %>" min="2024" max="2030" required>
                 <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Year when this school system started recording fees.</p>
             </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 2rem;">
+            <label for="include_overdue_in_challans" style="font-weight: 600;">Include Previous Overdue / Arrears on Fee Challans</label>
+            <select id="include_overdue_in_challans" name="include_overdue_in_challans" class="form-control">
+                <option value="1" <%= (currentTenant.include_overdue_in_challans === 1 || currentTenant.include_overdue_in_challans === null || currentTenant.include_overdue_in_challans === undefined) ? 'selected' : '' %>>Enabled (Yes - include previous unpaid dues on challan)</option>
+                <option value="0" <%= currentTenant.include_overdue_in_challans === 0 ? 'selected' : '' %>>Disabled (No - print current month tuition fee only)</option>
+            </select>
+            <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">If disabled, fee challans will only charge the current month fee by default without adding previous dues.</p>
         </div>
 
         <div class="section-header" style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">

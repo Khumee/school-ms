@@ -1363,10 +1363,11 @@
 
         <div class="form-group" style="margin-bottom: 1.25rem;">
             <label for="challanArrearsStartMonth" style="font-weight: 600;">Calculate Previous Dues (Arrears) Starting From</label>
+            <% const isOverdueOn = (tenant.include_overdue_in_challans !== 0); %>
             <select name="arrearsStartMonth" id="challanArrearsStartMonth" class="form-control">
-                <option value="0">None (Current Month Only - No Previous Dues)</option>
+                <option value="0" <%= !isOverdueOn ? 'selected' : '' %>>None (Current Month Only - No Previous Dues)</option>
                 <% monthsList.forEach((mName, idx) => { %>
-                    <option value="<%= idx + 1 %>" <%= (tenant.fee_start_month || 8) === (idx + 1) ? 'selected' : '' %>><%= mName %> (<%= idx + 1 === (tenant.fee_start_month || 8) ? 'School System Start' : 'Month ' + (idx + 1) %>)</option>
+                    <option value="<%= idx + 1 %>" <%= (isOverdueOn && (tenant.fee_start_month || 8) === (idx + 1)) ? 'selected' : '' %>><%= mName %> (<%= idx + 1 === (tenant.fee_start_month || 8) ? 'School System Start' : 'Month ' + (idx + 1) %>)</option>
                 <% }) %>
             </select>
             <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Select start month for checking unpaid dues. Ignores earlier months when school wasn't active on system.</p>

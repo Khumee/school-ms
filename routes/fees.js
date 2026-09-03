@@ -701,7 +701,13 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
         }
 
         // Determine starting month for arrears calculation
-        const arrearsStart = arrearsStartMonth !== undefined ? parseInt(arrearsStartMonth) : (req.tenant.fee_start_month || 8);
+        let arrearsStart = 0;
+        if (arrearsStartMonth !== undefined && arrearsStartMonth !== null && arrearsStartMonth !== '') {
+            arrearsStart = parseInt(arrearsStartMonth);
+        } else {
+            const isOverdueEnabled = req.tenant.include_overdue_in_challans !== 0;
+            arrearsStart = isOverdueEnabled ? (req.tenant.fee_start_month || 8) : 0;
+        }
 
         // Fetch all previous payments for activeYear for students in this class
         const [previousPayments] = await db.execute(
