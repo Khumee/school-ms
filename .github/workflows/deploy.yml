@@ -22,6 +22,7 @@ jobs:
         port: 22
         script_stop: true
         script: |
+          set -e
           # Ensure target directory exists
           # Ensure target directory is a valid git repo
           if [ ! -d "/var/www/school-ms/.git" ]; then
