@@ -6,7 +6,7 @@
 <style>
     @page {
         size: A4 portrait;
-        margin: 6mm 8mm;
+        margin: 5mm 8mm;
     }
     * {
         box-sizing: border-box;
@@ -16,15 +16,15 @@
         print-color-adjust: exact !important;
     }
     body {
-        font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
-        color: #1e293b;
-        background-color: #ffffff;
+        font-family: 'Segoe UI', Arial, -apple-system, Roboto, sans-serif;
+        color: #0f172a;
+        background: #ffffff;
         font-size: 11px;
     }
 
     .challan-page {
         width: 100%;
-        height: 284mm; /* Fits standard A4 within 6mm margins */
+        height: 286mm;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -38,91 +38,99 @@
         break-after: auto;
     }
 
-    .challan-item-container {
+    .challan-unit {
         display: flex;
         flex-direction: column;
-        height: 31.8%; /* 3 items fit evenly */
+        height: 32%;
         justify-content: space-between;
     }
 
     .challan-card {
-        border: 2px solid <%= brandColor %>;
-        border-radius: 12px;
+        border: 2px solid <%= brandColor || '#c28b1e' %>;
+        border-radius: 14px;
         padding: 8px 12px 0 12px;
-        position: relative;
         background: #ffffff;
-        height: calc(100% - 14px);
+        height: calc(100% - 12px);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        position: relative;
+        overflow: hidden;
     }
 
-    /* Header section */
+    /* ---------------- HEADER ---------------- */
     .header-row {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-between;
-        gap: 8px;
-        border-bottom: 1.5px solid #f1f5f9;
-        padding-bottom: 4px;
+        gap: 12px;
+        border-bottom: 1.5px solid #e2e8f0;
+        padding-bottom: 6px;
     }
 
-    .school-branding {
+    .school-info-group {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         flex: 1;
     }
 
-    .school-logo {
-        width: 48px;
-        height: 48px;
+    .school-logo-img {
+        width: 52px;
+        height: 52px;
         object-fit: contain;
-        border-radius: 6px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        padding: 2px;
+        background: #ffffff;
     }
 
-    .school-logo-placeholder {
-        width: 48px;
-        height: 48px;
-        border-radius: 6px;
-        background: <%= brandColor %>;
-        color: #ffffff;
+    .school-logo-fallback {
+        width: 52px;
+        height: 52px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        border: 2px solid <%= brandColor || '#c28b1e' %>;
+        color: <%= brandColor || '#c28b1e' %>;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 16px;
-        font-weight: 800;
+        font-weight: 900;
+        letter-spacing: 1px;
     }
 
-    .school-details {
+    .school-text-block {
         display: flex;
         flex-direction: column;
+        justify-content: center;
     }
 
-    .school-title {
-        font-size: 15px;
-        font-weight: 800;
+    .school-name {
+        font-size: 16px;
+        font-weight: 900;
         color: #0f172a;
-        letter-spacing: -0.2px;
+        letter-spacing: -0.3px;
         text-transform: uppercase;
-        line-height: 1.1;
+        line-height: 1.15;
     }
 
     .school-tagline {
-        font-size: 8.5px;
-        color: <%= brandColor %>;
+        font-size: 9px;
         font-weight: 700;
-        margin: 1px 0 2px 0;
+        color: <%= brandColor || '#c28b1e' %>;
+        margin: 2px 0 3px 0;
         letter-spacing: 0.5px;
     }
 
     .school-contacts {
-        font-size: 8px;
+        font-size: 8.5px;
         color: #475569;
         display: flex;
-        flex-direction: column;
-        gap: 1px;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        font-weight: 500;
     }
 
     .school-contacts span {
@@ -131,253 +139,278 @@
         gap: 3px;
     }
 
-    .challan-badge-container {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-    }
-
-    .challan-badge {
+    .challan-title-badge {
         background: #0f172a;
         color: #ffffff;
-        border: 2px solid <%= brandColor %>;
-        border-radius: 20px;
-        padding: 4px 14px;
-        font-weight: 800;
-        font-size: 11px;
-        letter-spacing: 0.5px;
+        border: 2px solid <%= brandColor || '#c28b1e' %>;
+        border-radius: 24px;
+        padding: 6px 18px;
+        font-weight: 900;
+        font-size: 12px;
+        letter-spacing: 0.8px;
         text-transform: uppercase;
         white-space: nowrap;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    /* Content Body */
+    /* ---------------- BODY GRID ---------------- */
     .body-grid {
         display: grid;
-        grid-template-columns: 2.1fr 1.6fr 1.8fr 2.4fr;
-        gap: 8px;
-        align-items: stretch;
-        padding: 4px 0;
+        grid-template-columns: 1.8fr 1.4fr 1.8fr 2.2fr;
+        gap: 10px;
+        align-items: center;
+        padding: 6px 0;
     }
 
-    /* Column 1 & 2: Student Details */
-    .info-col {
+    /* Column 1 & 2: Student Meta */
+    .meta-field-group {
         display: flex;
         flex-direction: column;
-        justify-content: space-around;
-        font-size: 9.5px;
+        gap: 5px;
     }
 
-    .info-row {
+    .meta-field-row {
         display: flex;
         align-items: baseline;
-        margin-bottom: 2px;
+        font-size: 10px;
     }
 
-    .info-label {
+    .meta-field-label {
         font-weight: 600;
-        color: #334155;
+        color: #475569;
         width: 80px;
         flex-shrink: 0;
     }
 
-    .info-val {
+    .meta-field-label.short {
+        width: 55px;
+    }
+
+    .meta-field-val {
         font-weight: 700;
         color: #0f172a;
         border-bottom: 1px solid #cbd5e1;
         flex: 1;
         padding-bottom: 1px;
+        padding-left: 3px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
     /* Column 3: Fee Detail Box */
-    .fee-box-container {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+    .fee-detail-card {
+        border: 1.5px solid <%= brandColor || '#c28b1e' %>;
+        border-radius: 10px;
+        padding: 4px 6px;
+        background: #fffdfa;
+        position: relative;
+        margin-top: 4px;
     }
 
-    .box-header-badge {
-        background: <%= brandColor %>;
+    .pill-header {
+        position: absolute;
+        top: -9px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: <%= brandColor || '#c28b1e' %>;
         color: #ffffff;
-        text-align: center;
         font-size: 8.5px;
         font-weight: 800;
-        padding: 2px 6px;
+        padding: 1px 12px;
         border-radius: 12px;
-        margin: 0 auto 3px auto;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        width: 85%;
+        white-space: nowrap;
     }
 
-    .fee-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 9px;
+    .fee-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 9.5px;
+        padding: 3px 2px 2px 2px;
     }
 
-    .fee-table td {
-        padding: 2px 4px;
-    }
-
-    .fee-table .total-row {
-        border: 1.5px solid <%= brandColor %>;
-        border-radius: 4px;
+    .fee-row.total-box {
+        border: 1.5px solid <%= brandColor || '#c28b1e' %>;
+        border-radius: 6px;
+        padding: 3px 6px;
         font-weight: 800;
-        font-size: 10px;
-        background: #fffbeb;
+        font-size: 11px;
+        background: #ffffff;
+        margin-top: 2px;
+        color: #0f172a;
     }
 
-    .fee-words {
-        font-size: 7.5px;
-        color: #475569;
-        margin-top: 2px;
+    .fee-in-words {
+        font-size: 8px;
+        color: #64748b;
+        margin-top: 3px;
         text-align: center;
         font-style: italic;
         line-height: 1.1;
     }
 
-    /* Column 4: Payment Details & Late Fine */
-    .payment-meta-col {
+    /* Column 4: Due Date, Fine & Payment Accounts */
+    .payment-due-card {
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-        font-size: 8.5px;
+        gap: 3px;
         border-left: 1px dashed #cbd5e1;
-        padding-left: 8px;
+        padding-left: 10px;
     }
 
-    .due-date-row {
+    .due-date-badge-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
         background: #f8fafc;
-        padding: 2px 6px;
-        border-radius: 4px;
+        padding: 3px 6px;
+        border-radius: 6px;
         border: 1px solid #e2e8f0;
+        font-size: 9px;
     }
 
-    .due-date-val {
+    .due-date-highlight {
         font-weight: 800;
         color: #b91c1c;
+        font-size: 10px;
     }
 
-    .fine-notice {
+    .late-fine-alert {
         display: flex;
         align-items: center;
         gap: 4px;
-        font-size: 7.5px;
+        font-size: 8px;
         color: #b45309;
-        line-height: 1.1;
-        margin: 2px 0;
+        font-weight: 600;
+        line-height: 1.15;
     }
 
-    .fine-icon {
+    .alert-dot {
         background: #fef3c7;
         color: #d97706;
         border-radius: 50%;
-        width: 12px;
-        height: 12px;
+        width: 13px;
+        height: 13px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
+        font-weight: 800;
         font-size: 8px;
         flex-shrink: 0;
+        border: 1px solid #fde68a;
     }
 
-    .payment-methods-bar {
+    .payment-method-container {
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        background: #f8fafc;
+        padding: 3px 4px;
+        margin-top: 2px;
+        position: relative;
+    }
+
+    .payment-pill-header {
+        background: #0f172a;
+        color: #ffffff;
+        font-size: 7.5px;
+        font-weight: 800;
+        text-align: center;
+        padding: 1px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 3px;
+    }
+
+    .payment-badges-row {
         display: flex;
-        align-items: center;
         justify-content: space-between;
         gap: 3px;
-        margin-top: 1px;
+        margin-bottom: 3px;
     }
 
-    .pm-badge {
-        font-size: 7.5px;
+    .pm-tag {
+        font-size: 8px;
         font-weight: 700;
-        padding: 1px 4px;
-        border-radius: 3px;
+        padding: 2px 4px;
+        border-radius: 4px;
+        border: 1px solid #cbd5e1;
+        background: #ffffff;
         display: inline-flex;
         align-items: center;
         gap: 2px;
-        border: 1px solid #cbd5e1;
-        background: #ffffff;
     }
 
-    .pm-badge.easypaisa {
-        color: #008744;
-        border-color: #008744;
-        background: #f0fdf4;
+    .pm-tag.easypaisa {
+        border-color: #10b981;
+        color: #047857;
+        background: #ecfdf5;
     }
 
-    .pm-badge.jazzcash {
-        color: #c20000;
-        border-color: #c20000;
+    .pm-tag.jazzcash {
+        border-color: #ef4444;
+        color: #b91c1c;
         background: #fef2f2;
     }
 
-    .account-num-box {
+    .pm-account-box {
         text-align: center;
-        border: 1px solid <%= brandColor %>;
+        border: 1px solid <%= brandColor || '#c28b1e' %>;
         border-radius: 4px;
-        padding: 2px;
-        font-size: 8px;
-        font-weight: 700;
+        padding: 2px 4px;
+        font-size: 8.5px;
+        font-weight: 800;
         color: #0f172a;
-        background: #fffdf5;
-        margin-top: 2px;
+        background: #ffffff;
     }
 
-    /* Bottom footer bar */
-    .challan-footer {
+    /* ---------------- FOOTER ---------------- */
+    .challan-footer-bar {
         background: #0f172a;
         color: #f8fafc;
-        margin: 2px -12px 0 -12px;
-        padding: 3px 12px;
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
+        margin: 4px -12px 0 -12px;
+        padding: 4px 12px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 7.5px;
+        font-size: 8px;
     }
 
-    .footer-warning {
+    .footer-left-note {
         display: flex;
         align-items: center;
         gap: 4px;
         color: #fbbf24;
+        font-weight: 600;
     }
 
-    .footer-thanks {
+    .footer-right-note {
         font-style: italic;
         color: #f1f5f9;
         font-family: Georgia, serif;
-        font-size: 8.5px;
+        font-size: 9px;
         letter-spacing: 0.5px;
     }
 
-    /* Scissor line */
-    .cut-line-container {
+    /* ---------------- SCISSOR CUT LINE ---------------- */
+    .cut-line-wrapper {
         display: flex;
         align-items: center;
         gap: 6px;
-        height: 14px;
+        height: 12px;
         color: #94a3b8;
         font-size: 11px;
     }
 
-    .cut-line {
+    .cut-dashed-line {
         flex: 1;
         border-bottom: 1.5px dashed #94a3b8;
     }
 
-    .cut-scissors {
-        transform: rotate(0deg);
+    .cut-icon {
         user-select: none;
     }
 </style>
@@ -396,139 +429,139 @@
 <% pages.forEach((pageStudents, pageIdx) => { %>
     <div class="challan-page">
         <% pageStudents.forEach((student, itemIdx) => { %>
-            <div class="challan-item-container">
+            <div class="challan-unit">
                 <div class="challan-card">
                     <!-- Top Header -->
                     <div class="header-row">
-                        <div class="school-branding">
+                        <div class="school-info-group">
                             <% if (tenant.logo_url) { %>
-                                <img src="<%= tenant.logo_url %>" alt="School Logo" class="school-logo">
+                                <img src="<%= tenant.logo_url %>" alt="School Logo" class="school-logo-img">
                             <% } else { %>
-                                <div class="school-logo-placeholder">
+                                <div class="school-logo-fallback">
                                     <%= tenant.school_name ? tenant.school_name.substring(0, 3).toUpperCase() : 'SCH' %>
                                 </div>
                             <% } %>
-                            <div class="school-details">
-                                <h1 class="school-title"><%= tenant.school_name %></h1>
-                                <p class="school-tagline">✦ Knowledge | Character | Success ✦</p>
+                            <div class="school-text-block">
+                                <h1 class="school-name"><%= tenant.school_name %></h1>
+                                <p class="school-tagline">◆ Knowledge | Character | Success ◆</p>
                                 <div class="school-contacts">
                                     <% if (tenant.address) { %>
                                         <span>📍 <%= tenant.address %></span>
+                                    <% } else { %>
+                                        <span>📍 Rawalpindi / Islamabad</span>
                                     <% } %>
-                                    <span>
-                                        <% if (tenant.contact_phone) { %>
-                                            📞 <%= tenant.contact_phone %>
-                                        <% } %>
-                                        <% if (tenant.contact_email) { %>
-                                            &nbsp;|&nbsp; ✉ <%= tenant.contact_email %>
-                                        <% } %>
-                                    </span>
+                                    <% if (tenant.contact_phone) { %>
+                                        <span>📞 <%= tenant.contact_phone %></span>
+                                    <% } else { %>
+                                        <span>📞 <%= feeAccountNumber %></span>
+                                    <% } %>
+                                    <% if (tenant.contact_email) { %>
+                                        <span>✉ <%= tenant.contact_email %></span>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="challan-badge-container">
-                            <div class="challan-badge">Student Fee Challan</div>
+                        <div>
+                            <div class="challan-title-badge">Student Fee Challan</div>
                         </div>
                     </div>
 
-                    <!-- Middle Content -->
+                    <!-- Body Grid -->
                     <div class="body-grid">
-                        <!-- Col 1: Student info -->
-                        <div class="info-col">
-                            <div class="info-row">
-                                <span class="info-label">Student Name:</span>
-                                <span class="info-val"><%= student.name %></span>
+                        <!-- Col 1: Student Details -->
+                        <div class="meta-field-group">
+                            <div class="meta-field-row">
+                                <span class="meta-field-label">Student Name:</span>
+                                <span class="meta-field-val"><%= student.name %></span>
                             </div>
-                            <div class="info-row">
-                                <span class="info-label">Father/Guardian:</span>
-                                <span class="info-val"><%= student.father_name || '-' %></span>
+                            <div class="meta-field-row">
+                                <span class="meta-field-label">Father/Guardian:</span>
+                                <span class="meta-field-val"><%= student.father_name || '-' %></span>
                             </div>
-                            <div class="info-row">
-                                <span class="info-label">Class:</span>
-                                <span class="info-val"><%= className %></span>
-                            </div>
-                        </div>
-
-                        <!-- Col 2: Meta info -->
-                        <div class="info-col">
-                            <div class="info-row">
-                                <span class="info-label" style="width: 50px;">Roll No.:</span>
-                                <span class="info-val"><%= student.reg_no %></span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label" style="width: 50px;">Month:</span>
-                                <span class="info-val"><%= monthName %> <%= year %></span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label" style="width: 50px;">Issue Date:</span>
-                                <span class="info-val"><%= issueDate %></span>
+                            <div class="meta-field-row">
+                                <span class="meta-field-label">Class:</span>
+                                <span class="meta-field-val"><%= className %></span>
                             </div>
                         </div>
 
-                        <!-- Col 3: Fee Detail -->
-                        <div class="fee-box-container">
-                            <div class="box-header-badge">Fee Detail</div>
-                            <table class="fee-table">
-                                <tr>
-                                    <td>Tuition Fee</td>
-                                    <td style="text-align: right; font-weight: 700;">Rs. <%= student.tuitionFee.toLocaleString() %></td>
-                                </tr>
-                                <tr class="total-row">
-                                    <td>TOTAL</td>
-                                    <td style="text-align: right; color: <%= brandColor %>;">Rs. <%= student.tuitionFee.toLocaleString() %></td>
-                                </tr>
-                            </table>
-                            <div class="fee-words">
+                        <!-- Col 2: Meta Info -->
+                        <div class="meta-field-group">
+                            <div class="meta-field-row">
+                                <span class="meta-field-label short">Roll No.:</span>
+                                <span class="meta-field-val"><%= student.reg_no %></span>
+                            </div>
+                            <div class="meta-field-row">
+                                <span class="meta-field-label short">Month:</span>
+                                <span class="meta-field-val"><%= monthName %> <%= year %></span>
+                            </div>
+                            <div class="meta-field-row">
+                                <span class="meta-field-label short">Issue Date:</span>
+                                <span class="meta-field-val"><%= issueDate %></span>
+                            </div>
+                        </div>
+
+                        <!-- Col 3: Fee Detail Card -->
+                        <div class="fee-detail-card">
+                            <div class="pill-header">Fee Detail</div>
+                            <div class="fee-row">
+                                <span>Tuition Fee</span>
+                                <strong style="font-size: 10px;">Rs. <%= student.tuitionFee.toLocaleString() %></strong>
+                            </div>
+                            <div class="fee-row total-box">
+                                <span>TOTAL</span>
+                                <span style="color: <%= brandColor || '#c28b1e' %>;">Rs. <%= student.tuitionFee.toLocaleString() %></span>
+                            </div>
+                            <div class="fee-in-words">
                                 Amount in Words: <strong><%= student.feeInWords %></strong>
                             </div>
                         </div>
 
-                        <!-- Col 4: Payment Methods & Due Date -->
-                        <div class="payment-meta-col">
-                            <div class="due-date-row">
+                        <!-- Col 4: Due Date & Payment Accounts -->
+                        <div class="payment-due-card">
+                            <div class="due-date-badge-row">
                                 <span>📅 Due Date:</span>
-                                <span class="due-date-val"><%= dueDate %></span>
+                                <span class="due-date-highlight"><%= dueDate %></span>
                             </div>
 
-                            <div class="fine-notice">
-                                <span class="fine-icon">!</span>
+                            <div class="late-fine-alert">
+                                <span class="alert-dot">!</span>
                                 <span>Otherwise a fine of Rs. <%= lateFineAmount %> will be charged on late fee.</span>
                             </div>
 
-                            <div class="box-header-badge" style="width: 100%; margin-bottom: 2px;">Payment Methods</div>
-
-                            <div class="payment-methods-bar">
-                                <span class="pm-badge">💵 Cash</span>
-                                <span class="pm-badge easypaisa">🟢 easypaisa</span>
-                                <span class="pm-badge jazzcash">🔴 JazzCash</span>
-                            </div>
-
-                            <div class="account-num-box">
-                                Easypaisa / JazzCash: [ <%= feeAccountNumber %> ]
+                            <div class="payment-method-container">
+                                <div class="payment-pill-header">Payment Methods</div>
+                                <div class="payment-badges-row">
+                                    <span class="pm-tag">💵 Cash</span>
+                                    <span class="pm-tag easypaisa">🟢 easypaisa</span>
+                                    <span class="pm-tag jazzcash">🔴 JazzCash</span>
+                                </div>
+                                <div class="pm-account-box">
+                                    Easypaisa / JazzCash: [ <%= feeAccountNumber %> ]
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Bottom Bar -->
-                    <div class="challan-footer">
-                        <span class="footer-warning">
+                    <div class="challan-footer-bar">
+                        <span class="footer-left-note">
                             ★ Please ensure fee is paid before the due date. This challan is valid for the month mentioned above.
                         </span>
-                        <span class="footer-thanks">
+                        <span class="footer-right-note">
                             — Thank You! —
                         </span>
                     </div>
                 </div>
 
-                <!-- Scissor Line if not the last item in the page -->
+                <!-- Scissor Cut Divider -->
                 <% if (itemIdx < pageStudents.length - 1) { %>
-                    <div class="cut-line-container">
-                        <span class="cut-scissors">✂</span>
-                        <div class="cut-line"></div>
+                    <div class="cut-line-wrapper">
+                        <span class="cut-icon">✂</span>
+                        <div class="cut-dashed-line"></div>
                     </div>
                 <% } else { %>
-                    <div style="height: 14px;"></div>
+                    <div style="height: 12px;"></div>
                 <% } %>
             </div>
         <% }) %>
