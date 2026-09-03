@@ -728,8 +728,8 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
         const formattedStudents = [];
         for (const s of students) {
             const defaultFee = parseFloat(s.default_monthly_fee || 0);
-            const customFee = s.custom_monthly_fee !== null && s.custom_monthly_fee !== undefined ? parseFloat(s.custom_monthly_fee) : defaultFee;
-            const tuitionFee = customFee;
+            const concessionAmount = (s.has_concession || s.custom_monthly_fee) ? parseFloat(s.custom_monthly_fee || 0) : 0;
+            const tuitionFee = Math.max(0, defaultFee - concessionAmount);
 
             // Determine effective start month for this student based on admission or system start
             let studentStartMonth = arrearsStart;
