@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const { isAuthenticated } = require('../middleware/auth');
 const { renderPdf, resolvePublicAsset } = require('../utils/pdfGenerator');
+const { numberToWords } = require('../utils/numberToWords');
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -629,6 +630,99 @@ router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send('Error generating fee receipt.');
+    }
+});
+
+// GET /fees/challans/print - generate bulk PDF fee challans for a class (3 students per page)
+router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
+    try {
+        const tenantId = req.tenant.id;
+        const { classId, month, year, issueDate, dueDate, lateFine } = req.query;
+
+        const activeYear = year ? parseInt(year) : new Date().getFullYear();
+        const activeMonth = month ? parseInt(month) : (new Date().getMonth() + 1);
+
+        if (!classId) {
+            return res.status(400).send('Please select a class to print challans.');
+        }
+
+        // Fetch class info
+        const [[classData]] = await db.execute(
+            'SELECT * FROM classes WHERE id = ? AND tenant_id = ?',
+            [classId, tenantId]
+        );
+
+        if (!classData) {
+            return res.status(404).send('Selected class not found.');
+        }
+
+        // Fetch active students in this class
+        const [students] = await db.execute(
+            `SELECT s.id, s.reg_no, s.name, s.father_name, s.custom_monthly_fee, s.has_concession,
+                    c.name as class_name, c.default_monthly_fee
+             FROM students s
+             LEFT JOIN classes c ON s.class_id = c.id
+             WHERE s.tenant_id = ? AND s.class_id = ? AND (s.status = 'active' OR s.status IS NULL)
+             ORDER BY s.reg_no ASC, s.name ASC`,
+            [tenantId, classId]
+        );
+
+        if (students.length === 0) {
+            return res.status(404).send('No active students found in this class.');
+        }
+
+        // Format dates
+        const formattedIssueDate = issueDate ? new Date(issueDate).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
+        let formattedDueDate = dueDate ? new Date(dueDate).toLocaleDateString('en-GB') : null;
+        if (!formattedDueDate) {
+            const dueObj = new Date(activeYear, activeMonth - 1, req.tenant.fine_start_days || 10);
+            formattedDueDate = dueObj.toLocaleDateString('en-GB');
+        }
+
+        const lateFineVal = lateFine ? parseFloat(lateFine) : (parseFloat(req.tenant.fine_amount_per_day || 25) * 10 || 250);
+
+        // Process student fees & amount in words
+        const formattedStudents = students.map(s => {
+            const defaultFee = parseFloat(s.default_monthly_fee || 0);
+            const customFee = s.custom_monthly_fee !== null && s.custom_monthly_fee !== undefined ? parseFloat(s.custom_monthly_fee) : defaultFee;
+            const tuitionFee = customFee;
+            return {
+                id: s.id,
+                reg_no: s.reg_no,
+                name: s.name,
+                father_name: s.father_name || '',
+                tuitionFee: tuitionFee,
+                feeInWords: numberToWords(tuitionFee)
+            };
+        });
+
+        const tenantForPdf = {
+            ...req.tenant,
+            logo_url: resolvePublicAsset(req.tenant.logo_url)
+        };
+
+        renderPdf(res, {
+            templateName: 'fee_challans',
+            data: {
+                tenant: tenantForPdf,
+                className: classData.name,
+                month: activeMonth,
+                monthName: MONTH_NAMES[activeMonth - 1],
+                year: activeYear,
+                issueDate: formattedIssueDate,
+                dueDate: formattedDueDate,
+                lateFineAmount: lateFineVal,
+                feeAccountNumber: req.tenant.fee_account_number || '0342-0980325',
+                brandColor: req.tenant.primary_color || '#c28b1e',
+                students: formattedStudents
+            },
+            fileBaseName: `fee_challans_${classId}_${activeMonth}_${activeYear}_${Date.now()}`,
+            downloadName: `Fee-Challans-${classData.name.replace(/\s+/g, '_')}-${MONTH_NAMES[activeMonth - 1]}-${activeYear}.pdf`
+        });
+
+    } catch (err) {
+        console.error('Error generating class fee challans:', err);
+        res.status(500).send('Error generating class fee challans.');
     }
 });
 

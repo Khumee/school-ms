@@ -97,6 +97,11 @@
 
 <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <h1 class="section-title" style="margin: 0;"><i class="bi bi-cash-coin"></i> Fee Ledger & Management</h1>
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <button type="button" class="btn-primary" onclick="openClassChallanModal('<%= locals.classId || (classes[0] ? classes[0].id : '') %>')" style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem;">
+            <i class="bi bi-printer-fill"></i> Print Class Challans (PDF)
+        </button>
+    </div>
 </div>
 
 <form action="/fees/ledger" method="GET" class="filter-bar">
@@ -410,7 +415,10 @@
                             <i class="bi bi-people-fill"></i> <%= group.totalStudents %> Students
                         </span>
                     </div>
-                    <div style="display: flex; gap: 1.5rem; align-items: center; font-size: 0.9rem;">
+                    <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.9rem;">
+                        <button type="button" class="btn-secondary nav-btn" onclick="event.stopPropagation(); openClassChallanModal('<%= group.id %>')" title="Print Fee Challans for <%= group.name %>" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem;">
+                            <i class="bi bi-printer-fill"></i> Print Challans
+                        </button>
                         <span style="<%= group.paidCount === group.totalStudents ? 'color: #16a34a;' : (group.paidCount === 0 ? 'color: #dc2626;' : 'color: #eab308;') %> font-weight: 600;">
                             Paid: <%= group.paidCount %> / <%= group.totalStudents %>
                         </span>
@@ -1115,7 +1123,113 @@
             checkbox.checked = showDefaultersOnly;
             toggleDefaultersOnly(showDefaultersOnly);
         }
-    });
+    // Open & Close Class Challan Modal
+    function openClassChallanModal(classId) {
+        if (classId && document.getElementById('challanClassId')) {
+            document.getElementById('challanClassId').value = classId;
+        }
+        
+        // Auto calculate default dates if empty
+        const now = new Date();
+        const issueInput = document.getElementById('challanIssueDate');
+        const dueInput = document.getElementById('challanDueDate');
+        
+        if (issueInput && !issueInput.value) {
+            issueInput.value = now.toISOString().split('T')[0];
+        }
+        if (dueInput && !dueInput.value) {
+            const dueDay = <%= tenant.fine_start_days || 10 %>;
+            const dueObj = new Date(now.getFullYear(), now.getMonth(), dueDay);
+            dueInput.value = dueObj.toISOString().split('T')[0];
+        }
+        
+        const modal = document.getElementById('classChallanModal');
+        const backdrop = document.getElementById('challanModalBackdrop');
+        if (modal && backdrop) {
+            modal.style.display = 'block';
+            backdrop.style.display = 'block';
+        }
+    }
+
+    function closeClassChallanModal() {
+        const modal = document.getElementById('classChallanModal');
+        const backdrop = document.getElementById('challanModalBackdrop');
+        if (modal && backdrop) {
+            modal.style.display = 'none';
+            backdrop.style.display = 'none';
+        }
+    }
 </script>
+
+<!-- Backdrop -->
+<div id="challanModalBackdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.6); z-index: 999; backdrop-filter: blur(2px);" onclick="closeClassChallanModal()"></div>
+
+<!-- Class Fee Challan Print Modal -->
+<div id="classChallanModal" class="card" style="display: none; max-width: 480px; width: 90%; margin: 0; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1); border-radius: 12px; padding: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+        <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem; color: var(--ink);">
+            <i class="bi bi-printer-fill" style="color: var(--primary-color);"></i> Print Class Fee Challans
+        </h3>
+        <button type="button" onclick="closeClassChallanModal()" style="background: none; border: none; font-size: 1.3rem; color: #94a3b8; cursor: pointer; padding: 0.2rem 0.5rem;">&times;</button>
+    </div>
+
+    <form action="/fees/challans/print" method="GET" target="_blank" onsubmit="setTimeout(closeClassChallanModal, 1000)">
+        <div class="form-group" style="margin-bottom: 1rem;">
+            <label for="challanClassId" style="font-weight: 600;">Select Class</label>
+            <select name="classId" id="challanClassId" class="form-control" required>
+                <% classes.forEach(c => { %>
+                    <option value="<%= c.id %>" <%= (locals.classId && locals.classId == c.id) ? 'selected' : '' %>><%= c.name %></option>
+                <% }) %>
+            </select>
+        </div>
+
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="challanMonth" style="font-weight: 600;">Fee Month</label>
+                <select name="month" id="challanMonth" class="form-control" required>
+                    <% monthsList.forEach((mName, idx) => { %>
+                        <option value="<%= idx + 1 %>" <%= activeMonthNum === (idx + 1) ? 'selected' : '' %>><%= mName %></option>
+                    <% }) %>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="challanYear" style="font-weight: 600;">Fee Year</label>
+                <select name="year" id="challanYear" class="form-control" required>
+                    <% const mY = new Date().getFullYear(); for(let y = 2024; y <= mY + 1; y++) { %>
+                        <option value="<%= y %>" <%= activeYear == y ? 'selected' : '' %>><%= y %></option>
+                    <% } %>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label for="challanIssueDate" style="font-weight: 600;">Issue Date</label>
+                <input type="date" name="issueDate" id="challanIssueDate" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="challanDueDate" style="font-weight: 600;">Due Date</label>
+                <input type="date" name="dueDate" id="challanDueDate" class="form-control" required>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label for="challanLateFine" style="font-weight: 600;">Late Fee Fine (PKR)</label>
+            <input type="number" name="lateFine" id="challanLateFine" class="form-control" value="<%= (tenant.fine_amount_per_day || 25) * 10 || 250 %>" min="0" step="1">
+            <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Fine charged if payment is made after the due date.</p>
+        </div>
+
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; margin-bottom: 1.25rem; font-size: 0.85rem; color: #475569;">
+            <i class="bi bi-info-circle-fill" style="color: var(--primary-color);"></i> Generates a multi-page PDF with <strong>3 student slips per A4 page</strong> to minimize printing costs.
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+            <button type="button" class="btn-secondary" onclick="closeClassChallanModal()">Cancel</button>
+            <button type="submit" class="btn-primary" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF
+            </button>
+        </div>
+    </form>
+</div>
 
 <%- include('partials/footer') %>
