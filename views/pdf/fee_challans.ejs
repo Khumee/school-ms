@@ -328,20 +328,31 @@
         border-radius: 4px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
     }
 
     .payment-badges-row {
         display: flex;
         justify-content: space-between;
-        gap: 4px;
+        align-items: center;
+        gap: 6px;
         margin-bottom: 4px;
+        background: #ffffff;
+        padding: 3px 6px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .pm-logo-img {
+        height: 17px;
+        max-width: 60px;
+        object-fit: contain;
     }
 
     .pm-tag {
         font-size: 9px;
         font-weight: 700;
-        padding: 2px 6px;
+        padding: 2px 5px;
         border-radius: 4px;
         border: 1px solid #cbd5e1;
         background: #ffffff;
@@ -350,28 +361,34 @@
         gap: 2px;
     }
 
-    .pm-tag.easypaisa {
-        border-color: #10b981;
-        color: #047857;
-        background: #ecfdf5;
-    }
-
-    .pm-tag.jazzcash {
-        border-color: #ef4444;
-        color: #b91c1c;
-        background: #fef2f2;
-    }
-
     .pm-account-box {
         text-align: center;
         border: 1.5px solid <%= brandColor || '#c28b1e' %>;
         border-radius: 6px;
-        padding: 2.5px 4px;
-        font-size: 9.5px;
+        padding: 2px 4px;
+        font-size: 9px;
         font-weight: 800;
         color: #0f172a;
         background: #ffffff;
+        line-height: 1.25;
     }
+
+    .pm-account-dual-box {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        border: 1.5px solid <%= brandColor || '#c28b1e' %>;
+        border-radius: 6px;
+        padding: 2px 4px;
+        font-size: 8.5px;
+        font-weight: 800;
+        color: #0f172a;
+        background: #ffffff;
+        text-align: center;
+    }
+
+    .ep-dot { color: #008744; font-size: 10px; }
+    .jc-dot { color: #e11d48; font-size: 10px; }
 
     /* ---------------- FOOTER ---------------- */
     .challan-footer-bar {
@@ -529,12 +546,28 @@
                                 <div class="payment-pill-header">Payment Methods</div>
                                 <div class="payment-badges-row">
                                     <span class="pm-tag">💵 Cash</span>
-                                    <span class="pm-tag easypaisa">🟢 easypaisa</span>
-                                    <span class="pm-tag jazzcash">🔴 JazzCash</span>
+                                    <% if (easypaisaLogo) { %>
+                                        <img src="<%= easypaisaLogo %>" alt="easypaisa" class="pm-logo-img">
+                                    <% } else { %>
+                                        <span class="pm-tag" style="border-color: #10b981; color: #047857;">🟢 easypaisa</span>
+                                    <% } %>
+                                    <% if (jazzcashLogo) { %>
+                                        <img src="<%= jazzcashLogo %>" alt="JazzCash" class="pm-logo-img">
+                                    <% } else { %>
+                                        <span class="pm-tag" style="border-color: #ef4444; color: #b91c1c;">🔴 JazzCash</span>
+                                    <% } %>
                                 </div>
-                                <div class="pm-account-box">
-                                    Easypaisa / JazzCash: [ <%= feeAccountNumber %> ]
-                                </div>
+
+                                <% if (easypaisaNumber === jazzcashNumber || !jazzcashNumber) { %>
+                                    <div class="pm-account-box">
+                                        Easypaisa / JazzCash: [ <%= easypaisaNumber || feeAccountNumber %> ]
+                                    </div>
+                                <% } else { %>
+                                    <div class="pm-account-dual-box">
+                                        <div><span class="ep-dot">●</span> <strong>Easypaisa:</strong> <%= easypaisaNumber %></div>
+                                        <div><span class="jc-dot">●</span> <strong>JazzCash:</strong> <%= jazzcashNumber %></div>
+                                    </div>
+                                <% } %>
                             </div>
                         </div>
                     </div>

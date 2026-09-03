@@ -99,19 +99,32 @@
         </div>
 
         <div class="section-header" style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;">
-            <h3 style="margin: 0;">Fee Challan & Online Payment Account</h3>
+            <h3 style="margin: 0;">Fee Challan Payment Channels & Accounts</h3>
+        </div>
+
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+            <div class="form-group">
+                <label for="easypaisa_number" style="font-weight: 600;">Easypaisa Account Number</label>
+                <input type="text" id="easypaisa_number" name="easypaisa_number" class="form-control" value="<%= currentTenant.easypaisa_number || currentTenant.fee_account_number || '' %>" placeholder="e.g. 0342-0980325">
+                <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Used for Easypaisa payments on fee challans.</p>
+            </div>
+            <div class="form-group">
+                <label for="jazzcash_number" style="font-weight: 600;">JazzCash Account Number</label>
+                <input type="text" id="jazzcash_number" name="jazzcash_number" class="form-control" value="<%= currentTenant.jazzcash_number || currentTenant.fee_account_number || '' %>" placeholder="e.g. 0300-1234567">
+                <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Used for JazzCash payments on fee challans.</p>
+            </div>
         </div>
 
         <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
             <div class="form-group">
-                <label for="fee_account_number" style="font-weight: 600;">EasyPaisa / JazzCash Account Number</label>
-                <input type="text" id="fee_account_number" name="fee_account_number" class="form-control" value="<%= currentTenant.fee_account_number || '' %>" placeholder="e.g. 0342-0980325">
-                <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Printed on fee challan slips for parent payments.</p>
-            </div>
-            <div class="form-group">
                 <label for="fee_account_title" style="font-weight: 600;">Account Title / Owner Name (Optional)</label>
                 <input type="text" id="fee_account_title" name="fee_account_title" class="form-control" value="<%= currentTenant.fee_account_title || '' %>" placeholder="e.g. School Principal / Admin">
                 <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Displayed alongside the account number.</p>
+            </div>
+            <div class="form-group">
+                <label for="fee_account_number" style="font-weight: 600;">Primary Fallback Account Number</label>
+                <input type="text" id="fee_account_number" name="fee_account_number" class="form-control" value="<%= currentTenant.fee_account_number || '' %>" placeholder="e.g. 0342-0980325">
+                <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Fallback if specific channel number is not set.</p>
             </div>
         </div>
 

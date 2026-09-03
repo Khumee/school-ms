@@ -715,6 +715,11 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
             logo_url: resolvePublicAsset(req.tenant.logo_url)
         };
 
+        const easypaisaLogo = resolvePublicAsset('/images/easypaisa.png');
+        const jazzcashLogo = resolvePublicAsset('/images/jazzcash.png');
+        const easypaisaNumber = req.tenant.easypaisa_number || req.tenant.fee_account_number || '0342-0980325';
+        const jazzcashNumber = req.tenant.jazzcash_number || req.tenant.fee_account_number || '0342-0980325';
+
         renderPdf(res, {
             templateName: 'fee_challans',
             data: {
@@ -727,7 +732,11 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
                 dueDate: formattedDueDate,
                 lateFineAmount: lateFineVal,
                 lateFineNotice: lateFineNotice,
-                feeAccountNumber: req.tenant.fee_account_number || '0342-0980325',
+                easypaisaLogo: easypaisaLogo,
+                jazzcashLogo: jazzcashLogo,
+                easypaisaNumber: easypaisaNumber,
+                jazzcashNumber: jazzcashNumber,
+                feeAccountNumber: req.tenant.fee_account_number || easypaisaNumber,
                 brandColor: req.tenant.primary_color || '#c28b1e',
                 students: formattedStudents
             },
