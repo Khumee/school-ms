@@ -658,7 +658,7 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
 
         // Fetch active students in this class
         const [students] = await db.execute(
-            `SELECT s.id, s.reg_no, s.name, s.father_name, s.custom_monthly_fee, s.has_concession, s.date_of_admission, s.created_at,
+            `SELECT s.id, s.reg_no, s.name, s.father_name, s.custom_monthly_fee, s.has_concession, s.date_of_admission,
                     c.name as class_name, c.default_monthly_fee
              FROM students s
              LEFT JOIN classes c ON s.class_id = c.id
@@ -741,13 +741,6 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
                     studentStartMonth = Math.max(studentStartMonth, admMonth);
                 } else if (admYear > activeYear) {
                     studentStartMonth = 99; // Admitted in future year
-                }
-            } else if (s.created_at) {
-                const createDate = new Date(s.created_at);
-                const createYear = createDate.getFullYear();
-                const createMonth = createDate.getMonth() + 1;
-                if (createYear === activeYear) {
-                    studentStartMonth = Math.max(studentStartMonth, createMonth);
                 }
             }
 
