@@ -270,7 +270,7 @@ router.get('/transactions', isAuthenticated, async (req, res) => {
         // Helper to fetch salaries (as expenses)
         const fetchSalaries = async () => {
             const [sl] = await db.execute(
-                `SELECT s.id, s.month, s.year, s.basic_salary, s.bonus, s.deductions, s.payment_date,
+                `SELECT s.id, s.month, s.year, s.basic_salary, s.bonus, s.deduction, s.paid_date,
                         e.name as emp_name, e.designation
                  FROM salaries s
                  JOIN employees e ON s.employee_id = e.id
@@ -278,10 +278,10 @@ router.get('/transactions', isAuthenticated, async (req, res) => {
                 [tenantId, activeMonth, activeYear]
             );
             return sl.map(s => {
-                const totalSalary = parseFloat(s.basic_salary || 0) + parseFloat(s.bonus || 0) - parseFloat(s.deductions || 0);
+                const totalSalary = parseFloat(s.basic_salary || 0) + parseFloat(s.bonus || 0) - parseFloat(s.deduction || 0);
                 return {
                     id: s.id,
-                    date: s.payment_date ? new Date(s.payment_date) : new Date(activeYear, activeMonth - 1, 1),
+                    date: s.paid_date ? new Date(s.paid_date) : new Date(activeYear, activeMonth - 1, 1),
                     amount: totalSalary,
                     type: 'salaries',
                     typeLabel: 'Salary',
