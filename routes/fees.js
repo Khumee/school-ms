@@ -658,7 +658,7 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
 
         // Fetch active students in this class
         const [students] = await db.execute(
-            `SELECT s.id, s.reg_no, s.name, s.father_name, s.custom_monthly_fee, s.has_concession, s.date_of_admission,
+            `SELECT s.id, s.reg_no, s.name, s.father_name, s.custom_monthly_fee, s.has_concession, s.date_of_admission, s.created_at,
                     c.name as class_name, c.default_monthly_fee
              FROM students s
              LEFT JOIN classes c ON s.class_id = c.id
@@ -685,12 +685,12 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
         const dueDateDisplay = `${dueDayStr} ${monthsShort[dueObj.getMonth()]} ${dueObj.getFullYear()}`;
 
         // Dynamic Late Fine calculation and notice formatting
-        const fineType = lateFeeType || req.tenant.default_late_fee_type || 'fixed';
+        const fineType = req.tenant.default_late_fee_type || 'fixed';
         let lateFineVal = 0;
-        if (lateFine !== undefined && lateFine !== null && lateFine !== '') {
-            lateFineVal = parseFloat(lateFine);
+        if (fineType === 'per_day') {
+            lateFineVal = parseFloat(req.tenant.fine_amount_per_day || 20);
         } else {
-            lateFineVal = fineType === 'per_day' ? parseFloat(req.tenant.fine_amount_per_day || 20) : parseFloat(req.tenant.fixed_late_fee_amount || 250);
+            lateFineVal = parseFloat(req.tenant.fixed_late_fee_amount || 250);
         }
 
         let lateFineNotice = '';
@@ -731,21 +731,31 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
             const customFee = s.custom_monthly_fee !== null && s.custom_monthly_fee !== undefined ? parseFloat(s.custom_monthly_fee) : defaultFee;
             const tuitionFee = customFee;
 
-            // Compute previous unpaid dues / arrears from arrearsStart to activeMonth - 1
+            // Determine effective start month for this student based on admission or system start
+            let studentStartMonth = arrearsStart;
+            if (s.date_of_admission) {
+                const admDate = new Date(s.date_of_admission);
+                const admYear = admDate.getFullYear();
+                const admMonth = admDate.getMonth() + 1;
+                if (admYear === activeYear) {
+                    studentStartMonth = Math.max(studentStartMonth, admMonth);
+                } else if (admYear > activeYear) {
+                    studentStartMonth = 99; // Admitted in future year
+                }
+            } else if (s.created_at) {
+                const createDate = new Date(s.created_at);
+                const createYear = createDate.getFullYear();
+                const createMonth = createDate.getMonth() + 1;
+                if (createYear === activeYear) {
+                    studentStartMonth = Math.max(studentStartMonth, createMonth);
+                }
+            }
+
+            // Compute previous unpaid dues / arrears from studentStartMonth to activeMonth - 1
             let previousDues = 0;
             const unpaidItems = [];
-            if (arrearsStart > 0 && activeMonth > arrearsStart) {
-                for (let m = arrearsStart; m < activeMonth; m++) {
-                    // Check admission date if present: skip months before student admission
-                    if (s.date_of_admission) {
-                        const admDate = new Date(s.date_of_admission);
-                        const admYear = admDate.getFullYear();
-                        const admMonth = admDate.getMonth() + 1;
-                        if (admYear > activeYear || (admYear === activeYear && admMonth > m)) {
-                            continue;
-                        }
-                    }
-
+            if (arrearsStart > 0 && activeMonth > studentStartMonth) {
+                for (let m = studentStartMonth; m < activeMonth; m++) {
                     const paidForMonth = (prevPaymentMap[s.id] && prevPaymentMap[s.id][m]) ? prevPaymentMap[s.id][m] : 0;
                     const dueForMonth = Math.max(0, tuitionFee - paidForMonth);
                     if (dueForMonth > 0) {

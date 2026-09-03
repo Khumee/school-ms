@@ -214,7 +214,21 @@
         color: #9e7330;
         text-transform: uppercase;
         letter-spacing: 1px;
-        margin-bottom: 4px;
+        margin-bottom: 2px;
+    }
+
+    .fee-sub-heading {
+        font-size: 8px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 2px 0 1px 0;
+    }
+
+    .fee-arrears-divider {
+        border-top: 1px dashed #d1c7b8;
+        margin: 3px 0 2px 0;
     }
 
     .fee-line-item {
@@ -496,17 +510,29 @@
                         <div class="fee-detail-card">
                             <div>
                                 <div class="fee-header-title">Fee Detail</div>
+                                
+                                <div class="fee-sub-heading">Current Month (<%= monthName.substring(0, 3) %>)</div>
                                 <div class="fee-line-item tuition-highlight">
                                     <span>Tuition Fee</span>
                                     <strong>Rs. <%= student.tuitionFee.toLocaleString() %></strong>
                                 </div>
+
                                 <% if (student.unpaidItems && student.unpaidItems.length > 0) { %>
-                                    <% student.unpaidItems.forEach(item => { %>
+                                    <div class="fee-arrears-divider"></div>
+                                    <div class="fee-sub-heading" style="color: #991b1b;">Previous Dues (Arrears)</div>
+                                    <% if (student.unpaidItems.length <= 2) { %>
+                                        <% student.unpaidItems.forEach(item => { %>
+                                            <div class="fee-line-item unpaid-due-item">
+                                                <span><%= item.monthName %> Dues</span>
+                                                <strong>Rs. <%= item.due.toLocaleString() %></strong>
+                                            </div>
+                                        <% }) %>
+                                    <% } else { %>
                                         <div class="fee-line-item unpaid-due-item">
-                                            <span><%= item.monthName %> Dues</span>
-                                            <strong>Rs. <%= item.due.toLocaleString() %></strong>
+                                            <span><%= student.unpaidItems.map(u => u.shortName).join(', ') %> Dues</span>
+                                            <strong>Rs. <%= student.previousDues.toLocaleString() %></strong>
                                         </div>
-                                    <% }) %>
+                                    <% } %>
                                 <% } %>
                             </div>
 
@@ -538,24 +564,28 @@
                                     </span>
                                     <span class="channel-info" style="color: #64748b; font-weight: 500; font-size: 10px;">School Counter</span>
                                 </div>
-                                <div class="channel-row">
-                                    <span class="channel-name">
-                                        <% if (easypaisaLogo) { %>
-                                            <img src="<%= easypaisaLogo %>" alt="EP" class="channel-logo-inline">
-                                        <% } %>
-                                        Easypaisa
-                                    </span>
-                                    <span class="channel-info"><%= easypaisaNumber %></span>
-                                </div>
-                                <div class="channel-row">
-                                    <span class="channel-name">
-                                        <% if (jazzcashLogo) { %>
-                                            <img src="<%= jazzcashLogo %>" alt="JC" class="channel-logo-inline">
-                                        <% } %>
-                                        JazzCash
-                                    </span>
-                                    <span class="channel-info"><%= jazzcashNumber %></span>
-                                </div>
+                                <% if (easypaisaNumber && easypaisaNumber.trim()) { %>
+                                    <div class="channel-row">
+                                        <span class="channel-name">
+                                            <% if (easypaisaLogo) { %>
+                                                <img src="<%= easypaisaLogo %>" alt="EP" class="channel-logo-inline">
+                                            <% } %>
+                                            Easypaisa
+                                        </span>
+                                        <span class="channel-info"><%= easypaisaNumber %></span>
+                                    </div>
+                                <% } %>
+                                <% if (jazzcashNumber && jazzcashNumber.trim()) { %>
+                                    <div class="channel-row">
+                                        <span class="channel-name">
+                                            <% if (jazzcashLogo) { %>
+                                                <img src="<%= jazzcashLogo %>" alt="JC" class="channel-logo-inline">
+                                            <% } %>
+                                            JazzCash
+                                        </span>
+                                        <span class="channel-info"><%= jazzcashNumber %></span>
+                                    </div>
+                                <% } %>
                             </div>
                         </div>
                     </div>
