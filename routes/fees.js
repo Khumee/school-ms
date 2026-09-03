@@ -637,7 +637,7 @@ router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
 router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        const { classId, month, year, issueDate, dueDate, lateFine, lateFeeType } = req.query;
+        const { classId, month, year, issueDate, dueDate, lateFine, lateFeeType, arrearsStartMonth } = req.query;
 
         const activeYear = year ? parseInt(year) : new Date().getFullYear();
         const activeMonth = month ? parseInt(month) : (new Date().getMonth() + 1);
@@ -658,7 +658,7 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
 
         // Fetch active students in this class
         const [students] = await db.execute(
-            `SELECT s.id, s.reg_no, s.name, s.father_name, s.custom_monthly_fee, s.has_concession,
+            `SELECT s.id, s.reg_no, s.name, s.father_name, s.custom_monthly_fee, s.has_concession, s.date_of_admission,
                     c.name as class_name, c.default_monthly_fee
              FROM students s
              LEFT JOIN classes c ON s.class_id = c.id
@@ -700,6 +700,9 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
             lateFineNotice = `A late fine of Rs. ${lateFineVal.toLocaleString()} applies after this date.`;
         }
 
+        // Determine starting month for arrears calculation
+        const arrearsStart = arrearsStartMonth !== undefined ? parseInt(arrearsStartMonth) : (req.tenant.fee_start_month || 8);
+
         // Fetch all previous payments for activeYear for students in this class
         const [previousPayments] = await db.execute(
             `SELECT student_id, month, SUM(amount_paid) as total_paid
@@ -722,11 +725,21 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
             const customFee = s.custom_monthly_fee !== null && s.custom_monthly_fee !== undefined ? parseFloat(s.custom_monthly_fee) : defaultFee;
             const tuitionFee = customFee;
 
-            // Compute previous unpaid dues / arrears from month 1 to activeMonth - 1
+            // Compute previous unpaid dues / arrears from arrearsStart to activeMonth - 1
             let previousDues = 0;
             const unpaidItems = [];
-            if (activeMonth > 1) {
-                for (let m = 1; m < activeMonth; m++) {
+            if (arrearsStart > 0 && activeMonth > arrearsStart) {
+                for (let m = arrearsStart; m < activeMonth; m++) {
+                    // Check admission date if present: skip months before student admission
+                    if (s.date_of_admission) {
+                        const admDate = new Date(s.date_of_admission);
+                        const admYear = admDate.getFullYear();
+                        const admMonth = admDate.getMonth() + 1;
+                        if (admYear > activeYear || (admYear === activeYear && admMonth > m)) {
+                            continue;
+                        }
+                    }
+
                     const paidForMonth = (prevPaymentMap[s.id] && prevPaymentMap[s.id][m]) ? prevPaymentMap[s.id][m] : 0;
                     const dueForMonth = Math.max(0, tuitionFee - paidForMonth);
                     if (dueForMonth > 0) {
