@@ -1347,10 +1347,18 @@
             </div>
         </div>
 
-        <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label for="challanLateFine" style="font-weight: 600;">Late Fee Fine (PKR)</label>
-            <input type="number" name="lateFine" id="challanLateFine" class="form-control" value="<%= (tenant.fine_amount_per_day || 25) * 10 || 250 %>" min="0" step="1">
-            <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">Fine charged if payment is made after the due date.</p>
+        <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="form-group">
+                <label for="challanLateFeeType" style="font-weight: 600;">Late Fee Type</label>
+                <select name="lateFeeType" id="challanLateFeeType" class="form-control" onchange="updateChallanFineDefault()">
+                    <option value="fixed" <%= (tenant.default_late_fee_type === 'fixed' || !tenant.default_late_fee_type) ? 'selected' : '' %>>Fixed One-Time Fee</option>
+                    <option value="per_day" <%= tenant.default_late_fee_type === 'per_day' ? 'selected' : '' %>>Per Day Fine</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="challanLateFine" style="font-weight: 600;" id="challanLateFineLabel"><%= (tenant.default_late_fee_type === 'per_day') ? 'Fine Per Day (PKR)' : 'Fixed Late Fee (PKR)' %></label>
+                <input type="number" name="lateFine" id="challanLateFine" class="form-control" value="<%= (tenant.default_late_fee_type === 'per_day' ? (tenant.fine_amount_per_day || 20) : (tenant.fixed_late_fee_amount || 250)) %>" min="0" step="1" required>
+            </div>
         </div>
 
         <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; margin-bottom: 1.25rem; font-size: 0.85rem; color: #475569;">
@@ -1365,6 +1373,23 @@
         </div>
     </form>
 </div>
+
+<script>
+    function updateChallanFineDefault() {
+        const typeSelect = document.getElementById('challanLateFeeType');
+        const fineInput = document.getElementById('challanLateFine');
+        const label = document.getElementById('challanLateFineLabel');
+        if (typeSelect && fineInput) {
+            if (typeSelect.value === 'per_day') {
+                fineInput.value = <%= tenant.fine_amount_per_day || 20 %>;
+                if (label) label.textContent = 'Fine Per Day (PKR)';
+            } else {
+                fineInput.value = <%= tenant.fixed_late_fee_amount || 250 %>;
+                if (label) label.textContent = 'Fixed Late Fee (PKR)';
+            }
+        }
+    }
+</script>
 
 <style>
 @keyframes spin {

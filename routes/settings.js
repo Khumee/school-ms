@@ -46,14 +46,16 @@ router.get('/settings/general', isAuthenticated, async (req, res) => {
 router.post('/settings/general', isAuthenticated, upload.single('logo'), async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        const { primary_color, secondary_color, fine_start_days, fine_amount_per_day, school_start_time, school_end_time, late_threshold_minutes, late_days_deduction_trigger, hifz_pages_per_para, hifz_lines_per_page, hifz_total_pages, fee_account_number, fee_account_title } = req.body;
+        const { primary_color, secondary_color, fine_start_days, fine_amount_per_day, fixed_late_fee_amount, default_late_fee_type, school_start_time, school_end_time, late_threshold_minutes, late_days_deduction_trigger, hifz_pages_per_para, hifz_lines_per_page, hifz_total_pages, fee_account_number, fee_account_title } = req.body;
         
-        let updateQuery = 'UPDATE tenants SET primary_color = ?, secondary_color = ?, fine_start_days = ?, fine_amount_per_day = ?, school_start_time = ?, school_end_time = ?, late_threshold_minutes = ?, late_days_deduction_trigger = ?, hifz_pages_per_para = ?, hifz_lines_per_page = ?, hifz_total_pages = ?, fee_account_number = ?, fee_account_title = ?';
+        let updateQuery = 'UPDATE tenants SET primary_color = ?, secondary_color = ?, fine_start_days = ?, fine_amount_per_day = ?, fixed_late_fee_amount = ?, default_late_fee_type = ?, school_start_time = ?, school_end_time = ?, late_threshold_minutes = ?, late_days_deduction_trigger = ?, hifz_pages_per_para = ?, hifz_lines_per_page = ?, hifz_total_pages = ?, fee_account_number = ?, fee_account_title = ?';
         const queryParams = [
             primary_color, 
             secondary_color,
             fine_start_days ? parseInt(fine_start_days) : 10,
             fine_amount_per_day ? parseFloat(fine_amount_per_day) : 20.00,
+            fixed_late_fee_amount ? parseFloat(fixed_late_fee_amount) : 250.00,
+            default_late_fee_type || 'fixed',
             school_start_time || '08:00:00',
             school_end_time || '14:00:00',
             late_threshold_minutes ? parseInt(late_threshold_minutes) : 15,

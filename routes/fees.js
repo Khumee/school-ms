@@ -637,7 +637,7 @@ router.get('/fees/receipt/:id', isAuthenticated, async (req, res) => {
 router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        const { classId, month, year, issueDate, dueDate, lateFine } = req.query;
+        const { classId, month, year, issueDate, dueDate, lateFine, lateFeeType } = req.query;
 
         const activeYear = year ? parseInt(year) : new Date().getFullYear();
         const activeMonth = month ? parseInt(month) : (new Date().getMonth() + 1);
@@ -679,7 +679,21 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
             formattedDueDate = dueObj.toLocaleDateString('en-GB');
         }
 
-        const lateFineVal = lateFine ? parseFloat(lateFine) : (parseFloat(req.tenant.fine_amount_per_day || 25) * 10 || 250);
+        // Dynamic Late Fine calculation and notice formatting
+        const fineType = lateFeeType || req.tenant.default_late_fee_type || 'fixed';
+        let lateFineVal = 0;
+        if (lateFine !== undefined && lateFine !== null && lateFine !== '') {
+            lateFineVal = parseFloat(lateFine);
+        } else {
+            lateFineVal = fineType === 'per_day' ? parseFloat(req.tenant.fine_amount_per_day || 20) : parseFloat(req.tenant.fixed_late_fee_amount || 250);
+        }
+
+        let lateFineNotice = '';
+        if (fineType === 'per_day') {
+            lateFineNotice = `A fine of Rs. ${lateFineVal.toLocaleString()} per day will be charged after the due date.`;
+        } else {
+            lateFineNotice = `Otherwise a fine of Rs. ${lateFineVal.toLocaleString()} will be charged on late fee.`;
+        }
 
         // Process student fees & amount in words
         const formattedStudents = students.map(s => {
@@ -712,6 +726,7 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
                 issueDate: formattedIssueDate,
                 dueDate: formattedDueDate,
                 lateFineAmount: lateFineVal,
+                lateFineNotice: lateFineNotice,
                 feeAccountNumber: req.tenant.fee_account_number || '0342-0980325',
                 brandColor: req.tenant.primary_color || '#c28b1e',
                 students: formattedStudents
