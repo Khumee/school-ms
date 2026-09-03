@@ -46,12 +46,13 @@ router.get('/settings/general', isAuthenticated, async (req, res) => {
 router.post('/settings/general', isAuthenticated, upload.single('logo'), async (req, res) => {
     try {
         const tenantId = req.tenant.id;
-        const { primary_color, secondary_color, fine_start_days, fine_amount_per_day, fixed_late_fee_amount, default_late_fee_type, school_start_time, school_end_time, late_threshold_minutes, late_days_deduction_trigger, hifz_pages_per_para, hifz_lines_per_page, hifz_total_pages, fee_account_number, fee_account_title, easypaisa_number, jazzcash_number } = req.body;
+        const { primary_color, secondary_color, school_tagline, fine_start_days, fine_amount_per_day, fixed_late_fee_amount, default_late_fee_type, school_start_time, school_end_time, late_threshold_minutes, late_days_deduction_trigger, hifz_pages_per_para, hifz_lines_per_page, hifz_total_pages, fee_account_number, fee_account_title, easypaisa_number, jazzcash_number } = req.body;
         
-        let updateQuery = 'UPDATE tenants SET primary_color = ?, secondary_color = ?, fine_start_days = ?, fine_amount_per_day = ?, fixed_late_fee_amount = ?, default_late_fee_type = ?, school_start_time = ?, school_end_time = ?, late_threshold_minutes = ?, late_days_deduction_trigger = ?, hifz_pages_per_para = ?, hifz_lines_per_page = ?, hifz_total_pages = ?, fee_account_number = ?, fee_account_title = ?, easypaisa_number = ?, jazzcash_number = ?';
+        let updateQuery = 'UPDATE tenants SET primary_color = ?, secondary_color = ?, school_tagline = ?, fine_start_days = ?, fine_amount_per_day = ?, fixed_late_fee_amount = ?, default_late_fee_type = ?, school_start_time = ?, school_end_time = ?, late_threshold_minutes = ?, late_days_deduction_trigger = ?, hifz_pages_per_para = ?, hifz_lines_per_page = ?, hifz_total_pages = ?, fee_account_number = ?, fee_account_title = ?, easypaisa_number = ?, jazzcash_number = ?';
         const queryParams = [
             primary_color, 
             secondary_color,
+            school_tagline || null,
             fine_start_days ? parseInt(fine_start_days) : 10,
             fine_amount_per_day ? parseFloat(fine_amount_per_day) : 20.00,
             fixed_late_fee_amount ? parseFloat(fixed_late_fee_amount) : 250.00,

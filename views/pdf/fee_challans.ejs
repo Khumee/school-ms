@@ -51,13 +51,13 @@
         border-radius: 16px;
         padding: 10px 16px 0 16px;
         background: #ffffff;
-        height: 86mm;
+        height: 87mm;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
 
     /* ---------------- HEADER ---------------- */
@@ -78,8 +78,8 @@
     }
 
     .school-logo-img {
-        width: 60px;
-        height: 60px;
+        width: 58px;
+        height: 58px;
         object-fit: contain;
         border-radius: 8px;
         border: 1.5px solid <%= brandColor || '#c28b1e' %>66;
@@ -89,8 +89,8 @@
     }
 
     .school-logo-fallback {
-        width: 60px;
-        height: 60px;
+        width: 58px;
+        height: 58px;
         border-radius: 8px;
         background: linear-gradient(135deg, #0f172a, #1e293b);
         border: 2px solid <%= brandColor || '#c28b1e' %>;
@@ -98,7 +98,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 19px;
+        font-size: 18px;
         font-weight: 900;
         letter-spacing: 1px;
         flex-shrink: 0;
@@ -120,7 +120,7 @@
     }
 
     .school-tagline {
-        font-size: 10px;
+        font-size: 9.5px;
         font-weight: 700;
         color: <%= brandColor || '#c28b1e' %>;
         letter-spacing: 0.5px;
@@ -132,7 +132,7 @@
         color: #334155;
         display: flex;
         flex-direction: column;
-        gap: 1.5px;
+        gap: 1px;
         font-weight: 500;
     }
 
@@ -148,9 +148,9 @@
         color: #ffffff;
         border: 2px solid <%= brandColor || '#c28b1e' %>;
         border-radius: 24px;
-        padding: 9px 22px;
+        padding: 8px 22px;
         font-weight: 900;
-        font-size: 13.5px;
+        font-size: 13px;
         letter-spacing: 0.8px;
         text-transform: uppercase;
         white-space: nowrap;
@@ -160,10 +160,10 @@
     /* ---------------- BODY GRID ---------------- */
     .body-grid {
         display: grid;
-        grid-template-columns: 1.7fr 1.3fr 1.8fr 2.2fr;
+        grid-template-columns: 1.7fr 1.3fr 1.7fr 2.3fr;
         gap: 12px;
-        align-items: center;
-        padding: 4px 0 6px 0;
+        align-items: stretch;
+        padding: 6px 0 4px 0;
         flex: 1;
     }
 
@@ -171,13 +171,14 @@
     .meta-field-group {
         display: flex;
         flex-direction: column;
-        gap: 9px;
+        justify-content: space-around;
     }
 
     .meta-field-row {
         display: flex;
         align-items: baseline;
         font-size: 12px;
+        padding: 2px 0;
     }
 
     .meta-field-label {
@@ -207,10 +208,12 @@
     .fee-detail-card {
         border: 2px solid <%= brandColor || '#c28b1e' %>;
         border-radius: 12px;
-        padding: 8px 10px 6px 10px;
+        padding: 10px 10px 6px 10px;
         background: #fffdf9;
         position: relative;
-        margin-top: 4px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     .pill-header {
@@ -233,36 +236,36 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 11px;
-        padding: 4px 2px;
+        font-size: 11.5px;
+        padding: 2px 0;
         color: #334155;
     }
 
     .fee-row.total-box {
         border: 2px solid <%= brandColor || '#c28b1e' %>;
         border-radius: 8px;
-        padding: 5px 8px;
+        padding: 4px 8px;
         font-weight: 900;
         font-size: 13.5px;
         background: #ffffff;
-        margin-top: 2px;
+        margin: 2px 0;
         color: #0f172a;
     }
 
     .fee-in-words {
         font-size: 9px;
         color: #475569;
-        margin-top: 4px;
         text-align: center;
         font-style: italic;
         line-height: 1.2;
     }
 
-    /* Column 4: Due Date, Fine & Payment Accounts */
+    /* Column 4: Due Date, Fine & Payment Channels */
     .payment-due-card {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        justify-content: space-between;
+        gap: 3px;
         border-left: 1.5px dashed #cbd5e1;
         padding-left: 12px;
     }
@@ -271,24 +274,30 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: #f8fafc;
-        padding: 4px 8px;
+        background: #fef2f2;
+        padding: 4px 10px;
         border-radius: 6px;
-        border: 1px solid #e2e8f0;
-        font-size: 10.5px;
+        border: 1.5px solid #fecaca;
+        font-size: 11px;
+    }
+
+    .due-date-label {
+        font-weight: 800;
+        color: #991b1b;
+        letter-spacing: 0.3px;
     }
 
     .due-date-highlight {
         font-weight: 900;
         color: #b91c1c;
-        font-size: 11.5px;
+        font-size: 13px;
     }
 
     .late-fine-alert {
         display: flex;
         align-items: center;
         gap: 5px;
-        font-size: 9px;
+        font-size: 8.5px;
         color: #b45309;
         font-weight: 600;
         line-height: 1.2;
@@ -298,13 +307,13 @@
         background: #fef3c7;
         color: #d97706;
         border-radius: 50%;
-        width: 14px;
-        height: 14px;
+        width: 13px;
+        height: 13px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         font-weight: 800;
-        font-size: 9.5px;
+        font-size: 9px;
         flex-shrink: 0;
         border: 1px solid #fde68a;
     }
@@ -314,88 +323,68 @@
         border-radius: 8px;
         background: #f8fafc;
         padding: 4px 6px;
-        margin-top: 1px;
         position: relative;
     }
 
     .payment-pill-header {
         background: #0f172a;
         color: #ffffff;
-        font-size: 8.5px;
+        font-size: 8px;
         font-weight: 800;
         text-align: center;
-        padding: 1.5px 6px;
+        padding: 1px 6px;
         border-radius: 4px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 3px;
     }
 
-    .payment-badges-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: 4px;
+    .payment-channels-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 4px;
+        align-items: stretch;
+    }
+
+    .channel-box {
         background: #ffffff;
-        padding: 3px 6px;
-        border-radius: 6px;
         border: 1px solid #e2e8f0;
-    }
-
-    .pm-logo-img {
-        height: 17px;
-        max-width: 60px;
-        object-fit: contain;
-    }
-
-    .pm-tag {
-        font-size: 9px;
-        font-weight: 700;
-        padding: 2px 5px;
-        border-radius: 4px;
-        border: 1px solid #cbd5e1;
-        background: #ffffff;
-        display: inline-flex;
-        align-items: center;
-        gap: 2px;
-    }
-
-    .pm-account-box {
-        text-align: center;
-        border: 1.5px solid <%= brandColor || '#c28b1e' %>;
         border-radius: 6px;
-        padding: 2px 4px;
-        font-size: 9px;
-        font-weight: 800;
-        color: #0f172a;
-        background: #ffffff;
-        line-height: 1.25;
-    }
-
-    .pm-account-dual-box {
+        padding: 3px 4px;
         display: flex;
         flex-direction: column;
-        gap: 2px;
-        border: 1.5px solid <%= brandColor || '#c28b1e' %>;
-        border-radius: 6px;
-        padding: 2px 4px;
-        font-size: 8.5px;
-        font-weight: 800;
-        color: #0f172a;
-        background: #ffffff;
+        align-items: center;
+        justify-content: center;
         text-align: center;
     }
 
-    .ep-dot { color: #008744; font-size: 10px; }
-    .jc-dot { color: #e11d48; font-size: 10px; }
+    .channel-logo-img {
+        height: 18px;
+        max-width: 62px;
+        object-fit: contain;
+        margin-bottom: 2px;
+    }
+
+    .channel-title {
+        font-size: 8.5px;
+        font-weight: 700;
+        color: #334155;
+    }
+
+    .channel-num {
+        font-size: 8px;
+        font-weight: 900;
+        color: #0f172a;
+        white-space: nowrap;
+        letter-spacing: -0.2px;
+    }
 
     /* ---------------- FOOTER ---------------- */
     .challan-footer-bar {
         background: #0f172a;
         color: #f8fafc;
         margin: 0 -16px 0 -16px;
-        padding: 6px 16px;
+        padding: 5px 16px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -466,7 +455,7 @@
                             <% } %>
                             <div class="school-text-block">
                                 <h1 class="school-name"><%= tenant.school_name %></h1>
-                                <p class="school-tagline">◆ Knowledge | Character | Success ◆</p>
+                                <p class="school-tagline"><%= tenant.school_tagline ? ('◆ ' + tenant.school_tagline + ' ◆') : '◆ Knowledge | Character | Success ◆' %></p>
                                 <div class="school-contacts">
                                     <span>📍 <%= tenant.address || 'Talab Road, Rawat, Islamabad' %></span>
                                     <span>📞 <%= tenant.contact_phone || feeAccountNumber %></span>
@@ -530,10 +519,10 @@
                             </div>
                         </div>
 
-                        <!-- Col 4: Due Date & Payment Accounts -->
+                        <!-- Col 4: Due Date, Fine & Payment Channels -->
                         <div class="payment-due-card">
                             <div class="due-date-badge-row">
-                                <span>📅 Due Date:</span>
+                                <span class="due-date-label">📅 DUE DATE:</span>
                                 <span class="due-date-highlight"><%= dueDate %></span>
                             </div>
 
@@ -543,31 +532,33 @@
                             </div>
 
                             <div class="payment-method-container">
-                                <div class="payment-pill-header">Payment Methods</div>
-                                <div class="payment-badges-row">
-                                    <span class="pm-tag">💵 Cash</span>
-                                    <% if (easypaisaLogo) { %>
-                                        <img src="<%= easypaisaLogo %>" alt="easypaisa" class="pm-logo-img">
-                                    <% } else { %>
-                                        <span class="pm-tag" style="border-color: #10b981; color: #047857;">🟢 easypaisa</span>
-                                    <% } %>
-                                    <% if (jazzcashLogo) { %>
-                                        <img src="<%= jazzcashLogo %>" alt="JazzCash" class="pm-logo-img">
-                                    <% } else { %>
-                                        <span class="pm-tag" style="border-color: #ef4444; color: #b91c1c;">🔴 JazzCash</span>
-                                    <% } %>
+                                <div class="payment-pill-header">Payment Channels</div>
+                                <div class="payment-channels-grid">
+                                    <!-- Cash -->
+                                    <div class="channel-box">
+                                        <span style="font-size: 14px;">💵</span>
+                                        <span class="channel-title">Cash</span>
+                                        <span class="channel-num" style="color: #64748b; font-size: 7.5px;">School Counter</span>
+                                    </div>
+                                    <!-- Easypaisa -->
+                                    <div class="channel-box" style="border-color: #a7f3d0;">
+                                        <% if (easypaisaLogo) { %>
+                                            <img src="<%= easypaisaLogo %>" alt="Easypaisa" class="channel-logo-img">
+                                        <% } else { %>
+                                            <span class="channel-title" style="color: #059669;">easypaisa</span>
+                                        <% } %>
+                                        <span class="channel-num"><%= easypaisaNumber %></span>
+                                    </div>
+                                    <!-- JazzCash -->
+                                    <div class="channel-box" style="border-color: #fecaca;">
+                                        <% if (jazzcashLogo) { %>
+                                            <img src="<%= jazzcashLogo %>" alt="JazzCash" class="channel-logo-img">
+                                        <% } else { %>
+                                            <span class="channel-title" style="color: #dc2626;">JazzCash</span>
+                                        <% } %>
+                                        <span class="channel-num"><%= jazzcashNumber %></span>
+                                    </div>
                                 </div>
-
-                                <% if (easypaisaNumber === jazzcashNumber || !jazzcashNumber) { %>
-                                    <div class="pm-account-box">
-                                        Easypaisa / JazzCash: [ <%= easypaisaNumber || feeAccountNumber %> ]
-                                    </div>
-                                <% } else { %>
-                                    <div class="pm-account-dual-box">
-                                        <div><span class="ep-dot">●</span> <strong>Easypaisa:</strong> <%= easypaisaNumber %></div>
-                                        <div><span class="jc-dot">●</span> <strong>JazzCash:</strong> <%= jazzcashNumber %></div>
-                                    </div>
-                                <% } %>
                             </div>
                         </div>
                     </div>
