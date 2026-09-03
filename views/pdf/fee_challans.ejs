@@ -202,14 +202,14 @@
         background: #f7f2eb;
         border: 1px solid #e5dccf;
         border-radius: 12px;
-        padding: 10px 12px;
+        padding: 7px 10px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
     }
 
     .fee-header-title {
-        font-size: 9px;
+        font-size: 8.5px;
         font-weight: 800;
         color: #9e7330;
         text-transform: uppercase;
@@ -218,7 +218,7 @@
     }
 
     .fee-sub-heading {
-        font-size: 8px;
+        font-size: 7.5px;
         font-weight: 700;
         color: #64748b;
         text-transform: uppercase;
@@ -228,28 +228,29 @@
 
     .fee-arrears-divider {
         border-top: 1px dashed #d1c7b8;
-        margin: 3px 0 2px 0;
+        margin: 2px 0 2px 0;
     }
 
     .fee-line-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 11px;
+        font-size: 10.5px;
         color: #475569;
-        margin-bottom: 2px;
+        margin-bottom: 1.5px;
     }
 
     .fee-line-item.tuition-highlight {
-        font-size: 11.5px;
+        font-size: 11px;
         font-weight: 700;
         color: #1e293b;
     }
 
     .fee-line-item.unpaid-due-item {
-        font-size: 10px;
+        font-size: 9px;
         font-weight: 600;
         color: #b91c1c;
+        margin-bottom: 1px;
     }
 
     .fee-dotted-divider {
@@ -519,20 +520,13 @@
 
                                 <% if (student.unpaidItems && student.unpaidItems.length > 0) { %>
                                     <div class="fee-arrears-divider"></div>
-                                    <div class="fee-sub-heading" style="color: #991b1b;">Previous Dues (Arrears)</div>
-                                    <% if (student.unpaidItems.length <= 2) { %>
-                                        <% student.unpaidItems.forEach(item => { %>
-                                            <div class="fee-line-item unpaid-due-item">
-                                                <span><%= item.monthName %> Dues</span>
-                                                <strong>Rs. <%= item.due.toLocaleString() %></strong>
-                                            </div>
-                                        <% }) %>
-                                    <% } else { %>
+                                    <div class="fee-sub-heading" style="color: #991b1b;">Previous Dues</div>
+                                    <% student.unpaidItems.forEach(item => { %>
                                         <div class="fee-line-item unpaid-due-item">
-                                            <span><%= student.unpaidItems.map(u => u.shortName).join(', ') %> Dues</span>
-                                            <strong>Rs. <%= student.previousDues.toLocaleString() %></strong>
+                                            <span><%= item.monthName %> Dues</span>
+                                            <strong>Rs. <%= item.due.toLocaleString() %></strong>
                                         </div>
-                                    <% } %>
+                                    <% }) %>
                                 <% } %>
                             </div>
 
