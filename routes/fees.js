@@ -672,12 +672,17 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
         }
 
         // Format dates
-        const formattedIssueDate = issueDate ? new Date(issueDate).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
-        let formattedDueDate = dueDate ? new Date(dueDate).toLocaleDateString('en-GB') : null;
-        if (!formattedDueDate) {
-            const dueObj = new Date(activeYear, activeMonth - 1, req.tenant.fine_start_days || 10);
-            formattedDueDate = dueObj.toLocaleDateString('en-GB');
+        const issueObj = issueDate ? new Date(issueDate) : new Date();
+        const formattedIssueDate = issueObj.toLocaleDateString('en-GB');
+
+        let dueObj = dueDate ? new Date(dueDate) : null;
+        if (!dueObj) {
+            dueObj = new Date(activeYear, activeMonth - 1, req.tenant.fine_start_days || 10);
         }
+        const formattedDueDate = dueObj.toLocaleDateString('en-GB');
+        const monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const dueDayStr = String(dueObj.getDate()).padStart(2, '0');
+        const dueDateDisplay = `${dueDayStr} ${monthsShort[dueObj.getMonth()]} ${dueObj.getFullYear()}`;
 
         // Dynamic Late Fine calculation and notice formatting
         const fineType = lateFeeType || req.tenant.default_late_fee_type || 'fixed';
@@ -690,20 +695,47 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
 
         let lateFineNotice = '';
         if (fineType === 'per_day') {
-            lateFineNotice = `A fine of Rs. ${lateFineVal.toLocaleString()} per day will be charged after the due date.`;
+            lateFineNotice = `A late fine of Rs. ${lateFineVal.toLocaleString()} per day applies after this date.`;
         } else {
-            lateFineNotice = `Otherwise a fine of Rs. ${lateFineVal.toLocaleString()} will be charged on late fee.`;
+            lateFineNotice = `A late fine of Rs. ${lateFineVal.toLocaleString()} applies after this date.`;
         }
 
-        // Process student fees & amount in words (skip students with 0 fee / 100% full waiver)
+        // Fetch all previous payments for activeYear for students in this class
+        const [previousPayments] = await db.execute(
+            `SELECT student_id, month, SUM(amount_paid) as total_paid
+             FROM fee_payments
+             WHERE tenant_id = ? AND year = ? AND month < ? AND month >= 1 AND month <= 12
+             GROUP BY student_id, month`,
+            [tenantId, activeYear, activeMonth]
+        );
+
+        const prevPaymentMap = {};
+        previousPayments.forEach(p => {
+            if (!prevPaymentMap[p.student_id]) prevPaymentMap[p.student_id] = {};
+            prevPaymentMap[p.student_id][p.month] = parseFloat(p.total_paid || 0);
+        });
+
+        // Process student fees, previous arrears, and amount in words
         const formattedStudents = [];
         for (const s of students) {
             const defaultFee = parseFloat(s.default_monthly_fee || 0);
             const customFee = s.custom_monthly_fee !== null && s.custom_monthly_fee !== undefined ? parseFloat(s.custom_monthly_fee) : defaultFee;
             const tuitionFee = customFee;
 
-            // Skip zero fee / full waiver students
-            if (tuitionFee <= 0) {
+            // Compute previous unpaid dues / arrears from month 1 to activeMonth - 1
+            let previousDues = 0;
+            if (activeMonth > 1) {
+                for (let m = 1; m < activeMonth; m++) {
+                    const paidForMonth = (prevPaymentMap[s.id] && prevPaymentMap[s.id][m]) ? prevPaymentMap[s.id][m] : 0;
+                    const dueForMonth = Math.max(0, tuitionFee - paidForMonth);
+                    previousDues += dueForMonth;
+                }
+            }
+
+            const totalPayable = tuitionFee + previousDues;
+
+            // Skip zero fee / full waiver students who have no balance to pay
+            if (totalPayable <= 0) {
                 continue;
             }
 
@@ -713,7 +745,9 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
                 name: s.name,
                 father_name: s.father_name || '',
                 tuitionFee: tuitionFee,
-                feeInWords: numberToWords(tuitionFee)
+                previousDues: previousDues,
+                totalPayable: totalPayable,
+                feeInWords: numberToWords(totalPayable)
             });
         }
 
@@ -728,8 +762,8 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
 
         const easypaisaLogo = resolvePublicAsset('/images/easypaisa.png');
         const jazzcashLogo = resolvePublicAsset('/images/jazzcash.png');
-        const easypaisaNumber = req.tenant.easypaisa_number || req.tenant.fee_account_number || '0342-0980325';
-        const jazzcashNumber = req.tenant.jazzcash_number || req.tenant.fee_account_number || '0342-0980325';
+        const easypaisaNumber = req.tenant.easypaisa_number || req.tenant.fee_account_number || '03420980325';
+        const jazzcashNumber = req.tenant.jazzcash_number || req.tenant.fee_account_number || '03420980325';
 
         renderPdf(res, {
             templateName: 'fee_challans',
@@ -741,6 +775,7 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
                 year: activeYear,
                 issueDate: formattedIssueDate,
                 dueDate: formattedDueDate,
+                dueDateDisplay: dueDateDisplay,
                 lateFineAmount: lateFineVal,
                 lateFineNotice: lateFineNotice,
                 easypaisaLogo: easypaisaLogo,
@@ -748,7 +783,7 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
                 easypaisaNumber: easypaisaNumber,
                 jazzcashNumber: jazzcashNumber,
                 feeAccountNumber: req.tenant.fee_account_number || easypaisaNumber,
-                brandColor: req.tenant.primary_color || '#c28b1e',
+                brandColor: req.tenant.primary_color || '#1b2a47',
                 students: formattedStudents
             },
             fileBaseName: `fee_challans_${classId}_${activeMonth}_${activeYear}_${Date.now()}`,

@@ -16,10 +16,10 @@
         print-color-adjust: exact !important;
     }
     body {
-        font-family: 'Segoe UI', Arial, -apple-system, Roboto, sans-serif;
-        color: #0f172a;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: #1e293b;
         background: #ffffff;
-        font-size: 11.5px;
+        font-size: 11px;
     }
 
     .challan-page {
@@ -28,7 +28,7 @@
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        gap: 4mm;
+        gap: 3.5mm;
         page-break-after: always;
         break-after: page;
         box-sizing: border-box;
@@ -42,22 +42,22 @@
     .challan-unit {
         display: flex;
         flex-direction: column;
-        height: 92mm;
+        height: 92.5mm;
         justify-content: space-between;
     }
 
     .challan-card {
-        border: 2.5px solid <%= brandColor || '#c28b1e' %>;
-        border-radius: 16px;
-        padding: 10px 16px 0 16px;
+        border: 1.5px solid #e7dfd5;
+        border-radius: 14px;
+        padding: 12px 18px 0 18px;
         background: #ffffff;
-        height: 87mm;
+        height: 87.5mm;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
 
     /* ---------------- HEADER ---------------- */
@@ -66,8 +66,8 @@
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        border-bottom: 2px solid <%= brandColor || '#c28b1e' %>33;
-        padding-bottom: 6px;
+        border-bottom: 1px solid #e7dfd5;
+        padding-bottom: 8px;
     }
 
     .school-info-group {
@@ -78,62 +78,61 @@
     }
 
     .school-logo-img {
-        width: 58px;
-        height: 58px;
+        width: 52px;
+        height: 52px;
         object-fit: contain;
-        border-radius: 8px;
-        border: 1.5px solid <%= brandColor || '#c28b1e' %>66;
-        padding: 2px;
-        background: #ffffff;
+        border-radius: 6px;
         flex-shrink: 0;
     }
 
     .school-logo-fallback {
-        width: 58px;
-        height: 58px;
-        border-radius: 8px;
-        background: linear-gradient(135deg, #0f172a, #1e293b);
-        border: 2px solid <%= brandColor || '#c28b1e' %>;
-        color: <%= brandColor || '#c28b1e' %>;
+        width: 52px;
+        height: 52px;
+        border-radius: 6px;
+        background: #1b2a47;
+        color: #c28b1e;
+        border: 1.5px solid #c28b1e;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 18px;
-        font-weight: 900;
+        font-size: 17px;
+        font-weight: 800;
         letter-spacing: 1px;
         flex-shrink: 0;
+        font-family: Georgia, serif;
     }
 
     .school-text-block {
         display: flex;
         flex-direction: column;
-        gap: 1.5px;
+        gap: 1px;
     }
 
     .school-name {
-        font-size: 18px;
-        font-weight: 900;
-        color: #0f172a;
-        letter-spacing: -0.3px;
-        text-transform: uppercase;
+        font-size: 20px;
+        font-weight: 700;
+        color: #1b2a47;
+        letter-spacing: -0.2px;
         line-height: 1.15;
+        font-family: Georgia, 'Times New Roman', serif;
     }
 
     .school-tagline {
-        font-size: 9.5px;
+        font-size: 8.5px;
         font-weight: 700;
-        color: <%= brandColor || '#c28b1e' %>;
-        letter-spacing: 0.5px;
+        color: #c28b1e;
+        letter-spacing: 2px;
+        text-transform: uppercase;
         margin: 1px 0 2px 0;
     }
 
     .school-contacts {
         font-size: 9.5px;
-        color: #334155;
+        color: #64748b;
         display: flex;
         flex-direction: column;
         gap: 1px;
-        font-weight: 500;
+        font-weight: 400;
     }
 
     .school-contacts span {
@@ -144,23 +143,21 @@
     }
 
     .challan-title-badge {
-        background: #0f172a;
+        background: #1b2a47;
         color: #ffffff;
-        border: 2px solid <%= brandColor || '#c28b1e' %>;
-        border-radius: 24px;
-        padding: 8px 22px;
-        font-weight: 900;
-        font-size: 13px;
-        letter-spacing: 0.8px;
-        text-transform: uppercase;
+        border-radius: 20px;
+        padding: 7px 20px;
+        font-weight: 700;
+        font-size: 13.5px;
+        letter-spacing: 0.3px;
         white-space: nowrap;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        font-family: Georgia, serif;
     }
 
     /* ---------------- BODY GRID ---------------- */
     .body-grid {
         display: grid;
-        grid-template-columns: 1.7fr 1.3fr 1.7fr 2.3fr;
+        grid-template-columns: 1.6fr 1.3fr 1.8fr 2.1fr;
         gap: 12px;
         align-items: stretch;
         padding: 6px 0 4px 0;
@@ -171,93 +168,96 @@
     .meta-field-group {
         display: flex;
         flex-direction: column;
-        justify-content: space-around;
-    }
-
-    .meta-field-row {
-        display: flex;
-        align-items: baseline;
-        font-size: 12px;
+        justify-content: space-between;
         padding: 2px 0;
     }
 
-    .meta-field-label {
-        font-weight: 600;
-        color: #475569;
-        width: 88px;
-        flex-shrink: 0;
+    .meta-field-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
     }
 
-    .meta-field-label.short {
-        width: 60px;
+    .meta-label {
+        font-size: 8.5px;
+        font-weight: 700;
+        color: #8c9ba5;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
-    .meta-field-val {
+    .meta-val {
+        font-size: 13.5px;
         font-weight: 800;
-        color: #0f172a;
-        border-bottom: 1.5px solid #cbd5e1;
-        flex: 1;
-        padding-bottom: 2px;
-        padding-left: 4px;
+        color: #1b2a47;
+        border-bottom: 1px solid #e2d9cd;
+        padding-bottom: 3px;
+        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
     }
 
     /* Column 3: Fee Detail Box */
     .fee-detail-card {
-        border: 2px solid <%= brandColor || '#c28b1e' %>;
+        background: #f7f2eb;
+        border: 1px solid #e5dccf;
         border-radius: 12px;
-        padding: 10px 10px 6px 10px;
-        background: #fffdf9;
-        position: relative;
+        padding: 10px 12px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
     }
 
-    .pill-header {
-        position: absolute;
-        top: -10px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: <%= brandColor || '#c28b1e' %>;
-        color: #ffffff;
-        font-size: 9.5px;
+    .fee-header-title {
+        font-size: 9px;
         font-weight: 800;
-        padding: 2px 14px;
-        border-radius: 12px;
+        color: #9e7330;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        white-space: nowrap;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
     }
 
-    .fee-row {
+    .fee-line-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 11.5px;
-        padding: 2px 0;
-        color: #334155;
-    }
-
-    .fee-row.total-box {
-        border: 2px solid <%= brandColor || '#c28b1e' %>;
-        border-radius: 8px;
-        padding: 4px 8px;
-        font-weight: 900;
-        font-size: 13.5px;
-        background: #ffffff;
-        margin: 2px 0;
-        color: #0f172a;
-    }
-
-    .fee-in-words {
-        font-size: 9px;
+        font-size: 11px;
         color: #475569;
-        text-align: center;
+        margin-bottom: 2px;
+    }
+
+    .fee-dotted-divider {
+        border-top: 1px dotted #d1c7b8;
+        margin: 4px 0;
+    }
+
+    .fee-total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+    }
+
+    .fee-total-label {
+        font-size: 10px;
+        font-weight: 800;
+        color: #1b2a47;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .fee-total-val {
+        font-size: 18px;
+        font-weight: 900;
+        color: #1b2a47;
+        font-family: Georgia, serif;
+    }
+
+    .fee-words-note {
+        font-size: 8.5px;
         font-style: italic;
-        line-height: 1.2;
+        color: #857a6e;
+        line-height: 1.25;
+        margin-top: 4px;
     }
 
     /* Column 4: Due Date, Fine & Payment Channels */
@@ -265,146 +265,100 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        gap: 3px;
-        border-left: 1.5px dashed #cbd5e1;
-        padding-left: 12px;
+        gap: 4px;
     }
 
-    .due-date-badge-row {
+    .due-date-card-box {
+        background: #fbf5f2;
+        border: 1.5px solid #e8cbc2;
+        border-radius: 10px;
+        padding: 6px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+    }
+
+    .due-date-mini-label {
+        font-size: 8px;
+        font-weight: 800;
+        color: #9e3b2b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .due-date-bold-val {
+        font-size: 16px;
+        font-weight: 900;
+        color: #1b2a47;
+        font-family: Georgia, serif;
+    }
+
+    .due-date-fine-note {
+        font-size: 8px;
+        color: #78716c;
+        line-height: 1.15;
+    }
+
+    .payment-channels-section {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .payment-channels-title {
+        font-size: 8px;
+        font-weight: 800;
+        color: #8c9ba5;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 1px;
+    }
+
+    .channel-row {
+        background: #ffffff;
+        border: 1px solid #e2d9cd;
+        border-radius: 6px;
+        padding: 3px 8px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: #fef2f2;
-        padding: 4px 10px;
-        border-radius: 6px;
-        border: 1.5px solid #fecaca;
-        font-size: 11px;
+        font-size: 9.5px;
     }
 
-    .due-date-label {
-        font-weight: 800;
-        color: #991b1b;
-        letter-spacing: 0.3px;
-    }
-
-    .due-date-highlight {
-        font-weight: 900;
-        color: #b91c1c;
-        font-size: 13px;
-    }
-
-    .late-fine-alert {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 8.5px;
-        color: #b45309;
-        font-weight: 600;
-        line-height: 1.2;
-    }
-
-    .alert-dot {
-        background: #fef3c7;
-        color: #d97706;
-        border-radius: 50%;
-        width: 13px;
-        height: 13px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        font-size: 9px;
-        flex-shrink: 0;
-        border: 1px solid #fde68a;
-    }
-
-    .payment-method-container {
-        border: 1.5px solid #e2e8f0;
-        border-radius: 8px;
-        background: #f8fafc;
-        padding: 4px 6px;
-        position: relative;
-    }
-
-    .payment-pill-header {
-        background: #0f172a;
-        color: #ffffff;
-        font-size: 8px;
-        font-weight: 800;
-        text-align: center;
-        padding: 1px 6px;
-        border-radius: 4px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 3px;
-    }
-
-    .payment-channels-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 4px;
-        align-items: stretch;
-    }
-
-    .channel-box {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        padding: 3px 4px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-    }
-
-    .channel-logo-img {
-        height: 18px;
-        max-width: 62px;
-        object-fit: contain;
-        margin-bottom: 2px;
-    }
-
-    .channel-title {
-        font-size: 8.5px;
+    .channel-name {
         font-weight: 700;
-        color: #334155;
+        color: #1b2a47;
     }
 
-    .channel-num {
-        font-size: 8px;
-        font-weight: 900;
-        color: #0f172a;
+    .channel-info {
+        font-weight: 600;
+        color: #334155;
         white-space: nowrap;
-        letter-spacing: -0.2px;
     }
 
     /* ---------------- FOOTER ---------------- */
     .challan-footer-bar {
-        background: #0f172a;
-        color: #f8fafc;
-        margin: 0 -16px 0 -16px;
-        padding: 5px 16px;
+        background: #1b2a47;
+        color: #e2e8f0;
+        margin: 0 -18px 0 -18px;
+        padding: 5px 18px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 9px;
+        font-size: 8.5px;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
     }
 
     .footer-left-note {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        color: #fbbf24;
-        font-weight: 600;
+        color: #e2e8f0;
     }
 
     .footer-right-note {
         font-style: italic;
-        color: #f1f5f9;
+        color: #c28b1e;
         font-family: Georgia, serif;
-        font-size: 10px;
-        letter-spacing: 0.5px;
+        font-size: 9.5px;
     }
 
     /* ---------------- SCISSOR CUT LINE ---------------- */
@@ -419,7 +373,7 @@
 
     .cut-dashed-line {
         flex: 1;
-        border-bottom: 1.5px dashed #94a3b8;
+        border-bottom: 1.5px dashed #cbd5e1;
     }
 
     .cut-icon {
@@ -455,11 +409,10 @@
                             <% } %>
                             <div class="school-text-block">
                                 <h1 class="school-name"><%= tenant.school_name %></h1>
-                                <p class="school-tagline"><%= tenant.school_tagline ? ('◆ ' + tenant.school_tagline + ' ◆') : '◆ Knowledge | Character | Success ◆' %></p>
+                                <p class="school-tagline"><%= tenant.school_tagline || 'KNOWLEDGE · CHARACTER · SUCCESS' %></p>
                                 <div class="school-contacts">
-                                    <span>📍 <%= tenant.address || 'Talab Road, Rawat, Islamabad' %></span>
-                                    <span>📞 <%= tenant.contact_phone || feeAccountNumber %></span>
-                                    <span>✉ <%= tenant.contact_email || 'school.office@gmail.com' %></span>
+                                    <span><%= tenant.address || 'Talab Road, Rawat, Islamabad' %></span>
+                                    <span><%= tenant.contact_phone || feeAccountNumber %> · <%= tenant.contact_email || 'school.office@gmail.com' %></span>
                                 </div>
                             </div>
                         </div>
@@ -473,91 +426,85 @@
                     <div class="body-grid">
                         <!-- Col 1: Student Details -->
                         <div class="meta-field-group">
-                            <div class="meta-field-row">
-                                <span class="meta-field-label">Student Name:</span>
-                                <span class="meta-field-val"><%= student.name %></span>
+                            <div class="meta-field-item">
+                                <span class="meta-label">Student Name</span>
+                                <span class="meta-val"><%= student.name %></span>
                             </div>
-                            <div class="meta-field-row">
-                                <span class="meta-field-label">Father/Guardian:</span>
-                                <span class="meta-field-val"><%= student.father_name || '-' %></span>
+                            <div class="meta-field-item">
+                                <span class="meta-label">Father / Guardian</span>
+                                <span class="meta-val"><%= student.father_name || '-' %></span>
                             </div>
-                            <div class="meta-field-row">
-                                <span class="meta-field-label">Class:</span>
-                                <span class="meta-field-val"><%= className %></span>
+                            <div class="meta-field-item">
+                                <span class="meta-label">Class</span>
+                                <span class="meta-val"><%= className %></span>
                             </div>
                         </div>
 
                         <!-- Col 2: Meta Info -->
                         <div class="meta-field-group">
-                            <div class="meta-field-row">
-                                <span class="meta-field-label short">Roll No.:</span>
-                                <span class="meta-field-val"><%= student.reg_no %></span>
+                            <div class="meta-field-item">
+                                <span class="meta-label">Roll No.</span>
+                                <span class="meta-val"><%= student.reg_no %></span>
                             </div>
-                            <div class="meta-field-row">
-                                <span class="meta-field-label short">Month:</span>
-                                <span class="meta-field-val"><%= monthName %> <%= year %></span>
+                            <div class="meta-field-item">
+                                <span class="meta-label">Month</span>
+                                <span class="meta-val"><%= monthName %> <%= year %></span>
                             </div>
-                            <div class="meta-field-row">
-                                <span class="meta-field-label short">Issue Date:</span>
-                                <span class="meta-field-val"><%= issueDate %></span>
+                            <div class="meta-field-item">
+                                <span class="meta-label">Issue Date</span>
+                                <span class="meta-val"><%= issueDate %></span>
                             </div>
                         </div>
 
                         <!-- Col 3: Fee Detail Card -->
                         <div class="fee-detail-card">
-                            <div class="pill-header">Fee Detail</div>
-                            <div class="fee-row">
-                                <span>Tuition Fee</span>
-                                <strong style="font-size: 11.5px;">Rs. <%= student.tuitionFee.toLocaleString() %></strong>
+                            <div>
+                                <div class="fee-header-title">Fee Detail</div>
+                                <div class="fee-line-item">
+                                    <span>Tuition Fee</span>
+                                    <strong>Rs. <%= student.tuitionFee.toLocaleString() %></strong>
+                                </div>
+                                <% if (student.previousDues > 0) { %>
+                                    <div class="fee-line-item" style="color: #b91c1c;">
+                                        <span>Previous Dues</span>
+                                        <strong>Rs. <%= student.previousDues.toLocaleString() %></strong>
+                                    </div>
+                                <% } %>
                             </div>
-                            <div class="fee-row total-box">
-                                <span>TOTAL</span>
-                                <span style="color: <%= brandColor || '#c28b1e' %>;">Rs. <%= student.tuitionFee.toLocaleString() %></span>
-                            </div>
-                            <div class="fee-in-words">
-                                Amount in Words: <strong><%= student.feeInWords %></strong>
+
+                            <div>
+                                <div class="fee-dotted-divider"></div>
+                                <div class="fee-total-row">
+                                    <span class="fee-total-label">TOTAL</span>
+                                    <span class="fee-total-val">Rs. <%= student.totalPayable.toLocaleString() %></span>
+                                </div>
+                                <div class="fee-words-note">
+                                    Amount in words — <%= student.feeInWords %>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Col 4: Due Date, Fine & Payment Channels -->
                         <div class="payment-due-card">
-                            <div class="due-date-badge-row">
-                                <span class="due-date-label">📅 DUE DATE:</span>
-                                <span class="due-date-highlight"><%= dueDate %></span>
+                            <div class="due-date-card-box">
+                                <span class="due-date-mini-label">Due Date</span>
+                                <span class="due-date-bold-val"><%= dueDateDisplay %></span>
+                                <span class="due-date-fine-note"><%= lateFineNotice %></span>
                             </div>
 
-                            <div class="late-fine-alert">
-                                <span class="alert-dot">!</span>
-                                <span><%= lateFineNotice %></span>
-                            </div>
-
-                            <div class="payment-method-container">
-                                <div class="payment-pill-header">Payment Channels</div>
-                                <div class="payment-channels-grid">
-                                    <!-- Cash -->
-                                    <div class="channel-box">
-                                        <span style="font-size: 14px;">💵</span>
-                                        <span class="channel-title">Cash</span>
-                                        <span class="channel-num" style="color: #64748b; font-size: 7.5px;">School Counter</span>
-                                    </div>
-                                    <!-- Easypaisa -->
-                                    <div class="channel-box" style="border-color: #a7f3d0;">
-                                        <% if (easypaisaLogo) { %>
-                                            <img src="<%= easypaisaLogo %>" alt="Easypaisa" class="channel-logo-img">
-                                        <% } else { %>
-                                            <span class="channel-title" style="color: #059669;">easypaisa</span>
-                                        <% } %>
-                                        <span class="channel-num"><%= easypaisaNumber %></span>
-                                    </div>
-                                    <!-- JazzCash -->
-                                    <div class="channel-box" style="border-color: #fecaca;">
-                                        <% if (jazzcashLogo) { %>
-                                            <img src="<%= jazzcashLogo %>" alt="JazzCash" class="channel-logo-img">
-                                        <% } else { %>
-                                            <span class="channel-title" style="color: #dc2626;">JazzCash</span>
-                                        <% } %>
-                                        <span class="channel-num"><%= jazzcashNumber %></span>
-                                    </div>
+                            <div class="payment-channels-section">
+                                <div class="payment-channels-title">Payment Channels</div>
+                                <div class="channel-row">
+                                    <span class="channel-name">Cash</span>
+                                    <span class="channel-info" style="color: #64748b;">School Counter</span>
+                                </div>
+                                <div class="channel-row">
+                                    <span class="channel-name">Easypaisa</span>
+                                    <span class="channel-info"><%= easypaisaNumber %></span>
+                                </div>
+                                <div class="channel-row">
+                                    <span class="channel-name">JazzCash</span>
+                                    <span class="channel-info"><%= jazzcashNumber %></span>
                                 </div>
                             </div>
                         </div>
@@ -566,10 +513,10 @@
                     <!-- Bottom Bar -->
                     <div class="challan-footer-bar">
                         <span class="footer-left-note">
-                            ★ Please ensure fee is paid before the due date. This challan is valid for the month mentioned above.
+                            Please ensure fee is paid before the due date. This challan is valid for the month mentioned above.
                         </span>
                         <span class="footer-right-note">
-                            — Thank You! —
+                            Thank you
                         </span>
                     </div>
                 </div>
