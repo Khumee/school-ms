@@ -160,17 +160,16 @@
         grid-template-columns: 1.6fr 1.3fr 1.8fr 2.1fr;
         gap: 14px;
         align-items: stretch;
-        padding: 6px 0 4px 0;
+        padding: 8px 0 4px 0;
         flex: 1;
     }
 
-    /* Column 1 & 2: Student Details */
+    /* Column 1 & 2: Student Details (natural compact gap) */
     .meta-field-group {
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-        padding: 2px 0;
-        height: 100%;
+        justify-content: flex-start;
+        gap: 8px;
     }
 
     .meta-field-item {
@@ -188,11 +187,11 @@
     }
 
     .meta-val {
-        font-size: 14px;
+        font-size: 13.5px;
         font-weight: 800;
         color: #1b2a47;
-        border-bottom: 1.5px solid #e2d9cd;
-        padding-bottom: 3px;
+        border-bottom: 1px solid #e2d9cd;
+        padding-bottom: 2px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -207,7 +206,6 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        height: 100%;
     }
 
     .fee-header-title {
@@ -226,6 +224,18 @@
         font-size: 11px;
         color: #475569;
         margin-bottom: 2px;
+    }
+
+    .fee-line-item.tuition-highlight {
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .fee-line-item.unpaid-due-item {
+        font-size: 10px;
+        font-weight: 600;
+        color: #b91c1c;
     }
 
     .fee-dotted-divider {
@@ -268,7 +278,6 @@
         flex-direction: column;
         justify-content: space-between;
         gap: 4px;
-        height: 100%;
     }
 
     .due-date-card-box {
@@ -282,7 +291,7 @@
     }
 
     .due-date-mini-label {
-        font-size: 8px;
+        font-size: 8.5px;
         font-weight: 800;
         color: #9e3b2b;
         text-transform: uppercase;
@@ -290,9 +299,9 @@
     }
 
     .due-date-bold-val {
-        font-size: 17px;
+        font-size: 18px;
         font-weight: 900;
-        color: #1b2a47;
+        color: #b91c1c;
         font-family: Georgia, serif;
     }
 
@@ -321,11 +330,11 @@
         background: #ffffff;
         border: 1px solid #e2d9cd;
         border-radius: 6px;
-        padding: 3px 8px;
+        padding: 3.5px 8px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 9.5px;
+        font-size: 10px;
     }
 
     .channel-name {
@@ -337,17 +346,18 @@
     }
 
     .channel-logo-inline {
-        height: 13px;
+        height: 14px;
         width: 18px;
         object-fit: contain;
         flex-shrink: 0;
     }
 
     .channel-info {
-        font-weight: 700;
-        color: #1b2a47;
+        font-weight: 800;
+        color: #0f172a;
+        font-size: 11px;
+        letter-spacing: 0.3px;
         white-space: nowrap;
-        letter-spacing: -0.2px;
     }
 
     /* ---------------- FOOTER ---------------- */
@@ -474,15 +484,17 @@
                         <div class="fee-detail-card">
                             <div>
                                 <div class="fee-header-title">Fee Detail</div>
-                                <div class="fee-line-item">
+                                <div class="fee-line-item tuition-highlight">
                                     <span>Tuition Fee</span>
                                     <strong>Rs. <%= student.tuitionFee.toLocaleString() %></strong>
                                 </div>
-                                <% if (student.previousDues > 0) { %>
-                                    <div class="fee-line-item" style="color: #b91c1c;">
-                                        <span>Previous Dues <% if (student.unpaidMonthsLabel) { %>(<%= student.unpaidMonthsLabel %>)<% } %></span>
-                                        <strong>Rs. <%= student.previousDues.toLocaleString() %></strong>
-                                    </div>
+                                <% if (student.unpaidItems && student.unpaidItems.length > 0) { %>
+                                    <% student.unpaidItems.forEach(item => { %>
+                                        <div class="fee-line-item unpaid-due-item">
+                                            <span><%= item.monthName %> Dues</span>
+                                            <strong>Rs. <%= item.due.toLocaleString() %></strong>
+                                        </div>
+                                    <% }) %>
                                 <% } %>
                             </div>
 
@@ -512,7 +524,7 @@
                                     <span class="channel-name">
                                         <span>💵</span> Cash
                                     </span>
-                                    <span class="channel-info" style="color: #64748b; font-weight: 500;">School Counter</span>
+                                    <span class="channel-info" style="color: #64748b; font-weight: 500; font-size: 10px;">School Counter</span>
                                 </div>
                                 <div class="channel-row">
                                     <span class="channel-name">

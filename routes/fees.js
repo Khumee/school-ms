@@ -724,14 +724,19 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
 
             // Compute previous unpaid dues / arrears from month 1 to activeMonth - 1
             let previousDues = 0;
-            const unpaidMonthList = [];
+            const unpaidItems = [];
             if (activeMonth > 1) {
                 for (let m = 1; m < activeMonth; m++) {
                     const paidForMonth = (prevPaymentMap[s.id] && prevPaymentMap[s.id][m]) ? prevPaymentMap[s.id][m] : 0;
                     const dueForMonth = Math.max(0, tuitionFee - paidForMonth);
                     if (dueForMonth > 0) {
                         previousDues += dueForMonth;
-                        unpaidMonthList.push(MONTH_NAMES[m - 1].substring(0, 3));
+                        unpaidItems.push({
+                            monthNum: m,
+                            monthName: MONTH_NAMES[m - 1],
+                            shortName: MONTH_NAMES[m - 1].substring(0, 3),
+                            due: dueForMonth
+                        });
                     }
                 }
             }
@@ -750,7 +755,7 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
                 father_name: s.father_name || '',
                 tuitionFee: tuitionFee,
                 previousDues: previousDues,
-                unpaidMonthsLabel: unpaidMonthList.join(', '),
+                unpaidItems: unpaidItems,
                 totalPayable: totalPayable,
                 feeInWords: numberToWords(totalPayable)
             });
