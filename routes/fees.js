@@ -695,20 +695,31 @@ router.get('/fees/challans/print', isAuthenticated, async (req, res) => {
             lateFineNotice = `Otherwise a fine of Rs. ${lateFineVal.toLocaleString()} will be charged on late fee.`;
         }
 
-        // Process student fees & amount in words
-        const formattedStudents = students.map(s => {
+        // Process student fees & amount in words (skip students with 0 fee / 100% full waiver)
+        const formattedStudents = [];
+        for (const s of students) {
             const defaultFee = parseFloat(s.default_monthly_fee || 0);
             const customFee = s.custom_monthly_fee !== null && s.custom_monthly_fee !== undefined ? parseFloat(s.custom_monthly_fee) : defaultFee;
             const tuitionFee = customFee;
-            return {
+
+            // Skip zero fee / full waiver students
+            if (tuitionFee <= 0) {
+                continue;
+            }
+
+            formattedStudents.push({
                 id: s.id,
                 reg_no: s.reg_no,
                 name: s.name,
                 father_name: s.father_name || '',
                 tuitionFee: tuitionFee,
                 feeInWords: numberToWords(tuitionFee)
-            };
-        });
+            });
+        }
+
+        if (formattedStudents.length === 0) {
+            return res.status(400).send('No students with payable fee found in this class (all students have 0 fee or full waiver).');
+        }
 
         const tenantForPdf = {
             ...req.tenant,
