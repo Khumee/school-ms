@@ -434,10 +434,21 @@
                             <% } %>
                             <div class="school-text-block">
                                 <h1 class="school-name"><%= tenant.school_name %></h1>
-                                <p class="school-tagline"><%= tenant.school_tagline || 'KNOWLEDGE · CHARACTER · SUCCESS' %></p>
+                                <% if (tenant.school_tagline) { %>
+                                    <p class="school-tagline">◆ <%= tenant.school_tagline %> ◆</p>
+                                <% } %>
                                 <div class="school-contacts">
-                                    <span><%= tenant.address || 'Talab Road, Rawat, Islamabad' %></span>
-                                    <span><%= tenant.contact_phone || feeAccountNumber %> · <%= tenant.contact_email || 'school.office@gmail.com' %></span>
+                                    <% if (tenant.address) { %>
+                                        <span><%= tenant.address %></span>
+                                    <% } %>
+                                    <% 
+                                        const contactParts = [];
+                                        if (tenant.contact_phone) contactParts.push(tenant.contact_phone);
+                                        if (tenant.contact_email) contactParts.push(tenant.contact_email);
+                                    %>
+                                    <% if (contactParts.length > 0) { %>
+                                        <span><%= contactParts.join(' · ') %></span>
+                                    <% } %>
                                 </div>
                             </div>
                         </div>
