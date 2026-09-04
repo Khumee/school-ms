@@ -180,7 +180,7 @@ router.post('/students/add', isAuthenticated, upload.fields([{ name: 'photo', ma
 
             const fileUrl = `/uploads/${tenantId}/${studentId}/${docFile.filename}`;
             await db.execute(
-                `INSERT INTO student_documents (tenant_id, student_id, document_type, description, file_url) VALUES (?, ?, ?, ?, ?)`,
+                `INSERT INTO student_documents (tenant_id, student_id, document_type, description, file_path) VALUES (?, ?, ?, ?, ?)`,
                 [tenantId, studentId, document_type, document_description || null, fileUrl]
             );
         }

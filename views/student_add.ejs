@@ -357,7 +357,7 @@
 
     const classFees = {
         <% classes.forEach(c => { %>
-            "<%= c.id %>": <%= c.default_monthly_fee %>,
+            "<%= c.id %>": <%= c.default_monthly_fee !== null ? c.default_monthly_fee : '0' %>,
         <% }) %>
     };
 
