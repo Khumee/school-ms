@@ -162,6 +162,8 @@
             prevArrears,
             curMonthRecovered,
             arrRecovered,
+            remainingCurMonth,
+            remainingArrears,
             netStudentDue
         });
     });
@@ -587,6 +589,7 @@
                                 <th style="text-align: left;">Student Name</th>
                                 <th style="text-align: right;">Monthly Fee</th>
                                 <th style="text-align: right;">Amount Paid</th>
+                                <th style="text-align: right;">Outstanding Dues</th>
                                 <th>Status</th>
                                 <th style="padding-right: 1rem;">Actions</th>
                             </tr>
@@ -600,9 +603,6 @@
                                         <% if (s.prevArrears > 0) { %>
                                             <div style="font-size: 0.75rem; color: #dc2626; font-weight: 600;"><i class="bi bi-clock-history"></i> Arrears: PKR <%= s.prevArrears.toLocaleString() %></div>
                                         <% } %>
-                                        <% if (s.netStudentDue > 0 && s.madePayment) { %>
-                                            <div style="font-size: 0.72rem; color: #d97706; font-weight: 500;">Rem. Due: PKR <%= s.netStudentDue.toLocaleString() %></div>
-                                        <% } %>
                                     </td>
                                     <td style="text-align: right; font-weight: 600;">PKR <%= s.expectedFee.toLocaleString() %></td>
                                     <td style="text-align: right; font-weight: 600; color: #16a34a;">
@@ -615,6 +615,18 @@
                                             <% } %>
                                         <% } else { %>
                                             -
+                                        <% } %>
+                                    </td>
+                                    <td style="text-align: right; font-weight: 700; color: <%= s.netStudentDue > 0 ? '#dc2626' : '#16a34a' %>;">
+                                        <% if (s.netStudentDue > 0) { %>
+                                            PKR <%= s.netStudentDue.toLocaleString() %>
+                                            <% if (s.remainingArrears > 0 && s.remainingCurMonth > 0) { %>
+                                                <div style="font-size: 0.72rem; color: #991b1b; font-weight: 500;">
+                                                    (Fee <%= s.remainingCurMonth.toLocaleString() %> + Arr <%= s.remainingArrears.toLocaleString() %>)
+                                                </div>
+                                            <% } %>
+                                        <% } else { %>
+                                            <span style="color: #16a34a; font-weight: 600;">Rs. 0</span>
                                         <% } %>
                                     </td>
                                     <td>

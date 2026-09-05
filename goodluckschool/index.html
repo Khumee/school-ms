@@ -1,0 +1,2677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Migration Audit Report - Good Luck School</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-600: #475569;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            color: var(--slate-800);
+            line-height: 1.5;
+            padding: 2.5rem;
+        }
+        .report-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            padding: 3rem;
+            border: 1px solid var(--slate-200);
+        }
+        /* Header Banner */
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid var(--slate-200);
+            padding-bottom: 2rem;
+            margin-bottom: 2rem;
+        }
+        .institution-info h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.02em;
+            margin-bottom: 0.25rem;
+        }
+        .institution-info .subtitle {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--slate-600);
+            margin-bottom: 0.5rem;
+        }
+        .meta-tags {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+        .meta-pill {
+            background: var(--slate-100);
+            border: 1px solid var(--slate-200);
+            padding: 0.25rem 0.65rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--slate-600);
+        }
+        .report-badges {
+            text-align: right;
+        }
+        .status-stamp {
+            display: inline-block;
+            background: #dcfce7;
+            color: #15803d;
+            border: 1.5px solid #86efac;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.95rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        .report-date {
+            font-size: 0.85rem;
+            color: var(--slate-600);
+        }
+        /* KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2.5rem;
+        }
+        .kpi-card {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-radius: 10px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            border-top: 4px solid var(--primary-light);
+        }
+        .kpi-card.green { border-top-color: var(--success); }
+        .kpi-card.amber { border-top-color: var(--warning); }
+        .kpi-card.red { border-top-color: var(--danger); }
+        .kpi-card.purple { border-top-color: #8b5cf6; }
+        .kpi-card .label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--slate-600);
+            margin-bottom: 0.35rem;
+        }
+        .kpi-card .value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            line-height: 1.2;
+            margin-bottom: 0.25rem;
+        }
+        .kpi-card .subtext {
+            font-size: 0.8rem;
+            color: var(--slate-600);
+        }
+        /* Section styling */
+        .section-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            margin-bottom: 2.5rem;
+        }
+        .data-table th {
+            background: var(--slate-100);
+            color: var(--slate-800);
+            font-weight: 700;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 2px solid var(--slate-200);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .data-table td {
+            padding: 0.7rem 1rem;
+            border-bottom: 1px solid var(--slate-200);
+            color: var(--slate-800);
+        }
+        .data-table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+        .data-table tfoot td {
+            background: var(--slate-100);
+            font-weight: 800;
+            padding: 0.85rem 1rem;
+            border-top: 2px solid var(--slate-200);
+            color: var(--slate-900);
+        }
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.55rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .badge-success { background: #dcfce7; color: #15803d; }
+        .badge-warning { background: #fef3c7; color: #b45309; }
+        .badge-danger { background: #fee2e2; color: #b91c1c; }
+        .badge-info { background: #e0f2fe; color: #0369a1; }
+        
+        /* Class section */
+        .class-section {
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--slate-200);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+        .class-header {
+            background: #f8fafc;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--slate-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .class-title h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .class-meta {
+            font-size: 0.82rem;
+            color: var(--slate-600);
+        }
+        .class-stats-pill {
+            display: flex;
+            gap: 1rem;
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            padding: 0.35rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        .class-section .data-table {
+            margin-bottom: 0;
+        }
+        .callout {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-left: 4px solid #16a34a;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 2.5rem;
+        }
+        .callout h4 {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #166534;
+            margin-bottom: 0.4rem;
+        }
+        .callout p, .callout ul {
+            font-size: 0.88rem;
+            color: #14532d;
+        }
+        .callout ul {
+            margin-left: 1.25rem;
+            margin-top: 0.5rem;
+        }
+        /* Print Styles */
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+            }
+            .report-container {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                max-width: 100%;
+            }
+            .class-section {
+                page-break-inside: avoid;
+            }
+            .data-table th {
+                background-color: #f1f5f9 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+        .print-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--primary);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 9999px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 100;
+        }
+        .print-btn:hover {
+            background: #172554;
+        }
+    </style>
+</head>
+<body>
+
+    <button class="print-btn no-print" onclick="window.print()">
+        <svg style="width: 18px; height: 18px; fill: currentColor;" viewBox="0 0 16 16">
+            <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+            <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"/>
+        </svg>
+        Print / Save as PDF
+    </button>
+
+    <div class="report-container">
+        <!-- Header -->
+        <div class="report-header">
+            <div class="institution-info">
+                <h1>GOOD LUCK SCHOOL</h1>
+                <div class="subtitle">Official Data Migration Audit & Verification Report</div>
+                <div class="meta-tags">
+                    <span class="meta-pill">Tenant ID: 16</span>
+                    <span class="meta-pill">Subdomain: goodluck</span>
+                    <span class="meta-pill">Billing Period: August 2026</span>
+                    <span class="meta-pill">Source: Fee Record Primery 2026.xlsx (Aug-26)</span>
+                </div>
+            </div>
+            <div class="report-badges">
+                <div class="status-stamp">&check; 100% Verified & Balanced</div>
+                <div class="report-date">Generated: 05 September 2026</div>
+            </div>
+        </div>
+
+        <!-- Executive Summary Cards -->
+        <h2 class="section-title">Executive Metrics & Key Performance Indicators</h2>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="label">Enrolled Students</div>
+                <div class="value">109</div>
+                <div class="subtext">Across 9 active classes (GLS-001 to GLS-109)</div>
+            </div>
+            <div class="kpi-card green">
+                <div class="label">August Expected Tuition</div>
+                <div class="value">PKR 177,900</div>
+                <div class="subtext">100% matches client August tuition sheet</div>
+            </div>
+            <div class="kpi-card purple">
+                <div class="label">Total August Inflow (Paid)</div>
+                <div class="value">PKR 174,700</div>
+                <div class="subtext">69 payment transactions verified</div>
+            </div>
+            <div class="kpi-card">
+                <div class="label">Current Month Fee Recovered</div>
+                <div class="value" style="color: #2563eb;">PKR 125,400</div>
+                <div class="subtext">70.5% regular August tuition collected</div>
+            </div>
+            <div class="kpi-card green">
+                <div class="label">Arrears Recovered in August</div>
+                <div class="value" style="color: #059669;">PKR 49,300</div>
+                <div class="subtext">From PKR 234,720 legacy arrears</div>
+            </div>
+            <div class="kpi-card red">
+                <div class="label">Total Student Dues Remaining</div>
+                <div class="value" style="color: #dc2626;">PKR 254,920</div>
+                <div class="subtext">August unpaid (31 students) + remaining arrears</div>
+            </div>
+        </div>
+
+        <!-- Methodological Callout -->
+        <div class="callout">
+            <h4>&bull; Financial Architecture & Audit Validation Summary</h4>
+            <p>During the migration process, the legacy Excel sheet figures were audited down to the individual student level:</p>
+            <ul>
+                <li><strong>Strict Concession Integrity:</strong> In OmniSchool, <code>custom_monthly_fee</code> represents the concession discount subtracted from the standard class fee. Every discount was computed as <code>default_fee - student_fee</code>, preserving exact monthly expected billing (PKR 177,900.00).</li>
+                <li><strong>Arrears vs. Tuition Separation:</strong> Total payments received (PKR 174,700.00) comprise PKR 125,400.00 covering August tuition and PKR 49,300.00 recovering overdue legacy arrears. This separation eliminates misleading collection rates over 100%.</li>
+                <li><strong>Dynamic Ledger Architecture:</strong> In accordance with standard multi-tenant product standards, student arrears and liabilities are computed dynamically from transaction records rather than a static column, ensuring future monthly billing remains consistent with single-source-of-truth accounting standards.</li>
+            </ul>
+        </div>
+
+        <!-- Class Summary Table -->
+        <h2 class="section-title">Class-by-Class Comparative Summary</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Class</th>
+                    <th style="text-align: center;">Default Fee</th>
+                    <th style="text-align: center;">Enrolled</th>
+                    <th style="text-align: center;">Paid Ratio</th>
+                    <th style="text-align: right;">Expected Fee</th>
+                    <th style="text-align: right;">August Fee Rec.</th>
+                    <th style="text-align: right;">Arrears Rec.</th>
+                    <th style="text-align: right;">Total Collected</th>
+                    <th style="text-align: right;">Remaining Dues</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+        <tr>
+            <td style="font-weight: 700;">Play Group</td>
+            <td style="text-align: center;">2,000</td>
+            <td style="text-align: center;">10</td>
+            <td style="text-align: center;"><span class="badge badge-warning">7 / 10</span></td>
+            <td style="text-align: right; font-weight: 600;">PKR 12,800</td>
+            <td style="text-align: right; color: #2563eb; font-weight: 600;">PKR 8,500 <span style="font-size: 0.8rem; color: #64748b;">(66.4%)</span></td>
+            <td style="text-align: right; color: #059669; font-weight: 600;">PKR 5,500</td>
+            <td style="text-align: right; font-weight: 700; color: #1e293b;">PKR 14,000</td>
+            <td style="text-align: right; color: #dc2626; font-weight: 600;">PKR 10,800</td>
+        </tr>
+    
+        <tr>
+            <td style="font-weight: 700;">Nursery</td>
+            <td style="text-align: center;">2,000</td>
+            <td style="text-align: center;">12</td>
+            <td style="text-align: center;"><span class="badge badge-warning">7 / 12</span></td>
+            <td style="text-align: right; font-weight: 600;">PKR 20,000</td>
+            <td style="text-align: right; color: #2563eb; font-weight: 600;">PKR 13,000 <span style="font-size: 0.8rem; color: #64748b;">(65.0%)</span></td>
+            <td style="text-align: right; color: #059669; font-weight: 600;">PKR 4,000</td>
+            <td style="text-align: right; font-weight: 700; color: #1e293b;">PKR 17,000</td>
+            <td style="text-align: right; color: #dc2626; font-weight: 600;">PKR 16,900</td>
+        </tr>
+    
+        <tr>
+            <td style="font-weight: 700;">Prep</td>
+            <td style="text-align: center;">2,000</td>
+            <td style="text-align: center;">11</td>
+            <td style="text-align: center;"><span class="badge badge-warning">7 / 11</span></td>
+            <td style="text-align: right; font-weight: 600;">PKR 18,100</td>
+            <td style="text-align: right; color: #2563eb; font-weight: 600;">PKR 11,600 <span style="font-size: 0.8rem; color: #64748b;">(64.1%)</span></td>
+            <td style="text-align: right; color: #059669; font-weight: 600;">PKR 4,100</td>
+            <td style="text-align: right; font-weight: 700; color: #1e293b;">PKR 15,700</td>
+            <td style="text-align: right; color: #dc2626; font-weight: 600;">PKR 28,000</td>
+        </tr>
+    
+        <tr>
+            <td style="font-weight: 700;">One</td>
+            <td style="text-align: center;">2,000</td>
+            <td style="text-align: center;">7</td>
+            <td style="text-align: center;"><span class="badge badge-warning">6 / 7</span></td>
+            <td style="text-align: right; font-weight: 600;">PKR 8,000</td>
+            <td style="text-align: right; color: #2563eb; font-weight: 600;">PKR 6,000 <span style="font-size: 0.8rem; color: #64748b;">(75.0%)</span></td>
+            <td style="text-align: right; color: #059669; font-weight: 600;">PKR 1,000</td>
+            <td style="text-align: right; font-weight: 700; color: #1e293b;">PKR 7,000</td>
+            <td style="text-align: right; color: #dc2626; font-weight: 600;">PKR 10,000</td>
+        </tr>
+    
+        <tr>
+            <td style="font-weight: 700;">Two</td>
+            <td style="text-align: center;">2,000</td>
+            <td style="text-align: center;">13</td>
+            <td style="text-align: center;"><span class="badge badge-warning">8 / 13</span></td>
+            <td style="text-align: right; font-weight: 600;">PKR 20,700</td>
+            <td style="text-align: right; color: #2563eb; font-weight: 600;">PKR 12,500 <span style="font-size: 0.8rem; color: #64748b;">(60.4%)</span></td>
+            <td style="text-align: right; color: #059669; font-weight: 600;">-</td>
+            <td style="text-align: right; font-weight: 700; color: #1e293b;">PKR 12,500</td>
+            <td style="text-align: right; color: #dc2626; font-weight: 600;">PKR 49,600</td>
+        </tr>
+    
+        <tr>
+            <td style="font-weight: 700;">Three</td>
+            <td style="text-align: center;">2,000</td>
+            <td style="text-align: center;">15</td>
+            <td style="text-align: center;"><span class="badge badge-warning">13 / 15</span></td>
+            <td style="text-align: right; font-weight: 600;">PKR 24,500</td>
+            <td style="text-align: right; color: #2563eb; font-weight: 600;">PKR 20,500 <span style="font-size: 0.8rem; color: #64748b;">(83.7%)</span></td>
+            <td style="text-align: right; color: #059669; font-weight: 600;">PKR 13,500</td>
+            <td style="text-align: right; font-weight: 700; color: #1e293b;">PKR 34,000</td>
+            <td style="text-align: right; color: #dc2626; font-weight: 600;">PKR 26,720</td>
+        </tr>
+    
+        <tr>
+            <td style="font-weight: 700;">Four</td>
+            <td style="text-align: center;">2,000</td>
+            <td style="text-align: center;">10</td>
+            <td style="text-align: center;"><span class="badge badge-warning">7 / 10</span></td>
+            <td style="text-align: right; font-weight: 600;">PKR 18,300</td>
+            <td style="text-align: right; color: #2563eb; font-weight: 600;">PKR 13,800 <span style="font-size: 0.8rem; color: #64748b;">(75.4%)</span></td>
+            <td style="text-align: right; color: #059669; font-weight: 600;">PKR 11,000</td>
+            <td style="text-align: right; font-weight: 700; color: #1e293b;">PKR 24,800</td>
+            <td style="text-align: right; color: #dc2626; font-weight: 600;">PKR 17,300</td>
+        </tr>
+    
+        <tr>
+            <td style="font-weight: 700;">Five</td>
+            <td style="text-align: center;">2,500</td>
+            <td style="text-align: center;">14</td>
+            <td style="text-align: center;"><span class="badge badge-warning">12 / 14</span></td>
+            <td style="text-align: right; font-weight: 600;">PKR 22,500</td>
+            <td style="text-align: right; color: #2563eb; font-weight: 600;">PKR 18,500 <span style="font-size: 0.8rem; color: #64748b;">(82.2%)</span></td>
+            <td style="text-align: right; color: #059669; font-weight: 600;">PKR 7,200</td>
+            <td style="text-align: right; font-weight: 700; color: #1e293b;">PKR 25,700</td>
+            <td style="text-align: right; color: #dc2626; font-weight: 600;">PKR 26,300</td>
+        </tr>
+    
+        <tr>
+            <td style="font-weight: 700;">Seven</td>
+            <td style="text-align: center;">2,500</td>
+            <td style="text-align: center;">17</td>
+            <td style="text-align: center;"><span class="badge badge-warning">11 / 17</span></td>
+            <td style="text-align: right; font-weight: 600;">PKR 33,000</td>
+            <td style="text-align: right; color: #2563eb; font-weight: 600;">PKR 21,000 <span style="font-size: 0.8rem; color: #64748b;">(63.6%)</span></td>
+            <td style="text-align: right; color: #059669; font-weight: 600;">PKR 3,000</td>
+            <td style="text-align: right; font-weight: 700; color: #1e293b;">PKR 24,000</td>
+            <td style="text-align: right; color: #dc2626; font-weight: 600;">PKR 69,300</td>
+        </tr>
+    
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td>OVERALL TOTALS</td>
+                    <td style="text-align: center;">-</td>
+                    <td style="text-align: center;">109</td>
+                    <td style="text-align: center;">78 / 109</td>
+                    <td style="text-align: right;">PKR 177,900</td>
+                    <td style="text-align: right; color: #2563eb;">PKR 125,400 (70.5%)</td>
+                    <td style="text-align: right; color: #059669;">PKR 49,300</td>
+                    <td style="text-align: right; color: var(--primary);">PKR 174,700</td>
+                    <td style="text-align: right; color: #dc2626;">PKR 254,920</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- Detailed Class Audits -->
+        <h2 class="section-title">Detailed Student Directory & Fee Audit (All 109 Students)</h2>
+        
+        <div class="class-section">
+            <div class="class-header">
+                <div class="class-title">
+                    <h3>Class: Play Group</h3>
+                    <span class="class-meta">Standard Fee: PKR 2,000 / month &bull; 10 Enrolled Students</span>
+                </div>
+                <div class="class-stats-pill">
+                    <span><strong>Fee:</strong> PKR 12,800</span>
+                    <span><strong>Collected:</strong> PKR 14,000</span>
+                    <span><strong>Paid:</strong> 7 / 10</span>
+                </div>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Reg No</th>
+                        <th>Student Name</th>
+                        <th style="text-align: right; width: 90px;">Standard</th>
+                        <th style="text-align: right; width: 90px;">Discount</th>
+                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 105px;">Legacy Arrears</th>
+                        <th style="text-align: right; width: 130px;">Aug Paid</th>
+                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: center; width: 100px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-001</td>
+                <td style="font-weight: 600; color: #1e293b;">Hassan Raza Khan</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-002</td>
+                <td style="font-weight: 600; color: #1e293b;">Zara Noor</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 0</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-info">FULL WAIVER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-003</td>
+                <td style="font-weight: 600; color: #1e293b;">Anabiya Nazir</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-004</td>
+                <td style="font-weight: 600; color: #1e293b;">Um e Haniya</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 0</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-info">FULL WAIVER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-005</td>
+                <td style="font-weight: 600; color: #1e293b;">yahkhya sister</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 700</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,300</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 1,300
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-006</td>
+                <td style="font-weight: 600; color: #1e293b;">Zoya Khan</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 1,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-007</td>
+                <td style="font-weight: 600; color: #1e293b;">Dua Zara</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 4,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 6,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-008</td>
+                <td style="font-weight: 600; color: #1e293b;">Sadia</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-009</td>
+                <td style="font-weight: 600; color: #1e293b;">Daniyal</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 1,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 3,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 1,500 + Arr: Rs. 1,500)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-010</td>
+                <td style="font-weight: 600; color: #1e293b;">Areesh nabeel</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 6,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 2,000 + Arr: Rs. 4,000)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+                </tbody>
+            </table>
+        </div>
+    
+        <div class="class-section">
+            <div class="class-header">
+                <div class="class-title">
+                    <h3>Class: Nursery</h3>
+                    <span class="class-meta">Standard Fee: PKR 2,000 / month &bull; 12 Enrolled Students</span>
+                </div>
+                <div class="class-stats-pill">
+                    <span><strong>Fee:</strong> PKR 20,000</span>
+                    <span><strong>Collected:</strong> PKR 17,000</span>
+                    <span><strong>Paid:</strong> 7 / 12</span>
+                </div>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Reg No</th>
+                        <th>Student Name</th>
+                        <th style="text-align: right; width: 90px;">Standard</th>
+                        <th style="text-align: right; width: 90px;">Discount</th>
+                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 105px;">Legacy Arrears</th>
+                        <th style="text-align: right; width: 130px;">Aug Paid</th>
+                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: center; width: 100px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-011</td>
+                <td style="font-weight: 600; color: #1e293b;">HAMMAD</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;"><span style="color: #0284c7; font-weight: 600;">(Adv: Rs. 1,500)</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 1,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-012</td>
+                <td style="font-weight: 600; color: #1e293b;">A.Rehman</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-013</td>
+                <td style="font-weight: 600; color: #1e293b;">M. Shahban</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 3,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 4,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-014</td>
+                <td style="font-weight: 600; color: #1e293b;">Hassan Amjad</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 3,400</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 4,400
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-015</td>
+                <td style="font-weight: 600; color: #1e293b;">M. Awais</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 4,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-016</td>
+                <td style="font-weight: 600; color: #1e293b;">Rohan Wasem</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-017</td>
+                <td style="font-weight: 600; color: #1e293b;">Abbas Khan</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 1,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 1,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-018</td>
+                <td style="font-weight: 600; color: #1e293b;">Anas Nazir Rizvi</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-019</td>
+                <td style="font-weight: 600; color: #1e293b;">Hurrain Fatima</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-020</td>
+                <td style="font-weight: 600; color: #1e293b;">Muhammad Abdullah</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 3,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 4,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 1,500 + Arr: Rs. 2,500)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-021</td>
+                <td style="font-weight: 600; color: #1e293b;">Muhammad Qasim Ali</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-022</td>
+                <td style="font-weight: 600; color: #1e293b;">Naqib Ullah</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 1,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 3,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 1,500 + Arr: Rs. 1,500)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+                </tbody>
+            </table>
+        </div>
+    
+        <div class="class-section">
+            <div class="class-header">
+                <div class="class-title">
+                    <h3>Class: Prep</h3>
+                    <span class="class-meta">Standard Fee: PKR 2,000 / month &bull; 11 Enrolled Students</span>
+                </div>
+                <div class="class-stats-pill">
+                    <span><strong>Fee:</strong> PKR 18,100</span>
+                    <span><strong>Collected:</strong> PKR 15,700</span>
+                    <span><strong>Paid:</strong> 7 / 11</span>
+                </div>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Reg No</th>
+                        <th>Student Name</th>
+                        <th style="text-align: right; width: 90px;">Standard</th>
+                        <th style="text-align: right; width: 90px;">Discount</th>
+                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 105px;">Legacy Arrears</th>
+                        <th style="text-align: right; width: 130px;">Aug Paid</th>
+                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: center; width: 100px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-023</td>
+                <td style="font-weight: 600; color: #1e293b;">M YAKHYA</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 1,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,000</td>
+                <td style="text-align: right;"><span style="color: #0284c7; font-weight: 600;">(Adv: Rs. 1,000)</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 1,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-024</td>
+                <td style="font-weight: 600; color: #1e293b;">YASHFA NOOR</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 700</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,300</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 1,300</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,600
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 1,300 + Arr: Rs. 1,300)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-025</td>
+                <td style="font-weight: 600; color: #1e293b;">RUQIYA SAAD</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 700</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,300</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 1,300</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,600
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 1,300 + Arr: Rs. 1,300)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-026</td>
+                <td style="font-weight: 600; color: #1e293b;">M FARHAN</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 4,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-027</td>
+                <td style="font-weight: 600; color: #1e293b;">Horish</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 3,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 5,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-028</td>
+                <td style="font-weight: 600; color: #1e293b;">ABDUL WAHAB</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 12,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 14,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-029</td>
+                <td style="font-weight: 600; color: #1e293b;">Saif Ullah</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-030</td>
+                <td style="font-weight: 600; color: #1e293b;">Shahrukh Khan</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 1,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 3,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 1,500 + Arr: Rs. 1,500)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-031</td>
+                <td style="font-weight: 600; color: #1e293b;">Muhammad Mustafa</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 1,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 1,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-032</td>
+                <td style="font-weight: 600; color: #1e293b;">Mohaviya</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-033</td>
+                <td style="font-weight: 600; color: #1e293b;">Arisha Noor</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+                </tbody>
+            </table>
+        </div>
+    
+        <div class="class-section">
+            <div class="class-header">
+                <div class="class-title">
+                    <h3>Class: One</h3>
+                    <span class="class-meta">Standard Fee: PKR 2,000 / month &bull; 7 Enrolled Students</span>
+                </div>
+                <div class="class-stats-pill">
+                    <span><strong>Fee:</strong> PKR 8,000</span>
+                    <span><strong>Collected:</strong> PKR 7,000</span>
+                    <span><strong>Paid:</strong> 6 / 7</span>
+                </div>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Reg No</th>
+                        <th>Student Name</th>
+                        <th style="text-align: right; width: 90px;">Standard</th>
+                        <th style="text-align: right; width: 90px;">Discount</th>
+                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 105px;">Legacy Arrears</th>
+                        <th style="text-align: right; width: 130px;">Aug Paid</th>
+                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: center; width: 100px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-034</td>
+                <td style="font-weight: 600; color: #1e293b;">AYAN YASIR</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 0</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-info">FULL WAIVER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-035</td>
+                <td style="font-weight: 600; color: #1e293b;">SADIA</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #0284c7; font-weight: 600;">(Adv: Rs. 2,000)</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-036</td>
+                <td style="font-weight: 600; color: #1e293b;">SAAD ADNAN</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 4,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 4,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-037</td>
+                <td style="font-weight: 600; color: #1e293b;">Ahmad Raza</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 1,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-038</td>
+                <td style="font-weight: 600; color: #1e293b;">MUKHAIR REHMAN</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 0</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-info">FULL WAIVER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-039</td>
+                <td style="font-weight: 600; color: #1e293b;">Muhammad Asif</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 4,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 4,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-040</td>
+                <td style="font-weight: 600; color: #1e293b;">Nisar</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 1,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 1,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 1,000 + Arr: Rs. 1,000)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+                </tbody>
+            </table>
+        </div>
+    
+        <div class="class-section">
+            <div class="class-header">
+                <div class="class-title">
+                    <h3>Class: Two</h3>
+                    <span class="class-meta">Standard Fee: PKR 2,000 / month &bull; 13 Enrolled Students</span>
+                </div>
+                <div class="class-stats-pill">
+                    <span><strong>Fee:</strong> PKR 20,700</span>
+                    <span><strong>Collected:</strong> PKR 12,500</span>
+                    <span><strong>Paid:</strong> 8 / 13</span>
+                </div>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Reg No</th>
+                        <th>Student Name</th>
+                        <th style="text-align: right; width: 90px;">Standard</th>
+                        <th style="text-align: right; width: 90px;">Discount</th>
+                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 105px;">Legacy Arrears</th>
+                        <th style="text-align: right; width: 130px;">Aug Paid</th>
+                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: center; width: 100px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-041</td>
+                <td style="font-weight: 600; color: #1e293b;">M WALI</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 3,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 4,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-042</td>
+                <td style="font-weight: 600; color: #1e293b;">HAMZA Amjad</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 1,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-043</td>
+                <td style="font-weight: 600; color: #1e293b;">NAJEEB</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 1,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 1,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-044</td>
+                <td style="font-weight: 600; color: #1e293b;">Husnain Yousaf</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,800</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,800
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-045</td>
+                <td style="font-weight: 600; color: #1e293b;">M Adnan Khan</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 11,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 13,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-046</td>
+                <td style="font-weight: 600; color: #1e293b;">M. Rehan Shahzad</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-047</td>
+                <td style="font-weight: 600; color: #1e293b;">Hunaiza</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 300</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,700</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 100</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 1,800
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-048</td>
+                <td style="font-weight: 600; color: #1e293b;">SHANZEY NOOR</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-049</td>
+                <td style="font-weight: 600; color: #1e293b;">Anam</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 14,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 16,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-050</td>
+                <td style="font-weight: 600; color: #1e293b;">Hassan Naveed</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 0</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-info">FULL WAIVER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-051</td>
+                <td style="font-weight: 600; color: #1e293b;">Maria Gul</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 6,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 6,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-052</td>
+                <td style="font-weight: 600; color: #1e293b;">Dua Fatima</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-053</td>
+                <td style="font-weight: 600; color: #1e293b;">Muzamal Hussain</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+                </tbody>
+            </table>
+        </div>
+    
+        <div class="class-section">
+            <div class="class-header">
+                <div class="class-title">
+                    <h3>Class: Three</h3>
+                    <span class="class-meta">Standard Fee: PKR 2,000 / month &bull; 15 Enrolled Students</span>
+                </div>
+                <div class="class-stats-pill">
+                    <span><strong>Fee:</strong> PKR 24,500</span>
+                    <span><strong>Collected:</strong> PKR 34,000</span>
+                    <span><strong>Paid:</strong> 13 / 15</span>
+                </div>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Reg No</th>
+                        <th>Student Name</th>
+                        <th style="text-align: right; width: 90px;">Standard</th>
+                        <th style="text-align: right; width: 90px;">Discount</th>
+                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 105px;">Legacy Arrears</th>
+                        <th style="text-align: right; width: 130px;">Aug Paid</th>
+                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: center; width: 100px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-054</td>
+                <td style="font-weight: 600; color: #1e293b;">HUSAIN MUSTAFA</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 6,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 7,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 2,000 + Arr: Rs. 5,000)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 1,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-055</td>
+                <td style="font-weight: 600; color: #1e293b;">Isha Nadeem</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 200</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,800</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 3,900</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 3,600
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 1,800 + Arr: Rs. 1,800)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,100
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-056</td>
+                <td style="font-weight: 600; color: #1e293b;">MURTAGIS</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-057</td>
+                <td style="font-weight: 600; color: #1e293b;">JAWARIA Noor</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 0</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-info">FULL WAIVER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-058</td>
+                <td style="font-weight: 600; color: #1e293b;">AYESHA NOOR</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 3,300</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 3,300
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-059</td>
+                <td style="font-weight: 600; color: #1e293b;">TAHA SAQIB</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 3,320</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 5,320
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-060</td>
+                <td style="font-weight: 600; color: #1e293b;">LAIZA EMAN</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 7,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 9,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-061</td>
+                <td style="font-weight: 600; color: #1e293b;">ABDUL HADI ZAMIR</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 0</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-info">FULL WAIVER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-062</td>
+                <td style="font-weight: 600; color: #1e293b;">AHSAN Bin Usman</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 300</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,700</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 1,700</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 3,400
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 1,700 + Arr: Rs. 1,700)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-063</td>
+                <td style="font-weight: 600; color: #1e293b;">M. Zaryab</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 4,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 2,000 + Arr: Rs. 2,000)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-064</td>
+                <td style="font-weight: 600; color: #1e293b;">Anesha Shahzad</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-065</td>
+                <td style="font-weight: 600; color: #1e293b;">Zubariya Tabraiz</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-066</td>
+                <td style="font-weight: 600; color: #1e293b;">Muhammad (gul Badsha)</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-067</td>
+                <td style="font-weight: 600; color: #1e293b;">Zunaira</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 6,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 3,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 2,000 + Arr: Rs. 1,000)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 5,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-068</td>
+                <td style="font-weight: 600; color: #1e293b;">Muhammad Ismail</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 4,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 2,000 + Arr: Rs. 2,000)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+                </tbody>
+            </table>
+        </div>
+    
+        <div class="class-section">
+            <div class="class-header">
+                <div class="class-title">
+                    <h3>Class: Four</h3>
+                    <span class="class-meta">Standard Fee: PKR 2,000 / month &bull; 10 Enrolled Students</span>
+                </div>
+                <div class="class-stats-pill">
+                    <span><strong>Fee:</strong> PKR 18,300</span>
+                    <span><strong>Collected:</strong> PKR 24,800</span>
+                    <span><strong>Paid:</strong> 7 / 10</span>
+                </div>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Reg No</th>
+                        <th>Student Name</th>
+                        <th style="text-align: right; width: 90px;">Standard</th>
+                        <th style="text-align: right; width: 90px;">Discount</th>
+                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 105px;">Legacy Arrears</th>
+                        <th style="text-align: right; width: 130px;">Aug Paid</th>
+                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: center; width: 100px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-069</td>
+                <td style="font-weight: 600; color: #1e293b;">URWA SHAHZADI</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-070</td>
+                <td style="font-weight: 600; color: #1e293b;">M MAHAD AMJAD</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 3,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 5,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-071</td>
+                <td style="font-weight: 600; color: #1e293b;">M Sufyan</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 0</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,800</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,800
+                </td>
+                <td style="text-align: center;"><span class="badge badge-info">FULL WAIVER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-072</td>
+                <td style="font-weight: 600; color: #1e293b;">ZARIYA Arbab</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-073</td>
+                <td style="font-weight: 600; color: #1e293b;">HAMAEL FATIMA</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 1,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 5,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 2,000 + Arr: Rs. 3,000)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-074</td>
+                <td style="font-weight: 600; color: #1e293b;">Anshra Nouman</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-075</td>
+                <td style="font-weight: 600; color: #1e293b;">Ansar</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-076</td>
+                <td style="font-weight: 600; color: #1e293b;">HASNAIN ALI Majid</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #2563eb; font-weight: 500;">+Rs. 300</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,300</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,300
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-077</td>
+                <td style="font-weight: 600; color: #1e293b;">Um e Humaira</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 5,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 7,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-078</td>
+                <td style="font-weight: 600; color: #1e293b;">Muhammad Ammar</td>
+                <td style="text-align: right;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 10,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 2,000 + Arr: Rs. 8,000)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+                </tbody>
+            </table>
+        </div>
+    
+        <div class="class-section">
+            <div class="class-header">
+                <div class="class-title">
+                    <h3>Class: Five</h3>
+                    <span class="class-meta">Standard Fee: PKR 2,500 / month &bull; 14 Enrolled Students</span>
+                </div>
+                <div class="class-stats-pill">
+                    <span><strong>Fee:</strong> PKR 22,500</span>
+                    <span><strong>Collected:</strong> PKR 25,700</span>
+                    <span><strong>Paid:</strong> 12 / 14</span>
+                </div>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Reg No</th>
+                        <th>Student Name</th>
+                        <th style="text-align: right; width: 90px;">Standard</th>
+                        <th style="text-align: right; width: 90px;">Discount</th>
+                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 105px;">Legacy Arrears</th>
+                        <th style="text-align: right; width: 130px;">Aug Paid</th>
+                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: center; width: 100px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-079</td>
+                <td style="font-weight: 600; color: #1e293b;">ISHA KHURAM</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-080</td>
+                <td style="font-weight: 600; color: #1e293b;">ARYAN AHMED</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 4,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 6,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-081</td>
+                <td style="font-weight: 600; color: #1e293b;">ABDUL WAHID</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-082</td>
+                <td style="font-weight: 600; color: #1e293b;">M SHAFEH</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 2,500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 0</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-info">FULL WAIVER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-083</td>
+                <td style="font-weight: 600; color: #1e293b;">HIFZA AWAIS</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 800</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,700</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 1,700</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 3,400
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 1,700 + Arr: Rs. 1,700)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-084</td>
+                <td style="font-weight: 600; color: #1e293b;">KINZA Rehman</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 5,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 2,000 + Arr: Rs. 3,000)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-085</td>
+                <td style="font-weight: 600; color: #1e293b;">AHMED SALEH</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 5,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 2,500 + Arr: Rs. 2,500)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-086</td>
+                <td style="font-weight: 600; color: #1e293b;">UMAIR WAJID</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-087</td>
+                <td style="font-weight: 600; color: #1e293b;">REHMAT ULLAH</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 2,500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 0</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-info">FULL WAIVER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-088</td>
+                <td style="font-weight: 600; color: #1e293b;">Uzair Zafar</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 11,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 13,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-089</td>
+                <td style="font-weight: 600; color: #1e293b;">Muhammad Waqid</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 1,500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 3,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 3,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-090</td>
+                <td style="font-weight: 600; color: #1e293b;">Ahmed Maqsood</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-091</td>
+                <td style="font-weight: 600; color: #1e293b;">Muhammad Mahad</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 1,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-092</td>
+                <td style="font-weight: 600; color: #1e293b;">Sania Ibrahim</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 700</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,800</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 1,800</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,800
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 1,800
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+                </tbody>
+            </table>
+        </div>
+    
+        <div class="class-section">
+            <div class="class-header">
+                <div class="class-title">
+                    <h3>Class: Seven</h3>
+                    <span class="class-meta">Standard Fee: PKR 2,500 / month &bull; 17 Enrolled Students</span>
+                </div>
+                <div class="class-stats-pill">
+                    <span><strong>Fee:</strong> PKR 33,000</span>
+                    <span><strong>Collected:</strong> PKR 24,000</span>
+                    <span><strong>Paid:</strong> 11 / 17</span>
+                </div>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Reg No</th>
+                        <th>Student Name</th>
+                        <th style="text-align: right; width: 90px;">Standard</th>
+                        <th style="text-align: right; width: 90px;">Discount</th>
+                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 105px;">Legacy Arrears</th>
+                        <th style="text-align: right; width: 130px;">Aug Paid</th>
+                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: center; width: 100px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-093</td>
+                <td style="font-weight: 600; color: #1e293b;">HASSAN ALI Majid</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-094</td>
+                <td style="font-weight: 600; color: #1e293b;">Zunaira Zameer</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 2,500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 0</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-info">FULL WAIVER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-095</td>
+                <td style="font-weight: 600; color: #1e293b;">Karishma Talha</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-096</td>
+                <td style="font-weight: 600; color: #1e293b;">Maliya Fatima</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 1,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-097</td>
+                <td style="font-weight: 600; color: #1e293b;">Asma Qadeer</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 1,500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 3,800</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 4,800
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-098</td>
+                <td style="font-weight: 600; color: #1e293b;">AYESHA KHURRAM</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 12,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 5,000
+                    <div style="font-size: 0.75rem; color: #059669; font-weight: 500;">(Fee: Rs. 2,000 + Arr: Rs. 3,000)</div>
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 9,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-099</td>
+                <td style="font-weight: 600; color: #1e293b;">Muhammad Ali</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-100</td>
+                <td style="font-weight: 600; color: #1e293b;">Abdul Rehman</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-101</td>
+                <td style="font-weight: 600; color: #1e293b;">NOOR UL AIN</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 4,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-102</td>
+                <td style="font-weight: 600; color: #1e293b;">Fatima Gull</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 3,600</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 3,600
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-103</td>
+                <td style="font-weight: 600; color: #1e293b;">Muhammad Faizan</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 5,400</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 7,400
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-104</td>
+                <td style="font-weight: 600; color: #1e293b;">Ayman Tabraiz</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,000
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #16a34a;">
+                    Rs. 0
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-105</td>
+                <td style="font-weight: 600; color: #1e293b;">Isma Noor</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 3,000</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 5,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-106</td>
+                <td style="font-weight: 600; color: #1e293b;">Eman Fatima</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 2,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 2,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-107</td>
+                <td style="font-weight: 600; color: #1e293b;">Tayyab Jamil</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 1,000</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 1,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 8,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    Rs. 1,500
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 8,500
+                </td>
+                <td style="text-align: center;"><span class="badge badge-success">PAID</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-108</td>
+                <td style="font-weight: 600; color: #1e293b;">Sherbano</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 600;">Rs. 11,500</span></td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 14,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+            <tr>
+                <td style="font-weight: 700; color: #475569;">GLS-109</td>
+                <td style="font-weight: 600; color: #1e293b;">New Shoaib Stamp</td>
+                <td style="text-align: right;">Rs. 2,500</td>
+                <td style="text-align: right;"><span style="color: #dc2626; font-weight: 500;">-Rs. 500</span></td>
+                <td style="text-align: right; font-weight: 700;">Rs. 2,000</td>
+                <td style="text-align: right;">-</td>
+                <td style="text-align: right; font-weight: 700; color: #16a34a;">
+                    -
+                    
+                </td>
+                <td style="text-align: right; font-weight: 600; color: #dc2626;">
+                    Rs. 2,000
+                </td>
+                <td style="text-align: center;"><span class="badge badge-danger">DEFAULTER</span></td>
+            </tr>
+        
+                </tbody>
+            </table>
+        </div>
+    
+
+        <!-- Footer Sign-Off -->
+        <div style="margin-top: 3rem; padding-top: 1.5rem; border-top: 2px solid var(--slate-200); display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--slate-600);">
+            <div>
+                <strong>OmniSchool Management Platform</strong> &bull; Database: <code>sms</code> (Local MySQL) &bull; Migration Script: <code>sql/migrate_tenant_16.sql</code>
+            </div>
+            <div>
+                Verified & certified accurate for Good Luck School
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
