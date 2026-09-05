@@ -680,6 +680,13 @@ tbody tr:last-child td {
     cursor: pointer;
 }
 
+.status-pending {
+    background-color: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+    cursor: pointer;
+}
+
 .cell-amount {
     font-weight: 600;
 }

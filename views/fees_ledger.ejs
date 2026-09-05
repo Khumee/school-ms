@@ -2,10 +2,20 @@
 
 <%
     // Current month settings
-    const activeMonthNum = locals.activeMonthNum !== undefined ? locals.activeMonthNum : (new Date().getMonth() + 1);
-    const activeYear = locals.activeYear !== undefined ? locals.activeYear : new Date().getFullYear();
+    const activeMonthNum = locals.activeMonthNum !== undefined ? Number(locals.activeMonthNum) : (new Date().getMonth() + 1);
+    const activeYear = locals.activeYear !== undefined ? Number(locals.activeYear) : new Date().getFullYear();
     const monthsList = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const activeMonthName = monthsList[activeMonthNum - 1];
+
+    // Calendar Real-time Context for Grace Period Evaluation (Due by 10th of month)
+    const currentRealDate = new Date();
+    const currentCalendarMonth = currentRealDate.getMonth() + 1;
+    const currentCalendarYear = currentRealDate.getFullYear();
+    const currentCalendarDay = currentRealDate.getDate();
+
+    const isCurrentActiveMonth = (activeYear === currentCalendarYear && activeMonthNum === currentCalendarMonth);
+    const isGracePeriodActive = isCurrentActiveMonth && (currentCalendarDay <= 10);
+    const isFutureMonth = (activeYear > currentCalendarYear) || (activeYear === currentCalendarYear && activeMonthNum > currentCalendarMonth);
 
     // Compute simple view statistics
     let totalExpected = 0;
@@ -34,6 +44,7 @@
             }
         }
         const prevArrears = Math.max(0, dynamicPrevArrears - dynamicAdvance);
+        s.prevArrears = prevArrears;
         
         totalExpected += expectedFee;
         totalPreviousOutstanding += prevArrears;
@@ -278,7 +289,11 @@
             PKR <%= totalAmountDue.toLocaleString() %>
         </span>
         <span class="kpi-subtitle" style="font-size: 0.78rem; color: #64748b; margin-top: 0.4rem; display: block;">
-            Unpaid fee (<%= defaulterCount %> defaulters) + remaining arrears
+            <% if (isGracePeriodActive) { %>
+                Unpaid fee (<%= defaulterCount %> awaiting payment by 10th <%= activeMonthName %>) + remaining arrears
+            <% } else { %>
+                Unpaid fee (<%= defaulterCount %> defaulters) + remaining arrears
+            <% } %>
         </span>
     </div>
 
@@ -302,7 +317,7 @@
         </div>
         <span class="kpi-value" style="font-size: 1.35rem; font-weight: 800; color: #16a34a;"><%= paidCount %> / <%= students.length %></span>
         <span class="kpi-subtitle" style="font-size: 0.78rem; color: #64748b; margin-top: 0.4rem; display: block;">
-            <%= defaulterCount %> awaiting payment
+            <%= defaulterCount %> awaiting payment <%= isGracePeriodActive ? ('(due 10th ' + activeMonthName + ')') : '' %>
         </span>
     </div>
 </div>
@@ -484,7 +499,11 @@
 <!-- Tab: Class Summary Pane -->
 <div id="pane-class">
     <div style="margin-bottom: 1rem; color: var(--muted); font-weight: 500;">
-        Students grouped by class. Defaulters (unpaid) are shown first.
+        <% if (isGracePeriodActive) { %>
+            Students grouped by class. Unpaid students (due by 10th <%= activeMonthName %>) are shown first.
+        <% } else { %>
+            Students grouped by class. Defaulters (unpaid) are shown first.
+        <% } %>
     </div>
 
     <% Object.values(classGroups).forEach((group, index) => { %>
@@ -591,6 +610,8 @@
                                             <span class="status-cell status-paid" style="background-color: #f3f4f6; color: #4b5563;"><i class="bi bi-gift-fill"></i> FULL WAIVER</span>
                                         <% } else if (s.isPaid) { %>
                                             <span class="status-cell status-paid"><i class="bi bi-check-circle-fill"></i> PAID</span>
+                                        <% } else if ((s.prevArrears || 0) === 0 && (isGracePeriodActive || isFutureMonth)) { %>
+                                            <span class="status-cell status-pending"><i class="bi bi-clock-history"></i> UNPAID</span>
                                         <% } else { %>
                                             <span class="status-cell status-unpaid"><i class="bi bi-exclamation-triangle-fill"></i> DEFAULTER</span>
                                         <% } %>
@@ -649,10 +670,10 @@
             <span class="kpi-value" style="font-size: 1.4rem; color: #16a34a;"><%= paidCount %> / <%= students.length %></span>
             <span class="kpi-subtitle">Received this month</span>
         </div>
-        <div class="card kpi-card" style="padding: 1rem; cursor: pointer;" onclick="filterByStatus('unpaid')" title="Click to show defaulters only">
-            <span class="kpi-label">Defaulters</span>
-            <span class="kpi-value" style="font-size: 1.4rem; color: #dc2626;"><%= defaulterCount %></span>
-            <span class="kpi-subtitle">Awaiting payment</span>
+        <div class="card kpi-card" style="padding: 1rem; cursor: pointer;" onclick="filterByStatus('unpaid')" title="Click to show <%= isGracePeriodActive ? 'unpaid' : 'defaulters' %> only">
+            <span class="kpi-label"><%= isGracePeriodActive ? 'Unpaid / Pending' : 'Defaulters' %></span>
+            <span class="kpi-value" style="font-size: 1.4rem; color: <%= isGracePeriodActive ? '#d97706' : '#dc2626' %>;"><%= defaulterCount %></span>
+            <span class="kpi-subtitle"><%= isGracePeriodActive ? ('Due by 10th ' + activeMonthName) : 'Awaiting payment' %></span>
         </div>
     </div>
 
@@ -660,7 +681,7 @@
     <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
         <div style="display: flex; align-items: center; gap: 0.5rem;">
             <input type="checkbox" id="show-defaulters-checkbox" onchange="toggleDefaultersOnly(this.checked)" style="width: 18px; height: 18px; cursor: pointer;">
-            <label for="show-defaulters-checkbox" style="font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--ink);">Show Defaulters Only</label>
+            <label for="show-defaulters-checkbox" style="font-size: 0.9rem; font-weight: 600; cursor: pointer; color: var(--ink);"><%= isGracePeriodActive ? 'Show Unpaid Students Only' : 'Show Defaulters Only' %></label>
         </div>
         <div style="font-size: 0.85rem; color: var(--muted); font-weight: 600;">
             Showing <%= students.length %> students
@@ -700,6 +721,8 @@
                             <td>
                                 <% if (isPaid) { %>
                                     <span class="status-cell status-paid"><i class="bi bi-check-circle-fill"></i> PAID</span>
+                                <% } else if ((s.prevArrears || 0) === 0 && (isGracePeriodActive || isFutureMonth)) { %>
+                                    <span class="status-cell status-pending"><i class="bi bi-clock-history"></i> UNPAID</span>
                                 <% } else { %>
                                     <span class="status-cell status-unpaid"><i class="bi bi-exclamation-triangle-fill"></i> DEFAULTER</span>
                                 <% } %>

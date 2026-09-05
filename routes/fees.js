@@ -72,9 +72,18 @@ router.post('/fees/concessions/update', isAuthenticated, async (req, res) => {
 
 // Helper to calculate YTD Top Defaulters
 async function getTopDefaulters(tenantId, activeYear, limit = 10, offset = 0) {
+    const currentDay = new Date().getDate();
     const currentMonthNum = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
-    const elapsedMonths = activeYear < currentYear ? 12 : (activeYear === currentYear ? currentMonthNum : 0);
+    const elapsedMonths = activeYear < currentYear 
+        ? 12 
+        : (activeYear === currentYear 
+            ? (currentDay <= 10 ? currentMonthNum - 1 : currentMonthNum) 
+            : 0);
+    
+    if (elapsedMonths <= 0) {
+        return [];
+    }
     
     const [students] = await db.execute(`
         SELECT s.id, s.reg_no, s.name, s.custom_monthly_fee, c.name as class_name, c.default_monthly_fee, c.is_hifz_class
