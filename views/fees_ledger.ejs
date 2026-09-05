@@ -529,32 +529,13 @@
                             <i class="bi bi-people-fill"></i> <%= group.totalStudents %> Students
                         </span>
                     </div>
-                    <div style="display: flex; gap: 0.75rem; align-items: center; font-size: 0.88rem; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 0.75rem; align-items: center; font-size: 0.88rem;">
                         <button type="button" class="btn-secondary nav-btn" onclick="event.stopPropagation(); openClassChallanModal('<%= group.id %>')" title="Print Fee Challans for <%= group.name %>" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem;">
                             <i class="bi bi-printer-fill"></i> Print Challans
                         </button>
                         <span style="<%= group.paidCount === group.totalStudents ? 'color: #16a34a;' : (group.paidCount === 0 ? 'color: #dc2626;' : 'color: #d97706;') %> font-weight: 600;">
                             Paid: <%= group.paidCount %> / <%= group.totalStudents %>
                         </span>
-                        <span style="color: #1e40af; font-weight: 700; background: #eff6ff; padding: 2px 8px; border-radius: 4px; border: 1px solid #bfdbfe;">
-                            Actual Fee Due: PKR <%= group.totalExpected.toLocaleString() %>
-                        </span>
-                        <span style="color: #15803d; font-weight: 700; background: #f0fdf4; padding: 2px 8px; border-radius: 4px; border: 1px solid #bbf7d0;">
-                            Fee Received: PKR <%= group.totalMonthlyRecovered.toLocaleString() %> (<%= group.totalExpected > 0 ? Math.min(100, Math.round((group.totalMonthlyRecovered / group.totalExpected) * 100)) : 0 %>%)
-                        </span>
-                        <% if (group.totalArrearsRecovered > 0) { %>
-                        <span style="color: #047857; font-weight: 600; background: #ecfdf5; padding: 2px 8px; border-radius: 4px; border: 1px solid #a7f3d0;">
-                            Arrears Rec.: PKR <%= group.totalArrearsRecovered.toLocaleString() %>
-                        </span>
-                        <span style="font-weight: 700; color: #6b21a8; background: #faf5ff; padding: 2px 8px; border-radius: 4px; border: 1px solid #e9d5ff;">
-                            Total Inflow: PKR <%= group.totalCollected.toLocaleString() %>
-                        </span>
-                        <% } %>
-                        <% if (group.totalAmountDue > 0) { %>
-                        <span style="color: #dc2626; font-weight: 600;">
-                            Dues: PKR <%= group.totalAmountDue.toLocaleString() %>
-                        </span>
-                        <% } %>
                         <i class="bi bi-chevron-down toggle-icon"></i>
                     </div>
                 </summary>
