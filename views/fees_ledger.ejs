@@ -10,16 +10,51 @@
     // Compute simple view statistics
     let totalExpected = 0;
     let totalCollected = 0;
+    let totalMonthlyRecovered = 0;
+    let totalArrearsRecovered = 0;
+    let totalPreviousOutstanding = 0;
+    let totalAmountDue = 0;
     let paidCount = 0;
     let defaulterCount = 0;
 
+    const tenantStartMonth = (locals.tenant && locals.tenant.fee_start_month && Number(locals.tenant.fee_start_month) >= 1) ? Number(locals.tenant.fee_start_month) : 1;
+
     students.forEach(s => {
         const expectedFee = (parseFloat(s.default_monthly_fee || 0) - parseFloat(s.custom_monthly_fee || 0));
+        
+        // Calculate dynamic previous arrears / advance from earlier months in the billing period
+        let dynamicPrevArrears = 0;
+        let dynamicAdvance = 0;
+        for (let m = tenantStartMonth; m < activeMonthNum; m++) {
+            const paidForM = (paymentMap[s.id] && paymentMap[s.id][m]) ? parseFloat(paymentMap[s.id][m].amount_paid || 0) : 0;
+            if (paidForM < expectedFee) {
+                dynamicPrevArrears += (expectedFee - paidForM);
+            } else if (paidForM > expectedFee) {
+                dynamicAdvance += (paidForM - expectedFee);
+            }
+        }
+        const prevArrears = Math.max(0, dynamicPrevArrears - dynamicAdvance);
+        
         totalExpected += expectedFee;
+        totalPreviousOutstanding += prevArrears;
         
         const payObj = paymentMap[s.id] && paymentMap[s.id][activeMonthNum];
-        if (payObj && payObj.amount_paid > 0) {
-            totalCollected += parseFloat(payObj.amount_paid);
+        const paidAmount = (payObj && payObj.amount_paid > 0) ? parseFloat(payObj.amount_paid) : 0;
+        
+        const curMonthRecovered = Math.min(paidAmount, expectedFee);
+        const arrRecovered = Math.max(0, paidAmount - expectedFee);
+        
+        totalCollected += paidAmount;
+        totalMonthlyRecovered += curMonthRecovered;
+        totalArrearsRecovered += arrRecovered;
+        
+        const remainingCurMonth = Math.max(0, expectedFee - paidAmount);
+        const remainingArrears = Math.max(0, prevArrears - arrRecovered);
+        const netStudentDue = remainingCurMonth + remainingArrears;
+        totalAmountDue += netStudentDue;
+        
+        const isFullWaiver = expectedFee <= 0 && parseFloat(s.default_monthly_fee || 0) > 0;
+        if (paidAmount >= expectedFee || isFullWaiver) {
             paidCount++;
         } else {
             defaulterCount++;
@@ -34,7 +69,12 @@
             name: c.name,
             totalStudents: 0,
             paidCount: 0,
+            totalExpected: 0,
             totalCollected: 0,
+            totalMonthlyRecovered: 0,
+            totalArrearsRecovered: 0,
+            totalPreviousOutstanding: 0,
+            totalAmountDue: 0,
             students: []
         };
     });
@@ -44,29 +84,71 @@
         name: 'Unassigned',
         totalStudents: 0,
         paidCount: 0,
+        totalExpected: 0,
         totalCollected: 0,
+        totalMonthlyRecovered: 0,
+        totalArrearsRecovered: 0,
+        totalPreviousOutstanding: 0,
+        totalAmountDue: 0,
         students: []
     };
 
     students.forEach(s => {
         const cId = s.class_id || 'unassigned';
         if (!classGroups[cId]) {
-            classGroups[cId] = { id: cId, name: s.class_name || 'Unknown', totalStudents: 0, paidCount: 0, totalCollected: 0, students: [] };
+            classGroups[cId] = {
+                id: cId,
+                name: s.class_name || 'Unknown',
+                totalStudents: 0,
+                paidCount: 0,
+                totalExpected: 0,
+                totalCollected: 0,
+                totalMonthlyRecovered: 0,
+                totalArrearsRecovered: 0,
+                totalPreviousOutstanding: 0,
+                totalAmountDue: 0,
+                students: []
+            };
         }
         
-        const payObj = paymentMap[s.id] && paymentMap[s.id][activeMonthNum];
-        const madePayment = payObj && payObj.amount_paid > 0;
         const expectedFee = (parseFloat(s.default_monthly_fee || 0) - parseFloat(s.custom_monthly_fee || 0));
-        const isFullWaiver = expectedFee <= 0 && parseFloat(s.default_monthly_fee || 0) > 0;
         
-        const isPaid = madePayment || isFullWaiver;
+        let dynamicPrevArrears = 0;
+        let dynamicAdvance = 0;
+        for (let m = tenantStartMonth; m < activeMonthNum; m++) {
+            const paidForM = (paymentMap[s.id] && paymentMap[s.id][m]) ? parseFloat(paymentMap[s.id][m].amount_paid || 0) : 0;
+            if (paidForM < expectedFee) {
+                dynamicPrevArrears += (expectedFee - paidForM);
+            } else if (paidForM > expectedFee) {
+                dynamicAdvance += (paidForM - expectedFee);
+            }
+        }
+        const prevArrears = Math.max(0, dynamicPrevArrears - dynamicAdvance);
+        
+        const payObj = paymentMap[s.id] && paymentMap[s.id][activeMonthNum];
+        const paidAmount = (payObj && payObj.amount_paid > 0) ? parseFloat(payObj.amount_paid) : 0;
+        const madePayment = paidAmount > 0;
+        
+        const curMonthRecovered = Math.min(paidAmount, expectedFee);
+        const arrRecovered = Math.max(0, paidAmount - expectedFee);
+        
+        const remainingCurMonth = Math.max(0, expectedFee - paidAmount);
+        const remainingArrears = Math.max(0, prevArrears - arrRecovered);
+        const netStudentDue = remainingCurMonth + remainingArrears;
+        
+        const isFullWaiver = expectedFee <= 0 && parseFloat(s.default_monthly_fee || 0) > 0;
+        const isPaid = (paidAmount >= expectedFee) || isFullWaiver;
         
         classGroups[cId].totalStudents++;
-        if (madePayment) {
+        classGroups[cId].totalExpected += expectedFee;
+        classGroups[cId].totalCollected += paidAmount;
+        classGroups[cId].totalMonthlyRecovered += curMonthRecovered;
+        classGroups[cId].totalArrearsRecovered += arrRecovered;
+        classGroups[cId].totalPreviousOutstanding += prevArrears;
+        classGroups[cId].totalAmountDue += netStudentDue;
+
+        if (isPaid) {
             classGroups[cId].paidCount++;
-            classGroups[cId].totalCollected += parseFloat(payObj.amount_paid);
-        } else if (isFullWaiver) {
-            classGroups[cId].paidCount++; // Count them as paid so they don't break KPI
         }
         
         classGroups[cId].students.push({
@@ -75,7 +157,12 @@
             isFullWaiver,
             madePayment,
             payObj,
-            expectedFee
+            paidAmount,
+            expectedFee,
+            prevArrears,
+            curMonthRecovered,
+            arrRecovered,
+            netStudentDue
         });
     });
 
@@ -138,38 +225,94 @@
             <a href="/fees/ledger" class="btn-secondary" style="display: inline-flex; align-items: center; white-space: nowrap;">Reset</a>
         </div>
     </div>
-    <input type="hidden" name="view" id="filter-view-input" value="recent">
+    <input type="hidden" name="view" id="filter-view-input" value="class">
 </form>
 
 <!-- Quick Statistics Grid (Always visible) -->
-<div class="kpi-grid" style="margin-bottom: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-    <div class="card kpi-card" style="padding: 1rem;">
-        <span class="kpi-label">Month Collection Progress</span>
-        <span class="kpi-value" style="font-size: 1.4rem;">PKR <%= totalCollected.toLocaleString() %> / <%= totalExpected.toLocaleString() %></span>
-        <span class="kpi-subtitle">Progress Rate: <%= totalExpected > 0 ? Math.round((totalCollected / totalExpected) * 100) : 0 %>%</span>
+<div class="kpi-grid" style="margin-bottom: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem;">
+    <!-- Tile 1: Current Month Tuition Fee Collection -->
+    <div class="card kpi-card" style="padding: 1rem 1.1rem; border-left: 4px solid #3b82f6;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <span class="kpi-label" style="font-weight: 700; color: #1e293b;"><i class="bi bi-calendar-check" style="color: #3b82f6;"></i> Current Month Fee</span>
+            <span style="background: #eff6ff; color: #2563eb; font-weight: 700; font-size: 0.75rem; padding: 2px 7px; border-radius: 9999px;">
+                <%= totalExpected > 0 ? Math.min(100, Math.round((totalMonthlyRecovered / totalExpected) * 100)) : 0 %>%
+            </span>
+        </div>
+        <span class="kpi-value" style="font-size: 1.35rem; font-weight: 800; color: #1e293b;">
+            PKR <%= totalMonthlyRecovered.toLocaleString() %> <span style="font-size: 0.9rem; font-weight: 600; color: #64748b;">/ <%= totalExpected.toLocaleString() %></span>
+        </span>
+        <div style="width: 100%; background: #e2e8f0; height: 6px; border-radius: 9999px; margin-top: 0.4rem; margin-bottom: 0.3rem; overflow: hidden;">
+            <div style="width: <%= totalExpected > 0 ? Math.min(100, Math.round((totalMonthlyRecovered / totalExpected) * 100)) : 0 %>%; background: #3b82f6; height: 100%;"></div>
+        </div>
+        <span class="kpi-subtitle" style="font-size: 0.78rem; color: #64748b;">Tuition fee recovered for <%= activeMonthName %></span>
     </div>
-    <div class="card kpi-card" style="padding: 1rem;">
-        <span class="kpi-label">Paid Students</span>
-        <span class="kpi-value" style="font-size: 1.4rem; color: #16a34a;"><%= paidCount %> / <%= students.length %></span>
-        <span class="kpi-subtitle">Received this month</span>
+
+    <!-- Tile 2: Previous Arrears Recovered -->
+    <div class="card kpi-card" style="padding: 1rem 1.1rem; border-left: 4px solid #10b981;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <span class="kpi-label" style="font-weight: 700; color: #1e293b;"><i class="bi bi-arrow-repeat" style="color: #10b981;"></i> Arrears Recovered</span>
+            <% if (totalPreviousOutstanding > 0) { %>
+                <span style="background: #ecfdf5; color: #059669; font-weight: 700; font-size: 0.75rem; padding: 2px 7px; border-radius: 9999px;">
+                    <%= Math.round((totalArrearsRecovered / totalPreviousOutstanding) * 100) %>% rec.
+                </span>
+            <% } %>
+        </div>
+        <span class="kpi-value" style="font-size: 1.35rem; font-weight: 800; color: #10b981;">
+            PKR <%= totalArrearsRecovered.toLocaleString() %>
+        </span>
+        <span class="kpi-subtitle" style="font-size: 0.78rem; color: #64748b; margin-top: 0.4rem; display: block;">
+            Out of PKR <%= totalPreviousOutstanding.toLocaleString() %> previous balance
+        </span>
     </div>
-    <div class="card kpi-card" style="padding: 1rem;">
-        <span class="kpi-label">Defaulters</span>
-        <span class="kpi-value" style="font-size: 1.4rem; color: #dc2626;"><%= defaulterCount %></span>
-        <span class="kpi-subtitle">Awaiting payment</span>
+
+    <!-- Tile 3: Total Amount Due on Students -->
+    <div class="card kpi-card" style="padding: 1rem 1.1rem; border-left: 4px solid #f59e0b;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <span class="kpi-label" style="font-weight: 700; color: #1e293b;"><i class="bi bi-exclamation-circle" style="color: #f59e0b;"></i> Total Amount Due</span>
+        </div>
+        <span class="kpi-value" style="font-size: 1.35rem; font-weight: 800; color: #d97706;">
+            PKR <%= totalAmountDue.toLocaleString() %>
+        </span>
+        <span class="kpi-subtitle" style="font-size: 0.78rem; color: #64748b; margin-top: 0.4rem; display: block;">
+            Unpaid fee (<%= defaulterCount %> defaulters) + remaining arrears
+        </span>
+    </div>
+
+    <!-- Tile 4: Total Cash Collected -->
+    <div class="card kpi-card" style="padding: 1rem 1.1rem; border-left: 4px solid #8b5cf6;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <span class="kpi-label" style="font-weight: 700; color: #1e293b;"><i class="bi bi-cash-stack" style="color: #8b5cf6;"></i> Total Inflow</span>
+        </div>
+        <span class="kpi-value" style="font-size: 1.35rem; font-weight: 800; color: #7c3aed;">
+            PKR <%= totalCollected.toLocaleString() %>
+        </span>
+        <span class="kpi-subtitle" style="font-size: 0.78rem; color: #64748b; margin-top: 0.4rem; display: block;">
+            Fee PKR <%= totalMonthlyRecovered.toLocaleString() %> + Arrears PKR <%= totalArrearsRecovered.toLocaleString() %>
+        </span>
+    </div>
+
+    <!-- Tile 5: Paid Students -->
+    <div class="card kpi-card" style="padding: 1rem 1.1rem; border-left: 4px solid #16a34a; cursor: pointer;" onclick="filterByStatus('paid')">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+            <span class="kpi-label" style="font-weight: 700; color: #1e293b;"><i class="bi bi-people" style="color: #16a34a;"></i> Paid Students</span>
+        </div>
+        <span class="kpi-value" style="font-size: 1.35rem; font-weight: 800; color: #16a34a;"><%= paidCount %> / <%= students.length %></span>
+        <span class="kpi-subtitle" style="font-size: 0.78rem; color: #64748b; margin-top: 0.4rem; display: block;">
+            <%= defaulterCount %> awaiting payment
+        </span>
     </div>
 </div>
 
 <!-- View Toggles (Tabs) -->
 <div class="nav-tabs" style="margin-bottom: 1.5rem; display: flex; gap: 0.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; flex-wrap: wrap;">
-    <button class="nav-tab active" id="tab-recent-btn" onclick="switchTab('recent')"><i class="bi bi-clock-history"></i> Monthly Fee Recent Activity</button>
-    <button class="nav-tab" id="tab-class-btn" onclick="switchTab('class')"><i class="bi bi-diagram-3-fill"></i> Monthly Class Summary (<%= activeMonthName %>)</button>
+    <button class="nav-tab active" id="tab-class-btn" onclick="switchTab('class')"><i class="bi bi-diagram-3-fill"></i> Monthly Class Summary (<%= activeMonthName %>)</button>
+    <button class="nav-tab" id="tab-recent-btn" onclick="switchTab('recent')"><i class="bi bi-clock-history"></i> Monthly Fee Recent Activity</button>
     <button class="nav-tab" id="tab-matrix-btn" onclick="switchTab('matrix')"><i class="bi bi-grid-3x3-gap-fill"></i> Full Year Matrix</button>
     <button class="nav-tab" id="tab-cashflow-btn" onclick="switchTab('cashflow')"><i class="bi bi-cash-coin"></i> Cash Inflow (<%= activeMonthName %>)</button>
 </div>
 
 <!-- Tab: Recent Activity Pane -->
-<div id="pane-recent">
+<div id="pane-recent" style="display: none;">
     <div style="display: flex; flex-direction: column; gap: 2rem;">
         <!-- Top: Recent Collections -->
         <div>
@@ -335,7 +478,7 @@
 </div>
 
 <!-- Tab: Class Summary Pane -->
-<div id="pane-class" style="display: none;">
+<div id="pane-class">
     <!-- Filters Collapsible Panel -->
     <details class="filter-panel" <%= (classId || search || locals.activeMonthNum || locals.activeYear) ? 'open' : '' %>>
         <summary>
@@ -343,7 +486,7 @@
             <i class="bi bi-chevron-down toggle-icon"></i>
         </summary>
         <form action="/fees/ledger" method="GET" class="filter-content">
-            <input type="hidden" name="view" id="filter-view-input" value="recent">
+            <input type="hidden" name="view" id="filter-view-input-class" value="class">
             <div class="form-group">
                 <label for="classId">Class</label>
                 <select name="classId" id="classId" class="form-control" onchange="this.form.submit()">
@@ -415,15 +558,23 @@
                             <i class="bi bi-people-fill"></i> <%= group.totalStudents %> Students
                         </span>
                     </div>
-                    <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.9rem;">
+                    <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.9rem; flex-wrap: wrap;">
                         <button type="button" class="btn-secondary nav-btn" onclick="event.stopPropagation(); openClassChallanModal('<%= group.id %>')" title="Print Fee Challans for <%= group.name %>" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem;">
                             <i class="bi bi-printer-fill"></i> Print Challans
                         </button>
                         <span style="<%= group.paidCount === group.totalStudents ? 'color: #16a34a;' : (group.paidCount === 0 ? 'color: #dc2626;' : 'color: #eab308;') %> font-weight: 600;">
                             Paid: <%= group.paidCount %> / <%= group.totalStudents %>
                         </span>
-                        <span style="font-weight: 600;">
-                            Collected: PKR <%= group.totalCollected.toLocaleString() %>
+                        <span style="color: #2563eb; font-weight: 600;">
+                            Fee: PKR <%= group.totalMonthlyRecovered.toLocaleString() %> / <%= group.totalExpected.toLocaleString() %>
+                        </span>
+                        <% if (group.totalArrearsRecovered > 0) { %>
+                        <span style="color: #10b981; font-weight: 600;">
+                            Arrears Rec.: PKR <%= group.totalArrearsRecovered.toLocaleString() %>
+                        </span>
+                        <% } %>
+                        <span style="font-weight: 700; color: #1e293b;">
+                            Total Inflow: PKR <%= group.totalCollected.toLocaleString() %>
                         </span>
                         <i class="bi bi-chevron-down toggle-icon"></i>
                     </div>
@@ -444,10 +595,27 @@
                             <% group.students.forEach(s => { %>
                                 <tr class="student-row <%= s.isPaid ? 'status-row-paid' : 'status-row-unpaid' %>">
                                     <td style="font-weight: 600; text-align: left; padding-left: 1rem;"><%= s.reg_no %></td>
-                                    <td style="text-align: left; font-weight: 500;"><a href="/students/view/<%= s.id %>" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;"><%= s.name %></a></td>
+                                    <td style="text-align: left; font-weight: 500;">
+                                        <a href="/students/view/<%= s.id %>" style="color: var(--primary-color); text-decoration: underline; cursor: pointer;"><%= s.name %></a>
+                                        <% if (s.prevArrears > 0) { %>
+                                            <div style="font-size: 0.75rem; color: #dc2626; font-weight: 600;"><i class="bi bi-clock-history"></i> Arrears: PKR <%= s.prevArrears.toLocaleString() %></div>
+                                        <% } %>
+                                        <% if (s.netStudentDue > 0 && s.madePayment) { %>
+                                            <div style="font-size: 0.72rem; color: #d97706; font-weight: 500;">Rem. Due: PKR <%= s.netStudentDue.toLocaleString() %></div>
+                                        <% } %>
+                                    </td>
                                     <td style="text-align: right; font-weight: 600;">PKR <%= s.expectedFee.toLocaleString() %></td>
                                     <td style="text-align: right; font-weight: 600; color: #16a34a;">
-                                        <%= s.madePayment ? 'PKR ' + s.payObj.amount_paid.toLocaleString() : '-' %>
+                                        <% if (s.madePayment) { %>
+                                            PKR <%= s.paidAmount.toLocaleString() %>
+                                            <% if (s.arrRecovered > 0) { %>
+                                                <div style="font-size: 0.72rem; color: #059669; font-weight: 500;">
+                                                    (Fee <%= s.curMonthRecovered.toLocaleString() %> + Arr <%= s.arrRecovered.toLocaleString() %>)
+                                                </div>
+                                            <% } %>
+                                        <% } else { %>
+                                            -
+                                        <% } %>
                                     </td>
                                     <td>
                                         <% if (s.isFullWaiver && !s.madePayment) { %>
@@ -1049,9 +1217,9 @@
             cashflowBtn.classList.add('active');
             if (cashflowPane) cashflowPane.style.display = 'block';
         } else {
-            if (recentBtn) recentBtn.classList.add('active');
-            if (recentPane) recentPane.style.display = 'block';
-            tabType = 'recent';
+            if (classBtn) classBtn.classList.add('active');
+            if (classPane) classPane.style.display = 'block';
+            tabType = 'class';
         }
         
         if (filterViewInput) filterViewInput.value = tabType;
@@ -1113,7 +1281,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const urlView = urlParams.get('view');
-        let savedView = urlView || localStorage.getItem('fees_ledger_view') || 'recent';
+        let savedView = urlView || localStorage.getItem('fees_ledger_view') || 'class';
         
         switchTab(savedView);
 
