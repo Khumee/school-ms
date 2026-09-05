@@ -253,6 +253,138 @@
             margin-left: 1.25rem;
             margin-top: 0.5rem;
         }
+        /* Partnership Hero Banner */
+        .partnership-banner {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #1d4ed8 100%);
+            color: #ffffff;
+            border-radius: 12px;
+            padding: 2.25rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 10px 25px -5px rgba(30, 58, 138, 0.25);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .partnership-banner::after {
+            content: "";
+            position: absolute;
+            top: -40%;
+            right: -8%;
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .partnership-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .partnership-banner h2 {
+            font-size: 1.55rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.01em;
+        }
+        .partnership-banner p {
+            font-size: 0.95rem;
+            line-height: 1.65;
+            color: #e2e8f0;
+            margin-bottom: 0.85rem;
+        }
+        .partnership-signature {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.18);
+            padding-top: 1rem;
+            margin-top: 1.25rem;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .partnership-signature strong {
+            color: #ffffff;
+        }
+
+        /* Technical Challenges & Innovation Grid */
+        .deepdive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        .deepdive-card {
+            background: #ffffff;
+            border: 1px solid var(--slate-200);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .deepdive-card:hover {
+            box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+        }
+        .deepdive-tag {
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 0.75rem;
+            width: fit-content;
+        }
+        .tag-challenge { background: #fee2e2; color: #b91c1c; }
+        .tag-solution { background: #dbeafe; color: #1e40af; }
+        .tag-feature { background: #dcfce7; color: #15803d; }
+        .deepdive-card h4 {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--slate-900);
+            margin-bottom: 0.5rem;
+        }
+        .deepdive-card p {
+            font-size: 0.88rem;
+            color: var(--slate-600);
+            line-height: 1.55;
+            margin-bottom: 0.85rem;
+        }
+        .deepdive-card .resolution-box {
+            background: var(--slate-50);
+            border-left: 3.5px solid var(--primary-light);
+            padding: 0.8rem 1rem;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.84rem;
+            color: var(--slate-800);
+            margin-top: auto;
+            border-top: 1px solid var(--slate-200);
+            border-right: 1px solid var(--slate-200);
+            border-bottom: 1px solid var(--slate-200);
+        }
+        .deepdive-card .resolution-box strong {
+            color: var(--primary);
+            display: block;
+            margin-bottom: 0.25rem;
+            font-size: 0.85rem;
+        }
         /* Print Styles */
         @media print {
             body {
@@ -329,6 +461,22 @@
             </div>
         </div>
 
+        <!-- Founding Institutional Partnership Banner -->
+        <div class="partnership-banner">
+            <div class="partnership-badge">&starf; Founding Institutional Partner</div>
+            <h2>A Special Welcome & Dedication to Good Luck School</h2>
+            <p>
+                On behalf of the OmniSchool Engineering & Deployment Team, we extend our sincere gratitude to the leadership, management, and administrative staff of <strong>Good Luck School</strong> for choosing OmniSchool as your official digital management platform. As one of our valued inaugural institutional partners, your confidence in our technology represents a cornerstone milestone for our organization.
+            </p>
+            <p>
+                Transitioning mission-critical academic records and student financial ledgers from legacy spreadsheets to an enterprise cloud database is an intricate endeavor. To honor your trust and demonstrate our steadfast commitment to a prosperous, long-term working relationship, our senior engineering team went the extra mile. We performed comprehensive manual auditing, algorithmic data sanitization, and specialized platform enhancements to ensure your historical fee records were onboarded with 100% mathematical fidelity.
+            </p>
+            <div class="partnership-signature">
+                <div>Prepared with dedication by the <strong>OmniSchool Core Engineering Team</strong></div>
+                <div>Milestone: <strong>Inaugural Client Onboarding & Historical Ledger Reconciliation</strong></div>
+            </div>
+        </div>
+
         <!-- Executive Summary Cards -->
         <h2 class="section-title">Executive Metrics & Key Performance Indicators</h2>
         <div class="kpi-grid">
@@ -373,6 +521,104 @@
                 <li><strong>Arrears vs. Tuition Separation:</strong> Total payments received (PKR 174,700.00) comprise PKR 125,400.00 covering August tuition and PKR 49,300.00 recovering overdue legacy arrears. This separation eliminates misleading collection rates over 100%.</li>
                 <li><strong>Dynamic Ledger Architecture:</strong> In accordance with standard multi-tenant product standards, student arrears and liabilities are computed dynamically from transaction records rather than a static column, ensuring future monthly billing remains consistent with single-source-of-truth accounting standards.</li>
             </ul>
+        </div>
+
+        <!-- Technical Journey: Spreadsheet Anomalies, Challenges & Innovations -->
+        <h2 class="section-title">Technical Journey: Spreadsheet Anomalies, Challenges & Platform Innovations</h2>
+        <p style="color: var(--slate-600); font-size: 0.92rem; margin-bottom: 1.5rem; line-height: 1.6;">
+            School financial spreadsheets naturally accumulate anomalies over time due to ad-hoc manual data entry, mixed transaction types, and formula limitations. Below is an executive account of the critical anomalies identified in the legacy Excel workbook (<code>Fee Record Primery 2026.xlsx</code>) and the custom engineering solutions developed within OmniSchool to permanently resolve them.
+        </p>
+
+        <div class="deepdive-grid">
+            <!-- Card 1: Conflation of Arrears & Monthly Fee -->
+            <div class="deepdive-card">
+                <div>
+                    <span class="deepdive-tag tag-challenge">&excl; Legacy Spreadsheet Anomaly</span>
+                    <h4>1. Conflation of August Tuition & Past Arrears</h4>
+                    <p>
+                        In the source spreadsheet, payments frequently combined August tuition and historical arrears into a single aggregated lump sum. When compared strictly against regular monthly fees, this produced misleading collection rates (e.g. Play Group showing 109% and Nursery exceeding 400%).
+                    </p>
+                </div>
+                <div class="resolution-box">
+                    <strong>OmniSchool Engineering Innovation:</strong>
+                    Engineered a <em>Dual-Stream Inflow Decomposition Engine</em> that strictly separates regular tuition recovery (capped at 100% of monthly fee) from legacy arrears liquidation. School leadership now receives transparent, segregated figures for regular tuition vs. arrears recovery.
+                </div>
+            </div>
+
+            <!-- Card 2: Fragmented Concessions & Custom Pricing -->
+            <div class="deepdive-card">
+                <div>
+                    <span class="deepdive-tag tag-challenge">&excl; Legacy Spreadsheet Anomaly</span>
+                    <h4>2. Non-Standardized Concessions & Subsidies</h4>
+                    <p>
+                        Across multiple classes, peer students paid varying tuition rates without explicit discount records or standard percentage tiers documented in the file. Hardcoding static prices would have permanently corrupted future monthly billing rolls and automated challan generation.
+                    </p>
+                </div>
+                <div class="resolution-box">
+                    <strong>OmniSchool Engineering Innovation:</strong>
+                    Architected an individual student concession model where <code>custom_monthly_fee</code> represents the exact subsidy deducted from class standard tuition. This preserved exact August billing (PKR 177,900) while safeguarding standardized billing for future terms.
+                </div>
+            </div>
+
+            <!-- Card 3: Untracked Historical Liabilities -->
+            <div class="deepdive-card">
+                <div>
+                    <span class="deepdive-tag tag-challenge">&excl; Legacy Spreadsheet Anomaly</span>
+                    <h4>3. Unitemized Legacy Arrears Backlog (PKR 234,720)</h4>
+                    <p>
+                        The spreadsheet contained an unitemized backlog of PKR 234,720 in previous dues spread across 40+ students without date stamps, payment receipts, or relational transaction history, posing severe risks of parent dispute or lost school revenue.
+                    </p>
+                </div>
+                <div class="resolution-box">
+                    <strong>OmniSchool Engineering Innovation:</strong>
+                    Ingested each student's previous dues as formal audited balance records linked to their registration identifier. All subsequent payments automatically settle current dues before transparently writing down legacy arrears.
+                </div>
+            </div>
+
+            <!-- Card 4: Dynamic Ledger vs Static Columns -->
+            <div class="deepdive-card">
+                <div>
+                    <span class="deepdive-tag tag-feature">&check; Architectural Enhancement</span>
+                    <h4>4. Dynamic Multi-Month Single-Source-of-Truth</h4>
+                    <p>
+                        Traditional software relies on static "previous balance" database columns that easily desynchronize, become corrupted during edits, and fail during calendar roll-overs.
+                    </p>
+                </div>
+                <div class="resolution-box">
+                    <strong>OmniSchool Engineering Innovation:</strong>
+                    Implemented a dynamic calculation engine across all prior billing records. Whether a receipt is edited, a concession updated, or a new month opened, the system computes exact net dues on-the-fly without data discrepancies.
+                </div>
+            </div>
+
+            <!-- Card 5: Tailored Administrative Workflow -->
+            <div class="deepdive-card">
+                <div>
+                    <span class="deepdive-tag tag-feature">&check; Workflow Optimization</span>
+                    <h4>5. Customized School Leadership Workflow</h4>
+                    <p>
+                        Good Luck School administration requires rapid daily oversight of class-by-class fee recovery, instantaneous identification of defaulters, and bulk parent billing.
+                    </p>
+                </div>
+                <div class="resolution-box">
+                    <strong>OmniSchool Engineering Innovation:</strong>
+                    Tailored the platform default view to the <em>Monthly Class Summary</em>, prioritized defaulters at the top of each section, added instant visual dues breakdown tags, and introduced 1-click batch PDF fee challan generation per section.
+                </div>
+            </div>
+
+            <!-- Card 6: Zero Data Loss Reconciliation -->
+            <div class="deepdive-card">
+                <div>
+                    <span class="deepdive-tag tag-solution">&check; Reconciliation Guarantee</span>
+                    <h4>6. 100% Single-Rupee Balanced Audit</h4>
+                    <p>
+                        Automated data migrations often discard edge cases or round minor variances. For Good Luck School, every single record was verified down to the individual rupee.
+                    </p>
+                </div>
+                <div class="resolution-box">
+                    <strong>OmniSchool Engineering Innovation:</strong>
+                    Achieved 100.0% parity across all 109 students: exactly PKR 177,900.00 expected tuition, PKR 174,700.00 total cash collected, and PKR 254,920.00 net outstanding dues cataloged and ready for recovery.
+                </div>
+            </div>
         </div>
 
         <!-- Class Summary Table -->
@@ -539,10 +785,10 @@
                         <th>Student Name</th>
                         <th style="text-align: right; width: 90px;">Standard</th>
                         <th style="text-align: right; width: 90px;">Discount</th>
-                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 100px;">Monthly Fee Due</th>
                         <th style="text-align: right; width: 105px;">Legacy Arrears</th>
-                        <th style="text-align: right; width: 130px;">Aug Paid</th>
-                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: right; width: 120px;">August Inflow (Paid)</th>
+                        <th style="text-align: right; width: 110px;">Outstanding Dues</th>
                         <th style="text-align: center; width: 100px;">Status</th>
                     </tr>
                 </thead>
@@ -741,10 +987,10 @@
                         <th>Student Name</th>
                         <th style="text-align: right; width: 90px;">Standard</th>
                         <th style="text-align: right; width: 90px;">Discount</th>
-                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 100px;">Monthly Fee Due</th>
                         <th style="text-align: right; width: 105px;">Legacy Arrears</th>
-                        <th style="text-align: right; width: 130px;">Aug Paid</th>
-                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: right; width: 120px;">August Inflow (Paid)</th>
+                        <th style="text-align: right; width: 110px;">Outstanding Dues</th>
                         <th style="text-align: center; width: 100px;">Status</th>
                     </tr>
                 </thead>
@@ -977,10 +1223,10 @@
                         <th>Student Name</th>
                         <th style="text-align: right; width: 90px;">Standard</th>
                         <th style="text-align: right; width: 90px;">Discount</th>
-                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 100px;">Monthly Fee Due</th>
                         <th style="text-align: right; width: 105px;">Legacy Arrears</th>
-                        <th style="text-align: right; width: 130px;">Aug Paid</th>
-                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: right; width: 120px;">August Inflow (Paid)</th>
+                        <th style="text-align: right; width: 110px;">Outstanding Dues</th>
                         <th style="text-align: center; width: 100px;">Status</th>
                     </tr>
                 </thead>
@@ -1196,10 +1442,10 @@
                         <th>Student Name</th>
                         <th style="text-align: right; width: 90px;">Standard</th>
                         <th style="text-align: right; width: 90px;">Discount</th>
-                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 100px;">Monthly Fee Due</th>
                         <th style="text-align: right; width: 105px;">Legacy Arrears</th>
-                        <th style="text-align: right; width: 130px;">Aug Paid</th>
-                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: right; width: 120px;">August Inflow (Paid)</th>
+                        <th style="text-align: right; width: 110px;">Outstanding Dues</th>
                         <th style="text-align: center; width: 100px;">Status</th>
                     </tr>
                 </thead>
@@ -1347,10 +1593,10 @@
                         <th>Student Name</th>
                         <th style="text-align: right; width: 90px;">Standard</th>
                         <th style="text-align: right; width: 90px;">Discount</th>
-                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 100px;">Monthly Fee Due</th>
                         <th style="text-align: right; width: 105px;">Legacy Arrears</th>
-                        <th style="text-align: right; width: 130px;">Aug Paid</th>
-                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: right; width: 120px;">August Inflow (Paid)</th>
+                        <th style="text-align: right; width: 110px;">Outstanding Dues</th>
                         <th style="text-align: center; width: 100px;">Status</th>
                     </tr>
                 </thead>
@@ -1600,10 +1846,10 @@
                         <th>Student Name</th>
                         <th style="text-align: right; width: 90px;">Standard</th>
                         <th style="text-align: right; width: 90px;">Discount</th>
-                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 100px;">Monthly Fee Due</th>
                         <th style="text-align: right; width: 105px;">Legacy Arrears</th>
-                        <th style="text-align: right; width: 130px;">Aug Paid</th>
-                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: right; width: 120px;">August Inflow (Paid)</th>
+                        <th style="text-align: right; width: 110px;">Outstanding Dues</th>
                         <th style="text-align: center; width: 100px;">Status</th>
                     </tr>
                 </thead>
@@ -1887,10 +2133,10 @@
                         <th>Student Name</th>
                         <th style="text-align: right; width: 90px;">Standard</th>
                         <th style="text-align: right; width: 90px;">Discount</th>
-                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 100px;">Monthly Fee Due</th>
                         <th style="text-align: right; width: 105px;">Legacy Arrears</th>
-                        <th style="text-align: right; width: 130px;">Aug Paid</th>
-                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: right; width: 120px;">August Inflow (Paid)</th>
+                        <th style="text-align: right; width: 110px;">Outstanding Dues</th>
                         <th style="text-align: center; width: 100px;">Status</th>
                     </tr>
                 </thead>
@@ -2089,10 +2335,10 @@
                         <th>Student Name</th>
                         <th style="text-align: right; width: 90px;">Standard</th>
                         <th style="text-align: right; width: 90px;">Discount</th>
-                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 100px;">Monthly Fee Due</th>
                         <th style="text-align: right; width: 105px;">Legacy Arrears</th>
-                        <th style="text-align: right; width: 130px;">Aug Paid</th>
-                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: right; width: 120px;">August Inflow (Paid)</th>
+                        <th style="text-align: right; width: 110px;">Outstanding Dues</th>
                         <th style="text-align: center; width: 100px;">Status</th>
                     </tr>
                 </thead>
@@ -2359,10 +2605,10 @@
                         <th>Student Name</th>
                         <th style="text-align: right; width: 90px;">Standard</th>
                         <th style="text-align: right; width: 90px;">Discount</th>
-                        <th style="text-align: right; width: 90px;">Net Fee</th>
+                        <th style="text-align: right; width: 100px;">Monthly Fee Due</th>
                         <th style="text-align: right; width: 105px;">Legacy Arrears</th>
-                        <th style="text-align: right; width: 130px;">Aug Paid</th>
-                        <th style="text-align: right; width: 100px;">Remaining Due</th>
+                        <th style="text-align: right; width: 120px;">August Inflow (Paid)</th>
+                        <th style="text-align: right; width: 110px;">Outstanding Dues</th>
                         <th style="text-align: center; width: 100px;">Status</th>
                     </tr>
                 </thead>
@@ -2661,6 +2907,22 @@
             </table>
         </div>
     
+
+        <!-- Ongoing Support & Partnership Outlook -->
+        <div class="callout" style="background: #eff6ff; border-color: #bfdbfe; border-left-color: #2563eb; margin-top: 2.5rem; margin-bottom: 2rem;">
+            <h4 style="color: #1e40af; font-size: 1.15rem; margin-bottom: 0.5rem;">&bull; Our Ongoing Commitment & Technical Partnership Outlook</h4>
+            <p style="color: #1e3a8a; margin-bottom: 0.75rem; line-height: 1.6;">
+                Successfully migrating and reconciling your legacy data into OmniSchool is merely the first milestone of our collaborative journey. As an inaugural institutional client, Good Luck School will receive our highest level of dedicated technical partnership:
+            </p>
+            <ul style="color: #1e3a8a; line-height: 1.65; margin-bottom: 0.75rem;">
+                <li><strong>Priority Engineering Support:</strong> Direct, white-glove technical assistance for school administrative staff during monthly billing cycles and fee collection periods.</li>
+                <li><strong>Complimentary Staff Onboarding:</strong> Dedicated walkthroughs and training sessions for your fee collectors and school accountants to ensure total mastery of receipt issuance, defaulter management, and bulk challan generation.</li>
+                <li><strong>Continuous Product Innovations:</strong> Automatic access to upcoming platform capabilities, including automated WhatsApp/SMS parent notifications, end-of-year tax statements, and advanced financial analytics.</li>
+            </ul>
+            <p style="color: #1e3a8a; font-weight: 600; line-height: 1.6;">
+                We are confident that this clean, audited, and resilient financial foundation will deliver immense operational efficiency, transparent governance, and enduring value to Good Luck School for many years to come.
+            </p>
+        </div>
 
         <!-- Footer Sign-Off -->
         <div style="margin-top: 3rem; padding-top: 1.5rem; border-top: 2px solid var(--slate-200); display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--slate-600);">

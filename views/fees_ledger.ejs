@@ -235,18 +235,20 @@
     <!-- Tile 1: Current Month Tuition Fee Collection -->
     <div class="card kpi-card" style="padding: 1rem 1.1rem; border-left: 4px solid #3b82f6;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-            <span class="kpi-label" style="font-weight: 700; color: #1e293b;"><i class="bi bi-calendar-check" style="color: #3b82f6;"></i> Current Month Fee</span>
+            <span class="kpi-label" style="font-weight: 700; color: #1e293b;"><i class="bi bi-calendar-check" style="color: #3b82f6;"></i> Actual Monthly Fee</span>
             <span style="background: #eff6ff; color: #2563eb; font-weight: 700; font-size: 0.75rem; padding: 2px 7px; border-radius: 9999px;">
-                <%= totalExpected > 0 ? Math.min(100, Math.round((totalMonthlyRecovered / totalExpected) * 100)) : 0 %>%
+                <%= totalExpected > 0 ? Math.min(100, Math.round((totalMonthlyRecovered / totalExpected) * 100)) : 0 %>% Rec.
             </span>
         </div>
         <span class="kpi-value" style="font-size: 1.35rem; font-weight: 800; color: #1e293b;">
-            PKR <%= totalMonthlyRecovered.toLocaleString() %> <span style="font-size: 0.9rem; font-weight: 600; color: #64748b;">/ <%= totalExpected.toLocaleString() %></span>
+            PKR <%= totalMonthlyRecovered.toLocaleString() %> <span style="font-size: 0.85rem; font-weight: 600; color: #64748b;">/ <%= totalExpected.toLocaleString() %> Due</span>
         </span>
         <div style="width: 100%; background: #e2e8f0; height: 6px; border-radius: 9999px; margin-top: 0.4rem; margin-bottom: 0.3rem; overflow: hidden;">
             <div style="width: <%= totalExpected > 0 ? Math.min(100, Math.round((totalMonthlyRecovered / totalExpected) * 100)) : 0 %>%; background: #3b82f6; height: 100%;"></div>
         </div>
-        <span class="kpi-subtitle" style="font-size: 0.78rem; color: #64748b;">Tuition fee recovered for <%= activeMonthName %></span>
+        <span class="kpi-subtitle" style="font-size: 0.78rem; color: #64748b;">
+            Strictly fee received from <%= activeMonthName %> tuition (excludes arrears)
+        </span>
     </div>
 
     <!-- Tile 2: Previous Arrears Recovered -->
@@ -270,7 +272,7 @@
     <!-- Tile 3: Total Amount Due on Students -->
     <div class="card kpi-card" style="padding: 1rem 1.1rem; border-left: 4px solid #f59e0b;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-            <span class="kpi-label" style="font-weight: 700; color: #1e293b;"><i class="bi bi-exclamation-circle" style="color: #f59e0b;"></i> Total Amount Due</span>
+            <span class="kpi-label" style="font-weight: 700; color: #1e293b;"><i class="bi bi-exclamation-circle" style="color: #f59e0b;"></i> Outstanding Dues</span>
         </div>
         <span class="kpi-value" style="font-size: 1.35rem; font-weight: 800; color: #d97706;">
             PKR <%= totalAmountDue.toLocaleString() %>
@@ -283,13 +285,13 @@
     <!-- Tile 4: Total Cash Collected -->
     <div class="card kpi-card" style="padding: 1rem 1.1rem; border-left: 4px solid #8b5cf6;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-            <span class="kpi-label" style="font-weight: 700; color: #1e293b;"><i class="bi bi-cash-stack" style="color: #8b5cf6;"></i> Total Inflow</span>
+            <span class="kpi-label" style="font-weight: 700; color: #1e293b;"><i class="bi bi-cash-stack" style="color: #8b5cf6;"></i> Total Inflow (Paid)</span>
         </div>
         <span class="kpi-value" style="font-size: 1.35rem; font-weight: 800; color: #7c3aed;">
             PKR <%= totalCollected.toLocaleString() %>
         </span>
         <span class="kpi-subtitle" style="font-size: 0.78rem; color: #64748b; margin-top: 0.4rem; display: block;">
-            Fee PKR <%= totalMonthlyRecovered.toLocaleString() %> + Arrears PKR <%= totalArrearsRecovered.toLocaleString() %>
+            Actual Fee PKR <%= totalMonthlyRecovered.toLocaleString() %> + Arrears PKR <%= totalArrearsRecovered.toLocaleString() %>
         </span>
     </div>
 
@@ -560,24 +562,32 @@
                             <i class="bi bi-people-fill"></i> <%= group.totalStudents %> Students
                         </span>
                     </div>
-                    <div style="display: flex; gap: 1rem; align-items: center; font-size: 0.9rem; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 0.75rem; align-items: center; font-size: 0.88rem; flex-wrap: wrap;">
                         <button type="button" class="btn-secondary nav-btn" onclick="event.stopPropagation(); openClassChallanModal('<%= group.id %>')" title="Print Fee Challans for <%= group.name %>" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem;">
                             <i class="bi bi-printer-fill"></i> Print Challans
                         </button>
-                        <span style="<%= group.paidCount === group.totalStudents ? 'color: #16a34a;' : (group.paidCount === 0 ? 'color: #dc2626;' : 'color: #eab308;') %> font-weight: 600;">
+                        <span style="<%= group.paidCount === group.totalStudents ? 'color: #16a34a;' : (group.paidCount === 0 ? 'color: #dc2626;' : 'color: #d97706;') %> font-weight: 600;">
                             Paid: <%= group.paidCount %> / <%= group.totalStudents %>
                         </span>
-                        <span style="color: #2563eb; font-weight: 600;">
-                            Fee: PKR <%= group.totalMonthlyRecovered.toLocaleString() %> / <%= group.totalExpected.toLocaleString() %>
+                        <span style="color: #1e40af; font-weight: 700; background: #eff6ff; padding: 2px 8px; border-radius: 4px; border: 1px solid #bfdbfe;">
+                            Actual Fee Due: PKR <%= group.totalExpected.toLocaleString() %>
+                        </span>
+                        <span style="color: #15803d; font-weight: 700; background: #f0fdf4; padding: 2px 8px; border-radius: 4px; border: 1px solid #bbf7d0;">
+                            Fee Received: PKR <%= group.totalMonthlyRecovered.toLocaleString() %> (<%= group.totalExpected > 0 ? Math.min(100, Math.round((group.totalMonthlyRecovered / group.totalExpected) * 100)) : 0 %>%)
                         </span>
                         <% if (group.totalArrearsRecovered > 0) { %>
-                        <span style="color: #10b981; font-weight: 600;">
+                        <span style="color: #047857; font-weight: 600; background: #ecfdf5; padding: 2px 8px; border-radius: 4px; border: 1px solid #a7f3d0;">
                             Arrears Rec.: PKR <%= group.totalArrearsRecovered.toLocaleString() %>
                         </span>
                         <% } %>
-                        <span style="font-weight: 700; color: #1e293b;">
+                        <span style="font-weight: 700; color: #6b21a8; background: #faf5ff; padding: 2px 8px; border-radius: 4px; border: 1px solid #e9d5ff;">
                             Total Inflow: PKR <%= group.totalCollected.toLocaleString() %>
                         </span>
+                        <% if (group.totalAmountDue > 0) { %>
+                        <span style="color: #dc2626; font-weight: 600;">
+                            Dues: PKR <%= group.totalAmountDue.toLocaleString() %>
+                        </span>
+                        <% } %>
                         <i class="bi bi-chevron-down toggle-icon"></i>
                     </div>
                 </summary>
@@ -587,11 +597,13 @@
                             <tr>
                                 <th style="text-align: left; padding-left: 1rem;">Reg No</th>
                                 <th style="text-align: left;">Student Name</th>
-                                <th style="text-align: right;">Monthly Fee</th>
-                                <th style="text-align: right;">Amount Paid</th>
+                                <th style="text-align: right;">Actual Fee Due</th>
+                                <th style="text-align: right; color: #15803d;">Month Fee Received</th>
+                                <th style="text-align: right; color: #047857;">Arrears Received</th>
+                                <th style="text-align: right; color: #6b21a8;">Total Paid</th>
                                 <th style="text-align: right;">Outstanding Dues</th>
-                                <th>Status</th>
-                                <th style="padding-right: 1rem;">Actions</th>
+                                <th style="text-align: center;">Status</th>
+                                <th style="padding-right: 1rem; text-align: center;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -605,17 +617,14 @@
                                         <% } %>
                                     </td>
                                     <td style="text-align: right; font-weight: 600;">PKR <%= s.expectedFee.toLocaleString() %></td>
-                                    <td style="text-align: right; font-weight: 600; color: #16a34a;">
-                                        <% if (s.madePayment) { %>
-                                            PKR <%= s.paidAmount.toLocaleString() %>
-                                            <% if (s.arrRecovered > 0) { %>
-                                                <div style="font-size: 0.72rem; color: #059669; font-weight: 500;">
-                                                    (Fee <%= s.curMonthRecovered.toLocaleString() %> + Arr <%= s.arrRecovered.toLocaleString() %>)
-                                                </div>
-                                            <% } %>
-                                        <% } else { %>
-                                            -
-                                        <% } %>
+                                    <td style="text-align: right; font-weight: 600; color: #15803d;">
+                                        <%= s.curMonthRecovered > 0 ? 'PKR ' + s.curMonthRecovered.toLocaleString() : '-' %>
+                                    </td>
+                                    <td style="text-align: right; font-weight: 600; color: #047857;">
+                                        <%= s.arrRecovered > 0 ? 'PKR ' + s.arrRecovered.toLocaleString() : '-' %>
+                                    </td>
+                                    <td style="text-align: right; font-weight: 700; color: #6b21a8;">
+                                        <%= s.madePayment ? 'PKR ' + s.paidAmount.toLocaleString() : '-' %>
                                     </td>
                                     <td style="text-align: right; font-weight: 700; color: <%= s.netStudentDue > 0 ? '#dc2626' : '#16a34a' %>;">
                                         <% if (s.netStudentDue > 0) { %>
@@ -629,7 +638,7 @@
                                             <span style="color: #16a34a; font-weight: 600;">Rs. 0</span>
                                         <% } %>
                                     </td>
-                                    <td>
+                                    <td style="text-align: center;">
                                         <% if (s.isFullWaiver && !s.madePayment) { %>
                                             <span class="status-cell status-paid" style="background-color: #f3f4f6; color: #4b5563;"><i class="bi bi-gift-fill"></i> FULL WAIVER</span>
                                         <% } else if (s.isPaid) { %>
@@ -638,7 +647,7 @@
                                             <span class="status-cell status-unpaid"><i class="bi bi-exclamation-triangle-fill"></i> DEFAULTER</span>
                                         <% } %>
                                     </td>
-                                    <td style="padding-right: 1rem;">
+                                    <td style="padding-right: 1rem; text-align: center;">
                                         <div style="display: flex; gap: 0.4rem; justify-content: center;">
                                             <% if (s.madePayment) { %>
                                                 <a href="/fees/receipt/<%= s.payObj.id %>" class="btn-secondary nav-btn" target="_blank" title="Print PDF Receipt"><i class="bi bi-printer-fill"></i> Receipt</a>
@@ -653,6 +662,17 @@
                                 </tr>
                             <% }) %>
                         </tbody>
+                        <tfoot style="background: #f8fafc; font-weight: 700; border-top: 2px solid var(--border);">
+                            <tr>
+                                <td colspan="2" style="text-align: left; padding-left: 1rem; color: #334155;">Total (<%= group.name %>)</td>
+                                <td style="text-align: right; color: #1e293b;">PKR <%= group.totalExpected.toLocaleString() %></td>
+                                <td style="text-align: right; color: #15803d;">PKR <%= group.totalMonthlyRecovered.toLocaleString() %></td>
+                                <td style="text-align: right; color: #047857;"><%= group.totalArrearsRecovered > 0 ? 'PKR ' + group.totalArrearsRecovered.toLocaleString() : '-' %></td>
+                                <td style="text-align: right; color: #6b21a8;">PKR <%= group.totalCollected.toLocaleString() %></td>
+                                <td style="text-align: right; color: <%= group.totalAmountDue > 0 ? '#dc2626' : '#16a34a' %>;">PKR <%= group.totalAmountDue.toLocaleString() %></td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </details>
