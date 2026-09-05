@@ -76,9 +76,18 @@ router.get('/', isAuthenticated, async (req, res) => {
                 [tenantId, m]
             );
             
-            // Fee Collection (Accrual Basis - fees for month m)
+            // Fee Collection (Accrual Basis - fees strictly for month m, excluding arrears)
             const [[{ fees_collected_accrual }]] = await db.execute(
-                'SELECT (COALESCE(SUM(amount_paid), 0) + COALESCE(SUM(additional_fee), 0)) as fees_collected_accrual FROM fee_payments WHERE tenant_id = ? AND month = ? AND year = 2026',
+                `SELECT COALESCE(SUM(
+                    LEAST(
+                        fp.amount_paid,
+                        GREATEST(0, COALESCE(c.default_monthly_fee, 0) - IF(s.has_concession = 1, COALESCE(s.custom_monthly_fee, 0), 0))
+                    )
+                ), 0) as fees_collected_accrual 
+                FROM fee_payments fp
+                JOIN students s ON fp.student_id = s.id
+                LEFT JOIN classes c ON s.class_id = c.id
+                WHERE fp.tenant_id = ? AND fp.month = ? AND fp.year = 2026`,
                 [tenantId, m]
             );
             

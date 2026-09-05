@@ -483,58 +483,6 @@
 
 <!-- Tab: Class Summary Pane -->
 <div id="pane-class">
-    <!-- Filters Collapsible Panel -->
-    <details class="filter-panel" <%= (classId || search || locals.activeMonthNum || locals.activeYear) ? 'open' : '' %>>
-        <summary>
-            <span><i class="bi bi-funnel-fill"></i> Filter & Search Fees</span>
-            <i class="bi bi-chevron-down toggle-icon"></i>
-        </summary>
-        <form action="/fees/ledger" method="GET" class="filter-content">
-            <input type="hidden" name="view" id="filter-view-input-class" value="class">
-            <div class="form-group">
-                <label for="classId">Class</label>
-                <select name="classId" id="classId" class="form-control" onchange="this.form.submit()">
-                    <option value="">-- All Classes --</option>
-                    <% classes.forEach(c => { %>
-                        <option value="<%= c.id %>" <%= classId == c.id ? 'selected' : '' %>><%= c.name %></option>
-                    <% }) %>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="month">Month</label>
-                <select name="month" id="month" class="form-control" onchange="this.form.submit()">
-                    <% monthsList.forEach((mName, idx) => { %>
-                        <option value="<%= idx + 1 %>" <%= activeMonthNum == (idx + 1) ? 'selected' : '' %>><%= mName %></option>
-                    <% }) %>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="year">Year</label>
-                <select name="year" id="year" class="form-control" onchange="this.form.submit()">
-                    <% 
-                        const currentY = new Date().getFullYear();
-                        const yearsList = [];
-                        for(let y = 2024; y <= currentY; y++) yearsList.push(y);
-                        yearsList.forEach(y => { 
-                    %>
-                        <option value="<%= y %>" <%= activeYear == y ? 'selected' : '' %>><%= y %></option>
-                    <% }) %>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="search">Search</label>
-                <input type="text" name="search" id="search" class="form-control" value="<%= search || '' %>" placeholder="Search by name or Reg No...">
-            </div>
-            
-            <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
-                <button type="submit" class="btn-secondary" style="height: 38px;">Search</button>
-                <a href="/fees/ledger" class="btn-secondary" style="height: 38px; display: inline-flex; align-items: center;">Reset</a>
-            </div>
-        </form>
-    </details>
     <div style="margin-bottom: 1rem; color: var(--muted); font-weight: 500;">
         Students grouped by class. Defaulters (unpaid) are shown first.
     </div>
